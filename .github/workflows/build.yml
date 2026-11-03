@@ -1,0 +1,132 @@
+# Build-uri automate: Web (PWA + fisier unic), Windows (.exe), Android (.apk semnat), iOS (.ipa nesemnat).
+# Ruleaza la fiecare push pe main si manual (Actions -> Build -> Run workflow).
+# La un tag v* (ex. v1.0.0) fisierele sunt puse si intr-un Release.
+name: Build
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - run: npm run build:single && cp dist-single/index.html BubuDudu-joc.html
+      - uses: actions/upload-artifact@v4
+        with: { name: web, path: dist/ }
+      - uses: actions/upload-artifact@v4
+        with: { name: BubuDudu-joc-html, path: BubuDudu-joc.html }
+      # jocul compilat merge si pe ramura gh-pages: GitHub Pages (joc online) + serverul de pe S10 il descarca de aici
+      - name: Publica pe gh-pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run dist:win
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", CSC_IDENTITY_AUTO_DISCOVERY: "false" }
+      - uses: actions/upload-artifact@v4
+        with: { name: windows-exe, path: release/*.exe }
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap add android
+      - run: npx cap sync android
+      - name: Pictograma aplicatiei
+        run: |
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            cp public/icon-512.png android/app/src/main/res/mipmap-$d/ic_launcher.png
+            cp public/icon-512.png android/app/src/main/res/mipmap-$d/ic_launcher_round.png
+            rm -f android/app/src/main/res/mipmap-$d/ic_launcher_foreground.png
+          done
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+      - name: Cheia de semnare (din Secrets)
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then echo "::warning::Lipseste secretul ANDROID_KEYSTORE_BASE64 - APK-ul va fi semnat doar cu cheia de debug"; exit 0; fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/release.jks
+      - name: Build APK
+        working-directory: android
+        env:
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          chmod +x gradlew
+          if [ -f app/release.jks ]; then
+            ./gradlew assembleRelease \
+              -Pandroid.injected.signing.store.file=$PWD/app/release.jks \
+              -Pandroid.injected.signing.store.password="$KS_PASS" \
+              -Pandroid.injected.signing.key.alias="${KS_ALIAS:-bubududu}" \
+              -Pandroid.injected.signing.key.password="$KS_PASS"
+            cp app/build/outputs/apk/release/app-release.apk ../BubuDudu.apk
+          else
+            ./gradlew assembleDebug
+            cp app/build/outputs/apk/debug/app-debug.apk ../BubuDudu.apk
+          fi
+          rm -f app/release.jks
+      - uses: actions/upload-artifact@v4
+        with: { name: android-apk, path: BubuDudu.apk }
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap add ios
+      - run: npx cap sync ios
+      - name: Build .ipa (nesemnat)
+        working-directory: ios/App
+        run: |
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphoneos \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+          mkdir -p Payload && cp -R build/Build/Products/Release-iphoneos/App.app Payload/
+          zip -qr ../../BubuDudu-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with: { name: ios-ipa, path: BubuDudu-unsigned.ipa }
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [web, windows, android, ios]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: art }
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            art/windows-exe/*.exe
+            art/android-apk/*.apk
+            art/ios-ipa/*.ipa
+            art/BubuDudu-joc-html/*.html

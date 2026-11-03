@@ -3,6 +3,14 @@
 Serverul face 3 lucruri: leagă cele două telefoane în timp real, **salvează casa** (în `server/data/`)
 și **servește jocul** (deschizi `http://IP:8787` în browser și joci).
 
+## ⚡ Varianta rapidă (direct de pe GitHub)
+În Termux (de pe F-Droid), o singură comandă:
+```bash
+pkg install -y git nodejs && curl -fsSL https://raw.githubusercontent.com/mandrutaniel5-gif/bubu_dudu/main/server/s10-termux.sh | bash
+```
+Scriptul clonează repository-ul și ia jocul gata compilat de GitHub Actions (ramura `gh-pages`). Apoi pornește serverul pe portul 8787 și îl repornește singur dacă se oprește. Data viitoare rulezi doar `~/bubu_dudu/server/s10-termux.sh`: își face singur update la ultima versiune de pe GitHub.
+> Dacă repository-ul e privat, `git clone` îți cere utilizatorul și un token GitHub (Settings → Developer settings → Personal access tokens, cu drept de citire). Tokenul îl introduci doar pe telefon.
+
 ## 1. Instalare pe S10
 1. Instalează **Termux** din **F-Droid** (versiunea din Play Store e veche): https://f-droid.org/packages/com.termux/
 2. Deschide Termux și rulează:

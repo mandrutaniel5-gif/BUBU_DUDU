@@ -100,6 +100,7 @@ export class WorldScene implements Scene {
   private listeners: [EventTarget, string, any][] = [];
 
   constructor(private game: Game, public net: NetAdapter, public myId: CharId) {
+    { const m = Math.min(game.w, game.h); this.cam.zoom = m < 500 ? 0.95 : m < 800 ? 1.15 : 1.4; } // zoom potrivit ecranului (telefon / tableta / laptop)
     const other: CharId = myId === 'bubu' ? 'dudu' : 'bubu';
     this.me = this.makePawn(myId, 'me');
     this.partner = this.makePawn(other, 'ai');
@@ -184,7 +185,13 @@ export class WorldScene implements Scene {
     switch (e.t) {
       case 'emote': this.pawnOf(e.who).actor.play(e.anim); break;
       case 'pair': this.runPair(e.who, e.pair, false); break;
-      case 'op': this.applyLocal(e.op); break;
+      case 'op': {
+        const prevCh = this.chapter;
+        this.applyLocal(e.op);
+        const ok = e.op as any; if (ok.k === 'stat' && typeof ok.key === 'string' && ok.key.startsWith('goal-')) { const g = GOALS.find(x => 'goal-' + x.id === ok.key); if (g) this.hud.toast(`✅ Obiectiv: ${g.icon} ${g.text}`); this.hud.refreshGoal(); }
+        if (this.chapter > prevCh) { this.syncPlaced(); Sfx.play('good'); this.me.actor.play('dance_hop'); setTimeout(() => this.hud.showChapter(CHAPTERS[prevCh].done), 900); }
+        break;
+      }
       case 'chat': this.hud.toast(`${e.who === 'bubu' ? '🐼' : '🐻'} ${e.text}`); break;
       case 'mini': this.onMiniEvent(e.who, e.data); break;
       case 'act': {
@@ -515,6 +522,7 @@ export class WorldScene implements Scene {
     return [{ x0: 5, y0: 11.9, x1: 6, y1: 12.1 }, { x0: 13.9, y0: 9, x1: 14.1, y1: 10 }];
   }
   checkGoals() {
+    if (!this.isHost) return; // in multiplayer doar gazda (Bubu) decide obiectivele, ca sa nu se dubleze recompensele
     const ch = chapterOf(this.w);
     for (const g of ch.goals) if (!g.cost && !this.w.stats['goal-' + g.id] && g.done(this.w)) this.completeGoal(g.id);
     if (ch.goals.every(g => this.w.stats['goal-' + g.id]) && this.chapter < CHAPTERS.length - 1) this.advanceChapter();

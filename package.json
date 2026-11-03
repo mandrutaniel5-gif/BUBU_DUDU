@@ -8,15 +8,62 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
     "server": "node server/server.mjs",
-    "build:single": "vite build -c vite.single.config.ts"
+    "build:single": "vite build -c vite.single.config.ts",
+    "electron": "npm run build && electron .",
+    "dist:win": "npm run build && electron-builder --win --x64",
+    "cap:sync": "npm run build && npx cap sync"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.2.3",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
     "firebase": "^13.2.0",
     "typescript": "^5.9.3",
     "vite": "^8.3.5",
-    "vite-plugin-singlefile": "^2.3.4"
+    "vite-plugin-singlefile": "^2.3.4",
+    "@capacitor/android": "^6.2.3",
+    "@capacitor/core": "^6.2.3",
+    "@capacitor/ios": "^6.2.3"
   },
   "dependencies": {
     "ws": "^8.22.1"
+  },
+  "main": "electron/main.cjs",
+  "description": "Bubu & Dudu — joc de familie pentru doi",
+  "author": "Bubu & Dudu",
+  "build": {
+    "appId": "ro.casutanoastra.bubududu",
+    "productName": "Bubu & Dudu",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "electron/**",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/icon-512.png",
+      "artifactName": "BubuDudu-${version}-${arch}-${target}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Bubu & Dudu"
+    }
   }
 }

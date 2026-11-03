@@ -4,3 +4,11 @@ out
 *.log
 server/data/
 dist-single
+
+# chei de semnare (secrete!)
+*.jks
+*.keystore
+keystore.base64.txt
+release/
+android/
+ios/

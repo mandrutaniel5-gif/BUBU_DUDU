@@ -155,3 +155,29 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 .goals.inv li { flex-direction:row; justify-content:space-between; align-items:center; }
 .hud .clock { max-width:calc(100vw - 20px); flex-wrap:wrap; justify-content:center; }
 .fogmsg { position:absolute; left:50%; bottom:90px; transform:translateX(-50%); }
+
+/* ---- dispozitive: telefon (portret / peisaj), tableta, laptop ---- */
+@media (max-width: 700px) {
+  .hud .card.me { width:min(200px, 50vw); transform:scale(.8); transform-origin:top left; }
+  .hud .card.partner { width:min(170px, 44vw); transform:scale(.8); transform-origin:top right; }
+  .hud .clock { top:128px; bottom:auto; left:50%; transform:translateX(-50%) scale(.92); font-size:12.5px; padding:2px 8px; gap:5px; }
+  .hud .goal { top:196px; transform:scale(.9); transform-origin:top left; }
+  .act { width:52px; height:52px; } .act .ic { font-size:22px; }
+  .act.big { min-width:104px; height:54px; }
+  .hud .actions { right:10px; bottom:10px; gap:8px; } .hud .actions .row { gap:7px; }
+  .modal .box { max-height:84vh; }
+  .shop { grid-template-columns:repeat(auto-fill, minmax(84px,1fr)); }
+}
+@media (max-height: 500px) {
+  .hud .card.me { transform:scale(.7); transform-origin:top left; }
+  .hud .card.partner { transform:scale(.7); transform-origin:top right; }
+  .hud .clock { top:auto; bottom:8px; left:8px; transform:scale(.85); transform-origin:bottom left; }
+  .hud .goal { top:auto; bottom:62px; left:8px; transform:scale(.8); transform-origin:bottom left; }
+  .act { width:48px; height:48px; } .act .ic { font-size:20px; }
+  .act.big { min-width:96px; height:50px; }
+  .hud .actions { right:8px; bottom:8px; gap:6px; } .hud .actions .row { gap:6px; }
+  .pop { bottom:120px; max-height:70vh; }
+}
+@media (min-width: 701px) and (max-width: 1100px) and (min-height: 501px) {
+  .hud .clock { top:auto; bottom:12px; left:12px; transform:none; }
+}

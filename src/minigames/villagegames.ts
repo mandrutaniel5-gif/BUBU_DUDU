@@ -72,7 +72,7 @@ export class FerrisGame extends Panel {
     if (this.k >= 1) {
       const s = this.scene; const love = this.kissed ? 35 : 20;
       s.op({ k: 'need', who: s.myId, need: 'love', delta: love }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: 15 });
-      if (s.partner.control !== 'remote') s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love });
+      if (s.sameArea()) s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love });
       s.op({ k: 'stat', key: 'ferris', delta: 1 });
       s.log(this.kissed ? 'Un pupic în vârful roții mari 🎡💋' : 'O tură cu roata mare 🎡');
       this.finish(this.kissed ? 2 : 1, this.kissed ? 'Cel mai frumos pupic 💋🌅' : 'Ce priveliște! 🌅');

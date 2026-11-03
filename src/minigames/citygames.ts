@@ -179,7 +179,7 @@ export class CinemaGame extends Panel {
     if (this.k >= 1) {
       const s = this.scene; const love = 15 + (this.held ? 20 : 0), fun = 20 + this.caught * 2;
       s.op({ k: 'need', who: s.myId, need: 'love', delta: love }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: fun }); s.op({ k: 'need', who: s.myId, need: 'hunger', delta: this.caught });
-      if (s.partner.control !== 'remote') { s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love }); s.op({ k: 'need', who: s.partner.id, need: 'fun', delta: fun }); }
+      if (s.sameArea()) { s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love }); s.op({ k: 'need', who: s.partner.id, need: 'fun', delta: fun }); }
       s.op({ k: 'stat', key: 'cinema', delta: 1 });
       s.log(this.held ? 'Un film romantic, mână în mână 🎬💕' : 'O seară la cinema 🎬');
       this.finish(this.held ? 2 : 1, this.held ? 'Mână în mână 💕 · cel mai frumos film' : `Ce film! 🍿 ${this.caught} floricele`);
@@ -278,7 +278,7 @@ export class RestoGame extends Panel {
     const elegant = ['rochie', 'costum'].includes((s.w.chars[s.myId].outfit as any)?.body ?? '');
     const love = 18 + right * 8 + (clinked ? 10 : 0) + (elegant ? 10 : 0);
     s.op({ k: 'need', who: s.myId, need: 'hunger', delta: 60 }); s.op({ k: 'need', who: s.myId, need: 'love', delta: love }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: 12 });
-    if (s.partner.control !== 'remote') { s.op({ k: 'need', who: s.partner.id, need: 'hunger', delta: 60 }); s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love }); }
+    if (s.sameArea()) { s.op({ k: 'need', who: s.partner.id, need: 'hunger', delta: 60 }); s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love }); }
     s.op({ k: 'stat', key: 'restoDates', delta: 1 });
     s.log(`Cină romantică la „La Doi” 🕯️ ${right}/3 feluri ghicite${elegant ? ', în haine elegante' : ''}`);
     this.finish(1 + right * 0.4, right === 3 ? `Vă cunoașteți perfect! 💕 3/3` : `${right}/3 ghicite · o seară dulce 🕯️`);
