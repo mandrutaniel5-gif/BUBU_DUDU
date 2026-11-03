@@ -9,6 +9,7 @@ import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
 import { GOALS, CHAPTERS, chapterOf, currentGoal, INV_INFO, SHOP_BUY, SHOP_ONLINE, SHOP_SELL } from '../game/economy';
 import { CROPS, seedKey, catCount, drawCropPlant, WET_MIN } from '../world/garden';
+import { CRITTER_NAMES } from '../world/forest';
 import type { NetStatus } from '../net/types';
 
 
@@ -95,7 +96,7 @@ export class Hud {
     (this.root.querySelector('.clock .money') as HTMLElement).textContent = `💰 ${w.money ?? 0} lei`;
     const rs = (this.root.querySelector('.clock .res') as HTMLElement); const R = w.res ?? {}; const seeds = Object.keys(CROPS).reduce((a, c) => a + (R[seedKey(c)] ?? 0), 0); const rt = `🪵${R.wood ?? 0} 🪨${R.stone ?? 0} 🥕${catCount(R, 'veg')} 🌸${catCount(R, 'flower')} 🍲${R.meals ?? 0} 💧${R.water ?? 0} 🌰${seeds} · 🔥${Math.round((w.furn.fire as number) ?? 0)}% 🎒`; if (rs.textContent !== rt) rs.textContent = rt;
     const pc = w.chars[s.partner.id];
-    this.els['.pmood'].textContent = moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : '');
+    this.els['.pmood'].textContent = (s.sameArea() ? '' : s.partnerArea() === 'home' ? '🏡 acasă · ' : '🌲 la pădure · ') + moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : '');
     (this.els['.fart .fill'] as HTMLElement).style.height = c.fart + '%';
     this.els['[data-a="pairs"]'].classList.toggle('glow', s.nearPartner());
     // butonul de actiune
@@ -104,6 +105,7 @@ export class Hud {
     else {
       const f = s.nearestFurn(s.me); const act = f && s.actionFor(f);
       if (act) { label = act.label; icon = act.icon; }
+      else if (s.nearCritter()) { const c = s.nearCritter()!; label = 'Mângâie ' + CRITTER_NAMES[c.kind].toLowerCase(); icon = '🤗'; }
       else if (s.nearPartner()) { label = 'Împreună'; icon = '💞'; }
     }
     const key = icon + label;

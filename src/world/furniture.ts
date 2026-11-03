@@ -1,8 +1,9 @@
 // Desenarea mobilei, peretilor si a podelei in stil izometric "sticker".
 import { iso, isoBox, boxOf, poly, tilePath, shade, TW, TH, type Pt } from './iso';
-import { floorAt, MAP_W, MAP_H, type Furn, type Wall } from './map';
+import { floorAt, MAP_W, MAP_H, AREA, type Furn, type Wall } from './map';
 import { heartPath } from '../char/draw';
 import { drawBuildType } from './build';
+import { drawForestType } from './forest';
 
 const O = '#3a2a22';
 
@@ -19,6 +20,7 @@ export interface FurnState { depleted?: Record<string, boolean>; tvBroken?: bool
 export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: FurnState) {
   const { gx, gy, w, d } = f;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (drawForestType(ctx, f, t, !!st.depleted?.[f.id])) return;
   if (drawBuildType(ctx, f, t, st.night ?? 0, !!st.depleted?.[f.id])) return;
   switch (f.type) {
     case 'bed': {
@@ -316,6 +318,7 @@ export function renderFloor(): { canvas: HTMLCanvasElement; ox: number; oy: numb
     switch (f) {
       case 'grass': col = r > 0.5 ? '#a6dc93' : '#9fd68c'; break;
       case 'path': col = '#e9d8b8'; break;
+      case 'forest': col = r > 0.5 ? '#7cc47a' : '#74bd72'; break;
       case 'road': col = (x % 2) ? '#cdb48f' : '#c9af89'; break;
       case 'wood': col = (x + y) % 2 ? '#e8bf8e' : '#e3b886'; break;
       case 'pinkwood': col = (x + y) % 2 ? '#f6cfc4' : '#f2c6ba'; break;
@@ -339,6 +342,7 @@ export function renderFloor(): { canvas: HTMLCanvasElement; ox: number; oy: numb
     if (f === 'path') { ctx.fillStyle = '#d6c19a'; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.ellipse(c.x + (rnd(x + k, y) - 0.5) * 30, c.y + (rnd(x, y + k) - 0.5) * 12, 6, 3, 0, 0, 7); ctx.fill(); } }
     if (f === 'water') { ctx.strokeStyle = '#ffffff88'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(c.x - 10, c.y); ctx.quadraticCurveTo(c.x - 5, c.y - 3, c.x, c.y); ctx.quadraticCurveTo(c.x + 5, c.y + 3, c.x + 10, c.y); ctx.stroke(); }
   }
+  if (AREA !== 'home') return { canvas: cv, ox: minX, oy: minY };
   // marginea lacului
   ctx.strokeStyle = '#5aa9d6'; ctx.lineWidth = 3; tilePath(ctx, 0, 6, 2, 4); ctx.stroke();
   for (const [u, v] of [[17.6, 17.5], [18.6, 18.7]]) { const p = iso(u, v); ctx.fillStyle = '#6cbf6c'; ctx.beginPath(); ctx.ellipse(p.x, p.y, 9, 4.5, 0, 0.3, Math.PI * 2 - 0.3); ctx.lineTo(p.x, p.y); ctx.fill(); }

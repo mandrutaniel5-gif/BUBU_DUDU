@@ -107,6 +107,26 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
       return true;
     }
     case 'stand': {
+      const S = (globalThis as any).__stand ?? {};
+      if (S.broken) {
+        // scanduri cazute, stalpi strambi
+        isoBox(ctx, gx + 0.1, gy + 0.2, 0.06, 0.06, 40, boxOf('#a0703f'));
+        isoBox(ctx, gx + w - 0.2, gy + 0.2, 0.06, 0.06, 22, boxOf('#a0703f'));
+        isoBox(ctx, gx + 0.05, gy + 0.3, w - 0.1, 0.6, 12, { top: '#c9a57c', left: '#a87a50', right: '#946a44' });
+        for (const [u, v, a] of [[0.4, 0.95, 0.3], [1.3, 1.05, -0.4], [0.9, 0.6, 0.1]]) { const p = iso(gx + u, gy + v, 13); ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a); ctx.fillStyle = '#c98e5f'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.fillRect(-16, -3, 32, 6); ctx.strokeRect(-16, -3, 32, 6); ctx.restore(); }
+        const sg = iso(gx + w / 2, gy + 0.9, 18); ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.save(); ctx.translate(sg.x, sg.y); ctx.rotate(0.25); ctx.beginPath(); ctx.roundRect(-26, -7, 52, 14, 3); ctx.fill(); ctx.stroke();
+        ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#e63946'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('STRICATĂ 🔨', 0, 0); ctx.restore(); ctx.textBaseline = 'alphabetic';
+        return true;
+      }
+      if (!S.open) {
+        for (const u of [0.1, w - 0.15]) isoBox(ctx, gx + u, gy + 0.2, 0.06, 0.06, 64, boxOf('#c98e5f'));
+        isoBox(ctx, gx + 0.05, gy + 0.3, w - 0.1, 0.6, 26, { top: '#f6e7d3', left: '#d9a273', right: '#c48b5c' });
+        const a1 = iso(gx, gy + 0.12, 62), b1 = iso(gx + w, gy + 0.12, 62); // copertina stransa
+        ctx.strokeStyle = O; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(a1.x, a1.y); ctx.lineTo(b1.x, b1.y); ctx.stroke(); ctx.strokeStyle = '#ff9ab8'; ctx.lineWidth = 4; ctx.stroke();
+        const sg = iso(gx + w / 2, gy + 0.9, 12); ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(sg.x - 24, sg.y - 7, 48, 14, 4); ctx.fill(); ctx.stroke();
+        ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('ÎNCHIS', sg.x, sg.y); ctx.textBaseline = 'alphabetic';
+        return true;
+      }
       for (const u of [0.1, w - 0.15]) isoBox(ctx, gx + u, gy + 0.2, 0.06, 0.06, 64, boxOf('#c98e5f'));
       isoBox(ctx, gx + 0.05, gy + 0.3, w - 0.1, 0.6, 26, { top: '#f6e7d3', left: '#d9a273', right: '#c48b5c' });
       // copertina cu dungi

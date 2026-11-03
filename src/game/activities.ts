@@ -47,5 +47,13 @@ export const ACTIVITIES: Record<string, Activity> = {
   fertilize: { id: 'fertilize', anim: 'act_garden', dur: 1.4, needs: { hygiene: -2 }, text: 'Crește mai repede! ✨' },
   harvest: { id: 'harvest', anim: 'act_garden', dur: 1.4, needs: { fun: 5 }, text: 'Recoltă! 🧺' },
   plant: { id: 'plant', anim: 'act_garden', dur: 1.4, needs: { fun: 3, hygiene: -2 }, text: 'Plantat! 🌱' },
+  fish: { id: 'fish', anim: 'act_sit', dur: 6, needs: { fun: 15, energy: -3 }, text: 'Liniștea lacului 🎣', minigame: 'fishing' },
+  mushroom: { id: 'mushroom', anim: 'act_garden', dur: 2, needs: { fun: 4 }, text: 'Ciupercuțe! 🍄' },
+  berries: { id: 'berries', anim: 'act_garden', dur: 2, needs: { fun: 4, hunger: 3 }, text: 'Mure dulci 🫐' },
+  gohome: { id: 'gohome', anim: 'wave', dur: 0.5, needs: {}, text: '' },
+  forest: { id: 'forest', anim: 'wave', dur: 0.5, needs: {}, text: '' },
+  sellwood: { id: 'sellwood', anim: 'flex', dur: 1.5, needs: { fun: 4 }, text: 'Lemne vândute! 💰' },
+  repairstand: { id: 'repairstand', anim: 'act_scrub', dur: 3, needs: { fun: 6, energy: -5 }, text: 'Bang-bang 🔨' },
+  openstand: { id: 'openstand', anim: 'wave', dur: 0.8, needs: { fun: 2 }, text: 'Deschis! 🧺' },
   read_mail: { id: 'read_mail', anim: 'love', dur: 2.6, needs: { love: 8 }, text: 'Un bilețel de dragoste 💌' },
 };

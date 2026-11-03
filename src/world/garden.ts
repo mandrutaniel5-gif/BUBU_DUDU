@@ -20,7 +20,7 @@ export const seedKey = (crop: string) => 'seed_' + crop;
 
 /** cheile din inventar care intra intr-o categorie (pentru taraba si bucatarie) */
 export const CAT_KEYS: Record<CropCat, string[]> = {
-  veg: ['veg', 'carrot', 'potato', 'tomato', 'cabbage', 'strawberry'],
+  veg: ['veg', 'carrot', 'potato', 'tomato', 'cabbage', 'strawberry', 'mushroom', 'berry'],
   flower: ['flower', 'tulip', 'rose', 'sunflower'],
 };
 export const catCount = (res: Record<string, number>, cat: CropCat) => CAT_KEYS[cat].reduce((s, k) => s + (res[k] ?? 0), 0);

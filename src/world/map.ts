@@ -1,6 +1,6 @@
 import { RESOURCE_NODES } from './build';
 // Harta casei si a curtii.
-export type Floor = 'road' | 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand';
+export type Floor = 'forest' | 'road' | 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand';
 
 export interface Wall { x: number; y: number; dir: 'x' | 'y'; h: number; kind: 'back' | 'inner' | 'low'; window?: boolean; color: string }
 
@@ -22,7 +22,11 @@ export const MAP_W = 22, MAP_H = 27;
 export const YARD_H = 22, YARD_GATE = 5, ROAD_Y = 24.6;
 export const HOUSE = { x0: 2, y0: 2, x1: 13, y1: 11 };
 
-export function floorAt(x: number, y: number): Floor {
+/** zona curenta (acasa / padure / ...) */
+export let AREA = 'home';
+let areaFloor: ((x: number, y: number) => Floor) | null = null;
+export function floorAt(x: number, y: number): Floor { return areaFloor ? areaFloor(x, y) : homeFloor(x, y); }
+function homeFloor(x: number, y: number): Floor {
   if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return 'grass';
   if (y === 24 || y === 25) return 'road';
   if (y >= YARD_H) return x === YARD_GATE && y < 24 ? 'path' : 'grass';
@@ -127,4 +131,22 @@ export function colliders(): Rect[] {
   R.push({ x0: -1, y0: -1, x1: MAP_W + 1, y1: 0 }, { x0: -1, y0: MAP_H, x1: MAP_W + 1, y1: MAP_H + 1 });
   R.push({ x0: -1, y0: -1, x1: 0, y1: MAP_H + 1 }, { x0: MAP_W, y0: -1, x1: MAP_W + 1, y1: MAP_H + 1 });
   return R;
+}
+
+// ------------------------------------------------------------------ zone
+export interface AreaDef { floor: (x: number, y: number) => Floor; furniture: Furn[]; walls: Wall[]; spawn: { x: number; y: number } }
+const HOME_FURN = [...FURNITURE];
+const HOME_WALLS = [...WALLS];
+export const AREAS: Record<string, AreaDef> = {
+  home: { floor: homeFloor, furniture: HOME_FURN, walls: HOME_WALLS, spawn: { x: 17.5, y: 16.5 } },
+};
+/** inlocuieste continutul listelor globale cu cel al zonei (pastreaza obiectele dinamice ale casei) */
+export function setArea(name: string) {
+  const cur = AREAS[AREA];
+  if (cur) cur.furniture = [...FURNITURE];
+  AREA = name;
+  const a = AREAS[name];
+  areaFloor = name === 'home' ? null : a.floor;
+  FURNITURE.splice(0, FURNITURE.length, ...a.furniture);
+  WALLS.splice(0, WALLS.length, ...a.walls);
 }

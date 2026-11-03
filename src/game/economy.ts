@@ -4,6 +4,7 @@ import { CROPS, seedKey } from '../world/garden';
 
 export const INV_INFO: Record<string, { icon: string; label: string }> = {
   water: { icon: '💧', label: 'Apă (găleți)' },
+  fish: { icon: '🐟', label: 'Pește' }, mushroom: { icon: '🍄', label: 'Ciuperci' }, berry: { icon: '🫐', label: 'Mure' },
   fert: { icon: '✨', label: 'Îngrășământ' },
   veg: { icon: '🥕', label: 'Legume' },
   meals: { icon: '🍲', label: 'Porții de mâncare' },
@@ -35,6 +36,9 @@ export const SHOP_BUY: ShopItem[] = [
 ];
 export const SHOP_SELL = [
   ...Object.values(CROPS).map(c => ({ id: c.id, label: c.name, icon: (INV_INFO[c.id]?.icon ?? '🌱'), price: c.sell })),
+  { id: 'fish', label: 'Pește', icon: '🐟', price: 5 },
+  { id: 'mushroom', label: 'Ciuperci', icon: '🍄', price: 3 },
+  { id: 'berry', label: 'Mure', icon: '🫐', price: 2 },
   { id: 'wood', label: 'Lemne', icon: '🪵', price: 2 },
   { id: 'hay', label: 'Fân', icon: '🌾', price: 2 },
   { id: 'stone', label: 'Piatră', icon: '🪨', price: 2 },
@@ -78,16 +82,22 @@ export const CHAPTERS: Chapter[] = [
       { id: 'well', icon: '🪣', text: 'Scoate apă din fântână', hint: 'Fântâna de lângă grădină', done: w => st(w, 'waterDrawn') >= 1, reward: { hearts: 3 } },
       { id: 'plant3', icon: '🌱', text: 'Plantează 3 răzoare', hint: 'Atinge un răzor gol din grădină și alege semințele', done: w => st(w, 'planted') >= 3, reward: { money: 5 } },
       { id: 'harvest3', icon: '🧺', text: 'Culege 3 recolte', hint: 'Udă plantele 💧 și așteaptă să crească', done: w => st(w, 'harvested') >= 3, reward: { money: 15, hearts: 5 } },
+      { id: 'stand', icon: '🔨', text: 'Repară taraba și deschide-o', hint: 'Taraba de lângă drum e stricată — ai nevoie de 6 lemne 🪵', done: w => st(w, 'standRepaired') > 0 && st(w, 'standOpened') > 0, reward: { hearts: 5 } },
       { id: 'serve3', icon: '🧺', text: 'Servește 3 clienți la tarabă', hint: 'Taraba de lângă drum (ieși pe portiță)', done: w => st(w, 'served') >= 3, reward: { money: 20 } },
       { id: 'money100', icon: '💰', text: 'Strânge 100 de lei', hint: 'Taraba, vânzarea în sat', done: w => (w.money ?? 0) >= 100, reward: { hearts: 10 } },
     ],
   },
   {
-    id: 2, title: 'Capitolul 2 · Pădurea (în lucru)', done: '🚲 Cu bicicleta puteți merge în sat!',
+    id: 2, title: 'Capitolul 2 · Pădurea', done: '🚲 Cu bicicleta puteți merge în sat!',
     intro: 'Dudu merge cu tractorașul la pădure, taie lemne și le vinde. Cu banii cumpărați online o bicicletă.',
     goals: [
-      { id: 'tractor', icon: '🚜', text: 'Prima tură la pădure cu tractorașul', hint: 'În curând!', done: w => st(w, 'forestTrips') > 0, reward: { money: 20 } },
-      { id: 'bike', icon: '🚲', text: 'Cumpărați o bicicletă online', hint: 'Laptopul din casă (în curând)', done: w => st(w, 'bike') > 0, reward: { hearts: 15 } },
+      { id: 'tractor', icon: '🚜', text: 'Prima tură la pădure cu tractorașul', hint: 'Tractorașul stă lângă magazie, în curte', done: w => st(w, 'forestTrips') > 0, reward: { money: 10 } },
+      { id: 'logs15', icon: '🪓', text: 'Taie 15 lemne în pădure', hint: 'Brazii și copacii din pădure', done: w => st(w, 'forestWood') >= 15, reward: { money: 15 } },
+      { id: 'mush', icon: '🍄', text: 'Culege 6 ciuperci', hint: 'Caută-le pe sub copaci', done: w => st(w, 'mushroomTotal') >= 6, reward: { hearts: 5 } },
+      { id: 'fish3', icon: '🎣', text: 'Prinde 3 pești la lac', hint: 'Podețul de la lacul din pădure', done: w => (st(w, 'fishCaught')) >= 3, reward: { money: 15 } },
+      { id: 'friend', icon: '🦌', text: 'Împrietenește-te cu un animal din pădure', hint: 'Apropie-te încet și mângâie-l de 3 ori', done: w => st(w, 'petFriends') >= 1, reward: { hearts: 10 } },
+      { id: 'sellwood', icon: '💰', text: 'Vinde 15 lemne la cherestea', hint: 'Grămada de lemne de lângă tractoraș, acasă', done: w => st(w, 'woodSold') >= 15, reward: { money: 10 } },
+      { id: 'bike', icon: '🚲', text: 'Cumpărați o bicicletă', hint: 'Laptopul din casă → Vehicule (150 lei)', done: w => st(w, 'bike') > 0, reward: { hearts: 15 } },
     ],
   },
 ];
