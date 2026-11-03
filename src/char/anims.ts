@@ -61,7 +61,7 @@ def({
   id: 'wave', label: 'Salut', icon: '👋', who: 'both', kind: 'emote', dur: 1.8,
   pose(P, t, p) {
     const up = ease(seg(p, 0, 0.15)) * (1 - ease(seg(p, 0.85, 1)));
-    P.armR = lerp(0.25, 2.6 + wave(t, 2.6, 0.35), up);
+    P.armR = lerp(0.55, 1.95 + wave(t, 2.6, 0.3), up);
     P.eyes = 'happy'; P.mouth = 'open'; P.blush = 0.8;
     P.headRot = up * 0.1; P.dy = -bump(p, 0, 0.18) * 8; P.earWiggle = wave(t, 3, up);
   },
@@ -72,7 +72,7 @@ def({
   id: 'love', label: 'Te iubesc', icon: '🥰', who: 'both', kind: 'emote', dur: 2.6,
   pose(P, t, p) {
     const up = ease(seg(p, 0, 0.18)) * (1 - ease(seg(p, 0.86, 1)));
-    P.armL = P.armR = lerp(0.25, 2.75, up);
+    P.armL = P.armR = lerp(0.55, 1.55 + Math.sin(t * 6) * 0.15, up);
     P.eyes = 'heart'; P.mouth = 'w'; P.blush = 1.3;
     P.rot = wave(t, 0.9, 0.06) * up; P.headRot = wave(t, 0.9, 0.08, 1) * up;
     P.dy = -Math.abs(wave(t, 1.8, 3)) * up;
