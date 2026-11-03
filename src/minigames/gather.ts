@@ -44,7 +44,7 @@ export class ChopGame extends Panel {
     // eroul cu toporul
     this.hero.scale = 1.5; this.hero.x = x + w * 0.28; this.hero.y = ty; this.hero.flip = 1;
     this.hero.draw(ctx);
-    ctx.save(); ctx.translate(x + w * 0.28 + 30, ty - 70); ctx.rotate(-1.2 + this.swing * 1.6);
+    ctx.save(); ctx.translate(x + w * 0.28 + 34, ty - 34); ctx.rotate(-0.9 + this.swing * 1.5);
     ctx.fillStyle = '#c99a5b'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(-4, -60, 8, 70, 4); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#c0c6cc'; ctx.beginPath(); ctx.moveTo(4, -60); ctx.lineTo(30, -68); ctx.quadraticCurveTo(36, -52, 30, -36); ctx.lineTo(4, -44); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
