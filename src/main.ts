@@ -3,6 +3,7 @@ import { Game } from './engine/game';
 import { StudioScene } from './scenes/studio';
 import { SheetScene } from './scenes/sheet';
 import { MenuScene } from './scenes/menu';
+import { IconScene } from './scenes/icon';
 import { WorldScene } from './scenes/world';
 import { Settings } from './game/settings';
 import { makeAdapter } from './net/adapters';
@@ -12,6 +13,7 @@ const game = new Game(document.getElementById('game') as HTMLCanvasElement);
 game.scenes.menu = () => new MenuScene(game);
 game.scenes.studio = () => new StudioScene(game);
 game.scenes.sheet = () => new SheetScene(game);
+game.scenes.icon = () => new IconScene(game);
 game.scenes.world = () => {
   const s = Settings.get();
   return new WorldScene(game, makeAdapter(s.net), s.who);
@@ -27,3 +29,6 @@ Sfx.setMuted(Settings.get().muted);
 const start = location.hash.slice(1);
 game.go(start in game.scenes ? start : 'menu');
 game.start();
+
+// aplicatie instalabila (PWA): functioneaza si offline
+if ('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorker.register('./sw.js').catch(() => {});

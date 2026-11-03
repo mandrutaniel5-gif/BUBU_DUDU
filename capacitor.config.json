@@ -1,0 +1,7 @@
+{
+  "appId": "ro.casutanoastra.bubududu",
+  "appName": "Bubu & Dudu",
+  "webDir": "dist",
+  "server": { "androidScheme": "http", "cleartext": true },
+  "android": { "allowMixedContent": true }
+}
