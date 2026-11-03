@@ -29,7 +29,8 @@ export type WorldOp =
   | { k: 'grass'; key: string; value: number }
   | { k: 'grassAll' }
   | { k: 'npcs'; list: unknown[] }
-  | { k: 'npcServe'; id: string };
+  | { k: 'npcServe'; id: string }
+  | { k: 'clock'; gameMin: number };
 
 export type NetStatus = 'offline' | 'connecting' | 'online' | 'error';
 

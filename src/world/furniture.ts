@@ -14,7 +14,7 @@ function rhombDecal(ctx: CanvasRenderingContext2D, gx: number, gy: number, w: nu
   tilePath(ctx, gx, gy, w, d, z); ctx.fillStyle = fill; ctx.fill();
 }
 
-export interface FurnState { depleted?: Record<string, boolean>; lampOn?: boolean; tvOn?: boolean; clogged?: boolean; bathFoam?: number; cooking?: boolean; crops?: number[]; night?: number; }
+export interface FurnState { depleted?: Record<string, boolean>; tvBroken?: boolean; tubDirty?: boolean; fridgeDirty?: boolean; dishesDirty?: boolean; lampOn?: boolean; tvOn?: boolean; clogged?: boolean; bathFoam?: number; cooking?: boolean; crops?: number[]; night?: number; }
 
 export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: FurnState) {
   const { gx, gy, w, d } = f;
@@ -92,7 +92,8 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
     }
     case 'bathtub': {
       isoBox(ctx, gx + 0.05, gy + 0.08, w - 0.1, d - 0.14, 26, boxOf('#ffffff'));
-      tilePath(ctx, gx + 0.18, gy + 0.2, w - 0.36, d - 0.38, 26.5); ctx.fillStyle = '#9fd8f5'; ctx.fill();
+      tilePath(ctx, gx + 0.18, gy + 0.2, w - 0.36, d - 0.38, 26.5); ctx.fillStyle = st.tubDirty ? '#a0845a' : '#9fd8f5'; ctx.fill();
+      if (st.tubDirty) { stink(ctx, iso(gx + w / 2, gy + d / 2, 30), t); break; }
       const foam = st.bathFoam ?? 0.3;
       for (let i = 0; i < 14 * foam + 3; i++) {
         const u = (i * 0.37) % 1, v = (i * 0.61) % 1;
@@ -126,6 +127,7 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
       const a = iso(gx + 0.08, gy + 0.92, 50), b = iso(gx + 0.92, gy + 0.92, 50);
       ctx.strokeStyle = O; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       for (const z of [60, 36]) { const h = iso(gx + 0.8, gy + 0.92, z); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(h.x, h.y - 6); ctx.lineTo(h.x, h.y + 6); ctx.stroke(); }
+      if (st.fridgeDirty) stink(ctx, iso(gx + 0.5, gy + 0.9, 70), t);
       const mg = iso(gx + 0.4, gy + 0.92, 64); heartPath(ctx, mg.x, mg.y, 5); ctx.fillStyle = '#ff7aa2'; ctx.fill();
       const mg2 = iso(gx + 0.3, gy + 0.92, 30); ell(ctx, mg2, 4, 4, '#ffd23f');
       break;
@@ -148,7 +150,8 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
     case 'counter': {
       isoBox(ctx, gx + 0.08, gy + 0.08, 0.84, 0.84, 32, { top: '#f6e7d3', left: '#d9a273', right: '#c48b5c' });
       const p = iso(gx + 0.5, gy + 0.5, 32);
-      for (let i = 0; i < 3; i++) ell(ctx, { x: p.x, y: p.y - i * 3 }, 11, 5, '#ffffff');
+      for (let i = 0; i < (st.dishesDirty ? 6 : 3); i++) { ell(ctx, { x: p.x + (st.dishesDirty ? (i % 2) * 3 : 0), y: p.y - i * 3 }, 11, 5, '#ffffff'); if (st.dishesDirty) { ctx.fillStyle = '#a0784a'; ctx.beginPath(); ctx.arc(p.x - 4 + (i % 3) * 3, p.y - i * 3, 2, 0, 7); ctx.fill(); } }
+      if (st.dishesDirty) stink(ctx, { x: p.x, y: p.y - 14 }, t);
       break;
     }
     case 'table': {
@@ -179,7 +182,11 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
       poly(ctx, [a, b, c, e]); ctx.fillStyle = '#2b2b33'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.stroke();
       const a2 = iso(x + 0.01, gy + 0.3, 30), b2 = iso(x + 0.01, gy + d - 0.3, 30), c2 = iso(x + 0.01, gy + d - 0.3, 62), e2 = iso(x + 0.01, gy + 0.3, 62);
       poly(ctx, [a2, b2, c2, e2]);
-      if (st.tvOn) {
+      if (st.tvBroken) {
+        ctx.fillStyle = '#555'; ctx.fill(); ctx.save(); ctx.clip();
+        for (let i = 0; i < 40; i++) { const v = Math.floor(Math.random() * 255); ctx.fillStyle = `rgb(${v},${v},${v})`; const q = iso(x + 0.01, gy + 0.3 + Math.random() * (d - 0.6), 30 + Math.random() * 32); ctx.fillRect(q.x - 2, q.y - 1, 4, 3); }
+        ctx.restore();
+      } else if (st.tvOn) {
         const hue = (t * 40) % 360; ctx.fillStyle = `hsl(${hue},70%,72%)`; ctx.fill();
         const m = iso(x + 0.01, gy + d / 2, 46); heartPath(ctx, m.x, m.y + 4, 6 + Math.sin(t * 6) * 1.5); ctx.fillStyle = '#fff'; ctx.fill();
       } else { ctx.fillStyle = '#3b4250'; ctx.fill(); const gl = iso(x + 0.01, gy + 0.6, 56); ctx.fillStyle = '#ffffff33'; ctx.fillRect(gl.x - 4, gl.y - 2, 10, 4); }
@@ -384,4 +391,11 @@ export function drawYardGate(ctx: CanvasRenderingContext2D, x: number, y: number
   // usita deschisa spre interior (o jumatate de gard rotita)
   const a = iso(x + 0.02, y - 0.05, 0), b = iso(x + 0.15, y - 0.55, 0);
   for (const z of [8, 20]) { ctx.strokeStyle = O; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(a.x, a.y - z); ctx.lineTo(b.x, b.y - z); ctx.stroke(); ctx.strokeStyle = '#e7c08f'; ctx.lineWidth = 2.5; ctx.stroke(); }
+}
+
+/** linii de miros + muste (pentru lucrurile murdare din casa) */
+export function stink(ctx: CanvasRenderingContext2D, c: Pt, t: number) {
+  ctx.strokeStyle = '#8bc34a'; ctx.lineWidth = 2;
+  for (let i = -1; i <= 1; i++) { ctx.beginPath(); const x = c.x + i * 7; ctx.moveTo(x, c.y); ctx.bezierCurveTo(x - 4, c.y - 8, x + 4, c.y - 12, x, c.y - 20 - Math.sin(t * 3 + i) * 3); ctx.stroke(); }
+  for (let i = 0; i < 2; i++) { const a = t * 5 + i * 2.5; ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(c.x + Math.cos(a) * 14, c.y - 14 + Math.sin(a * 1.3) * 6, 1.6, 0, 7); ctx.fill(); }
 }

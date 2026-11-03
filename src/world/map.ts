@@ -8,7 +8,7 @@ export type FurnType =
   | 'bed' | 'nightstand' | 'wardrobe' | 'toilet' | 'bathtub' | 'sink' | 'washer' | 'fridge' | 'stove'
   | 'counter' | 'table' | 'sofa' | 'tv' | 'plant' | 'bookshelf' | 'tree' | 'plot' | 'bench' | 'mailbox'
   | 'rug' | 'lamp' | 'flowers' | 'doormat' | 'bush'
-  | 'fireplace' | 'shed' | 'stand' | 'gateway' | 'signpost'
+  | 'laptop' | 'fireplace' | 'shed' | 'stand' | 'gateway' | 'signpost'
   | 'rock' | 'wildflower' | 'stonepath' | 'heartstone' | 'fence' | 'pot' | 'lamppost' | 'sapling' | 'flowerbed' | 'swing' | 'snowman' | 'gazebo';
 
 export interface Furn {
@@ -101,6 +101,7 @@ export const FURNITURE: Furn[] = [
   { id: 'bush2', type: 'bush', gx: 8, gy: 15, w: 1, d: 1, solid: true },
   ...RESOURCE_NODES,
   // supravietuire si economie
+  { id: 'laptop', type: 'laptop', gx: 7, gy: 4, w: 1, d: 1, solid: true, action: act('online', 'Laptopul (magazin online)', '💻') },
   { id: 'fireplace', type: 'fireplace', gx: 7, gy: 7, w: 1, d: 1, solid: true, action: act('stove', 'Soba', '🔥') },
   { id: 'shed', type: 'shed', gx: 16, gy: 13, w: 1, d: 1, solid: true, action: act('mow', 'Tunde iarba', '✂️') },
   { id: 'stand', type: 'stand', gx: 7, gy: 23, w: 2, d: 1, solid: true, action: act('stand', 'Taraba lui Bubu', '🧺') },

@@ -54,6 +54,7 @@ export interface WorldState {
   placed?: { uid: string; type: string; gx: number; gy: number }[]; // constructii
   nodes?: Record<string, number>;                       // resurse epuizate pana la (ms)
   money?: number;                                       // lei
+  gameMin?: number;                                     // ceasul jocului (minute de la inceput)
   grass?: Record<string, number>;                       // iarba inalta: 'x,y' -> inaltime 1..3
 }
 
@@ -129,6 +130,7 @@ export function applyOp(w: WorldState, op: WorldOp) {
     case 'sick': w.chars[op.who].sick = op.value as Sickness | null; if (!op.value) w.chars[op.who].request = null; break;
     case 'jar': w.jar.push({ from: op.from, text: op.text, ts: op.ts }); break;
     case 'char': case 'npcs': case 'npcServe': return;
+    case 'clock': if (Math.abs((w.gameMin ?? 0) - op.gameMin) > 2) w.gameMin = op.gameMin; return;
     case 'res': { w.res ??= {}; w.res[op.res] = Math.max(0, (w.res[op.res] ?? 0) + op.delta); break; }
     case 'place': { w.placed ??= []; if (!w.placed.some(p => p.uid === op.uid)) w.placed.push({ uid: op.uid, type: op.type, gx: op.gx, gy: op.gy }); break; }
     case 'unplace': { w.placed = (w.placed ?? []).filter(p => p.uid !== op.uid); break; }

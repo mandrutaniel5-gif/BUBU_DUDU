@@ -4,7 +4,8 @@ import { colliders, MAP_W, MAP_H, type Rect } from './map';
 export class Nav {
   rects: Rect[] = colliders();
   blocked: boolean[] = [];
-  constructor() {
+  constructor(extra: Rect[] = []) {
+    this.rects.push(...extra);
     for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) {
       const cx = x + 0.5, cy = y + 0.5;
       this.blocked[y * MAP_W + x] = this.rects.some(r => cx > r.x0 && cx < r.x1 && cy > r.y0 && cy < r.y1);

@@ -58,6 +58,15 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
   const { gx, gy, w, d } = f;
   switch (f.type) {
     case 'gateway': return true;
+    case 'laptop': {
+      for (const [u, v] of [[0.15, 0.2], [0.75, 0.2], [0.15, 0.75], [0.75, 0.75]]) isoBox(ctx, gx + u, gy + v, 0.08, 0.08, 22, boxOf('#c98e5f'));
+      isoBox(ctx, gx + 0.08, gy + 0.12, 0.84, 0.76, 4, boxOf('#e7b98a'), 22);
+      isoBox(ctx, gx + 0.3, gy + 0.3, 0.4, 0.35, 2, boxOf('#c0c6cc'), 26);
+      const a = iso(gx + 0.3, gy + 0.32, 28), b = iso(gx + 0.7, gy + 0.32, 28), c2 = iso(gx + 0.7, gy + 0.32, 46), d2 = iso(gx + 0.3, gy + 0.32, 46);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.closePath(); ctx.fillStyle = '#3b4250'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.stroke();
+      const m = iso(gx + 0.5, gy + 0.32, 37); heartPath(ctx, m.x, m.y + 2, 4 + Math.sin(t * 3)); ctx.fillStyle = '#ff7aa2'; ctx.fill();
+      return true;
+    }
     case 'signpost': {
       isoBox(ctx, gx + 0.45, gy + 0.45, 0.1, 0.1, 50, boxOf('#a0703f'));
       const p = iso(gx + 0.5, gy + 0.5, 46);

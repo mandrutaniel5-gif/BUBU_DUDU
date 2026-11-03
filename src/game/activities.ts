@@ -13,7 +13,7 @@ export interface Activity {
 }
 
 export const ACTIVITIES: Record<string, Activity> = {
-  sleep: { id: 'sleep', anim: 'act_sleepbed', dur: 12, needs: { energy: 45, health: 6 }, place: 'bed', text: 'Somn dulce! 💤' },
+  sleep: { id: 'sleep', anim: 'act_sleepbed', dur: 99999, needs: { health: 6, love: 4 }, place: 'bed', text: 'Somn dulce! 💤' },
   snack: { id: 'snack', anim: 'act_eat', dur: 3.5, needs: { hunger: 22, fun: 3 }, text: 'Gustărică! 🍪' , minigame: 'fridge' },
   eat: { id: 'eat', anim: 'act_eat', dur: 5, needs: { hunger: 35, love: 3 }, text: 'Ce bun a fost tortul! 🍰' },
   cook: { id: 'cook', anim: 'act_cook', dur: 7, needs: { hunger: 10, fun: 8 }, furnFlag: ['cooking', true, false], text: 'Mâncare caldă gata! 🍲', minigame: 'pancakes' },
@@ -39,5 +39,8 @@ export const ACTIVITIES: Record<string, Activity> = {
   lightfire: { id: 'lightfire', anim: 'kiss', dur: 2, needs: { warmth: 6, fun: 4 }, text: 'Ne e cald! 🔥', minigame: 'fire' },
   mow: { id: 'mow', anim: 'act_scrub', dur: 5, needs: { fun: 6, energy: -8, hygiene: -6 }, text: 'Miroase a iarbă tunsă 🌾', minigame: 'mow' },
   stand: { id: 'stand', anim: 'wave', dur: 6, needs: { fun: 10, energy: -4 }, text: 'Clienți mulțumiți 🧺', minigame: 'merge' },
+  cleanfridge: { id: 'cleanfridge', anim: 'act_scrub', dur: 4, needs: { hygiene: -4, fun: 6 }, text: 'Frigider curat ✨', minigame: 'fridgeclean' },
+  scrubtub: { id: 'scrubtub', anim: 'act_scrub', dur: 4, needs: { hygiene: -6, fun: 4 }, text: 'Cadă strălucitoare 🛁', minigame: 'tubscrub' },
+  fixtv: { id: 'fixtv', anim: 'act_scrub', dur: 4, needs: { fun: 10 }, text: 'Televizorul merge! 📺', minigame: 'tvfix' },
   read_mail: { id: 'read_mail', anim: 'love', dur: 2.6, needs: { love: 8 }, text: 'Un bilețel de dragoste 💌' },
 };
