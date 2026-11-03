@@ -119,10 +119,12 @@ export function drawTractorIso(c: CanvasRenderingContext2D, gx: number, gy: numb
 }
 
 /** scena de drum (side-scroller cu parallax); k = 0..1 progresul calatoriei */
-export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: number, k: number, t: number, toForest: boolean, night: number, driver: CharSpec, passenger?: CharSpec, logs = 0) {
+export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: number, k: number, t: number, toForest: boolean, night: number, driver: CharSpec, passenger?: CharSpec, logs = 0, vehicle: 'tractor' | 'bike' | 'scooter' = 'tractor', dest = '') {
   const ground = h * 0.7;
-  const speed = 520; const off = t * speed;
-  const forestK = toForest ? k : 1 - k; // cat de "padure" e peisajul
+  const speed = vehicle === 'bike' ? 360 : 520; const off = t * speed;
+  const toVillage = dest === 'village', fromVillage = dest === 'home-from-village';
+  const forestK = toVillage || fromVillage ? 0 : toForest ? k : 1 - k; // cat de "padure" e peisajul
+  const villageK = toVillage ? k : fromVillage ? 1 - k : 0;
   // cerul
   const sky = c.createLinearGradient(0, 0, 0, ground);
   sky.addColorStop(0, night > 0.5 ? '#1d2550' : '#7cc8f5'); sky.addColorStop(1, night > 0.5 ? '#4a3f75' : '#ffe9cc');
@@ -143,6 +145,8 @@ export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: numbe
   // copaci pe dealul mijlociu (mai multi brazi spre padure)
   for (let i = 0; i < 26; i++) {
     const x = ((i * 70 - off * 0.3) % (w + 140) + w + 140) % (w + 140) - 70;
+    const house = ((i * 53) % 100) / 100 < villageK * 0.8;
+    if (house) { const y0 = h * 0.6 + ((i * 13) % 20); c.fillStyle = ['#fff1d6', '#ffe1ea', '#e8f1ff', '#fff6b8'][i % 4]; c.strokeStyle = O; c.lineWidth = 1.5; c.fillRect(x - 18, y0 - 26, 36, 26); c.strokeRect(x - 18, y0 - 26, 36, 26); c.fillStyle = ['#c0573e', '#e5809a', '#5b7fbf', '#7cb870'][i % 4]; c.beginPath(); c.moveTo(x - 22, y0 - 26); c.lineTo(x, y0 - 44); c.lineTo(x + 22, y0 - 26); c.closePath(); c.fill(); c.stroke(); c.fillStyle = night > 0.5 ? '#ffe680' : '#bfe8ff'; c.fillRect(x - 10, y0 - 18, 7, 7); c.fillRect(x + 3, y0 - 18, 7, 7); continue; }
     const pine = ((i * 37) % 100) / 100 < forestK * 0.9 + 0.1;
     const y = h * 0.58 + ((i * 13) % 20);
     if (pine) { for (let l = 0; l < 3; l++) { c.fillStyle = ['#2f7a4a', '#3f8f5a', '#4aa267'][l]; c.beginPath(); c.moveTo(x - 22 + l * 5, y - l * 16); c.lineTo(x, y - 34 - l * 16); c.lineTo(x + 22 - l * 5, y - l * 16); c.fill(); } }
@@ -158,7 +162,7 @@ export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: numbe
   if (sx > -120 && sx < w + 120) {
     c.fillStyle = '#a0703f'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(sx - 3, ground - 90, 6, 90, 2); c.fill(); c.stroke();
     c.fillStyle = '#e7c08f'; c.beginPath(); c.moveTo(sx - 50, ground - 96); c.lineTo(sx + 40, ground - 96); c.lineTo(sx + 56, ground - 82); c.lineTo(sx + 40, ground - 68); c.lineTo(sx - 50, ground - 68); c.closePath(); c.fill(); c.stroke();
-    c.font = '800 15px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(toForest ? 'Pădurea 🌲' : 'Acasă 🏡', sx, ground - 82); c.textBaseline = 'alphabetic';
+    c.font = '800 15px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(toVillage ? 'Satul 🏘️' : toForest ? 'Pădurea 🌲' : 'Acasă 🏡', sx, ground - 82); c.textBaseline = 'alphabetic';
   }
   // drumul
   c.fillStyle = '#c9af89'; c.fillRect(0, ground, w, h - ground);
@@ -177,7 +181,9 @@ export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: numbe
   // fumul din teava
   for (let i = 0; i < 6; i++) { const q = ((t * 1.2 + i / 6) % 1); c.globalAlpha = 0.5 * (1 - q); c.fillStyle = '#dcdcdc'; c.beginPath(); c.arc(tx + 49 * sc - q * 140 * sc, ground - 100 * sc - q * 70 * sc + bump * sc, (5 + q * 16) * sc, 0, 7); c.fill(); }
   c.globalAlpha = 1;
-  drawTractorSide(c, tx, ground + 10, sc, t, { rot: off / 22, bump, logs, driver, passenger });
+  if (vehicle === 'scooter') drawScooterSide(c, tx, ground + 10, sc * 1.15, t, { rot: off / 18, bump, driver, passenger });
+  else if (vehicle === 'bike') drawTandemSide(c, tx, ground + 10, sc * 1.1, t, { rot: off / 20, bump, driver, passenger });
+  else drawTractorSide(c, tx, ground + 10, sc, t, { rot: off / 22, bump, logs, driver, passenger });
 }
 
 /** tranzitie "iris" (cerc care se deschide/inchide) */
@@ -190,7 +196,7 @@ export function irisWipe(c: CanvasRenderingContext2D, w: number, h: number, open
  * Personajul la volan, din profil (spre dreapta). (x,y) = sezutul pe scaun.
  * steer = cat roteste volanul; drive = tine volanul (altfel saluta, ca pasager).
  */
-export function drawDriverSide(c: CanvasRenderingContext2D, spec: CharSpec, x: number, y: number, s: number, t: number, steer: number, drive: boolean) {
+export function drawDriverSide(c: CanvasRenderingContext2D, spec: CharSpec, x: number, y: number, s: number, t: number, steer: number, drive: boolean, wheel = true) {
   const body = spec.body, dark = spec.shade, isDudu = spec.id === 'dudu';
   const pad = isDudu ? '#c8917a' : '#4a2a22';
   const bob = Math.sin(t * 9) * 0.8;
@@ -241,11 +247,80 @@ export function drawDriverSide(c: CanvasRenderingContext2D, spec: CharSpec, x: n
   c.restore();
   c.restore();
   // volanul (desenat peste labute), doar pentru sofer
-  if (drive) {
+  if (drive && wheel) {
     c.save(); c.translate(x + 29 * s, y - 27 * s + bob);
     c.strokeStyle = '#333'; c.lineWidth = 3.5; c.beginPath(); c.moveTo(0, 0); c.lineTo(10, 30); c.stroke(); // coloana
     c.rotate(-0.45); c.lineWidth = 3.5; c.beginPath(); c.ellipse(0, 0, 4, 13, 0, 0, 7); c.stroke();
     c.save(); c.rotate(steer * 2); c.lineWidth = 2; c.beginPath(); c.moveTo(0, -12); c.lineTo(0, 12); c.stroke(); c.restore();
     c.restore();
   }
+}
+
+function simpleWheel(c: CanvasRenderingContext2D, x: number, y: number, r: number, rot: number, tire = '#2b2b33', rim = '#e5e5e5') {
+  c.save(); c.translate(x, y);
+  c.fillStyle = tire; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill(); c.stroke();
+  c.fillStyle = rim; c.beginPath(); c.arc(0, 0, r * 0.62, 0, 7); c.fill(); c.stroke();
+  c.strokeStyle = '#9aa5ad'; c.lineWidth = 1.5; for (let i = 0; i < 8; i++) { const a = rot + i * Math.PI / 4; c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(a) * r * 0.6, Math.sin(a) * r * 0.6); c.stroke(); }
+  c.fillStyle = '#666'; c.beginPath(); c.arc(0, 0, r * 0.16, 0, 7); c.fill();
+  c.restore();
+}
+
+/** scuterul albastru (ca in desenele lor): sofer in fata, pasager in spate */
+export function drawScooterSide(c: CanvasRenderingContext2D, x: number, y: number, s: number, t: number, opt: { rot: number; bump: number; driver?: CharSpec; passenger?: CharSpec }) {
+  c.save(); c.translate(x, y); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round';
+  const BL = '#8ecdf0', BL_D = '#5fa9d6', BL_L = '#c2e6fa';
+  c.fillStyle = 'rgba(40,20,20,0.2)'; c.beginPath(); c.ellipse(0, 2, 62, 7, 0, 0, 7); c.fill();
+  c.save(); c.translate(0, opt.bump);
+  // esapament
+  c.fillStyle = '#c0c6cc'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(-58, -24, 34, 8, 4); c.fill(); c.stroke();
+  // caroseria din spate (rotunjita, ca la Vespa)
+  c.fillStyle = BL; c.strokeStyle = O; c.lineWidth = 2.6;
+  c.beginPath(); c.moveTo(-52, -28); c.bezierCurveTo(-58, -62, -12, -66, -4, -40); c.lineTo(10, -40); c.lineTo(10, -22); c.lineTo(-40, -22); c.quadraticCurveTo(-54, -22, -52, -28); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = BL_L; c.lineWidth = 3; c.beginPath(); c.moveTo(-44, -46); c.quadraticCurveTo(-30, -56, -16, -50); c.stroke();
+  // podeaua si coloana din fata
+  c.fillStyle = BL_D; c.strokeStyle = O; c.lineWidth = 2.4; c.beginPath(); c.roundRect(-8, -26, 36, 8, 3); c.fill(); c.stroke();
+  c.fillStyle = BL; c.beginPath(); c.moveTo(22, -22); c.quadraticCurveTo(46, -26, 44, -70); c.lineTo(34, -72); c.quadraticCurveTo(34, -36, 18, -30); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = BL_L; c.lineWidth = 3; c.beginPath(); c.moveTo(38, -64); c.quadraticCurveTo(40, -40, 28, -30); c.stroke();
+  // aripa fata
+  c.fillStyle = BL; c.strokeStyle = O; c.lineWidth = 2.4; c.beginPath(); c.arc(42, -14, 15, Math.PI * 1.05, Math.PI * 1.95); c.closePath(); c.fill(); c.stroke();
+  // sa (lunga, pentru doi)
+  c.fillStyle = '#5a4a42'; c.beginPath(); c.roundRect(-50, -66, 52, 10, 5); c.fill(); c.stroke();
+  // ghidonul si farul
+  c.strokeStyle = '#5a4a42'; c.lineWidth = 4; c.beginPath(); c.moveTo(38, -72); c.lineTo(30, -82); c.stroke();
+  c.fillStyle = '#c0c6cc'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(20, -88, 18, 7, 3); c.fill(); c.stroke();
+  c.fillStyle = '#fff6b0'; c.beginPath(); c.arc(44, -76, 6, 0, 7); c.fill(); c.stroke();
+  c.fillStyle = '#e63946'; c.beginPath(); c.arc(-56, -42, 3.5, 0, 7); c.fill(); c.stroke(); // stop
+  // pasagerul (in spate) si soferul (in fata)
+  if (opt.passenger) drawDriverSide(c, opt.passenger, -40, -64, 0.9, t + 1.3, 0, false);
+  if (opt.driver) drawDriverSide(c, opt.driver, -14, -64, 0.95, t, Math.sin(t * 1.5) * 0.12, true, false);
+  c.restore();
+  simpleWheel(c, -36, -12, 13, opt.rot, '#2b2b33', '#d9d9d9');
+  simpleWheel(c, 42, -12, 13, opt.rot, '#2b2b33', '#d9d9d9');
+  c.restore();
+}
+
+/** bicicleta in tandem (pentru doi) */
+export function drawTandemSide(c: CanvasRenderingContext2D, x: number, y: number, s: number, t: number, opt: { rot: number; bump: number; driver?: CharSpec; passenger?: CharSpec }) {
+  c.save(); c.translate(x, y); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round';
+  c.fillStyle = 'rgba(40,20,20,0.2)'; c.beginPath(); c.ellipse(0, 2, 70, 7, 0, 0, 7); c.fill();
+  const F = '#ff7aa2';
+  simpleWheel(c, -52, -18, 18, opt.rot, '#2b2b33', '#fff');
+  simpleWheel(c, 52, -18, 18, opt.rot, '#2b2b33', '#fff');
+  // cadrul
+  const fr = (a: Pt, b: Pt) => { c.strokeStyle = O; c.lineWidth = 6; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); c.strokeStyle = F; c.lineWidth = 3.5; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); };
+  type Pt = { x: number; y: number };
+  const A = { x: -52, y: -18 }, B = { x: 52, y: -18 }, P1 = { x: -24, y: -16 }, P2 = { x: 18, y: -16 }, S1 = { x: -32, y: -50 }, S2 = { x: 8, y: -50 }, H = { x: 40, y: -56 };
+  fr(A, P1); fr(P1, S1); fr(S1, A); fr(P1, P2); fr(S1, S2); fr(P2, S2); fr(S2, H); fr(H, B); fr(P2, B);
+  // pedale care se invart
+  for (const pc of [P1, P2]) { const a = opt.rot * 0.8; c.strokeStyle = '#555'; c.lineWidth = 3; c.beginPath(); c.moveTo(pc.x + Math.cos(a) * 8, pc.y + Math.sin(a) * 8); c.lineTo(pc.x - Math.cos(a) * 8, pc.y - Math.sin(a) * 8); c.stroke(); c.fillStyle = '#666'; c.beginPath(); c.arc(pc.x, pc.y, 4, 0, 7); c.fill(); }
+  // sei + ghidon + cos cu flori
+  for (const sp of [S1, S2]) { c.fillStyle = '#5a4a42'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.ellipse(sp.x, sp.y - 4, 10, 4, 0, 0, 7); c.fill(); c.stroke(); }
+  c.strokeStyle = '#555'; c.lineWidth = 3; c.beginPath(); c.moveTo(H.x, H.y); c.lineTo(H.x - 6, H.y - 8); c.stroke();
+  c.fillStyle = '#d9a273'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(H.x + 2, H.y - 4, 18, 14, 3); c.fill(); c.stroke();
+  for (let i = 0; i < 3; i++) { c.fillStyle = ['#ff7aa2', '#ffd23f', '#c77dff'][i]; c.beginPath(); c.arc(H.x + 6 + i * 5, H.y - 6, 3.5, 0, 7); c.fill(); }
+  // ciclistii (pedaleaza: corpul sare usor)
+  const pedal = Math.sin(opt.rot * 0.8) * 1.5;
+  if (opt.passenger) drawDriverSide(c, opt.passenger, S1.x + 2, S1.y - 6 + pedal, 0.85, t + 1.3, 0, false);
+  if (opt.driver) drawDriverSide(c, opt.driver, S2.x + 2, S2.y - 6 - pedal, 0.9, t, Math.sin(t * 1.5) * 0.1, true, false);
+  c.restore();
 }

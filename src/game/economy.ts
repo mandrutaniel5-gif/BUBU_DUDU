@@ -100,6 +100,20 @@ export const CHAPTERS: Chapter[] = [
       { id: 'bike', icon: '🚲', text: 'Cumpărați o bicicletă', hint: 'Laptopul din casă → Vehicule (150 lei)', done: w => st(w, 'bike') > 0, reward: { hearts: 15 } },
     ],
   },
+  {
+    id: 3, title: 'Capitolul 3 · Satul', done: '🏙️ Satul vă iubește! Orașul vă așteaptă (în curând)',
+    intro: 'Cu bicicleta sau scuterul ajungeți în sat: magazine, croitorie, parc, școală. Bubu își deschide o florărie, Dudu o tâmplărie!',
+    goals: [
+      { id: 'village1', icon: '🏘️', text: 'Prima vizită în sat', hint: 'Indicatorul „Spre sat” de lângă drum', done: w => st(w, 'villageTrips') > 0, reward: { money: 10 } },
+      { id: 'clothes', icon: '🧵', text: 'Cumpără haine de la Croitorie', hint: 'Ie, vestă, salopetă, rochiță cu buline…', done: w => st(w, 'clothesBought') > 0, reward: { hearts: 5 } },
+      { id: 'school', icon: '🏫', text: 'Mergi la o lecție la școală', hint: 'Școala satului', done: w => st(w, 'school') > 0, reward: { money: 10 } },
+      { id: 'ferris', icon: '🎡', text: 'O tură romantică cu roata mare', hint: 'Parcul din sat (10 lei)', done: w => st(w, 'ferris') > 0, reward: { hearts: 10 } },
+      { id: 'scooter', icon: '🛵', text: 'Cumpărați un scuter', hint: 'Laptopul → Vehicule (300 lei)', done: w => st(w, 'scooter') > 0, reward: { hearts: 10 } },
+      { id: 'florarie', icon: '💐', text: 'Deschide florăria lui Bubu', hint: 'Primăria → 200 lei', done: w => st(w, 'florarie') > 0, reward: { hearts: 10 } },
+      { id: 'workshop', icon: '🪚', text: 'Deschide tâmplăria lui Dudu', hint: 'Primăria → 200 lei + 15 lemne', done: w => st(w, 'workshop') > 0, reward: { hearts: 10 } },
+      { id: 'craft3', icon: '🪑', text: 'Meșterește 3 lucruri în tâmplărie', hint: 'Scăunel, măsuță, căsuță pentru păsări…', done: w => st(w, 'crafted') >= 3, reward: { money: 30 } },
+    ],
+  },
 ];
 
 export const GOALS: Goal[] = CHAPTERS.flatMap(c => c.goals);

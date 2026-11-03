@@ -43,6 +43,7 @@ export class Hud {
           <button class="act" data-a="pairs" title="Împreună (R)"><span class="ic">💞</span></button>
           <button class="act fart" data-a="fart" title="Super-salt (F)"><span class="ic">💨</span><i class="fill"></i></button>
           <button class="act" data-a="build" title="Construiește (B)"><span class="ic">🔨</span></button>
+          <button class="act scooter" data-a="scooter" title="Scuterul"><span class="ic">🛵</span></button>
         </div>
       </div>
       <div class="pop emotes hidden"><h4>Emote-uri & dansuri</h4><div class="grid">${emotes.map(a => `<button data-emote="${a.id}"><span>${a.icon}</span>${a.label}</button>`).join('')}</div></div>
@@ -66,6 +67,7 @@ export class Hud {
       if (a === 'bell') s.ringBell();
       if (a === 'build') s.build ? s.endBuild() : this.openBuild();
       if (a === 'bok') s.confirmBuild();
+      if (a === 'scooter') s.toggleScooter();
       if (a === 'goals') this.openGoals();
       if (a === 'skipch' && confirm('(Provizoriu) Treci la capitolul următor?')) s.devSkipChapter();
       if (a === 'inv') this.openInventory();
@@ -100,6 +102,8 @@ export class Hud {
     this.els['.pmood'].textContent = (s.sameArea() ? '' : s.partnerArea() === 'home' ? '🏡 acasă · ' : '🌲 la pădure · ') + moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : '');
     (this.els['.fart .fill'] as HTMLElement).style.height = c.fart + '%';
     this.els['[data-a="pairs"]'].classList.toggle('glow', s.nearPartner());
+    (this.root.querySelector('.act.scooter') as HTMLElement).style.display = (w.stats.scooter ?? 0) > 0 ? '' : 'none';
+    (this.root.querySelector('.act.scooter') as HTMLElement).classList.toggle('glow', !!s.me.riding);
     // butonul de actiune
     let label = '…', icon = '✋';
     if (s.me.activity) { label = 'Oprește'; icon = '⏹'; }
@@ -176,6 +180,49 @@ export class Hud {
       (c.outfit as any)[it.slot] = cur === it.id ? 'none' : it.id;
       s.sendCharSync(); s.me.actor.play('shy'); Sfx.play('pop');
       this.openWardrobe();
+    }));
+  }
+
+  /** Primaria satului: afacerile voastre */
+  openHall() {
+    const s = this.s, w = s.w, r = w.res ?? {};
+    const deals = [
+      { id: 'florarie', icon: '💐', label: 'Florăria lui Bubu', desc: 'Clienții vin des și plătesc cu 50% mai mult pe flori', cost: { money: 200 } },
+      { id: 'workshop', icon: '🪚', label: 'Tâmplăria lui Dudu', desc: 'Faceți mobilier din lemn și îl vindeți', cost: { money: 200, wood: 15 } },
+    ];
+    const m = this.modal(`<h3>🏛️ Primăria satului</h3><p class="sub">Ai 💰 ${w.money ?? 0} lei · 🪵 ${r.wood ?? 0} lemne. Primarul vă dă autorizații pentru afaceri.</p>
+      <div class="shop">${deals.map(d => { const own = (w.stats[d.id] ?? 0) > 0; return `<button data-deal="${d.id}" class="${own ? 'on' : ''}"><span>${d.icon}</span><b>${d.label}</b><small>${own ? '✔ a voastră' : `💰 ${d.cost.money}${d.cost.wood ? ' · 🪵 ' + d.cost.wood : ''}`}</small><small>${d.desc}</small></button>`; }).join('')}
+      <button class="poor"><span>🏡</span><b>Casa cea mare</b><small>în curând (Capitolul 4)</small></button></div>`);
+    m.querySelectorAll('[data-deal]').forEach(b => b.addEventListener('click', () => {
+      const d = deals.find(x => x.id === (b as HTMLElement).dataset.deal)!; if ((w.stats[d.id] ?? 0) > 0) return;
+      if ((w.money ?? 0) < d.cost.money || (r.wood ?? 0) < (d.cost.wood ?? 0)) { this.toast('Încă nu ajung banii sau lemnele 💪'); Sfx.play('bad'); return; }
+      s.op({ k: 'money', delta: -d.cost.money }); if (d.cost.wood) s.op({ k: 'res', res: 'wood', delta: -d.cost.wood });
+      s.op({ k: 'stat', key: d.id, delta: 1 }); Sfx.play('good'); s.me.actor.play('dance_hop');
+      this.toast(`🎉 ${d.label} e a voastră!`); s.log(`Ați cumpărat ${d.label} ${d.icon}`); this.openHall();
+    }));
+  }
+
+  /** Tamplaria lui Dudu: mobilier din lemn */
+  openWorkshop() {
+    const s = this.s, w = s.w, r = w.res ?? {};
+    const recipes: { id: string; icon: string; label: string; need: Record<string, number>; pay: number }[] = [
+      { id: 'birdhouse', icon: '🐦', label: 'Căsuță pentru păsări', need: { wood: 3, flower: 1 }, pay: 18 },
+      { id: 'chair', icon: '🪑', label: 'Scăunel', need: { wood: 4 }, pay: 22 },
+      { id: 'table', icon: '🪵', label: 'Măsuță', need: { wood: 8 }, pay: 48 },
+      { id: 'swing', icon: '🎠', label: 'Leagăn de grădină', need: { wood: 10, stone: 2 }, pay: 70 },
+      { id: 'cradle', icon: '🍼', label: 'Leagăn de bebeluș', need: { wood: 14, flower: 3 }, pay: 110 },
+    ];
+    const bonus = s.myId === 'dudu' ? 1.2 : 1;
+    const need = (n: Record<string, number>) => Object.entries(n).map(([k, v]) => `${k === 'wood' ? '🪵' : k === 'stone' ? '🪨' : '🌸'}${v}`).join(' ');
+    const m = this.modal(`<h3>🪚 Tâmplăria lui Dudu</h3><p class="sub">Ai 🪵 ${r.wood ?? 0} · 🪨 ${r.stone ?? 0} · 🌸 ${r.flower ?? 0}. ${s.myId === 'dudu' ? 'Ești meșterul: +20% la preț 💪' : 'Dudu e meșterul, dar te descurci și tu 🙂'}</p>
+      <div class="shop">${recipes.map(rc => { const ok = Object.entries(rc.need).every(([k, v]) => (r[k] ?? 0) >= v); return `<button data-rc="${rc.id}" class="${ok ? '' : 'poor'}"><span>${rc.icon}</span><b>${rc.label}</b><small>${need(rc.need)} → 💰 ${Math.round(rc.pay * bonus)} lei</small></button>`; }).join('')}</div>`);
+    m.querySelectorAll('[data-rc]').forEach(b => b.addEventListener('click', () => {
+      const rc = recipes.find(x => x.id === (b as HTMLElement).dataset.rc)!;
+      if (!Object.entries(rc.need).every(([k, v]) => (r[k] ?? 0) >= v)) { this.toast('Nu ai destule materiale 🪵'); Sfx.play('bad'); return; }
+      for (const [k, v] of Object.entries(rc.need)) s.op({ k: 'res', res: k, delta: -v });
+      const pay = Math.round(rc.pay * bonus); s.op({ k: 'money', delta: pay }); s.op({ k: 'stat', key: 'crafted', delta: 1 });
+      Sfx.play('bonk'); setTimeout(() => Sfx.play('coin'), 300); s.me.actor.play('flex');
+      this.toast(`${rc.icon} ${rc.label} gata și vândut: +${pay} lei!`); this.openWorkshop();
     }));
   }
 
@@ -267,7 +314,7 @@ export class Hud {
     if (tab === 'sell') body = `<p class="sub">Vinde ce ai strâns (câte 1 la fiecare apăsare)</p><div class="shop">${SHOP_SELL.map(it => `<button data-sell="${it.id}" class="${(r[it.id] ?? 0) < 1 ? 'poor' : ''}"><span>${it.icon}</span><b>${it.label} (${r[it.id] ?? 0})</b><small>+${it.price} lei</small></button>`).join('')}</div>`;
     if (tab === 'hall') body = `<p class="sub">Investiții mari pentru familia voastră</p><div class="shop">${GOALS.filter(g => g.cost).map(g => { const done = !!w.stats['goal-' + g.id]; const c = g.cost!; return `<button data-goal="${g.id}" class="${done ? 'on' : ''}"><span>${g.icon}</span><b>${g.text}</b><small>${done ? '✔ gata' : [c.money ? '💰' + c.money : '', c.wood ? '🪵' + c.wood : '', c.stone ? '🪨' + c.stone : ''].join(' ')}</small></button>`; }).join('')}</div>`;
     if (tab === 'town') body = `<p class="sub">🚌 Autobuzul spre oraș pleacă după ce vă mutați în Casa cea mare. Acolo: supermarket, magazin de haine, cinema, slujbe… (Capitolul 3)</p>`;
-    const bike = online ? `<h4>🚲 Vehicule</h4><div class="shop"><button data-bike class="${(w.stats.bike ?? 0) > 0 ? 'on' : (w.money ?? 0) < 150 ? 'poor' : ''}"><span>🚲</span><b>Bicicletă pentru doi</b><small>${(w.stats.bike ?? 0) > 0 ? '✔ o aveți' : '💰 150 lei'}</small></button></div>` : '';
+    const bike = online ? `<h4>🚲 Vehicule</h4><div class="shop"><button data-bike class="${(w.stats.bike ?? 0) > 0 ? 'on' : (w.money ?? 0) < 150 ? 'poor' : ''}"><span>🚲</span><b>Bicicletă în tandem</b><small>${(w.stats.bike ?? 0) > 0 ? '✔ o aveți' : '💰 150 lei'}</small></button><button data-scooter class="${(w.stats.scooter ?? 0) > 0 ? 'on' : (w.money ?? 0) < 300 ? 'poor' : ''}"><span>🛵</span><b>Scuter albastru pentru doi</b><small>${(w.stats.scooter ?? 0) > 0 ? '✔ îl aveți' : '💰 300 lei'}</small></button></div>` : '';
     const m = this.modal(`<h3>${online ? '💻 Magazin online · livrare la ușă' : '🏘️ Satul'}</h3><p class="sub">Ai 💰 ${w.money ?? 0} lei</p><div class="tabs">${tabs.map(([id, l]) => `<button data-tab="${id}" class="${id === tab ? 'on' : ''}">${l}</button>`).join('')}</div>${body}${bike}`);
     m.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => this.openVillage((b as HTMLElement).dataset.tab)));
     m.querySelectorAll('[data-buy]').forEach(b => b.addEventListener('click', () => {
@@ -281,6 +328,12 @@ export class Hud {
       if ((w.money ?? 0) < 150) { this.toast('Nu ajung banii 💰 — taraba și lemnele!'); Sfx.play('bad'); return; }
       s.op({ k: 'money', delta: -150 }); s.op({ k: 'stat', key: 'bike', delta: 1 }); Sfx.play('good');
       this.toast('🚲 Ați cumpărat bicicleta! Satul vă așteaptă (indicatorul de lângă drum)'); s.log('Ați cumpărat o bicicletă pentru doi 🚲'); this.openVillage('online');
+    });
+    m.querySelector('[data-scooter]')?.addEventListener('click', () => {
+      if ((w.stats.scooter ?? 0) > 0) return;
+      if ((w.money ?? 0) < 300) { this.toast('Scuterul costă 300 lei 💰'); Sfx.play('bad'); return; }
+      s.op({ k: 'money', delta: -300 }); s.op({ k: 'stat', key: 'scooter', delta: 1 }); Sfx.play('good');
+      this.toast('🛵 Aveți scuter! Apasă butonul 🛵 ca să urci'); s.log('Ați cumpărat un scuter albastru 🛵💕'); this.openVillage('online');
     });
     m.querySelectorAll('[data-sell]').forEach(b => b.addEventListener('click', () => {
       const it = SHOP_SELL.find(i => i.id === (b as HTMLElement).dataset.sell)!;

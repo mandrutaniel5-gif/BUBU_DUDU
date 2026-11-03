@@ -75,7 +75,7 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
       const p = iso(gx + 0.5, gy + 0.5, 46);
       ctx.fillStyle = '#e7c08f'; ctx.strokeStyle = O; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(p.x - 26, p.y - 8); ctx.lineTo(p.x + 18, p.y - 8); ctx.lineTo(p.x + 28, p.y); ctx.lineTo(p.x + 18, p.y + 8); ctx.lineTo(p.x - 26, p.y + 8); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.font = '800 9px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Spre sat', p.x - 2, p.y + 0.5); ctx.textBaseline = 'alphabetic';
+      ctx.font = '800 9px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(f.id === 'v-home' ? 'Spre casă' : 'Spre sat', p.x - 2, p.y + 0.5); ctx.textBaseline = 'alphabetic';
       return true;
     }
     case 'fireplace': {

@@ -4,6 +4,7 @@ import { floorAt, MAP_W, MAP_H, AREA, type Furn, type Wall } from './map';
 import { heartPath } from '../char/draw';
 import { drawBuildType } from './build';
 import { drawForestType } from './forest';
+import { drawVillageType } from './village';
 
 const O = '#3a2a22';
 
@@ -20,6 +21,7 @@ export interface FurnState { depleted?: Record<string, boolean>; tvBroken?: bool
 export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: FurnState) {
   const { gx, gy, w, d } = f;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (drawVillageType(ctx, f, t, st.night ?? 0, (globalThis as any).__villageOwned ?? {})) return;
   if (drawForestType(ctx, f, t, !!st.depleted?.[f.id])) return;
   if (drawBuildType(ctx, f, t, st.night ?? 0, !!st.depleted?.[f.id])) return;
   switch (f.type) {

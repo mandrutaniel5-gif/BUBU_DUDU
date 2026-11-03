@@ -47,7 +47,7 @@ export class MergeGame extends Panel {
   clouds = [0.1, 0.45, 0.8].map((x, i) => ({ x, y: 0.06 + i * 0.04, s: 0.6 + i * 0.25 }));
 
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, '🧺 Taraba lui Bubu', '');
+    super(scene, done, scene.storeMode === 'florarie' ? '💐 Florăria lui Bubu' : '🧺 Taraba lui Bubu', '');
     const c = scene.w.chars[scene.myId] as any;
     if (!c.merge || c.merge.v !== 3) c.merge = newBoard();
     this.b = c.merge;
@@ -117,6 +117,7 @@ export class MergeGame extends Panel {
     const grassy = Object.keys(this.scene.w.grass ?? {}).length > 15;
     if (grassy) pay = Math.round(pay * 0.8);
     if (this.scene.myId === 'bubu') pay = Math.round(pay * 1.2); // e taraba ei :)
+    if (this.scene.storeMode === 'florarie') pay = Math.round(pay * 1.5);
     this.scene.serveNpc(npcId, pay);
     this.served++; this.earned += pay; this.paw = 1;
     Sfx.play('coin');
@@ -285,7 +286,7 @@ export class MergeGame extends Panel {
     ctx.fillStyle = '#ffd23f'; for (let i = 0; i < Math.min(8, 1 + Math.floor((this.scene.w.money ?? 0) / 25)); i++) { ctx.beginPath(); ctx.ellipse(jx - 8 + (i % 3) * 8, jy - 6 - Math.floor(i / 3) * 6, 6, 3, 0, 0, 7); ctx.fill(); ctx.stroke(); }
     ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = O; ctx.fillText(`${this.scene.w.money ?? 0} lei`, jx, jy - 50);
     ctx.fillStyle = '#fff8ef'; ctx.beginPath(); ctx.roundRect(24, cy - 32, 120, 28, 6); ctx.fill(); ctx.stroke();
-    ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText('Taraba lui Bubu', 84, cy - 18);
+    ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText(this.scene.storeMode === 'florarie' ? 'Florăria lui Bubu' : 'Taraba lui Bubu', 84, cy - 18);
     // tava cu produse
     const L = this.layout(); const q = this.queue();
     ctx.fillStyle = '#c48b5c'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(L.gx - 10, L.gy - 10, L.cs * COLS + 20, L.cs * ROWS + 20, 14); ctx.fill(); ctx.stroke();
