@@ -284,9 +284,9 @@ export class FridgeGame extends Panel {
     const B = this.box;
     for (const f of this.foods) {
       f.y += f.vy * dt; f.rot += dt * 2;
-      if (f.y > 0.8 && f.y < 0.86 && Math.abs(f.x - this.px) < 0.11) {
+      if (f.y > 0.7 && f.y < 0.76 && Math.abs(f.x - this.px) < 0.11) {
         const F = FOODS[f.kind]; f.y = 2;
-        this.fx.text(B.x + f.x * B.w, B.y + B.h * 0.72, F.txt, F.good > 0 ? '#2ec4b6' : '#e63946', 0.9);
+        this.fx.text(B.x + f.x * B.w, B.y + B.h * 0.66, F.txt, F.good > 0 ? '#2ec4b6' : '#e63946', 0.9);
         if (F.good > 0) { this.score += 1; Sfx.play('coin'); } else { this.score = Math.max(0, this.score - 1); Sfx.play('bad'); this.shake = 6; }
         if (f.kind === 4) this.beans++;
         if (f.kind === 6) { this.hot = 1.5; this.fx.burst('puff', B.x + this.px * B.w, B.y + B.h * 0.7, 10, 1.5, 120, { color: '#ff6b3d' }); }
@@ -304,10 +304,11 @@ export class FridgeGame extends Panel {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const f of this.foods) { ctx.save(); ctx.translate(x + f.x * w, y + f.y * h); ctx.rotate(f.rot); ctx.font = '34px sans-serif'; ctx.fillText(FOODS[f.kind].e, 0, 0); ctx.restore(); }
     // eroul cu farfuria
-    this.hero.scale = 1.2; this.hero.x = x + this.px * w; this.hero.y = y + h - 36;
+    this.hero.scale = 1.2; this.hero.x = x + this.px * w; this.hero.y = y + h - 30; this.hero.pose.armL = this.hero.pose.armR = 2.9;
     if (this.hot > 0) { this.hero.pose.mouth = 'scream'; this.hero.pose.eyes = 'cry'; this.hero.pose.blush = 2; }
     this.hero.draw(ctx);
-    ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(x + this.px * w, y + h * 0.83, 50, 12, 0, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(x + this.px * w, y + h * 0.75, 50, 12, 0, 0, 7); ctx.fill(); ctx.stroke();
+    this.hero.pose.armL = this.hero.pose.armR = 2.9;
     font(ctx, 16); ctx.fillStyle = O; ctx.fillText(`😋 ${this.score}   💨 ${this.beans}`, x + 80, y + 46);
     timerBar(ctx, x + 150, y + 39, w - 180, 1 - this.t / this.dur, '#7ab8ff');
   }
