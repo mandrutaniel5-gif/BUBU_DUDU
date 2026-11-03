@@ -309,6 +309,7 @@ export function renderFloor(): { canvas: HTMLCanvasElement; ox: number; oy: numb
     switch (f) {
       case 'grass': col = r > 0.5 ? '#a6dc93' : '#9fd68c'; break;
       case 'path': col = '#e9d8b8'; break;
+      case 'road': col = (x % 2) ? '#cdb48f' : '#c9af89'; break;
       case 'wood': col = (x + y) % 2 ? '#e8bf8e' : '#e3b886'; break;
       case 'pinkwood': col = (x + y) % 2 ? '#f6cfc4' : '#f2c6ba'; break;
       case 'tileblue': col = (x + y) % 2 ? '#d5eef9' : '#c4e6f5'; break;

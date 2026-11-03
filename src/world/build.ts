@@ -1,6 +1,7 @@
 // Constructie "gen Minecraft": resurse, catalog de obiecte, desenul lor.
 import { iso, isoBox, boxOf, tilePath, type Pt } from './iso';
 import { heartPath } from '../char/draw';
+import { drawItem } from './items';
 import type { Furn } from './map';
 
 export type Res = 'wood' | 'stone' | 'flower';
@@ -36,6 +37,9 @@ export const RESOURCE_NODES: Furn[] = [
   { id: 'wild3', type: 'wildflower', gx: 0, gy: 12, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
   { id: 'wild4', type: 'wildflower', gx: 9, gy: 19, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
   { id: 'wild5', type: 'wildflower', gx: 19, gy: 5, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
+  { id: 'wild6', type: 'wildflower', gx: 12, gy: 22, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
+  { id: 'wild7', type: 'wildflower', gx: 17, gy: 26, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
+  { id: 'wild8', type: 'wildflower', gx: 16, gy: 4, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
   { id: 'rock4', type: 'rock', gx: 20, gy: 14, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
   { id: 'rock5', type: 'rock', gx: 2, gy: 20, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
   { id: 'tree5', type: 'tree', gx: 18, gy: 2, w: 1, d: 1, solid: true, action: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
@@ -54,6 +58,14 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
   const { gx, gy, w, d } = f;
   switch (f.type) {
     case 'gateway': return true;
+    case 'signpost': {
+      isoBox(ctx, gx + 0.45, gy + 0.45, 0.1, 0.1, 50, boxOf('#a0703f'));
+      const p = iso(gx + 0.5, gy + 0.5, 46);
+      ctx.fillStyle = '#e7c08f'; ctx.strokeStyle = O; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(p.x - 26, p.y - 8); ctx.lineTo(p.x + 18, p.y - 8); ctx.lineTo(p.x + 28, p.y); ctx.lineTo(p.x + 18, p.y + 8); ctx.lineTo(p.x - 26, p.y + 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.font = '800 9px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Spre sat', p.x - 2, p.y + 0.5); ctx.textBaseline = 'alphabetic';
+      return true;
+    }
     case 'fireplace': {
       const fuel = (globalThis as any).__fireFuel ?? 0;
       isoBox(ctx, gx + 0.1, gy + 0.1, 0.8, 0.8, 40, { top: '#e8e2d8', left: '#c0573e', right: '#a84a35' });
@@ -91,8 +103,8 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
         const p0 = iso(gx + i / n * w, gy + 0.1, 66), p1 = iso(gx + (i + 1) / n * w, gy + 0.1, 66), p2 = iso(gx + (i + 1) / n * w, gy + 0.9, 54), p3 = iso(gx + i / n * w, gy + 0.9, 54);
         ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.closePath(); ctx.fillStyle = i % 2 ? '#fff' : '#ff9ab8'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.stroke();
       }
-      ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ['🥕', '🍰', '🌷', '🧋'].forEach((e, i) => { const p = iso(gx + 0.3 + i * 0.45, gy + 0.6, 32); ctx.fillText(e, p.x, p.y); });
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ['flower:2', 'veg:1', 'flower:0', 'veg:2'].forEach((e, i) => { const p = iso(gx + 0.3 + i * 0.45, gy + 0.6, 30); drawItem(ctx, e, p.x, p.y - 4, 20, t); });
       const sg = iso(gx + w / 2, gy + 0.9, 12); ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(sg.x - 30, sg.y - 7, 60, 14, 4); ctx.fill(); ctx.stroke();
       ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText('Taraba lui Bubu', sg.x, sg.y); ctx.textBaseline = 'alphabetic';
       return true;

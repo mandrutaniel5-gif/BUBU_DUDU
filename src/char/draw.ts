@@ -14,7 +14,20 @@ export interface CharSpec {
   outline: string;
   tail: string;
   accessory: 'none' | 'bow';
+  ears?: 'round' | 'bunny' | 'cat' | 'pig' | 'dog' | 'fox';
+  muzzle?: string;      // culoarea botului (NPC)
+  nose?: string;
 }
+
+/** clientii din sat (NPC), desenati in acelasi stil */
+export const NPC_SPECS: Record<string, CharSpec> = {
+  bunny: { id: 'npc' as CharId, name: 'Iepurașul Ina', body: '#fbf6f2', shade: '#e6dcd4', ear: '#fbf6f2', earInner: '#ffc2d1', cheek: '#ffa3b8', outline: '#2b1d17', tail: '#ffffff', accessory: 'bow', ears: 'bunny' },
+  granny: { id: 'npc' as CharId, name: 'Bunica Leana', body: '#cfc8c3', shade: '#aea49e', ear: '#cfc8c3', earInner: '#f1c6cf', cheek: '#ff9fb0', outline: '#2b1d17', tail: '#eee', accessory: 'none', ears: 'bunny' },
+  pig: { id: 'npc' as CharId, name: 'Purcelușul Gogu', body: '#ffc4d0', shade: '#f0a3b4', ear: '#ffb0c2', earInner: null, cheek: '#ff7f9e', outline: '#2b1d17', tail: '#ff9fb5', accessory: 'none', ears: 'pig', muzzle: '#ff9fb5' },
+  cat: { id: 'npc' as CharId, name: 'Pisica Miti', body: '#f7b267', shade: '#e09145', ear: '#f7b267', earInner: '#ffd6c9', cheek: '#ff8f8f', outline: '#2b1d17', tail: '#e09145', accessory: 'none', ears: 'cat', muzzle: '#fff1e0', nose: '#e5677d' },
+  fox: { id: 'npc' as CharId, name: 'Vulpița Rita', body: '#f08a4b', shade: '#d06a2f', ear: '#f08a4b', earInner: '#3a2418', cheek: '#ff9a9a', outline: '#2b1d17', tail: '#fff', accessory: 'none', ears: 'fox', muzzle: '#fff4ea' },
+  dog: { id: 'npc' as CharId, name: 'Cățelul Rex', body: '#e6c79c', shade: '#c9a678', ear: '#8a5d32', earInner: null, cheek: '#ff9a9a', outline: '#2b1d17', tail: '#8a5d32', accessory: 'none', ears: 'dog', muzzle: '#fff4ea' },
+};
 
 export const SPECS: Record<CharId, CharSpec> = {
   // Bubu = panda (fata): alba ca un mochi, urechi negre, obrajori roz, gene mici
@@ -162,13 +175,30 @@ function drawHead(ctx: CanvasRenderingContext2D, spec: CharSpec, p: Pose, time: 
   ctx.rotate(p.headRot);
   const ew = p.earWiggle;
   // urechi mici, rotunde, pe "colturile" capului
+  const es = spec.ears ?? 'round';
   for (const side of [-1, 1]) {
     ctx.save();
-    ctx.translate(side * 24, -20);
-    ctx.rotate(side * (0.25 + ew * 0.3));
-    ell(ctx, 0, 0, 9.5, 9); fillStroke(ctx, spec.ear, O);
-    if (spec.earInner) { ctx.fillStyle = spec.earInner; ell(ctx, 0, 1.5, 5, 4.4); ctx.fill(); }
-    else { ctx.fillStyle = 'rgba(255,255,255,0.18)'; ell(ctx, -2, -2.5, 3.5, 2.5); ctx.fill(); }
+    if (es === 'bunny') {
+      ctx.translate(side * 11, -24); ctx.rotate(side * (0.18 + ew * 0.3 + Math.sin(time * 2 + side) * 0.04));
+      ell(ctx, 0, -14, 7, 17); fillStroke(ctx, spec.ear, O);
+      ctx.fillStyle = spec.earInner ?? '#ffc2d1'; ell(ctx, 0, -13, 3.5, 12); ctx.fill();
+    } else if (es === 'cat' || es === 'fox') {
+      ctx.translate(side * 21, -18); ctx.rotate(side * (0.35 + ew * 0.3));
+      ctx.beginPath(); ctx.moveTo(-9, 4); ctx.lineTo(0, es === 'fox' ? -19 : -15); ctx.lineTo(9, 4); ctx.closePath(); fillStroke(ctx, spec.ear, O);
+      ctx.fillStyle = spec.earInner ?? '#ffc2d1'; ctx.beginPath(); ctx.moveTo(-4.5, 2); ctx.lineTo(0, es === 'fox' ? -12 : -9); ctx.lineTo(4.5, 2); ctx.closePath(); ctx.fill();
+    } else if (es === 'pig') {
+      ctx.translate(side * 22, -19); ctx.rotate(side * (0.6 + ew * 0.3));
+      ctx.beginPath(); ctx.moveTo(-8, 4); ctx.quadraticCurveTo(0, -16, 8, 4); ctx.closePath(); fillStroke(ctx, spec.ear, O);
+    } else if (es === 'dog') {
+      ctx.translate(side * 29, -8); ctx.rotate(side * (-0.25 + Math.sin(time * 3) * 0.05));
+      ell(ctx, 0, 6, 8, 15); fillStroke(ctx, spec.ear, O);
+    } else {
+      ctx.translate(side * 24, -20);
+      ctx.rotate(side * (0.25 + ew * 0.3));
+      ell(ctx, 0, 0, 9.5, 9); fillStroke(ctx, spec.ear, O);
+      if (spec.earInner) { ctx.fillStyle = spec.earInner; ell(ctx, 0, 1.5, 5, 4.4); ctx.fill(); }
+      else { ctx.fillStyle = 'rgba(255,255,255,0.18)'; ell(ctx, -2, -2.5, 3.5, 2.5); ctx.fill(); }
+    }
     ctx.restore();
   }
   mochiPath(ctx, HW, HH);
@@ -219,6 +249,17 @@ function drawFace(ctx: CanvasRenderingContext2D, spec: CharSpec, p: Pose, t: num
     }
     ctx.globalAlpha = 1;
   }
+  // botul NPC-urilor
+  if (spec.muzzle) {
+    if (spec.ears === 'pig') {
+      ctx.fillStyle = spec.muzzle; ell(ctx, 0, 10, 8.5, 6); ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.fillStyle = '#c2577a'; ell(ctx, -3, 10, 1.6, 2.4); ctx.fill(); ell(ctx, 3, 10, 1.6, 2.4); ctx.fill();
+    } else {
+      ctx.fillStyle = spec.muzzle; ell(ctx, 0, 10.5, 9, 6.2); ctx.fill();
+      ctx.fillStyle = spec.nose ?? O; ell(ctx, 0, 7.4, 2.8, 1.9); ctx.fill();
+      if (spec.ears === 'cat') { ctx.strokeStyle = O; ctx.lineWidth = 1; for (const s2 of [-1, 1]) for (const k of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s2 * 9, 10 + k); ctx.lineTo(s2 * 20, 9 + k * 3); ctx.stroke(); } }
+    }
+  }
   // botic deschis + nasuc (Dudu)
   if (spec.id === 'dudu') {
     ctx.fillStyle = '#d6a77a'; ctx.globalAlpha = 0.75; ell(ctx, 0, 10.5, 9, 6.2); ctx.fill(); ctx.globalAlpha = 1;
@@ -251,7 +292,7 @@ function drawFace(ctx: CanvasRenderingContext2D, spec: CharSpec, p: Pose, t: num
       ctx.stroke();
     }
   }
-  drawMouth(ctx, p.mouth, spec.id === 'dudu' ? 12 : 9.5, O, t);
+  drawMouth(ctx, p.mouth, spec.id === 'dudu' || (spec.muzzle && spec.ears !== 'pig') ? 12 : spec.ears === 'pig' ? 15.5 : 9.5, O, t);
 
   if (p.tears > 0) drawTears(ctx, ex, ey, p.tears, t);
   if (p.snot > 0) {

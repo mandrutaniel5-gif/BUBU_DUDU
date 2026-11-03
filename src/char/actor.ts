@@ -34,7 +34,7 @@ export class Actor {
   shakeReq = 0;
   outfit?: Outfit;
 
-  constructor(id: CharId, public fx: Fx) { this.spec = SPECS[id]; }
+  constructor(id: CharId, public fx: Fx, spec?: CharSpec) { this.spec = spec ?? SPECS[id]; }
 
   get id() { return this.spec.id; }
   get busy() { return this.anim !== IDLE && this.anim !== WALK; }

@@ -6,6 +6,8 @@ export const INV_INFO: Record<string, { icon: string; label: string }> = {
   veg: { icon: '🥕', label: 'Legume' },
   meals: { icon: '🍲', label: 'Porții de mâncare' },
   hay: { icon: '🌾', label: 'Fân' },
+  flour: { icon: '🥡', label: 'Făină' },
+  lemon: { icon: '🍋', label: 'Lămâi' },
 };
 
 /** magazinul din sat */
@@ -14,6 +16,8 @@ export const SHOP_BUY = [
   { id: 'meals', label: 'Mâncare gata (x2 porții)', icon: '🍱', price: 14, give: { meals: 2 } },
   { id: 'veg', label: 'Legume de la piață (x3)', icon: '🥕', price: 9, give: { veg: 3 } },
   { id: 'wood', label: 'Lemne de foc (x4)', icon: '🪵', price: 10, give: { wood: 4 } },
+  { id: 'flour', label: 'Sac de făină (x3)', icon: '🌾', price: 8, give: { flour: 3 } },
+  { id: 'lemon', label: 'Lămâi (x3)', icon: '🍋', price: 9, give: { lemon: 3 } },
 ];
 export const SHOP_SELL = [
   { id: 'wood', label: 'Lemne', icon: '🪵', price: 2 },
@@ -38,7 +42,7 @@ export const GOALS: Goal[] = [
   { id: 'fire', icon: '🔥', text: 'Aprinde focul în sobă', hint: 'Mergi la sobă (în sufragerie) — ai nevoie de lemne 🪵', done: w => st(w, 'fireLit') > 0, reward: { hearts: 5 } },
   { id: 'wood5', icon: '🪓', text: 'Taie 8 lemne de foc', hint: 'Copacii din curte — Dudu e cel mai bun tăietor', done: w => st(w, 'woodTotal') >= 8, reward: { money: 10 } },
   { id: 'veg3', icon: '🥕', text: 'Culege 3 legume din grădină', hint: 'Ai nevoie de semințe 🌰 (de la magazinul din sat)', done: w => st(w, 'vegTotal') >= 3, reward: { money: 10, hearts: 5 } },
-  { id: 'serve3', icon: '🧺', text: 'Servește 3 clienți la taraba lui Bubu', hint: 'Taraba din fața casei: unește produse și dă-le clienților', done: w => st(w, 'served') >= 3, reward: { money: 20 } },
+  { id: 'serve3', icon: '🧺', text: 'Servește 3 clienți la taraba lui Bubu', hint: 'Taraba de lângă drum (ieși pe poartă): culege flori 🌸, unește-le și dă-le clienților', done: w => st(w, 'served') >= 3, reward: { money: 20 } },
   { id: 'mow', icon: '✂️', text: 'Tunde iarba din curte', hint: 'Magazia din curte → mașina de tuns', done: w => st(w, 'mowed') >= 1, reward: { money: 10 } },
   { id: 'cook', icon: '🥞', text: 'Gătește o masă caldă', hint: 'Aragazul din bucătărie (folosește legume)', done: w => st(w, 'cooked') >= 1, reward: { hearts: 8 } },
   { id: 'money150', icon: '💰', text: 'Strânge 150 de lei', hint: 'Taraba, vânzarea de lemne și legume în sat', done: w => (w.money ?? 0) >= 150, reward: { hearts: 10 } },

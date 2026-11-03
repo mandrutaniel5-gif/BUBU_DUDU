@@ -27,7 +27,9 @@ export type WorldOp =
   | { k: 'money'; delta: number }
   | { k: 'stat'; key: string; delta: number }
   | { k: 'grass'; key: string; value: number }
-  | { k: 'grassAll' };
+  | { k: 'grassAll' }
+  | { k: 'npcs'; list: unknown[] }
+  | { k: 'npcServe'; id: string };
 
 export type NetStatus = 'offline' | 'connecting' | 'online' | 'error';
 

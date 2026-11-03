@@ -1,6 +1,6 @@
 import { RESOURCE_NODES } from './build';
 // Harta casei si a curtii.
-export type Floor = 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand';
+export type Floor = 'road' | 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand';
 
 export interface Wall { x: number; y: number; dir: 'x' | 'y'; h: number; kind: 'back' | 'inner' | 'low'; window?: boolean; color: string }
 
@@ -8,7 +8,7 @@ export type FurnType =
   | 'bed' | 'nightstand' | 'wardrobe' | 'toilet' | 'bathtub' | 'sink' | 'washer' | 'fridge' | 'stove'
   | 'counter' | 'table' | 'sofa' | 'tv' | 'plant' | 'bookshelf' | 'tree' | 'plot' | 'bench' | 'mailbox'
   | 'rug' | 'lamp' | 'flowers' | 'doormat' | 'bush'
-  | 'fireplace' | 'shed' | 'stand' | 'gateway'
+  | 'fireplace' | 'shed' | 'stand' | 'gateway' | 'signpost'
   | 'rock' | 'wildflower' | 'stonepath' | 'heartstone' | 'fence' | 'pot' | 'lamppost' | 'sapling' | 'flowerbed' | 'swing' | 'snowman' | 'gazebo';
 
 export interface Furn {
@@ -17,11 +17,15 @@ export interface Furn {
   rot?: 0 | 1; color?: string;
 }
 
-export const MAP_W = 22, MAP_H = 22;
+export const MAP_W = 22, MAP_H = 27;
+/** curtea (in interiorul gardului); dincolo de y = YARD_H e marginea drumului */
+export const YARD_H = 22, YARD_GATE = 5, ROAD_Y = 24.6;
 export const HOUSE = { x0: 2, y0: 2, x1: 13, y1: 11 };
 
 export function floorAt(x: number, y: number): Floor {
   if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return 'grass';
+  if (y === 24 || y === 25) return 'road';
+  if (y >= YARD_H) return x === YARD_GATE && y < 24 ? 'path' : 'grass';
   if (x >= 0 && x <= 1 && y >= 6 && y <= 9) return 'water';
   if (x >= HOUSE.x0 && x <= HOUSE.x1 && y >= HOUSE.y0 && y <= HOUSE.y1) {
     if (x <= 7 && y <= 6) return 'pinkwood';
@@ -99,8 +103,8 @@ export const FURNITURE: Furn[] = [
   // supravietuire si economie
   { id: 'fireplace', type: 'fireplace', gx: 7, gy: 7, w: 1, d: 1, solid: true, action: act('stove', 'Soba', '🔥') },
   { id: 'shed', type: 'shed', gx: 16, gy: 13, w: 1, d: 1, solid: true, action: act('mow', 'Tunde iarba', '✂️') },
-  { id: 'stand', type: 'stand', gx: 8, gy: 17, w: 2, d: 1, solid: true, action: act('stand', 'Taraba lui Bubu', '🧺') },
-  { id: 'gateway', type: 'gateway', gx: 5, gy: 21, w: 1, d: 1, solid: false, action: act('village', 'Mergi în sat', '🏘️') },
+  { id: 'stand', type: 'stand', gx: 7, gy: 23, w: 2, d: 1, solid: true, action: act('stand', 'Taraba lui Bubu', '🧺') },
+  { id: 'gateway', type: 'signpost', gx: 2, gy: 23, w: 1, d: 1, solid: true, action: act('village', 'Spre sat', '🏘️') },
 ];
 
 /** dreptunghiuri de coliziune in grid */
@@ -117,6 +121,8 @@ export function colliders(): Rect[] {
     R.push({ x0: f.gx + inset, y0: f.gy + inset, x1: f.gx + f.w - inset, y1: f.gy + f.d - inset });
   }
   for (let x = 0; x < MAP_W; x++) for (let y = 0; y < MAP_H; y++) if (floorAt(x, y) === 'water') R.push({ x0: x, y0: y, x1: x + 1, y1: y + 1 });
+  // gardul curtii (cu portita)
+  for (let x = 0; x < MAP_W; x++) if (x !== YARD_GATE) R.push({ x0: x, y0: YARD_H - t, x1: x + 1, y1: YARD_H + t });
   // marginile hartii
   R.push({ x0: -1, y0: -1, x1: MAP_W + 1, y1: 0 }, { x0: -1, y0: MAP_H, x1: MAP_W + 1, y1: MAP_H + 1 });
   R.push({ x0: -1, y0: -1, x1: 0, y1: MAP_H + 1 }, { x0: MAP_W, y0: -1, x1: MAP_W + 1, y1: MAP_H + 1 });

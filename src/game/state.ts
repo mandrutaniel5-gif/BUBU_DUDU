@@ -67,7 +67,7 @@ export function newWorld(): WorldState {
       dudu: { needs: fullNeeds(), sick: null, fart: 50, gx: 7.3, gy: 9.0 },
     },
     furn: { lampOn: false, tvOn: false, clogged: false, bathFoam: 0.2, cooking: false, crops: [0, 0, 0, 0, 0, 0] },
-    jar: [], log: [], stats: {}, res: { wood: 3, stone: 2, flower: 1, seeds: 3, veg: 1, meals: 2 }, placed: [], nodes: {}, money: 20, grass: {},
+    jar: [], log: [], stats: {}, res: { wood: 3, stone: 2, flower: 4, seeds: 3, veg: 1, meals: 2, flour: 0, lemon: 0 }, placed: [], nodes: {}, money: 20, grass: {},
   };
 }
 
@@ -128,7 +128,7 @@ export function applyOp(w: WorldState, op: WorldOp) {
     case 'hearts': w.hearts = Math.max(0, w.hearts + op.delta); break;
     case 'sick': w.chars[op.who].sick = op.value as Sickness | null; if (!op.value) w.chars[op.who].request = null; break;
     case 'jar': w.jar.push({ from: op.from, text: op.text, ts: op.ts }); break;
-    case 'char': return;
+    case 'char': case 'npcs': case 'npcServe': return;
     case 'res': { w.res ??= {}; w.res[op.res] = Math.max(0, (w.res[op.res] ?? 0) + op.delta); break; }
     case 'place': { w.placed ??= []; if (!w.placed.some(p => p.uid === op.uid)) w.placed.push({ uid: op.uid, type: op.type, gx: op.gx, gy: op.gy }); break; }
     case 'unplace': { w.placed = (w.placed ?? []).filter(p => p.uid !== op.uid); break; }
