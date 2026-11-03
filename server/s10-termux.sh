@@ -26,9 +26,10 @@ echo "Server pe ws://${IP:-IP-ul-telefonului}:8787  — pune adresa asta in joc 
 # porneste cu:  TUNEL=1 ~/bubu_dudu/server/s10-termux.sh
 if [ "${TUNEL:-0}" = "1" ]; then
   command -v cloudflared >/dev/null || pkg install -y cloudflared
+  command -v curl >/dev/null || pkg install -y curl
   rm -f "$HOME/tunel.log" "$HOME/tunel-adresa.txt"
   # logurile merg DOAR in fisier (un pipe inchis ar opri tunelul)
-  nohup cloudflared tunnel --no-autoupdate --url http://localhost:8787 > "$HOME/tunel.log" 2>&1 &
+  nohup cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8787 > "$HOME/tunel.log" 2>&1 &
   ( for i in $(seq 1 60); do
       U=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$HOME/tunel.log" 2>/dev/null | head -1)
       if [ -n "$U" ]; then
@@ -36,7 +37,12 @@ if [ "${TUNEL:-0}" = "1" ]; then
         echo ""; echo "=============================================================="
         echo " DE LA DISTANTA: deschide $U"
         echo " (sau in joc: Serverul nostru -> Adresa serverului: $U)"
-        echo "=============================================================="; break
+        echo "=============================================================="
+        # verificare: serverul raspunde prin tunel?
+        sleep 6
+        R=$(curl -s -m 10 "$U/health" || true)
+        if echo "$R" | grep -q '"ok":true'; then echo " ✅ Tunelul merge: $R"; else echo " ❌ Tunelul NU raspunde ($R). Vezi: tail -30 ~/tunel.log"; fi
+        break
       fi; sleep 1
     done ) &
 fi
