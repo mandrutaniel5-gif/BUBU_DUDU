@@ -328,6 +328,7 @@ export class WorldScene implements Scene {
       const q = this.game.pt(ev); const e = { clientX: q.x, clientY: q.y, pointerId: ev.pointerId, pointerType: ev.pointerType };
       Sfx.unlock();
       if (this.minigame) {
+        const mk = this.miniScale(); e.clientX /= mk; e.clientY /= mk;
         const b = this.minigame.obj.box;
         if (b && e.clientX > b.x + b.w - 44 && e.clientX < b.x + b.w + 6 && e.clientY > b.y - 6 && e.clientY < b.y + 40) { this.minigame.obj.abort?.(); return; }
         this.minigame.obj.pointer?.('down', e.clientX, e.clientY); return;
@@ -340,13 +341,13 @@ export class WorldScene implements Scene {
     });
     this.on(cv, 'pointermove', (ev: PointerEvent) => {
       const q = this.game.pt(ev); const e = { clientX: q.x, clientY: q.y, pointerId: ev.pointerId, pointerType: ev.pointerType };
-      if (this.minigame) { this.minigame.obj.pointer?.('move', e.clientX, e.clientY); return; }
+      if (this.minigame) { const mk = this.miniScale(); this.minigame.obj.pointer?.('move', e.clientX / mk, e.clientY / mk); return; }
       if (this.joy.active && e.pointerId === this.joy.id) { this.joy.x = e.clientX; this.joy.y = e.clientY; }
       else if (this.build?.item && e.pointerType === 'mouse') { const g = this.screenToGrid(e.clientX, e.clientY); this.build.gx = Math.floor(g.x); this.build.gy = Math.floor(g.y); }
     });
     const up = (ev: PointerEvent) => {
       const q = this.game.pt(ev); const e = { clientX: q.x, clientY: q.y, pointerId: ev.pointerId, pointerType: ev.pointerType };
-      if (this.minigame) { this.minigame.obj.pointer?.('up', e.clientX, e.clientY); return; }
+      if (this.minigame) { const mk = this.miniScale(); this.minigame.obj.pointer?.('up', e.clientX / mk, e.clientY / mk); return; }
       if (e.pointerId === this.joy.id) this.joy.active = false;
     };
     this.on(cv, 'pointerup', up); this.on(cv, 'pointercancel', up);
@@ -858,6 +859,8 @@ export class WorldScene implements Scene {
     }
     void f;
   }
+  /** scara la care desenam minijocurile (1 pe ecrane normale, <1 pe ecrane scunde) */
+  miniScale() { return Math.min(1, this.game.h / 470); }
   storeMode: '' | 'florarie' = '';
   /** porneste un minijoc fara activitate legata de un obiect */
   startCustom(mini: string) {
@@ -1593,7 +1596,11 @@ export class WorldScene implements Scene {
       ctx.font = '800 20px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.strokeText(`Ziua ${this.w.day} · ${clockText(this.w.minutes)}`, w / 2, h * 0.3 + 36); ctx.fillText(`Ziua ${this.w.day} · ${clockText(this.w.minutes)}`, w / 2, h * 0.3 + 36);
       ctx.restore();
     }
-    if (this.minigame) this.minigame.obj.draw(ctx, w, h);
+    if (this.minigame) {
+      // minijocurile sunt gandite pentru minim ~460 px inaltime: pe ecrane scunde (telefon pe lat) le scalam proportional
+      const k = this.miniScale();
+      ctx.save(); ctx.scale(k, k); this.minigame.obj.draw(ctx, w / k, h / k); ctx.restore();
+    }
     if (this.travel) this.drawTravel(ctx, w, h);
   }
 

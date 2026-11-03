@@ -234,3 +234,21 @@ html.rot .pop { width:min(360px, calc(var(--gw) - 28px)); }
 .loading .ld-bar { width:72%; height:6px; border-radius:6px; background:#ece7df; overflow:hidden; }
 .loading .ld-bar i { display:block; height:100%; width:0; background:#c09a62; border-radius:6px; transition:width .25s ease; }
 .loading .ld-txt { font:600 13px "Inter", "Segoe UI", system-ui, sans-serif; letter-spacing:.18em; text-transform:uppercase; color:#6b6b6b; }
+
+/* butonul mare de actiune: iconita in stanga, textul pe max 2 randuri, chenarul creste cu textul */
+.act.big { height:auto; min-height:58px; max-width:min(260px, calc(var(--gw) * .42)); flex-direction:row; gap:8px; padding:6px 14px 6px 10px; overflow:visible; }
+.act.big .ic { font-size:26px; flex:0 0 auto; }
+.act.big .lb { text-align:left; line-height:1.15; font-size:14px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; padding-bottom:1px; }
+html.h500 .act.big { min-height:46px; height:auto; max-width:min(210px, calc(var(--gw) * .34)); padding:4px 10px 4px 8px; gap:6px; }
+html.h500 .act.big .ic { font-size:20px; }
+html.h500 .act.big .lb { font-size:12.5px; }
+.act.big { width:max-content !important; }
+.act.big .lb { max-width:190px; }
+html.h500 .act.big .lb { max-width:140px; }
+.act.big .lb { min-width:84px; line-height:1.2; }
+.toasts { width:min(520px, calc(var(--gw, 100vw) * .62)); }
+html.h500 .toasts { top:62px; gap:4px; }
+html.h500 .toast { font-size:12px; padding:3px 10px; border-width:2.5px; border-radius:11px; }
+/* in timpul minijocurilor mesajele stau jos, mici, ca sa nu acopere jocul */
+.hud.in-mini .toasts { top:auto; bottom:6px; opacity:.92; }
+.hud.in-mini .toast { font-size:11.5px; padding:2px 9px; }

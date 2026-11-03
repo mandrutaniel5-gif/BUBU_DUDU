@@ -63,9 +63,11 @@ export class CafeGame extends Panel {
     s.log(`${s.me.actor.spec.name} a lucrat o tură la cafenea: ${this.good} cafele perfecte, +${pay} lei ☕`);
     this.finish(this.good ? 1 + this.good * 0.15 : 0.3, `${this.good} clienți fericiți · +${pay} lei`);
   }
-  ingBtn(i: number) { const B = this.box; const bw = (B.w - 60) / 3; return { x: B.x + 20 + (i % 3) * (bw + 10), y: B.y + B.h - 190 + Math.floor(i / 3) * 62, w: bw, h: 54 }; }
-  serveBtn() { const B = this.box; return { x: B.x + B.w - 150, y: B.y + B.h * 0.42, w: 130, h: 46 }; }
-  trashBtn() { const B = this.box; return { x: B.x + B.w - 150, y: B.y + B.h * 0.42 + 54, w: 130, h: 36 }; }
+  // asezare proportionala: tejgheaua la 42% din inaltime, butoanele jos (merge si pe ecrane scunde)
+  get C() { return this.box.y + this.box.h * 0.42; }
+  ingBtn(i: number) { const B = this.box; const gw = (B.w - 40) * 0.7, bw = (gw - 16) / 3, bh = Math.min(50, B.h * 0.1); return { x: B.x + 20 + (i % 3) * (bw + 8), y: B.y + B.h - 34 - 2 * (bh + 8) + Math.floor(i / 3) * (bh + 8), w: bw, h: bh }; }
+  serveBtn() { const B = this.box, a = this.ingBtn(0); return { x: B.x + 20 + (B.w - 40) * 0.72, y: a.y, w: (B.w - 40) * 0.28, h: a.h }; }
+  trashBtn() { const B = this.box, a = this.ingBtn(3); return { x: B.x + 20 + (B.w - 40) * 0.72, y: a.y, w: (B.w - 40) * 0.28, h: a.h }; }
   pointer(t: string, x: number, y: number) {
     if (t !== 'down' || this.ended) return;
     (Object.keys(ING) as Ing[]).forEach((k, i) => { if (inside(x, y, this.ingBtn(i)) && this.cup.length < 4) { this.cup.push(k); Sfx.play('pop'); } });
@@ -84,31 +86,32 @@ export class CafeGame extends Panel {
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
     // perete cu tabla de meniu
     ctx.fillStyle = '#f5e1c8'; ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = '#c98e5f'; ctx.fillRect(x, y + h * 0.5, w, h * 0.5);
-    ctx.fillStyle = '#2f3a36'; ctx.strokeStyle = '#8a5d32'; ctx.lineWidth = 6; ctx.beginPath(); ctx.roundRect(x + 20, y + 40, w * 0.5, 120, 8); ctx.fill(); ctx.stroke();
+    const C = this.C, bh = Math.min(120, C - y - 50);
+    ctx.fillStyle = '#c98e5f'; ctx.fillRect(x, C, w, y + h - C);
+    ctx.fillStyle = '#2f3a36'; ctx.strokeStyle = '#8a5d32'; ctx.lineWidth = 6; ctx.beginPath(); ctx.roundRect(x + 20, y + 40, w * 0.4, bh, 8); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'left'; ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff';
     ctx.fillText(`Comanda: ${this.order.name}`, x + 34, y + 62);
     this.order.rec.forEach((r, i) => { ctx.fillStyle = ING[r].col; ctx.beginPath(); ctx.arc(x + 44, y + 82 + i * 18, 6, 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.fillText(`${i + 1}. ${ING[r].label}`, x + 56, y + 87 + i * 18); });
-    ctx.fillStyle = '#ffd23f'; ctx.textAlign = 'right'; ctx.fillText(`⏰ ${Math.ceil(Math.max(0, this.left))}s  ·  ✅ ${this.good}`, x + 20 + w * 0.5 - 10, y + 62);
+    ctx.fillStyle = '#ffd23f'; ctx.textAlign = 'right'; ctx.fillText(`⏰ ${Math.ceil(Math.max(0, this.left))}s  ·  ✅ ${this.good}`, x + 20 + w * 0.4 - 10, y + 40 + bh - 10);
     // clientul la tejghea
     const cs = NPC_SPECS[CUST[this.cust]];
-    if (cs) { const bob = Math.sin(this.t * 3) * 2; const P = pose({ eyes: this.react > 0 ? (this.reactOk ? 'happy' : 'sad') : 'dot', mouth: this.react > 0 ? (this.reactOk ? 'open' : 'frown') : this.custT > 10 ? 'flat' : 'smile', armR: this.react > 0 && this.reactOk ? 2 : 0.55 }); drawCharacter(ctx, cs, P, x + w * 0.72, y + h * 0.5 - 6 + bob, 1.1, -1, this.t); }
+    if (cs) { const bob = Math.sin(this.t * 3) * 2; const P = pose({ eyes: this.react > 0 ? (this.reactOk ? 'happy' : 'sad') : 'dot', mouth: this.react > 0 ? (this.reactOk ? 'open' : 'frown') : this.custT > 10 ? 'flat' : 'smile', armR: this.react > 0 && this.reactOk ? 2 : 0.55 }); drawCharacter(ctx, cs, P, x + w * 0.82, C - 4 + bob, Math.min(1.1, (C - y) / 190), -1, this.t); }
     // bula cu bautura dorita
-    ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(x + w * 0.58, y + 36, 70, 74, 14); ctx.fill(); ctx.stroke();
-    drawCup(ctx, x + w * 0.58 + 35, y + 100, 0.85, this.order.rec);
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(x + w * 0.62, y + 36, 70, 74, 14); ctx.fill(); ctx.stroke();
+    drawCup(ctx, x + w * 0.62 + 35, y + 100, 0.85, this.order.rec);
     // tejgheaua
-    ctx.fillStyle = '#8a5d32'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x - 4, y + h * 0.5, w + 8, 26, 4); ctx.fill(); ctx.stroke();
+    // barista (tu), in spatele tejghelei
+    this.hero.scale = Math.min(0.85, (C - y) / 220); this.hero.x = x + w * 0.5; this.hero.y = C + 6; this.hero.flip = 1; this.hero.draw(ctx);
+    ctx.fillStyle = '#8a5d32'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x - 4, C, w + 8, 22, 4); ctx.fill(); ctx.stroke();
     // cana ta
-    drawCup(ctx, x + w * 0.36, y + h * 0.5 + 100, 1.3, this.cup);
+    const cupS = Math.min(1.3, (this.ingBtn(0).y - C - 34) / 64); drawCup(ctx, x + w * 0.42, this.ingBtn(0).y - 8, cupS, this.cup);
     // espressorul
-    ctx.fillStyle = '#c9ccd6'; ctx.beginPath(); ctx.roundRect(x + 24, y + h * 0.5 + 34, 90, 80, 10); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#3a3a44'; ctx.beginPath(); ctx.roundRect(x + 50, y + h * 0.5 + 60, 38, 14, 4); ctx.fill(); ctx.stroke();
-    if (this.cup.length) for (let i = 0; i < 3; i++) { const k = (this.t * 1.4 + i / 3) % 1; ctx.globalAlpha = 1 - k; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + w * 0.36 + Math.sin(k * 6 + i) * 8, y + h * 0.5 + 10 - k * 40, 6 + k * 6, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+    const mh = Math.min(80, this.ingBtn(0).y - C - 34); ctx.fillStyle = '#c9ccd6'; ctx.beginPath(); ctx.roundRect(x + 24, C + 28, 90, mh, 10); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#3a3a44'; ctx.beginPath(); ctx.roundRect(x + 50, C + 28 + mh * 0.35, 38, 14, 4); ctx.fill(); ctx.stroke();
+    if (this.cup.length) for (let i = 0; i < 3; i++) { const k = (this.t * 1.4 + i / 3) % 1; ctx.globalAlpha = 1 - k; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + w * 0.42 + Math.sin(k * 6 + i) * 8, this.ingBtn(0).y - 8 - 64 * cupS - k * 30, 6 + k * 6, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
     // butoane ingrediente
     (Object.keys(ING) as Ing[]).forEach((k, i) => { const b = this.ingBtn(i); btn(ctx, b, '#fff8ef'); ctx.fillStyle = ING[k].col; ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(b.x + 24, b.y + b.h / 2, 13, 0, 7); ctx.fill(); ctx.stroke(); ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(`${i + 1} ${ING[k].label}`, b.x + 44, b.y + b.h / 2 + 1); ctx.textBaseline = 'alphabetic'; });
-    btn(ctx, this.serveBtn(), '#9be38f', 'Servește ☕', 16); btn(ctx, this.trashBtn(), '#ffd0d0', 'Golește', 13);
-    // barista (tu)
-    this.hero.scale = 0.85; this.hero.x = x + w * 0.47; this.hero.y = y + h * 0.5 + 4; this.hero.flip = 1; this.hero.draw(ctx);
+    btn(ctx, this.serveBtn(), '#9be38f', 'Servește ☕', 15); btn(ctx, this.trashBtn(), '#ffd0d0', 'Golește', 13);
   }
 }
 
@@ -133,7 +136,7 @@ export class OfficeGame extends Panel {
     s.log(`${s.me.actor.spec.name} a muncit la birou: ${this.good} dosare puse la locul lor, +${pay} lei 💼`);
     this.finish(this.good ? 1 + this.good * 0.08 : 0.3, `${this.good} dosare · +${pay} lei`);
   }
-  drawer(i: number) { const B = this.box; const bw = (B.w - 80) / 3; return { x: B.x + 20 + i * (bw + 20), y: B.y + B.h - 130, w: bw, h: 80 }; }
+  drawer(i: number) { const B = this.box; const bw = (B.w - 80) / 3, dh = Math.min(80, B.h * 0.15); return { x: B.x + 20 + i * (bw + 20), y: B.y + B.h - 40 - dh, w: bw, h: dh }; }
   put(i: number) {
     const d = this.docs[0]; if (!d) return;
     this.docs.shift();
@@ -146,18 +149,19 @@ export class OfficeGame extends Panel {
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
     ctx.fillStyle = '#e8f1ff'; ctx.fillRect(x, y, w, h);
     // fereastra cu orasul
-    ctx.fillStyle = '#bfe8ff'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(x + 30, y + 40, w - 60, 130, 8); ctx.fill(); ctx.stroke();
-    for (let i = 0; i < 9; i++) { const bx = x + 40 + i * (w - 80) / 9, bh = 40 + ((i * 37) % 60); ctx.fillStyle = ['#9aa8c8', '#b8c4e0', '#c9d4ea'][i % 3]; ctx.fillRect(bx, y + 170 - bh, (w - 80) / 9 - 4, bh); }
-    ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(x + 30, y + 40, w - 60, 130, 8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x + w / 2, y + 40); ctx.lineTo(x + w / 2, y + 170); ctx.stroke();
-    ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.fillText(`⏰ ${Math.ceil(Math.max(0, this.left))}s · ✅ ${this.good} · ❌ ${this.bad}`, x + w / 2, y + 192);
+    const WH = Math.min(130, h * 0.2);
+    ctx.fillStyle = '#bfe8ff'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(x + 30, y + 40, w - 60, WH, 8); ctx.fill(); ctx.stroke();
+    for (let i = 0; i < 9; i++) { const bx = x + 40 + i * (w - 80) / 9, bh = (40 + ((i * 37) % 60)) * WH / 130; ctx.fillStyle = ['#9aa8c8', '#b8c4e0', '#c9d4ea'][i % 3]; ctx.fillRect(bx, y + 40 + WH - bh, (w - 80) / 9 - 4, bh); }
+    ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(x + 30, y + 40, w - 60, WH, 8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x + w / 2, y + 40); ctx.lineTo(x + w / 2, y + 40 + WH); ctx.stroke();
+    ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.fillText(`⏰ ${Math.ceil(Math.max(0, this.left))}s · ✅ ${this.good} · ❌ ${this.bad}`, x + w / 2, y + 40 + WH + 20);
     // banda cu dosare
-    const top = y + 205, bot = y + h - 150;
+    const top = y + 40 + WH + 32, bot = this.drawer(0).y - 10;
     ctx.fillStyle = '#d6d0c8'; ctx.fillRect(x + w / 2 - 50, top, 100, bot - top);
     for (const d of this.docs) { const dy = top + d.y * (bot - top); ctx.save(); ctx.translate(x + w / 2, dy); ctx.rotate(Math.sin(d.y * 20) * 0.06); ctx.fillStyle = FOLDERS[d.c].col; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(-34, -22, 68, 44, 5); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.fillRect(-24, -12, 48, 6); ctx.fillRect(-24, -2, 36, 6); ctx.restore(); }
     if (this.docs[0]) { const dy = top + this.docs[0].y * (bot - top); ctx.strokeStyle = '#ff4d6d'; ctx.lineWidth = 3; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.roundRect(x + w / 2 - 40, dy - 28, 80, 56, 8); ctx.stroke(); ctx.setLineDash([]); }
     // sertarele
-    for (let i = 0; i < 3; i++) { const b = this.drawer(i); btn(ctx, b, FOLDERS[i].col); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(b.x + b.w / 2 - 20, b.y + 14, 40, 8, 4); ctx.fill(); ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.fillText(`${i + 1}. ${FOLDERS[i].label}`, b.x + b.w / 2, b.y + 52); }
-    this.hero.scale = 0.8; this.hero.x = x + 70; this.hero.y = y + h - 150; this.hero.draw(ctx);
+    for (let i = 0; i < 3; i++) { const b = this.drawer(i); btn(ctx, b, FOLDERS[i].col); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(b.x + b.w / 2 - 20, b.y + b.h * 0.18, 40, 8, 4); ctx.fill(); ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.fillText(`${i + 1}. ${FOLDERS[i].label}`, b.x + b.w / 2, b.y + b.h * 0.66); }
+    this.hero.scale = Math.min(0.8, h / 700); this.hero.x = x + 70; this.hero.y = this.drawer(0).y - 8; this.hero.draw(ctx);
     // cana de cafea pe birou
     const cv = iconCanvas('🧋', 64); if (cv) ctx.drawImage(cv, x + w - 90, y + h - 200, 48, 48);
   }

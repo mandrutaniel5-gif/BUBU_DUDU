@@ -134,8 +134,12 @@ export class Hud {
   setPartner(on: boolean) { this.els['.pst'].textContent = on ? '🟢 online' : '🤖 AI'; }
 
   toast(text: string) {
-    const t = document.createElement('div'); t.className = 'toast'; t.textContent = text;
-    this.els['.toasts'].appendChild(t);
+    const box = this.els['.toasts'];
+    // acelasi mesaj de doua ori -> nu il dublam; maxim 3 mesaje odata (cele vechi pleaca)
+    for (const o of box.children) if ((o as HTMLElement).dataset.t === text && !o.classList.contains('out')) return;
+    while (box.children.length >= 3) box.firstElementChild!.remove();
+    const t = document.createElement('div'); t.className = 'toast'; t.textContent = text; t.dataset.t = text;
+    box.appendChild(t);
     setTimeout(() => t.classList.add('out'), 3600); setTimeout(() => t.remove(), 4200);
   }
 
