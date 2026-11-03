@@ -1,3 +1,4 @@
+import { RESOURCE_NODES } from './build';
 // Harta casei si a curtii.
 export type Floor = 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand';
 
@@ -6,7 +7,8 @@ export interface Wall { x: number; y: number; dir: 'x' | 'y'; h: number; kind: '
 export type FurnType =
   | 'bed' | 'nightstand' | 'wardrobe' | 'toilet' | 'bathtub' | 'sink' | 'washer' | 'fridge' | 'stove'
   | 'counter' | 'table' | 'sofa' | 'tv' | 'plant' | 'bookshelf' | 'tree' | 'plot' | 'bench' | 'mailbox'
-  | 'rug' | 'lamp' | 'flowers' | 'doormat' | 'bush';
+  | 'rug' | 'lamp' | 'flowers' | 'doormat' | 'bush'
+  | 'rock' | 'wildflower' | 'stonepath' | 'heartstone' | 'fence' | 'pot' | 'lamppost' | 'sapling' | 'flowerbed' | 'swing' | 'snowman' | 'gazebo';
 
 export interface Furn {
   id: string; type: FurnType; gx: number; gy: number; w: number; d: number;
@@ -14,7 +16,7 @@ export interface Furn {
   rot?: 0 | 1; color?: string;
 }
 
-export const MAP_W = 16, MAP_H = 16;
+export const MAP_W = 22, MAP_H = 22;
 export const HOUSE = { x0: 2, y0: 2, x1: 13, y1: 11 };
 
 export function floorAt(x: number, y: number): Floor {
@@ -29,6 +31,8 @@ export function floorAt(x: number, y: number): Floor {
   if (x === 5 && y >= 12) return 'path';
   if (x === 14 && y >= 9 && y <= 10) return 'path';
   if (x >= 9 && x <= 11 && y >= 13 && y <= 14) return 'dirt';
+  if (x >= 17 && x <= 19 && y >= 17 && y <= 19 && !(x === 19 && y === 19)) return 'water';
+  if (x === 5 && y > 15) return 'path';
   return 'grass';
 }
 
@@ -79,10 +83,10 @@ export const FURNITURE: Furn[] = [
   // curte
   { id: 'mat', type: 'doormat', gx: 5, gy: 12, w: 1, d: 1, solid: false },
   { id: 'plot', type: 'plot', gx: 9, gy: 13, w: 3, d: 2, solid: false, action: act('garden', 'Grădina', '🌱') },
-  { id: 'tree1', type: 'tree', gx: 0, gy: 1, w: 1, d: 1, solid: true },
-  { id: 'tree2', type: 'tree', gx: 14, gy: 14, w: 1, d: 1, solid: true },
-  { id: 'tree3', type: 'tree', gx: 1, gy: 13, w: 1, d: 1, solid: true },
-  { id: 'tree4', type: 'tree', gx: 15, gy: 3, w: 1, d: 1, solid: true },
+  { id: 'tree1', type: 'tree', gx: 0, gy: 1, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
+  { id: 'tree2', type: 'tree', gx: 14, gy: 14, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
+  { id: 'tree3', type: 'tree', gx: 1, gy: 13, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
+  { id: 'tree4', type: 'tree', gx: 15, gy: 3, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
   { id: 'bench', type: 'bench', gx: 2, gy: 14, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța', '🌅') },
   { id: 'mail', type: 'mailbox', gx: 6, gy: 13, w: 1, d: 1, solid: true, action: act('mail', 'Cutia poștală', '💌') },
   { id: 'fl1', type: 'flowers', gx: 7, gy: 14, w: 1, d: 1, solid: false },
@@ -90,6 +94,7 @@ export const FURNITURE: Furn[] = [
   { id: 'fl3', type: 'flowers', gx: 0, gy: 11, w: 1, d: 1, solid: false },
   { id: 'bush1', type: 'bush', gx: 15, gy: 8, w: 1, d: 1, solid: true },
   { id: 'bush2', type: 'bush', gx: 8, gy: 15, w: 1, d: 1, solid: true },
+  ...RESOURCE_NODES,
 ];
 
 /** dreptunghiuri de coliziune in grid */

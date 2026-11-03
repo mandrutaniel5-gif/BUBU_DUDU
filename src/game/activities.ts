@@ -30,5 +30,10 @@ export const ACTIVITIES: Record<string, Activity> = {
   garden: { id: 'garden', anim: 'act_garden', dur: 6, needs: { fun: 12, hygiene: -8 }, text: 'Grădina crește! 🌱' , minigame: 'garden' },
   bench: { id: 'bench', anim: 'act_sit', dur: 6, needs: { fun: 8, love: 6, energy: 4 }, text: 'Ce apus frumos 🌅' },
   pinch: { id: 'pinch', anim: 'act_plunge', dur: 1, needs: { fun: 10, energy: 4 }, text: 'Liniște 🤫', minigame: 'snore' },
+  chop: { id: 'chop', anim: 'act_scrub', dur: 4, needs: { fun: 6, energy: -6 }, text: 'Lemne! 🪵', minigame: 'chop' },
+  mine: { id: 'mine', anim: 'act_scrub', dur: 4, needs: { fun: 6, energy: -6 }, text: 'Piatră! 🪨', minigame: 'mine' },
+  pick: { id: 'pick', anim: 'act_garden', dur: 2.5, needs: { fun: 4, love: 2 }, text: 'Flori pentru iubire 🌸' },
+  swing: { id: 'swing', anim: 'act_sit', dur: 7, needs: { fun: 22, love: 10 }, text: 'Hușca-hușca! 🎠' },
+  gazebo: { id: 'gazebo', anim: 'love', dur: 2.6, needs: { love: 20, fun: 6 }, text: 'Momentul nostru în foișor 💞' },
   read_mail: { id: 'read_mail', anim: 'love', dur: 2.6, needs: { love: 8 }, text: 'Un bilețel de dragoste 💌' },
 };

@@ -4,6 +4,7 @@ import { Actor } from '../char/actor';
 import { Sfx } from '../engine/sfx';
 import { heartPath } from '../char/draw';
 import type { WorldScene } from '../scenes/world';
+import { g as gen } from '../game/gender';
 
 type Step = 'intro' | 'msg' | 'msgShow' | 'pos' | 'posShow' | 'tug' | 'dutch' | 'kiss' | 'night';
 
@@ -217,7 +218,7 @@ export class BedtimeGame extends Panel {
         drawBed('none'); T('E timpul de culcare… 🌙', y + 120, 26); T('Rutina noastră de seară', y + 156, 16, '#ffd6e4'); break;
       case 'msg':
         drawBed('none'); T('💌 Spune-i ceva frumos', y + 60, 22);
-        if (this.myMsg) T(this.partnerAI || this.theirMsg ? '…' : `Aștept mesajul lui/ei ${this.scene.partner.actor.spec.name}…`, y + 250, 15, '#ffd6e4');
+        if (this.myMsg) T(this.partnerAI || this.theirMsg ? '…' : `Aștept mesajul lui ${this.scene.partner.actor.spec.name}…`, y + 250, 15, '#ffd6e4');
         break;
       case 'msgShow': {
         drawBed('none');
@@ -238,7 +239,7 @@ export class BedtimeGame extends Panel {
         if (this.step === 'posShow') {
           drawBed(POSES[this.myPos === this.theirPos ? this.myPos : this.theirPos].id);
           T(this.myPos === this.theirPos ? `Perfect sincron! ${POSES[this.myPos].icon} 💞` : `Tu: ${POSES[this.myPos].label} · ${this.scene.partner.actor.spec.name}: ${POSES[this.theirPos].label}`, y + 70, 18);
-          if (this.myPos !== this.theirPos) T('…așa că ați făcut cum a vrut el/ea 😅', y + 100, 14, '#ffd6e4');
+          if (this.myPos !== this.theirPos) T(`…așa că ați făcut cum a vrut ${gen(this.scene.partner.id, 'el', 'ea')} 😅`, y + 100, 14, '#ffd6e4');
           break;
         }
         T('🤗 Cum adormim în seara asta?', y + 60, 20); T('Dacă alegeți la fel → bonus!', y + 88, 14, '#ffd6e4');
@@ -251,7 +252,7 @@ export class BedtimeGame extends Panel {
           this.heads(ctx, cx + (cw - 8) / 2, cy + 62, 0.75, p.id); ctx.restore();
           ctx.fillStyle = this.myPos === i ? '#fff' : O; ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillText(`${p.icon} ${p.label}`, cx + (cw - 8) / 2, cy + ch - 12);
         });
-        if (this.myPos >= 0) T(this.theirPos >= 0 ? '…' : `Aștept alegerea lui/ei ${this.scene.partner.actor.spec.name}…`, y + h - 50, 14, '#ffd6e4');
+        if (this.myPos >= 0) T(this.theirPos >= 0 ? '…' : `Aștept alegerea lui ${this.scene.partner.actor.spec.name}…`, y + h - 50, 14, '#ffd6e4');
         break;
       }
       case 'tug': {

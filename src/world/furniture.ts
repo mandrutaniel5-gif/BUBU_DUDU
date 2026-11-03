@@ -2,6 +2,7 @@
 import { iso, isoBox, boxOf, poly, tilePath, shade, TW, TH, type Pt } from './iso';
 import { floorAt, MAP_W, MAP_H, type Furn, type Wall } from './map';
 import { heartPath } from '../char/draw';
+import { drawBuildType } from './build';
 
 const O = '#3a2a22';
 
@@ -13,11 +14,12 @@ function rhombDecal(ctx: CanvasRenderingContext2D, gx: number, gy: number, w: nu
   tilePath(ctx, gx, gy, w, d, z); ctx.fillStyle = fill; ctx.fill();
 }
 
-export interface FurnState { lampOn?: boolean; tvOn?: boolean; clogged?: boolean; bathFoam?: number; cooking?: boolean; crops?: number[]; night?: number; }
+export interface FurnState { depleted?: Record<string, boolean>; lampOn?: boolean; tvOn?: boolean; clogged?: boolean; bathFoam?: number; cooking?: boolean; crops?: number[]; night?: number; }
 
 export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: FurnState) {
   const { gx, gy, w, d } = f;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (drawBuildType(ctx, f, t, st.night ?? 0, !!st.depleted?.[f.id])) return;
   switch (f.type) {
     case 'bed': {
       isoBox(ctx, gx, gy, w, 0.18, 46, boxOf('#c98e5f'));             // tablia
@@ -331,6 +333,7 @@ export function renderFloor(): { canvas: HTMLCanvasElement; ox: number; oy: numb
   }
   // marginea lacului
   ctx.strokeStyle = '#5aa9d6'; ctx.lineWidth = 3; tilePath(ctx, 0, 6, 2, 4); ctx.stroke();
+  for (const [u, v] of [[17.6, 17.5], [18.6, 18.7]]) { const p = iso(u, v); ctx.fillStyle = '#6cbf6c'; ctx.beginPath(); ctx.ellipse(p.x, p.y, 9, 4.5, 0, 0.3, Math.PI * 2 - 0.3); ctx.lineTo(p.x, p.y); ctx.fill(); }
   // nuferi
   for (const [u, v] of [[0.6, 7.2], [1.3, 8.6]]) { const p = iso(u, v); ctx.fillStyle = '#6cbf6c'; ctx.beginPath(); ctx.ellipse(p.x, p.y, 9, 4.5, 0, 0.3, Math.PI * 2 - 0.3); ctx.lineTo(p.x, p.y); ctx.fill(); ctx.fillStyle = '#ff9ab8'; ctx.beginPath(); ctx.arc(p.x + 2, p.y - 2, 3, 0, 7); ctx.fill(); }
   return { canvas: cv, ox: minX, oy: minY };

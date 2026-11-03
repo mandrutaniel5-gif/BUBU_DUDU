@@ -4,6 +4,7 @@ import { Actor } from '../char/actor';
 import { Sfx } from '../engine/sfx';
 import { heartPath } from '../char/draw';
 import type { WorldScene } from '../scenes/world';
+import { g } from '../game/gender';
 
 abstract class CarePanel extends Panel {
   patient: Actor;
@@ -30,7 +31,7 @@ export class SoupGame extends CarePanel {
   stir = 0; lastAng: number | null = null; dragging = false;
   knife = 0;
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, '🍲 Supă pentru bolnăvior', 'Atinge legumele ca să le tai, apoi amestecă în cerc');
+    super(scene, done, g(scene.partner.id, '🍲 Supă pentru bolnăvior', '🍲 Supă pentru bolnăvioară'), 'Atinge legumele ca să le tai, apoi amestecă în cerc');
     for (let i = 0; i < 5; i++) this.veg.push({ kind: i % 3, x: 0.22 + i * 0.14, y: 0.42, cuts: 0, done: false, fly: 0, vx: 0, vy: 0 });
     this.hero.play('act_cook'); this.patient.play('sick');
   }

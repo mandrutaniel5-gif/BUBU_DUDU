@@ -19,7 +19,11 @@ export type WorldOp =
   | { k: 'sick'; who: CharId; value: string | null }
   | { k: 'jar'; from: CharId; text: string; ts: number }
   | { k: 'log'; text: string; ts: number }
-  | { k: 'char'; who: CharId; state: unknown };
+  | { k: 'char'; who: CharId; state: unknown }
+  | { k: 'res'; res: string; delta: number }
+  | { k: 'place'; uid: string; type: string; gx: number; gy: number }
+  | { k: 'unplace'; uid: string }
+  | { k: 'node'; id: string; until: number };
 
 export type NetStatus = 'offline' | 'connecting' | 'online' | 'error';
 

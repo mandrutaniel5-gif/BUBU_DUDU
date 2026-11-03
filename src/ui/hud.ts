@@ -4,13 +4,11 @@ import { PAIRS } from '../scenes/world';
 import { ANIM_LIST } from '../char/anims';
 import { NEEDS, NEED_INFO, SICK_INFO, REQUESTS, clockText, nightAmount } from '../game/state';
 import { Sfx } from '../engine/sfx';
+import { moodText, g } from '../game/gender';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
+import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
 import type { NetStatus } from '../net/types';
 
-const MOOD_TXT: Record<string, string> = {
-  happy: 'Fericit(ă) 😊', calm: 'Liniștit(ă) 🙂', sad: 'Trist(ă) 😢', angry: 'Furios(ă) 😠', sleepy: 'Somnoros(oasă) 😪',
-  sick: 'Bolnav(ă) 🤒', hungry: 'Flămând(ă) 🤤', love: 'Îndrăgostit(ă) 🥰', sulky: 'Bosumflat(ă) 😒',
-};
 
 export class Hud {
   root: HTMLElement;
@@ -28,7 +26,7 @@ export class Hud {
         <div class="needs">${NEEDS.map(n => `<div class="need" data-n="${n}" title="${NEED_INFO[n].label}"><span>${NEED_INFO[n].icon}</span><i><b style="background:${NEED_INFO[n].color}"></b></i></div>`).join('')}</div>
         <div class="sick hidden"></div>
       </div>
-      <div class="clock"><span class="time">09:00</span><span class="day">Ziua 1</span><span class="hearts">💗 0</span></div>
+      <div class="clock"><span class="time">09:00</span><span class="day">Ziua 1</span><span class="hearts">💗 0</span><span class="res"></span></div>
       <div class="card partner">
         <div class="name">${pa.id === 'bubu' ? '🐼' : '🐻'} ${pa.name} <span class="pst">🤖 AI</span></div>
         <div class="pmood"></div>
@@ -40,10 +38,12 @@ export class Hud {
           <button class="act" data-a="emotes" title="Emote-uri (Q)"><span class="ic">😊</span></button>
           <button class="act" data-a="pairs" title="Împreună (R)"><span class="ic">💞</span></button>
           <button class="act fart" data-a="fart" title="Super-salt (F)"><span class="ic">💨</span><i class="fill"></i></button>
+          <button class="act" data-a="build" title="Construiește (B)"><span class="ic">🔨</span></button>
         </div>
       </div>
       <div class="pop emotes hidden"><h4>Emote-uri & dansuri</h4><div class="grid">${emotes.map(a => `<button data-emote="${a.id}"><span>${a.icon}</span>${a.label}</button>`).join('')}</div></div>
       <div class="pop pairs hidden"><h4>Împreună 💞</h4><div class="grid">${PAIRS.filter(p => !p.only || p.only === s.myId).map(p => `<button data-pair="${p.id}"><span>${p.icon}</span>${p.label}</button>`).join('')}</div></div>
+      <div class="buildbar hidden"><span class="bt"></span><button data-a="bok">✔ Pune</button><button data-a="bend">✖ Gata</button></div>
       <div class="toasts"></div>
       <div class="modal hidden"></div>
     `;
@@ -59,6 +59,9 @@ export class Hud {
       if (a === 'pairs') this.togglePairs();
       if (a === 'fart') s.fartJump();
       if (a === 'bell') s.ringBell();
+      if (a === 'build') s.build ? s.endBuild() : this.openBuild();
+      if (a === 'bok') s.confirmBuild();
+      if (a === 'bend') s.endBuild();
       if (a === 'menu') { s.save(); (window as any).game.go('menu'); }
       if (b.dataset.emote) s.emote(b.dataset.emote);
       if (b.dataset.pair) s.pairAction(b.dataset.pair);
@@ -76,15 +79,16 @@ export class Hud {
       el.style.width = c.needs[n] + '%';
       el.parentElement!.parentElement!.classList.toggle('low', c.needs[n] < 25);
     }
-    this.els['.me .mood'].textContent = MOOD_TXT[s.me.actor.mood] ?? '';
+    this.els['.me .mood'].textContent = moodText(s.myId, s.me.actor.mood);
     const sk = this.els['.me .sick'];
     sk.classList.toggle('hidden', !c.sick);
     if (c.sick) { const t = `${SICK_INFO[c.sick].icon} ${SICK_INFO[c.sick].label}${c.request ? ' · vrei ' + (REQUESTS[c.request]?.icon ?? '') : ''}`; if (sk.dataset.t !== t) { sk.dataset.t = t; sk.innerHTML = `${t} <button class="mini-btn" data-a="bell">🔔 Cheamă</button>`; } }
     this.els['.clock .time'].textContent = (nightAmount(w.minutes) > 0.5 ? '🌙 ' : '☀️ ') + clockText(w.minutes);
     this.els['.clock .day'].textContent = `Ziua ${w.day}`;
     this.els['.clock .hearts'].textContent = `💗 ${w.hearts}`;
+    const rs = (this.root.querySelector('.clock .res') as HTMLElement); const rt = (Object.keys(RES_INFO) as Res[]).map(r => `${RES_INFO[r].icon}${w.res?.[r] ?? 0}`).join(' '); if (rs.textContent !== rt) rs.textContent = rt;
     const pc = w.chars[s.partner.id];
-    this.els['.pmood'].textContent = (MOOD_TXT[s.partner.actor.mood] ?? '') + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} bolnav(ă)` : '');
+    this.els['.pmood'].textContent = moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : '');
     (this.els['.fart .fill'] as HTMLElement).style.height = c.fart + '%';
     this.els['[data-a="pairs"]'].classList.toggle('glow', s.nearPartner());
     // butonul de actiune
@@ -170,6 +174,28 @@ export class Hud {
       s.sendCharSync(); s.me.actor.play('shy');
       this.openWardrobe();
     }));
+  }
+
+  openBuild() {
+    const s = this.s; const r = s.w.res ?? {};
+    const cost = (it: BuildItem) => Object.entries(it.cost).map(([k, n]) => `${RES_INFO[k as Res].icon}${n}`).join(' ');
+    const m = this.modal(`<h3>🔨 Construim împreună</h3>
+      <p class="sub">Ai ${(Object.keys(RES_INFO) as Res[]).map(k => `${RES_INFO[k].icon} ${r[k] ?? 0}`).join(' · ')}. Strânge din curte: copaci 🪓, pietre ⛏️, flori 🌸.</p>
+      <div class="shop">${CATALOG.map(it => `<button data-b="${it.type}" class="${s.canAfford(it) ? '' : 'poor'}"><span>${it.icon}</span><b>${it.label}${it.coop ? ' 💞' : ''}</b><small>${cost(it)}</small></button>`).join('')}
+      <button data-b="__remove"><span>🧹</span><b>Mută / Strânge</b><small>primești ½ înapoi</small></button></div>`);
+    m.querySelectorAll('[data-b]').forEach(b => b.addEventListener('click', () => {
+      const t = (b as HTMLElement).dataset.b!;
+      this.closeModal();
+      if (t === '__remove') s.startBuild(null, true);
+      else s.startBuild(CATALOG.find(c => c.type === t)!);
+    }));
+  }
+  setBuild(b: { item: BuildItem | null; remove: boolean } | null) {
+    const bar = this.root.querySelector('.buildbar') as HTMLElement;
+    bar.classList.toggle('hidden', !b);
+    this.root.classList.toggle('building', !!b);
+    if (b) (bar.querySelector('.bt') as HTMLElement).textContent = b.remove ? '🧹 Atinge un obiect ca să-l strângi' : `${b.item!.icon} ${b.item!.label}: atinge locul, apoi ✔`;
+    (bar.querySelector('[data-a="bok"]') as HTMLElement).classList.toggle('hidden', !!b?.remove);
   }
 
   setMinigame(on: boolean) { this.root.classList.toggle('in-mini', on); }

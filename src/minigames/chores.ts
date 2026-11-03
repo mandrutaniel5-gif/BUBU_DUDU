@@ -206,7 +206,7 @@ export class SocksGame extends Panel {
     font(ctx, 15); ctx.fillStyle = O; ctx.fillText(`Perechi: ${this.pairs}/6 · Mutări: ${this.moves}`, x + w / 2, y + 54);
     if (this.lostJoke) {
       ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(x, y + h * 0.35, w, 120);
-      font(ctx, 18); ctx.fillStyle = O; ctx.fillText(`…dar o șosetă e pe capul lui/ei ${this.scene.partner.actor.spec.name}! 🧦😂`, x + w / 2, y + h * 0.35 + 60);
+      font(ctx, 18); ctx.fillStyle = O; ctx.fillText(`…dar o șosetă e pe capul lui ${this.scene.partner.actor.spec.name}! 🧦😂`, x + w / 2, y + h * 0.35 + 60);
     }
   }
 }

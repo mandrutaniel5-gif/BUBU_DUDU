@@ -136,3 +136,9 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 .shop button span { font-size:24px; } .shop button b { font-size:12px; line-height:1.1; text-align:center; } .shop button small { font-size:11px; opacity:.75; }
 .shop button.on { background:#ffe1ea; outline:3px solid var(--pink); }
 .modal h4 { margin:10px 0 4px; }
+.hud .clock .res { opacity:.85; font-size:13px; }
+.shop button.poor { opacity:.55; }
+.buildbar { position:absolute; left:50%; bottom:96px; transform:translateX(-50%); display:flex; gap:8px; align-items:center; background:#fffaf5f0; border:3px solid var(--ink); border-radius:18px; padding:6px 10px; box-shadow:0 4px 0 var(--ink); font-weight:800; font-size:13.5px; max-width:94vw; }
+.buildbar button { border:2.5px solid var(--ink); border-radius:12px; font-weight:800; padding:4px 10px; background:#fff; white-space:nowrap; }
+.buildbar [data-a="bok"] { background:#9be38f; }
+.hud.building .actions .big { display:none; }

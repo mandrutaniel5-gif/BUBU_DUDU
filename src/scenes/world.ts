@@ -4,11 +4,13 @@ import { ANIMS, ANIM_LIST } from '../char/anims';
 import { Fx } from '../char/fx';
 import type { CharId } from '../char/draw';
 import { Sfx } from '../engine/sfx';
+import { g } from '../game/gender';
 import type { Scene, Game } from '../engine/game';
 import { iso, unIso, screenDirToGrid, isoBox, boxOf, TW, TH } from '../world/iso';
-import { FURNITURE, WALLS, type Furn, type Wall } from '../world/map';
+import { FURNITURE, WALLS, MAP_W, MAP_H, type Furn, type Wall } from '../world/map';
 import { drawFurn, drawWall, renderFloor, type FurnState } from '../world/furniture';
 import { Nav } from '../world/nav';
+import { CATALOG, drawGhost, type BuildItem } from '../world/build';
 import { ACTIVITIES, type Activity } from '../game/activities';
 import { newWorld, moodFrom, tickNeeds, applyOp, clockText, nightAmount, NEEDS, NEED_INFO, SICK_INFO, REQUESTS, type WorldState, type NeedKey } from '../game/state';
 import type { NetAdapter, NetEvent, PlayerState, WorldOp } from '../net/types';
@@ -32,6 +34,7 @@ interface Pawn {
   aiT: number;
   facingBack: boolean;
   fleeT?: number;
+  lastFurn?: string;
 }
 
 export const PAIRS = [
@@ -60,6 +63,7 @@ export class WorldScene implements Scene {
   saveT = 0; syncT = 0; stateT = 0;
   partnerOnline = false;
   sickT = 4;
+  build: { item: BuildItem | null; gx: number; gy: number; remove: boolean } | null = null;
   snoring = false; snoreT = 3;
   miniInbox: unknown[] = [];
   minigame: { id: string; obj: any } | null = null;
@@ -86,6 +90,7 @@ export class WorldScene implements Scene {
     const saved = await this.net.loadWorld();
     if (saved) { try { const w = JSON.parse(saved.json) as WorldState; if (w.v === 1) this.w = { ...newWorld(), ...w }; } catch { /* corupt */ } }
     for (const p of [this.me, this.partner]) { const c = this.w.chars[p.id]; p.gx = c.gx; p.gy = c.gy; if (this.nav.hits(p.gx, p.gy)) { p.gx = 6.5 + (p.id === 'dudu' ? 0.8 : 0); p.gy = 8.4; } }
+    this.syncPlaced();
     this.cam.x = iso(this.me.gx, this.me.gy).x; this.cam.y = iso(this.me.gx, this.me.gy).y;
     // retea
     this.net.onState = s => this.onRemoteState(s);
@@ -112,7 +117,7 @@ export class WorldScene implements Scene {
     this.partnerOnline = on;
     this.partner.control = on ? 'remote' : 'ai';
     this.hud.setPartner(on);
-    this.hud.toast(on ? `${this.partner.actor.spec.name} a intrat în joc! 💞` : `${this.partner.actor.spec.name} a ieșit. Îl joacă AI-ul 🤖`);
+    this.hud.toast(on ? `${this.partner.actor.spec.name} a intrat în joc! 💞` : `${this.partner.actor.spec.name} a ieșit. ${g(this.partner.id, 'Îl', 'O')} joacă AI-ul 🤖`);
     if (on) this.sendCharSync();
   }
   onRemoteState(s: PlayerState) {
@@ -142,12 +147,72 @@ export class WorldScene implements Scene {
   applyLocal(o: WorldOp) {
     if (o.k === 'char') { if (o.who !== this.myId) Object.assign(this.w.chars[o.who], o.state as object); return; }
     applyOp(this.w, o);
+    if (o.k === 'place' || o.k === 'unplace') this.syncPlaced();
     if (o.k === 'jar' && o.from !== this.myId) this.hud.toast('💌 Ai primit un bilețel în Borcanul cu iubire!');
   }
   sendCharSync() {
     const c = this.w.chars[this.myId]; c.gx = this.me.gx; c.gy = this.me.gy;
     this.net.sendEvent({ t: 'op', op: { k: 'char', who: this.myId, state: c } });
   }
+  /** reconstruieste obiectele construite + navigarea */
+  syncPlaced() {
+    for (let i = FURNITURE.length - 1; i >= 0; i--) if (FURNITURE[i].id.startsWith('p-')) FURNITURE.splice(i, 1);
+    for (const p of this.w.placed ?? []) {
+      const it = CATALOG.find(c => c.type === p.type); if (!it) continue;
+      FURNITURE.push({ id: 'p-' + p.uid, type: it.type as any, gx: p.gx, gy: p.gy, w: it.w, d: it.d, solid: it.solid, action: it.action });
+    }
+    this.nav = new Nav();
+  }
+  depleted(id: string) { return (this.w.nodes?.[id] ?? 0) > Date.now(); }
+  isDecor(f: Furn) { return !f.solid && ['rug', 'plot', 'doormat', 'flowers', 'stonepath', 'heartstone', 'flowerbed', 'wildflower'].includes(f.type); }
+
+  // ------------------------------------------------------------------ constructie
+  startBuild(item: BuildItem | null, remove = false) {
+    const g = { x: Math.round(this.me.gx + 1), y: Math.round(this.me.gy + 1) };
+    this.build = { item, gx: g.x, gy: g.y, remove };
+    this.hud.setBuild(this.build);
+  }
+  endBuild() { this.build = null; this.hud.setBuild(null); }
+  canAfford(it: BuildItem) { return Object.entries(it.cost).every(([r, n]) => (this.w.res?.[r] ?? 0) >= (n ?? 0)); }
+  canPlace(it: BuildItem, gx: number, gy: number) {
+    for (let x = gx; x < gx + it.w; x++) for (let y = gy; y < gy + it.d; y++) {
+      if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return false;
+      if (this.nav.isBlocked(x, y)) return false;
+      if (FURNITURE.some(f => x >= f.gx && x < f.gx + f.w && y >= f.gy && y < f.gy + f.d)) return false;
+      for (const p of [this.me, this.partner]) if (Math.floor(p.gx) === x && Math.floor(p.gy) === y) return false;
+    }
+    return true;
+  }
+  buildTap(gx: number, gy: number) {
+    const b = this.build!; const tx = Math.floor(gx), ty = Math.floor(gy);
+    if (b.remove) {
+      const f = FURNITURE.find(f => f.id.startsWith('p-') && tx >= f.gx && tx < f.gx + f.w && ty >= f.gy && ty < f.gy + f.d);
+      if (!f) { this.hud.toast('Atinge un obiect construit de voi'); return; }
+      const it = CATALOG.find(c => c.type === f.type);
+      if (it) for (const [r, n] of Object.entries(it.cost)) this.op({ k: 'res', res: r, delta: Math.floor((n ?? 0) / 2) });
+      this.op({ k: 'unplace', uid: f.id.slice(2) }); Sfx.play('pop');
+      return;
+    }
+    if (!b.item) return;
+    if (tx !== b.gx || ty !== b.gy) { b.gx = tx; b.gy = ty; Sfx.play('click'); return; }
+    this.confirmBuild();
+  }
+  confirmBuild() {
+    const b = this.build; if (!b?.item) return;
+    const it = b.item;
+    if (!this.canAfford(it)) { this.hud.toast('Nu ai destule materiale 🪵🪨🌸 — taie copaci, sparge pietre, culege flori!'); Sfx.play('bad'); return; }
+    if (!this.canPlace(it, b.gx, b.gy)) { this.hud.toast('Nu încape aici ✖'); Sfx.play('bad'); return; }
+    for (const [r, n] of Object.entries(it.cost)) this.op({ k: 'res', res: r, delta: -(n ?? 0) });
+    const uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    this.op({ k: 'place', uid, type: it.type, gx: b.gx, gy: b.gy });
+    const p = iso(b.gx + it.w / 2, b.gy + it.d / 2, 40);
+    this.fx.burst('star', p.x, p.y, 10, 6.28, 120, { max: 0.8 }); this.fx.text(p.x, p.y - 20, `${it.icon} Construit!`, '#ff9f1c', 0.9);
+    Sfx.play('good'); this.op({ k: 'hearts', delta: it.coop ? 5 : 1 });
+    this.op({ k: 'need', who: this.myId, need: 'fun', delta: 5 });
+    this.me.actor.play(this.myId === 'dudu' ? 'flex' : 'love'); this.net.sendEvent({ t: 'emote', who: this.myId, anim: this.myId === 'dudu' ? 'flex' : 'love' });
+    if (it.coop) this.log(`${this.me.actor.spec.name} a construit ${it.label} ${it.icon} pentru voi!`);
+  }
+
   log(text: string) { this.op({ k: 'log', text, ts: Date.now() }); }
   save() {
     for (const p of [this.me, this.partner]) { this.w.chars[p.id].gx = p.gx; this.w.chars[p.id].gy = p.gy; }
@@ -168,6 +233,8 @@ export class WorldScene implements Scene {
       if (k === 'f') this.fartJump();
       if (k === 'q') this.hud.toggleEmotes();
       if (k === 'r') this.hud.togglePairs();
+      if (k === 'b') this.build ? this.endBuild() : this.hud.openBuild();
+      if (k === 'enter' && this.build) this.confirmBuild();
       const n = parseInt(k); if (n >= 1 && n <= 9) { const list = ANIM_LIST.filter(a => a.kind === 'emote' || a.kind === 'dance'); if (list[n - 1]) this.emote(list[n - 1].id); }
     });
     this.on(window, 'keyup', (e: KeyboardEvent) => { this.keys.delete(e.key.toLowerCase()); this.minigame?.obj.key?.(e.key.toLowerCase(), false); });
@@ -188,6 +255,7 @@ export class WorldScene implements Scene {
     this.on(cv, 'pointermove', (e: PointerEvent) => {
       if (this.minigame) { this.minigame.obj.pointer?.('move', e.clientX, e.clientY); return; }
       if (this.joy.active && e.pointerId === this.joy.id) { this.joy.x = e.clientX; this.joy.y = e.clientY; }
+      else if (this.build?.item && e.pointerType === 'mouse') { const g = this.screenToGrid(e.clientX, e.clientY); this.build.gx = Math.floor(g.x); this.build.gy = Math.floor(g.y); }
     });
     const up = (e: PointerEvent) => {
       if (this.minigame) { this.minigame.obj.pointer?.('up', e.clientX, e.clientY); return; }
@@ -205,6 +273,7 @@ export class WorldScene implements Scene {
 
   tapAt(sx: number, sy: number) {
     const g = this.screenToGrid(sx, sy);
+    if (this.build) { this.buildTap(g.x, g.y); return; }
     // a atins partenerul?
     const pd = Math.hypot(g.x - this.partner.gx, g.y - this.partner.gy);
     if (pd < 0.9) { this.walkTo(this.partner.gx + 0.7, this.partner.gy + 0.2); this.hud.togglePairs(true); return; }
@@ -272,6 +341,7 @@ export class WorldScene implements Scene {
     if (act.id === 'dress') { if (pawn === this.me) this.hud.openWardrobe(); return; }
     if (act.id === 'toilet' && this.w.furn.clogged) return;
     const a = ACTIVITIES[act.id]; if (!a) return;
+    if ((act.id === 'chop' || act.id === 'mine' || act.id === 'pick') && this.depleted(f.id)) { if (pawn === this.me) this.hud.toast('Crește la loc curând… 🌱'); return; }
     if (act.id === 'pinch' && pawn === this.me) { this.startMinigame('snore', a, f); return; }
     // minijoc pentru jucator (daca exista)
     if (pawn === this.me && a.minigame && MINIGAMES[a.minigame]) { this.startMinigame(a.minigame, a, f); return; }
@@ -283,7 +353,7 @@ export class WorldScene implements Scene {
 
   startActivity(pawn: Pawn, a: Activity, f: Furn, fromNet = false) {
     if (a.place === 'sofa') f = FURNITURE.find(x => x.id === 'sofa')!;
-    pawn.activity = { a, t: 0, furn: f };
+    pawn.activity = { a, t: 0, furn: f }; pawn.lastFurn = f.id;
     // pozitionare pe obiect
     const slot = pawn.id === 'bubu' ? 0 : 1;
     pawn.z = 0;
@@ -338,12 +408,19 @@ export class WorldScene implements Scene {
     }
     if (a.id === 'unclog') {
       this.op({ k: 'furn', key: 'clogged', value: false });
-      this.log(`${pawn.actor.spec.name} a desfundat toaleta 🪠✨ Erou!`);
+      this.log(`${pawn.actor.spec.name} a desfundat toaleta 🪠✨ ${g(pawn.id, "Erou", "Eroină")}!`);
     }
     if (a.id === 'garden' && ctrl) {
       const crops = [...(this.w.furn.crops as number[])];
       const i = crops.findIndex(c => c < 3); if (i >= 0) crops[i]++;
       this.op({ k: 'furn', key: 'crops', value: crops });
+    }
+    if (ctrl && (a.id === 'chop' || a.id === 'mine' || a.id === 'pick')) {
+      const res = a.id === 'chop' ? 'wood' : a.id === 'mine' ? 'stone' : 'flower';
+      const n = a.id === 'chop' ? (pawn.id === 'dudu' ? 4 : 3) : 2;
+      this.op({ k: 'res', res, delta: n });
+      const f = pawn.lastFurn; if (f) this.op({ k: 'node', id: f, until: Date.now() + (a.id === 'pick' ? 60 : 120) * 1000 });
+      const p = iso(pawn.gx, pawn.gy, 80); this.fx.text(p.x, p.y - 14, `+${n} ${res === 'wood' ? '🪵' : res === 'stone' ? '🪨' : '🌸'}`, '#2ec4b6', 1);
     }
     if (a.id === 'snack' || a.id === 'eat') { if (ctrl) this.op({ k: 'need', who: pawn.id, need: 'fart', delta: 15 }); }
   }
@@ -382,7 +459,7 @@ export class WorldScene implements Scene {
     if (pr.only && pr.only !== this.myId) return;
     if (!this.nearPartner()) { this.hud.toast('Apropie-te de partener 💞'); return; }
     if (pr.fart && this.w.chars[this.myId].fart < pr.fart) { this.hud.toast('💨 Nu ai destule gaze!'); return; }
-    if (pr.sickOnly && !this.w.chars[this.partner.id].sick) { this.hud.toast(`${this.partner.actor.spec.name} nu e bolnav(ă) 🙂`); return; }
+    if (pr.sickOnly && !this.w.chars[this.partner.id].sick) { this.hud.toast(`${this.partner.actor.spec.name} nu e ${g(this.partner.id, 'bolnav', 'bolnavă')} 🙂`); return; }
     if (id === 'care') {
       const req = this.w.chars[this.partner.id].request ?? 'kiss';
       const mini = REQUESTS[req]?.mini;
@@ -449,15 +526,15 @@ export class WorldScene implements Scene {
       this.w.chars[B.id].request = null;
       if (this.w.chars[B.id].sick && this.w.chars[B.id].needs.health > 68) {
         this.op({ k: 'sick', who: B.id, value: null });
-        setTimeout(() => { B.actor.play('dance_hop'); this.hud.toast(`🎉 ${B.actor.spec.name} s-a vindecat! Mulțumită lui/ei ${A.actor.spec.name} 💕`); }, 2600);
-        this.log(`${B.actor.spec.name} s-a vindecat datorită lui/ei ${A.actor.spec.name} 🎉`);
+        setTimeout(() => { B.actor.play('dance_hop'); this.hud.toast(`🎉 ${B.actor.spec.name} s-a vindecat! Mulțumită lui ${A.actor.spec.name} 💕`); }, 2600);
+        this.log(`${B.actor.spec.name} s-a vindecat datorită lui ${A.actor.spec.name} 🎉`);
       }
       this.sendCharSync();
     }
     if (id === 'steal') {
       const p = iso(A.gx, A.gy, 90); this.fx.text(p.x, p.y, 'Hihihi! 🍰', '#c77dff', 0.9);
       if (A.control === 'ai') { A.fleeT = 12; }
-      if (B === this.me) this.hud.toast(`${A.actor.spec.name} ți-a furat prăjitura! Prinde-l/o! 🏃`);
+      if (B === this.me) this.hud.toast(`${A.actor.spec.name} ți-a furat prăjitura! ${g(A.id, 'Prinde-l', 'Prinde-o')}! 🏃`);
     }
     if (local) this.op({ k: 'hearts', delta: 1 });
     void local;
@@ -680,6 +757,7 @@ export class WorldScene implements Scene {
       }
     }
     if (!target && Math.random() < 0.15 && this.w.chars[p.id].needs.hygiene > 30) target = pick(['toilet']);
+    if (!target && Math.random() < 0.25) { const opts = FURNITURE.filter(f => f.action && ['chop', 'mine', 'pick'].includes(f.action.id) && !this.depleted(f.id)); if (opts.length) target = opts[Math.floor(Math.random() * opts.length)]; }
     if (!target && p.id === 'dudu' && Math.random() < 0.08 && this.nearPartnerAI()) { this.runPair(p.id, 'steal', true); return; }
     if (target) { this.goInteract(p, target); return; }
     // altfel: plimbare sau un emote
@@ -689,7 +767,7 @@ export class WorldScene implements Scene {
       p.actor.play(list[Math.floor(Math.random() * list.length)].id);
     } else {
       for (let i = 0; i < 10; i++) {
-        const tx = 2.5 + Math.random() * 11, ty = 2.5 + Math.random() * 12;
+        const tx = 1 + Math.random() * (MAP_W - 2), ty = 1 + Math.random() * (MAP_H - 2);
         if (!this.nav.hits(tx, ty)) { const path = this.nav.path(p.gx, p.gy, tx, ty); if (path) { p.path = path; break; } }
       }
     }
@@ -699,13 +777,13 @@ export class WorldScene implements Scene {
     {
       p.fleeT = (p.fleeT ?? 0) - dt;
       if (p.fleeT < 10.3 && Math.hypot(this.me.gx - p.gx, this.me.gy - p.gy) < 0.75) {
-        p.fleeT = 0; p.path = []; p.actor.play('puppy'); this.hud.toast(`Prins(ă)! ${p.actor.spec.name} îți dă prăjitura înapoi 🥺🍰`);
+        p.fleeT = 0; p.path = []; p.actor.play('puppy'); this.hud.toast(`${g(p.id, 'Prins', 'Prinsă')}! ${p.actor.spec.name} îți dă prăjitura înapoi 🥺🍰`);
         this.op({ k: 'need', who: this.me.id, need: 'fun', delta: 15 }); this.op({ k: 'need', who: this.me.id, need: 'hunger', delta: 10 }); this.op({ k: 'hearts', delta: 3 });
         return;
       }
       if (!p.path.length) {
         let best: { x: number; y: number } | null = null, bd = -1;
-        for (let i = 0; i < 14; i++) { const tx = 2.5 + Math.random() * 11, ty = 2.5 + Math.random() * 12; if (this.nav.hits(tx, ty)) continue; const d = Math.hypot(tx - this.me.gx, ty - this.me.gy); if (d > bd) { bd = d; best = { x: tx, y: ty }; } }
+        for (let i = 0; i < 14; i++) { const tx = 1 + Math.random() * (MAP_W - 2), ty = 1 + Math.random() * (MAP_H - 2); if (this.nav.hits(tx, ty)) continue; const d = Math.hypot(tx - this.me.gx, ty - this.me.gy); if (d > bd) { bd = d; best = { x: tx, y: ty }; } }
         if (best) { const path = this.nav.path(p.gx, p.gy, best.x, best.y); if (path) p.path = path; }
       }
       p.actor.moving = this.followPath(p, dt * 0.85);
@@ -738,9 +816,11 @@ export class WorldScene implements Scene {
     const F = this.floor;
     ctx.drawImage(F.canvas, F.ox, F.oy, F.canvas.width / 2, F.canvas.height / 2);
 
-    const st: FurnState = { ...(this.w.furn as FurnState), night };
+    const dep: Record<string, boolean> = {}; for (const id in this.w.nodes ?? {}) if (this.depleted(id)) dep[id] = true;
+    const st: FurnState = { ...(this.w.furn as FurnState), night, depleted: dep };
     // decoruri pe sol
-    for (const f of FURNITURE) if (!f.solid && (f.type === 'rug' || f.type === 'plot' || f.type === 'doormat' || f.type === 'flowers')) drawFurn(ctx, f, this.time, st);
+    for (const f of FURNITURE) if (this.isDecor(f)) drawFurn(ctx, f, this.time, st);
+    if (this.build?.item) drawGhost(ctx, this.build.item, this.build.gx, this.build.gy, this.canPlace(this.build.item, this.build.gx, this.build.gy) && this.canAfford(this.build.item), this.time);
     // indicator obiect apropiat
     const near = this.nearestFurn(this.me);
     if (near && !this.me.activity) {
@@ -762,7 +842,7 @@ export class WorldScene implements Scene {
     // sortare in adancime
     type D = { x0: number; y0: number; x1: number; y1: number; draw: () => void; z?: number };
     const items: D[] = [];
-    for (const f of FURNITURE) if (f.solid || !(f.type === 'rug' || f.type === 'plot' || f.type === 'doormat' || f.type === 'flowers')) {
+    for (const f of FURNITURE) if (!this.isDecor(f)) {
       items.push({ x0: f.gx, y0: f.gy, x1: f.gx + f.w, y1: f.gy + f.d, draw: () => drawFurn(ctx, f, this.time, st) });
     }
     for (const wl of WALLS) if (wl.kind !== 'back') {

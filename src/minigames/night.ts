@@ -3,11 +3,12 @@ import { Panel } from './base';
 import { Actor } from '../char/actor';
 import { Sfx } from '../engine/sfx';
 import type { WorldScene } from '../scenes/world';
+import { g } from '../game/gender';
 
 export class SnoreGame extends Panel {
   sleeper: Actor; breath = 0; pinches = 0; wake = 0; hand = 0;
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, '😴 Astupă-i nasul!', 'Atinge când bula de la nas e MICĂ (inspiră). Nu-l trezi!');
+    super(scene, done, '😴 Astupă-i nasul!', `Atinge când bula de la nas e MICĂ (inspiră). ${g(scene.partner.id, 'Nu-l trezi', 'N-o trezi')}!`);
     this.sleeper = new Actor(scene.partner.id, this.fx);
     this.sleeper.play('act_sleepbed');
   }
@@ -30,7 +31,7 @@ export class SnoreGame extends Panel {
     } else {
       this.wake += 0.45; Sfx.play('bad'); this.shake = 4;
       this.fx.text(b.x + b.w / 2, b.y + b.h * 0.35, 'Hmm?! 😠', '#e63946', 1);
-      if (this.wake >= 1) { this.sleeper.play('angry'); this.finish(0, 'L-ai trezit! 😤'); }
+      if (this.wake >= 1) { this.sleeper.play('angry'); this.finish(0, g(this.scene.partner.id, 'L-ai trezit! 😤', 'Ai trezit-o! 😤')); }
     }
   }
   pointer(type: string) { if (type === 'down') this.pinch(); }

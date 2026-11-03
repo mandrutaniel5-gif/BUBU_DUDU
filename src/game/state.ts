@@ -49,6 +49,9 @@ export interface WorldState {
   jar: { from: CharId; text: string; ts: number }[];  // Borcanul cu iubire
   log: { text: string; ts: number }[];                 // "cat ai lipsit"
   stats: Record<string, number>;
+  res?: Record<string, number>;                         // lemn, piatra, flori
+  placed?: { uid: string; type: string; gx: number; gy: number }[]; // constructii
+  nodes?: Record<string, number>;                       // resurse epuizate pana la (ms)
 }
 
 const fullNeeds = (): Record<NeedKey, number> => ({ hunger: 80, energy: 85, hygiene: 80, fun: 70, love: 75, health: 100 });
@@ -61,7 +64,7 @@ export function newWorld(): WorldState {
       dudu: { needs: fullNeeds(), sick: null, fart: 50, gx: 7.3, gy: 9.0 },
     },
     furn: { lampOn: false, tvOn: false, clogged: false, bathFoam: 0.2, cooking: false, crops: [0, 0, 0, 0, 0, 0] },
-    jar: [], log: [], stats: {},
+    jar: [], log: [], stats: {}, res: { wood: 4, stone: 3, flower: 2 }, placed: [], nodes: {},
   };
 }
 
@@ -120,6 +123,10 @@ export function applyOp(w: WorldState, op: WorldOp) {
     case 'sick': w.chars[op.who].sick = op.value as Sickness | null; if (!op.value) w.chars[op.who].request = null; break;
     case 'jar': w.jar.push({ from: op.from, text: op.text, ts: op.ts }); break;
     case 'char': return;
+    case 'res': { w.res ??= {}; w.res[op.res] = Math.max(0, (w.res[op.res] ?? 0) + op.delta); break; }
+    case 'place': { w.placed ??= []; if (!w.placed.some(p => p.uid === op.uid)) w.placed.push({ uid: op.uid, type: op.type, gx: op.gx, gy: op.gy }); break; }
+    case 'unplace': { w.placed = (w.placed ?? []).filter(p => p.uid !== op.uid); break; }
+    case 'node': { w.nodes ??= {}; w.nodes[op.id] = op.until; break; }
     case 'log': w.log.push({ text: op.text, ts: op.ts }); if (w.log.length > 60) w.log.splice(0, w.log.length - 60); break;
   }
   w.ts = Date.now();

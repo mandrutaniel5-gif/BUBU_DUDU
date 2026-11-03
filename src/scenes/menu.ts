@@ -30,7 +30,7 @@ export class MenuScene implements Scene {
         </div>
         <h4>Cum jucăm?</h4>
         <select name="mode">
-          <option value="solo">🏠 Singur(ă) — partenerul e controlat de AI</option>
+          <option value="solo">🏠 Joc solo — partenerul e controlat de AI</option>
           <option value="server">📱 Serverul nostru (Samsung S10 / PC)</option>
           <option value="firebase">🔥 Firebase (online, fără server)</option>
           <option value="local">🧪 Test: 2 tab-uri pe același dispozitiv</option>
