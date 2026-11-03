@@ -57,6 +57,7 @@ export interface WorldState {
   plots?: Record<string, { crop: string | null; prog: number; wetUntil: number; fert: number }>; // gradina
   gameMin?: number;                                     // ceasul jocului (minute de la inceput)
   grass?: Record<string, number>;                       // iarba inalta: 'x,y' -> inaltime 1..3
+  town?: Record<string, unknown>;                       // sat/oras: cereri sateni, banca, mobila apartament
 }
 
 const fullNeeds = (): Record<NeedKey, number> => ({ hunger: 70, energy: 85, warmth: 60, hygiene: 80, fun: 70, love: 75, health: 100 });
@@ -142,6 +143,7 @@ export function applyOp(w: WorldState, op: WorldOp) {
     case 'stat': w.stats[op.key] = (w.stats[op.key] ?? 0) + op.delta; break;
     case 'grass': { w.grass ??= {}; if (op.value <= 0) delete w.grass[op.key]; else w.grass[op.key] = op.value; break; }
     case 'grassAll': w.grass = {}; break;
+    case 'town': w.town ??= {}; w.town[op.key] = op.value; break;
     case 'log': w.log.push({ text: op.text, ts: op.ts }); if (w.log.length > 60) w.log.splice(0, w.log.length - 60); break;
   }
   w.ts = Date.now();

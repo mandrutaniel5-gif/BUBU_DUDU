@@ -118,6 +118,7 @@ export class Hud {
       const f = s.nearestFurn(s.me); const act = f && s.actionFor(f);
       if (act) { label = act.label; icon = act.icon; }
       else if (s.nearCritter()) { const c = s.nearCritter()!; label = 'Mângâie ' + CRITTER_NAMES[c.kind].toLowerCase(); icon = '🤗'; }
+      else if (s.nearVillager()) { label = 'Vorbește cu ' + s.nearVillager()!.name; icon = '💬'; }
       else if (s.nearPartner()) { label = 'Împreună'; icon = '💞'; }
     }
     const key = icon + label;
@@ -223,7 +224,7 @@ export class Hud {
       { id: 'swing', icon: '🎠', label: 'Leagăn de grădină', need: { wood: 10, stone: 2 }, pay: 70 },
       { id: 'cradle', icon: '🍼', label: 'Leagăn de bebeluș', need: { wood: 14, flower: 3 }, pay: 110 },
     ];
-    const bonus = s.myId === 'dudu' ? 1.2 : 1;
+    const bonus = (s.myId === 'dudu' ? 1.2 : 1) * ((s.w.stats['dipl-tamplar-' + s.myId] ?? 0) > 0 ? 1.3 : 1); // cursul de tamplar: +30%
     const need = (n: Record<string, number>) => Object.entries(n).map(([k, v]) => `${k === 'wood' ? '🪵' : k === 'stone' ? '🪨' : '🌸'}${v}`).join(' ');
     const m = this.modal(`<h3>🪚 Tâmplăria lui Dudu</h3><p class="sub">Ai 🪵 ${r.wood ?? 0} · 🪨 ${r.stone ?? 0} · 🌸 ${r.flower ?? 0}. ${s.myId === 'dudu' ? 'Ești meșterul: +20% la preț 💪' : 'Dudu e meșterul, dar te descurci și tu 🙂'}</p>
       <div class="shop">${recipes.map(rc => { const ok = Object.entries(rc.need).every(([k, v]) => (r[k] ?? 0) >= v); return `<button data-rc="${rc.id}" class="${ok ? '' : 'poor'}"><span>${rc.icon}</span><b>${rc.label}</b><small>${need(rc.need)} → 💰 ${Math.round(rc.pay * bonus)} lei</small></button>`; }).join('')}</div>`);

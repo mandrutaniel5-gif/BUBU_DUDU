@@ -3,6 +3,7 @@ import { fillTextIcons } from '../ui/icons';
 import { AREAS, type Floor, type Furn } from './map';
 import { iso, isoBox, boxOf, shade, tilePath, type Pt } from './iso';
 import { heartPath } from '../char/draw';
+import { drawPOI, drawSign } from './poi';
 
 const O = '#4a2a22';
 const act = (id: string, label: string, icon: string) => ({ id, label, icon });
@@ -23,6 +24,9 @@ export const BUILDINGS: BuildingDef[] = [
   { id: 'v-school', gx: 5, gy: 15, w: 4, d: 3, h: 60, front: 'x', wall: '#fff6b8', roof: '#c0573e', sign: 'Școala', action: act('v-school', 'Școala satului', '🏫') },
   { id: 'v-florarie', gx: 5, gy: 19, w: 4, d: 3, h: 54, front: 'x', wall: '#fff0f5', roof: '#ff9ab8', sign: 'Florăria lui Bubu', awning: '#ff7aa2', action: act('v-florarie', 'Florăria lui Bubu', '💐') },
   { id: 'v-workshop', gx: 5, gy: 23, w: 4, d: 3, h: 54, front: 'x', wall: '#e7c08f', roof: '#8a5d32', sign: 'Tâmplăria lui Dudu', awning: '#c98e5f', action: act('v-workshop', 'Tâmplăria lui Dudu', '🪚') },
+  { id: 'v-bakery', gx: 1, gy: 1, w: 3, d: 3, h: 54, front: 'y', wall: '#fff3e0', roof: '#d9a05a', sign: 'Brutăria', awning: '#e8b06a', action: act('v-bakery', 'Brutăria (pâine / lucru)', '🍞') },
+  { id: 'v-post', gx: 5, gy: 1, w: 3, d: 3, h: 56, front: 'y', wall: '#e8f1ff', roof: '#5b7fbf', sign: 'Poșta', awning: '#7ab8ff', action: act('v-post', 'Poșta (lucrează ca poștaș)', '💌') },
+  { id: 'v-clinic', gx: 16, gy: 1, w: 4, d: 3, h: 58, front: 'y', wall: '#ffffff', roof: '#e63946', sign: 'Dispensar · Farmacie', awning: '#ff9a9a', action: act('v-clinic', 'Dispensarul (doctor, farmacie)', '🩺') },
 ];
 
 const F: Furn[] = [];
@@ -32,9 +36,10 @@ F.push({ id: 'v-fountain', type: 'fountain' as any, gx: 8, gy: 14, w: 1, d: 1, s
 F.push({ id: 'v-ferris', type: 'ferris' as any, gx: 16, gy: 17, w: 3, d: 2, solid: true, action: act('v-ferris', 'Roata mare (10 lei)', '🎡') });
 F.push({ id: 'v-carousel', type: 'carousel' as any, gx: 14, gy: 22, w: 2, d: 2, solid: true, action: act('v-carousel', 'Călușeii (5 lei)', '🎠') });
 F.push({ id: 'v-bus', type: 'busstop' as any, gx: 20, gy: 11, w: 1, d: 1, solid: true, action: act('v-bus', 'Autobuzul spre oraș', '🚌') });
+F.push({ id: 'v-board', type: 'noticeboard' as any, gx: 14, gy: 11, w: 1, d: 1, solid: true, action: act('v-board', 'Avizierul satului (cereri)', '📜') });
 F.push({ id: 'v-home', type: 'signpost' as any, gx: 1, gy: 14, w: 1, d: 1, solid: true, action: act('v-home', 'Înapoi acasă', '🏡') });
 for (const [x, y] of [[9, 11], [12, 16], [3, 11], [19, 14], [12, 6]]) F.push({ id: `v-lamp${x}-${y}`, type: 'lamppost' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
-for (const [x, y] of [[0, 3], [3, 2], [9, 3], [13, 2], [21, 4], [2, 25], [11, 25], [19, 21], [21, 17], [17, 25], [0, 20]]) F.push({ id: `v-tree${x}-${y}`, type: 'tree' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
+for (const [x, y] of [[0, 4], [9, 3], [13, 2], [21, 4], [2, 25], [11, 25], [19, 21], [21, 17], [17, 25], [0, 20]]) F.push({ id: `v-tree${x}-${y}`, type: 'tree' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 for (const [x, y] of [[13, 19], [18, 23]]) F.push({ id: `v-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța', '🌅') });
 for (const [x, y] of [[4, 12], [14, 15], [9, 9], [20, 15]]) F.push({ id: `v-fl${x}-${y}`, type: 'flowers' as any, gx: x, gy: y, w: 1, d: 1, solid: false });
 
@@ -100,11 +105,11 @@ function drawBuilding(c: CanvasRenderingContext2D, b: BuildingDef, t: number, ni
     const fl = iso(gx + w / 2, gy + d / 2, h + 90); c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(fl.x, fl.y); c.lineTo(fl.x, fl.y - 18); c.stroke();
     for (const [col, k] of [['#002b7f', 0], ['#fcd116', 1], ['#ce1126', 2]] as const) { c.fillStyle = col; c.fillRect(fl.x + k * 5, fl.y - 18 + Math.sin(t * 4 + k) * 1, 5, 8); }
   }
-  // firma
+  // firma mare cu iconita + semnul plutitor de deasupra (se vad de departe)
   const sp = P(0.5, h - 10);
-  c.font = '800 10px "Baloo 2", sans-serif'; const tw = c.measureText(b.sign).width + 14;
-  c.fillStyle = '#fff8ef'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(sp.x - tw / 2, sp.y - 9, tw, 18, 5); c.fill(); c.stroke();
-  c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(b.sign, sp.x, sp.y + 0.5); c.textBaseline = 'alphabetic';
+  drawSign(c, sp.x, sp.y, b.sign, b.action.icon, '#fff8ef', O, 11);
+  const top = iso(gx + w / 2, gy + d / 2, h + (b.tower ? 120 : 58));
+  drawPOI(c, top.x, top.y, b.action.icon, t, b.awning ?? b.roof, extra.open === false);
   if (extra.open === false) { const lp = P(0.5, 20); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = '#fff'; c.strokeStyle = '#e63946'; c.lineWidth = 3; c.textAlign = 'center'; c.fillStyle = '#e63946'; fillTextIcons(c, '🔒 de vânzare', lp.x, lp.y, 9, true); }
 }
 
@@ -167,6 +172,14 @@ export function drawVillageType(c: CanvasRenderingContext2D, f: Furn, t: number,
       c.fillStyle = '#c0573e'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(p.x - 3, p.y - 76, 6, 66, 2); c.fill(); c.stroke();
       for (let i = 0; i < 8; i++) { const a0 = i * Math.PI / 4, a1 = (i + 1) * Math.PI / 4; c.beginPath(); c.moveTo(p.x, p.y - 100); c.lineTo(p.x + Math.cos(a0) * 54, p.y - 66 + Math.sin(a0) * 22); c.lineTo(p.x + Math.cos(a1) * 54, p.y - 66 + Math.sin(a1) * 22); c.closePath(); c.fillStyle = i % 2 ? '#fff' : '#ff7aa2'; c.fill(); c.stroke(); }
       e(c, p.x, p.y - 102, 4, 4, '#ffd23f');
+      return true;
+    }
+    case 'noticeboard': {
+      for (const u of [0.25, 0.75]) isoBox(c, gx + u - 0.04, gy + 0.45, 0.08, 0.08, 46, boxOf('#8a5d32'));
+      const p = iso(gx + 0.5, gy + 0.5, 40);
+      c.fillStyle = '#c98e5f'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(p.x - 26, p.y - 22, 52, 34, 4); c.fill(); c.stroke();
+      for (const [dx, dy, col] of [[-16, -12, '#fff'], [2, -14, '#ffe680'], [-10, 0, '#ffd6e4'], [8, -2, '#fff']] as const) { c.fillStyle = col; c.fillRect(p.x + dx, p.y + dy, 14, 11); c.fillStyle = '#e63946'; c.beginPath(); c.arc(p.x + dx + 7, p.y + dy + 1, 1.6, 0, 7); c.fill(); }
+      drawPOI(c, p.x, p.y - 48, '📜', t, '#ffd23f');
       return true;
     }
     case 'busstop': {

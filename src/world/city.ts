@@ -2,8 +2,9 @@
 // cafeneaua (job), supermarket, parcul cu inghetata si blocul cu apartamentul vostru.
 // + interiorul apartamentului (zona 'apartment').
 import { AREAS, type Floor, type Furn, type Wall } from './map';
-import { iso, isoBox, shade, type Pt } from './iso';
+import { iso, isoBox, shade, boxOf, type Pt } from './iso';
 import { heartPath } from '../char/draw';
+import { drawPOI, drawSign } from './poi';
 
 const O = '#4a2a22';
 const act = (id: string, label: string, icon: string) => ({ id, label, icon });
@@ -23,10 +24,12 @@ export const CITY_BUILDINGS: CityBuilding[] = [
   { id: 'c-cinema', gx: 14, gy: 6, w: 6, d: 5, h: 104, floors: 3, front: 'y', wall: '#e9e2ff', trim: '#7a5ad6', sign: 'CINEMA', signCol: '#e63946', marquee: true, action: act('c-cinema', 'Cinema (20 lei / doi)', '🎬') },
   { id: 'c-resto', gx: 1, gy: 15, w: 4, d: 4, h: 84, floors: 3, front: 'x', wall: '#fff1d6', trim: '#c0573e', sign: 'Restaurant La Doi', signCol: '#c0573e', awning: '#e07a5f', action: act('c-resto', 'Restaurant (cină romantică)', '🍽️') },
   { id: 'c-cafe', gx: 5, gy: 15, w: 3, d: 4, h: 70, floors: 2, front: 'x', wall: '#f5e1c8', trim: '#8a5d32', sign: 'Cafeneaua', signCol: '#8a5d32', awning: '#c98e5f', action: act('c-cafe', 'Cafeneaua (lucrează ca barista)', '🧋') },
-  { id: 'c-tower', gx: 1, gy: 20, w: 5, d: 4, h: 176, floors: 7, front: 'x', wall: '#e8f1ff', trim: '#5b7fbf', sign: 'Blocul Lalelelor', signCol: '#5b7fbf', action: act('c-tower', 'Blocul cu apartamente', '🏙️') },
+  { id: 'c-tower', gx: 1, gy: 20, w: 4, d: 4, h: 176, floors: 7, front: 'x', wall: '#e8f1ff', trim: '#5b7fbf', sign: 'Blocul Lalelelor', signCol: '#5b7fbf', action: act('c-tower', 'Blocul cu apartamente', '🏙️') },
   { id: 'c-office', gx: 14, gy: 0, w: 5, d: 5, h: 196, floors: 8, front: 'y', wall: '#d8e6f5', trim: '#3f5f8f', sign: 'Turnul de birouri', signCol: '#3f5f8f', action: act('c-office', 'Birourile (lucrează la birou)', '💻') },
-  { id: 'c-flat2', gx: 1, gy: 1, w: 4, d: 4, h: 140, floors: 5, front: 'y', wall: '#fff6b8', trim: '#c9a24a', sign: '', signCol: O, action: act('c-flat', 'Un bloc', '🏙️') },
-  { id: 'c-flat3', gx: 5, gy: 1, w: 4, d: 4, h: 120, floors: 4, front: 'y', wall: '#ffd9c9', trim: '#c0573e', sign: '', signCol: O, action: act('c-flat', 'Un bloc', '🏙️') },
+  { id: 'c-bank', gx: 1, gy: 1, w: 4, d: 4, h: 132, floors: 5, front: 'y', wall: '#f5ead6', trim: '#c9a24a', sign: 'Banca', signCol: '#a07a2a', action: act('c-bank', 'Banca (economii, credit, apartament)', '🏦') },
+  { id: 'c-uni', gx: 5, gy: 1, w: 4, d: 4, h: 122, floors: 4, front: 'y', wall: '#e8e0ff', trim: '#6a5acd', sign: 'Universitatea', signCol: '#5a4abd', action: act('c-uni', 'Universitatea (cursuri, diplome)', '🎓') },
+  { id: 'c-hospital', gx: 6, gy: 20, w: 3, d: 4, h: 112, floors: 4, front: 'x', wall: '#ffffff', trim: '#e63946', sign: 'Spitalul', signCol: '#e63946', action: act('c-hospital', 'Spitalul (doctor, farmacie, lucru)', '🏥') },
+  { id: 'c-mall', gx: 14, gy: 15, w: 4, d: 3, h: 86, floors: 3, front: 'y', wall: '#fff0f5', trim: '#ff7aa2', sign: 'Mall', signCol: '#ff4d8d', awning: '#ffb3c7', action: act('c-mall', 'Mall-ul (mobilă pentru apartament)', '🛍️') },
 ];
 
 const F: Furn[] = [];
@@ -40,7 +43,7 @@ for (const [x, y] of [[9, 5], [12, 8], [3, 14], [8, 14], [16, 14], [12, 18], [9,
 for (const [x, y] of [[13, 24], [20, 21], [21, 25], [14, 26], [19, 26], [7, 26], [1, 26]]) F.push({ id: `c-tree${x}-${y}`, type: 'tree' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 for (const [x, y] of [[18, 21], [14, 24]]) F.push({ id: `c-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța din parc', '🌅') });
 for (const [x, y] of [[20, 23], [16, 25], [13, 21], [6, 25]]) F.push({ id: `c-fl${x}-${y}`, type: 'flowers' as any, gx: x, gy: y, w: 1, d: 1, solid: false });
-for (const [x, y] of [[13, 15], [20, 6], [8, 19]]) F.push({ id: `c-pot${x}-${y}`, type: 'pot' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
+for (const [x, y] of [[13, 15], [20, 6]]) F.push({ id: `c-pot${x}-${y}`, type: 'pot' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 
 AREAS.city = { floor: cityFloor, furniture: F, walls: [], spawn: { x: 19.5, y: 15.5 } };
 
@@ -159,8 +162,11 @@ function drawCityBuilding(c: CanvasRenderingContext2D, b: CityBuilding, t: numbe
   c.strokeStyle = shade(b.wall, 0.7); c.lineWidth = 4; c.beginPath(); c.moveTo(r0.x, r0.y); c.lineTo(r1.x, r1.y); c.lineTo(r2.x, r2.y); c.lineTo(r3.x, r3.y); c.closePath(); c.stroke();
   isoBox(c, gx + w * 0.2, gy + d * 0.2, 0.8, 0.6, 10, { top: '#e6e6ee', left: '#c9ccd6', right: '#b0b4c0' }, h);
   if (b.floors > 4) { const tp = iso(gx + w * 0.7, gy + d * 0.35, h); c.fillStyle = '#c99a5a'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(tp.x - 9, tp.y - 30, 18, 22, 4); c.fill(); c.stroke(); c.beginPath(); c.moveTo(tp.x - 7, tp.y - 8); c.lineTo(tp.x - 7, tp.y); c.moveTo(tp.x + 7, tp.y - 8); c.lineTo(tp.x + 7, tp.y); c.stroke(); }
+  // semnul plutitor deasupra institutiei
+  if (b.sign) { const top = iso(gx + w / 2, gy + d / 2, h + 34); drawPOI(c, top.x, top.y, b.action.icon, t, b.signCol); }
   // firma
-  if (b.sign) {
+  if (b.sign && !b.marquee) { const sp = P(0.5, 46); drawSign(c, sp.x, sp.y, b.sign, b.action.icon, '#fff8ef', b.signCol, 12); }
+  else if (b.sign) {
     const sp = P(0.5, b.marquee ? 58 : 46);
     c.font = `900 ${b.marquee ? 16 : 11}px "Baloo 2", sans-serif`; const tw = c.measureText(b.sign).width + 18;
     c.fillStyle = b.marquee ? '#2b1d40' : '#fff8ef'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(sp.x - tw / 2, sp.y - 11, tw, 22, 6); c.fill(); c.stroke();
@@ -197,6 +203,52 @@ export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, ni
       for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283 + t * 0.4; const k = (t * 1.1 + i / 12) % 1; c.fillStyle = `rgba(180,225,255,${1 - k})`; c.beginPath(); c.arc(p.x + Math.cos(a) * k * 34, p.y - 50 - Math.sin(k * Math.PI) * 26 + k * 40, 2.8, 0, 7); c.fill(); }
       // porumbei
       for (let i = 0; i < 3; i++) { const q = iso(gx - 0.2 + i * 0.5, gy + 2.2 + (i % 2) * 0.3); const hop = Math.abs(Math.sin(t * 3 + i * 2)) * 3; e(c, q.x, q.y - 5 - hop, 6, 4.5, '#b8bcc8', true, 1.2); e(c, q.x + 5, q.y - 9 - hop, 3, 3, '#9aa0ae', true, 1.2); }
+      return true;
+    }
+    // ---- mobila din mall (in apartament)
+    case 'aquarium': {
+      isoBox(c, gx + 0.1, gy + 0.2, 0.8, 0.6, 20, boxOf('#8a5d32'));
+      isoBox(c, gx + 0.12, gy + 0.22, 0.76, 0.56, 30, { top: '#bfe8ffcc', left: '#7ec8f0cc', right: '#5aa8d8cc' }, 20);
+      const p = iso(gx + 0.5, gy + 0.8, 34);
+      for (let i = 0; i < 3; i++) { const fx = p.x - 14 + ((t * 12 + i * 11) % 30), fy = p.y - 6 + i * 6 + Math.sin(t * 3 + i) * 2; c.fillStyle = ['#ff8c3a', '#ffd23f', '#ff5d8f'][i]; c.beginPath(); c.ellipse(fx, fy, 4, 2.5, 0, 0, 7); c.fill(); c.beginPath(); c.moveTo(fx - 4, fy); c.lineTo(fx - 7, fy - 2.5); c.lineTo(fx - 7, fy + 2.5); c.fill(); }
+      for (let i = 0; i < 3; i++) { const k = (t * 0.7 + i / 3) % 1; c.fillStyle = 'rgba(255,255,255,.8)'; c.beginPath(); c.arc(p.x + 10, p.y + 6 - k * 22, 1.5 + k, 0, 7); c.fill(); }
+      return true;
+    }
+    case 'piano': {
+      isoBox(c, gx + 0.1, gy + 0.15, 0.8, 0.7, 40, { top: '#3a3a44', left: '#2b2b33', right: '#22222a' });
+      const a = iso(gx + 0.12, gy + 0.85, 30), b2 = iso(gx + 0.88, gy + 0.85, 30);
+      c.fillStyle = '#fff'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b2.x, b2.y); c.lineTo(b2.x, b2.y + 7); c.lineTo(a.x, a.y + 7); c.closePath(); c.fill(); c.stroke();
+      for (let i = 1; i < 8; i++) { const q = iso(gx + 0.12 + i * 0.095, gy + 0.85, 30); c.fillStyle = '#2b2b33'; c.fillRect(q.x - 1, q.y, 2.5, 4); }
+      return true;
+    }
+    case 'console': {
+      isoBox(c, gx + 0.15, gy + 0.3, 0.7, 0.4, 8, boxOf('#5a6a8a'));
+      const p = iso(gx + 0.5, gy + 0.5, 12); c.fillStyle = '#ff5d8f'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(p.x - 9, p.y - 5, 18, 8, 4); c.fill(); c.stroke();
+      c.fillStyle = '#7ab8ff'; c.beginPath(); c.roundRect(p.x + 12, p.y - 2, 14, 7, 3); c.fill(); c.stroke();
+      return true;
+    }
+    case 'coffeemachine': {
+      isoBox(c, gx + 0.25, gy + 0.25, 0.5, 0.5, 24, { top: '#c9ccd6', left: '#9aa0ae', right: '#8a90a0' }, 24);
+      const p = iso(gx + 0.5, gy + 0.75, 30); c.fillStyle = '#fff'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(p.x - 4, p.y, 8, 7, 2); c.fill(); c.stroke();
+      for (let i = 0; i < 2; i++) { const k = (t * 0.8 + i / 2) % 1; c.globalAlpha = 1 - k; c.strokeStyle = '#c9b8b0'; c.beginPath(); c.moveTo(p.x, p.y - 2 - k * 14); c.quadraticCurveTo(p.x + 4, p.y - 6 - k * 14, p.x, p.y - 10 - k * 14); c.stroke(); c.globalAlpha = 1; }
+      return true;
+    }
+    case 'painting': {
+      for (const u of [0.25, 0.75]) isoBox(c, gx + u - 0.03, gy + 0.5, 0.06, 0.06, 40, boxOf('#8a5d32'));
+      const p = iso(gx + 0.5, gy + 0.5, 46); c.fillStyle = '#ffe1ea'; c.strokeStyle = '#c99a5a'; c.lineWidth = 4; c.beginPath(); c.roundRect(p.x - 20, p.y - 26, 40, 30, 3); c.fill(); c.stroke();
+      heartPath(c, p.x, p.y - 12, 8); c.fillStyle = '#ff4d6d'; c.fill();
+      return true;
+    }
+    case 'bigplant': {
+      isoBox(c, gx + 0.3, gy + 0.3, 0.4, 0.4, 16, boxOf('#e07a5f'));
+      const p = iso(gx + 0.5, gy + 0.5, 22);
+      for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + (i - 3) * 0.38, l = 26 + (i % 2) * 8; c.fillStyle = i % 2 ? '#6bb35a' : '#7cc56b'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.ellipse(p.x + Math.cos(a) * l * 0.55, p.y + Math.sin(a) * l * 0.8 - 4, 6, l * 0.5, a + Math.PI / 2, 0, 7); c.fill(); c.stroke(); }
+      return true;
+    }
+    case 'floorlamp': {
+      isoBox(c, gx + 0.46, gy + 0.46, 0.08, 0.08, 56, boxOf('#5a5a66'));
+      const p = iso(gx + 0.5, gy + 0.5, 62); c.fillStyle = '#ffe9a8'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(p.x - 14, p.y); c.lineTo(p.x + 14, p.y); c.lineTo(p.x + 8, p.y - 18); c.lineTo(p.x - 8, p.y - 18); c.closePath(); c.fill(); c.stroke();
+      if (night > 0.3) { const gr = c.createRadialGradient(p.x, p.y, 2, p.x, p.y, 70); gr.addColorStop(0, 'rgba(255,220,140,.4)'); gr.addColorStop(1, 'rgba(255,220,140,0)'); c.fillStyle = gr; c.beginPath(); c.arc(p.x, p.y, 70, 0, 7); c.fill(); }
       return true;
     }
     case 'trafficlight': {

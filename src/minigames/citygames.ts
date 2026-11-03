@@ -57,11 +57,9 @@ export class CafeGame extends Panel {
     if (this.left <= 0) this.end();
   }
   end() {
-    const s = this.scene; const pay = this.good * 9 + this.tips;
-    s.op({ k: 'money', delta: pay }); s.op({ k: 'stat', key: 'cafeShifts', delta: 1 }); s.op({ k: 'stat', key: 'cityEarned', delta: pay });
-    s.op({ k: 'need', who: s.myId, need: 'energy', delta: -12 }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: 6 });
-    s.log(`${s.me.actor.spec.name} a lucrat o tură la cafenea: ${this.good} cafele perfecte, +${pay} lei ☕`);
-    this.finish(this.good ? 1 + this.good * 0.15 : 0.3, `${this.good} clienți fericiți · +${pay} lei`);
+    // cat de bine ai lucrat: ~7 cafele perfecte intr-o tura = 100%, bacsisul mai adauga
+    const perf = Math.min(1.2, (this.good + this.tips * 0.15) / 7);
+    this.finish(this.good ? 1 + this.good * 0.15 : 0.3, this.scene.finishJob(perf, `${this.good} clienți fericiți`));
   }
   // asezare proportionala: tejgheaua la 42% din inaltime, butoanele jos (merge si pe ecrane scunde)
   get C() { return this.box.y + this.box.h * 0.42; }
@@ -130,11 +128,9 @@ export class OfficeGame extends Panel {
     if (this.left <= 0) this.end();
   }
   end() {
-    const s = this.scene; const pay = Math.max(0, this.good * 6 - this.bad * 2);
-    s.op({ k: 'money', delta: pay }); s.op({ k: 'stat', key: 'officeShifts', delta: 1 }); s.op({ k: 'stat', key: 'cityEarned', delta: pay });
-    s.op({ k: 'need', who: s.myId, need: 'energy', delta: -14 }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: -4 });
-    s.log(`${s.me.actor.spec.name} a muncit la birou: ${this.good} dosare puse la locul lor, +${pay} lei 💼`);
-    this.finish(this.good ? 1 + this.good * 0.08 : 0.3, `${this.good} dosare · +${pay} lei`);
+    const total = this.good + this.bad;
+    const perf = total ? (this.good / total) * Math.min(1.2, this.good / 14 + 0.15) : 0.3;
+    this.finish(this.good ? 1 + this.good * 0.08 : 0.3, this.scene.finishJob(perf, `${this.good} dosare la locul lor`));
   }
   drawer(i: number) { const B = this.box; const bw = (B.w - 80) / 3, dh = Math.min(80, B.h * 0.15); return { x: B.x + 20 + i * (bw + 20), y: B.y + B.h - 40 - dh, w: bw, h: dh }; }
   put(i: number) {

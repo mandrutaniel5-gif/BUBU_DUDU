@@ -263,3 +263,8 @@ html.h500 .toast { font-size:12px; padding:3px 10px; border-width:2.5px; border-
 html.h500 .ridebar { bottom:10px; left:auto; right:10px; transform:none; width:min(400px, calc(var(--gw, 100vw) * .58)); padding:5px 8px; gap:5px; }
 html.h500 .ridebar .rt { font-size:12px; } html.h500 .ridebar button { font-size:12.5px; padding:4px 9px; }
 html.h500 .hud.riding .actions { display:none; }
+
+/* discutia cu un satean */
+.villager { display:flex; gap:12px; align-items:center; }
+.villager img { width:96px; height:96px; flex:0 0 auto; border:3px solid var(--ink); border-radius:50%; background:#fff6d6; object-fit:cover; }
+.villager .say { font-weight:700; font-style:italic; margin:4px 0 0; }

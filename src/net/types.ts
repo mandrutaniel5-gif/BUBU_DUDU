@@ -34,7 +34,8 @@ export type WorldOp =
   | { k: 'npcServe'; id: string }
   | { k: 'clock'; gameMin: number }
   | { k: 'plot'; key: string; plot: unknown }
-  | { k: 'plots'; all: unknown };
+  | { k: 'plots'; all: unknown }
+  | { k: 'town'; key: string; value: unknown };
 
 export type NetStatus = 'offline' | 'connecting' | 'online' | 'error';
 

@@ -1,3 +1,7 @@
+import * as Town from './townctl';
+import * as TownUI from '../ui/townui';
+import { VILLAGERS, DECOR } from '../game/town';
+import type { ShopConfig } from '../minigames/towngames';
 import { makeCars, updateCars, drawCar, carPos, CITY_PATHS, type Car } from '../world/city';
 import { fillTextIcons } from '../ui/icons';
 // Scena principala: casa izometrica, cei doi ursuleti, nevoi, activitati, multiplayer.
@@ -90,7 +94,7 @@ export class WorldScene implements Scene {
   morningT = 0;
   area = 'home';
   travel: { t: 0 | number; to: string; from?: string; switched?: boolean; vehicle?: 'tractor' | 'bike' | 'scooter' | 'bus' | 'door'; withPartner?: boolean } | null = null;
-  walkers: { a: Actor; x: number; y: number; tx: number; ty: number; t: number; greetT: number }[] = [];
+  walkers: { a: Actor; x: number; y: number; tx: number; ty: number; t: number; greetT: number; vid?: string; name?: string }[] = [];
   critters: Critter[] = [];
   timeMult = 1;
   npcs: Npc[] = []; npcSpawnT = 6;
@@ -413,8 +417,11 @@ export class WorldScene implements Scene {
   }
   nearPartner() { return this.sameArea() && Math.hypot(this.me.gx - this.partner.gx, this.me.gy - this.partner.gy) < 1.7; }
 
+  /** cel mai apropiat satean cu care poti vorbi */
+  nearVillager() { if (this.area !== 'village') return null; let best: typeof this.walkers[0] | null = null, bd = 1.5; for (const v of this.walkers) { if (!v.vid) continue; const d = Math.hypot(v.x - this.me.gx, v.y - this.me.gy); if (d < bd) { bd = d; best = v; } } return best; }
   doAction() {
     if (this.me.activity) { this.stopActivity(this.me); return; }
+    const vl = this.nearVillager(); if (vl && !this.nearestFurn(this.me)) { vl.t = 4; vl.tx = vl.x; vl.ty = vl.y; vl.a.play('wave'); TownUI.openVillager(this, vl.vid!); return; }
     const cr = this.nearCritter(); if (cr) { this.petCritter(cr); return; }
     const f = this.nearestFurn(this.me);
     if (f) this.interact(this.me, f);
@@ -719,7 +726,7 @@ export class WorldScene implements Scene {
     if (name === 'home') this.syncPlaced(); else this.nav = new Nav([]);
     this.floor = renderFloor();
     const from = this.travel?.from;
-    const sp = name === 'village' && from === 'city' ? { x: 19.4, y: 12.6 } : name === 'city' && from === 'apartment' ? { x: 6.7, y: 22.5 } : AREAS[name].spawn;
+    const sp = name === 'village' && from === 'city' ? { x: 19.4, y: 12.6 } : name === 'city' && from === 'apartment' ? { x: 5.5, y: 22.4 } : AREAS[name].spawn;
     this.me.gx = sp.x; this.me.gy = sp.y; this.me.z = 0;
     (this.w.chars[this.myId] as any).area = name; this.sendCharSync();
     if (this.travel?.withPartner) { this.aiArea = name; this.stopActivity(this.partner); this.partner.path = []; this.partner.gx = sp.x + 0.8; this.partner.gy = sp.y + 0.3; this.partner.z = 0; }
@@ -731,7 +738,7 @@ export class WorldScene implements Scene {
     }
     if (name === 'village') { this.spawnWalkers(); this.op({ k: 'stat', key: 'villageTrips', delta: 1 }); if (this.travel?.vehicle === 'scooter') this.op({ k: 'stat', key: 'scooterRides', delta: 1 }); }
     if (name === 'city') { this.spawnWalkers(); this.cars = makeCars(); if (from !== 'apartment') this.op({ k: 'stat', key: 'cityTrips', delta: 1 }); }
-    if (name === 'apartment') this.op({ k: 'stat', key: 'aptVisits', delta: 1 });
+    if (name === 'apartment') { this.op({ k: 'stat', key: 'aptVisits', delta: 1 }); this.syncDecor(); }
     if (name === 'forest') { this.spawnCritters(); this.op({ k: 'stat', key: 'forestTrips', delta: 1 }); this.log(`${this.me.actor.spec.name} a plecat cu tractorașul la pădure 🚜🌲`); }
     const c = iso(this.me.gx, this.me.gy, 30); this.cam.x = c.x; this.cam.y = c.y;
   }
@@ -799,6 +806,8 @@ export class WorldScene implements Scene {
       else if (i % 3 === 0) a.outfit = { head: i % 2 ? 'palarie' : 'none', face: 'none', neck: 'none', body: ['vesta', 'salopeta', 'tricou', 'rochita'][i % 4] };
       this.walkers.push({ a, x: p.x + (Math.random() - 0.5), y: p.y + (Math.random() - 0.5) * 0.6, tx: p.x, ty: p.y, t: Math.random() * 3, greetT: 0 });
     }
+    // in sat: satenii cu nume (vorbesti cu ei, au cereri, va imprieteniti)
+    if (this.area === 'village') this.walkers.forEach((wk, i) => { const v = VILLAGERS[i % VILLAGERS.length]; if (i >= VILLAGERS.length) return; wk.vid = v.id; wk.name = v.name; wk.a.spec = NPC_SPECS[v.spec]; if (v.spec === 'granny') wk.a.outfit = { head: 'batic', face: 'none', neck: 'none', body: 'ie' }; });
   }
   updateWalkers(dt: number) {
     if (this.area !== 'village' && this.area !== 'city') return;
@@ -818,9 +827,13 @@ export class WorldScene implements Scene {
   villageAction(id: string, f: Furn) {
     const st = this.w.stats;
     switch (id) {
-      case 'v-grocery': this.hud.openVillage('shop'); break;
+      case 'v-grocery': Town.villageGrocery(this); break;
+      case 'v-post': TownUI.openJob(this, 'post'); break;
+      case 'v-bakery': this.choice('🥖 Brutăria', 'Cumperi pâine sau lucrezi o tură?', [['🛒', 'Cumpără pâine', () => Town.villageBakeryShop(this)], ['👩‍🍳', 'Lucrează ca brutar' + (this.myId === 'bubu' ? 'iță' : ''), () => TownUI.openJob(this, 'bakery')]]); break;
+      case 'v-clinic': this.choice('🩺 Dispensarul satului', 'Doctorița Rita vă îngrijește și vă dă medicamente.', [['🩺', 'Consult (vindecă boala) · 20 lei', () => { const e = Town.cure(this, 20); this.hud.toast(e ?? '🩺 Gata, sănătoși! Să nu mai răciți 💕'); Sfx.play(e ? 'bad' : 'good'); }], ['💊', 'Farmacia', () => Town.pharmacy(this, false)]]); break;
+      case 'v-board': TownUI.openBoard(this); break;
       case 'v-clothes': this.hud.openClothes('sat'); break;
-      case 'v-market': this.hud.openVillage('sell'); break;
+      case 'v-market': Town.villageMarket(this); break;
       case 'v-hall': this.hud.openHall(); break;
       case 'v-home': this.boardBest(); break;
       case 'v-bus': {
@@ -852,14 +865,21 @@ export class WorldScene implements Scene {
   cityAction(id: string, f: Furn) {
     const st = this.w.stats, money = this.w.money ?? 0;
     const pay = (n: number, what: string) => { if (money < n) { this.hud.toast(`Nu ajung banii: ${what} costă ${n} lei 💰`); Sfx.play('bad'); return false; } this.op({ k: 'money', delta: -n }); Sfx.play('coin'); return true; };
-    const tired = () => { if (this.w.chars[this.myId].needs.energy < 20) { this.hud.toast(`Ești prea ${g(this.myId, 'obosit', 'obosită')} ca să muncești 😴 Odihnește-te întâi`); Sfx.play('bad'); return true; } return false; };
     const h = this.w.minutes / 60;
     switch (id) {
       case 'c-bus': this.goArea('village'); break;
       case 'c-boutique': this.hud.openClothes('oras'); break;
-      case 'c-super': this.hud.openVillage('city'); break;
-      case 'c-cafe': if (h < 7 || h >= 21) { this.hud.toast('☕ Cafeneaua e deschisă între 7:00 și 21:00'); return; } if (!tired()) this.startCustom('cafe'); break;
-      case 'c-office': if (h < 8 || h >= 18) { this.hud.toast('💼 La birou se lucrează între 8:00 și 18:00'); return; } if (!tired()) this.startCustom('office'); break;
+      case 'c-super': Town.citySuper(this); break;
+      case 'c-cafe': TownUI.openJob(this, 'cafe'); break;
+      case 'c-office': TownUI.openJob(this, 'office'); break;
+      case 'c-bank': TownUI.openBank(this); break;
+      case 'c-uni': TownUI.openUni(this); break;
+      case 'c-mall': Town.cityMall(this); break;
+      case 'c-hospital': this.choice('🏥 Spitalul orașului', 'Doctori, farmacie și locuri de muncă.', [['🩺', 'Consult (vindecă boala) · 30 lei', () => { const e = Town.cure(this, 30); this.hud.toast(e ?? '🩺 Sănătoși tun! 💪'); Sfx.play(e ? 'bad' : 'good'); }], ['💊', 'Farmacia', () => Town.pharmacy(this, true)], ['🩹', 'Lucrează la spital', () => TownUI.openJob(this, 'nurse')]]); break;
+      case 'a-aquarium': this.decorUse('aquarium'); break;
+      case 'a-piano': this.decorUse('piano'); break;
+      case 'a-console': this.decorUse('console'); break;
+      case 'a-coffee': this.decorUse('coffee'); break;
       case 'c-cinema': if (pay(20, 'Cinema-ul (2 bilete)')) this.startCustom('cinema'); break;
       case 'c-resto': if (h < 11) { this.hud.toast('🍽️ Restaurantul se deschide la 11:00'); return; } if (pay(40, 'Cina pentru doi')) this.startCustom('resto'); break;
       case 'c-ice':
@@ -868,11 +888,39 @@ export class WorldScene implements Scene {
         if (this.partner.control !== 'remote' && this.sameArea()) this.op({ k: 'need', who: this.partner.id, need: 'fun', delta: 15 });
         this.me.actor.play('dance_hop'); { const p = iso(f.gx + 0.5, f.gy + 0.5, 70); this.fx.text(p.x, p.y, 'Mmm, înghețată! 🍦', '#ff4d6d', 0.9); } break;
       case 'c-tower':
-        if (!st.apartment) { this.hud.openApartment(); return; }
+        if (!st.apartment) { TownUI.openBank(this); this.hud.toast('🏙️ Apartamentele se cumpără de la bancă (pe loc sau cu credit)'); return; }
         this.goArea('apartment'); break;
       case 'a-exit': this.goArea('city'); break;
     }
     void f;
+  }
+  // ---- sat / oras: joburi, cursuri, magazine
+  jobCtx: { id: string } | null = null;
+  courseId: string | null = null;
+  shopCfg: ShopConfig | null = null;
+  finishJob(perf: number, detail: string) { return Town.finishJob(this, perf, detail); }
+  finishCourse(id: string, pass: boolean, good: number) { return Town.finishCourse(this, id, pass, good); }
+  /** fereastra mica cu cateva optiuni (ex. Brutaria: cumpar / lucrez) */
+  choice(title: string, sub: string, opts: [string, string, () => void][]) {
+    const m = this.hud.modal(`<h3>${title}</h3><p class="sub">${sub}</p><div class="shop">${opts.map(([ic, lb], i) => `<button data-ch="${i}"><span>${ic}</span><b>${lb}</b></button>`).join('')}</div>`);
+    m.querySelectorAll('[data-ch]').forEach(b => b.addEventListener('click', () => { m.classList.add('hidden'); opts[+(b as HTMLElement).dataset.ch!][2](); }));
+  }
+  /** mobila cumparata de la mall, in apartament */
+  decorUse(id: string) {
+    const me = this.myId, near = this.sameArea() && Math.hypot(this.partner.gx - this.me.gx, this.partner.gy - this.me.gy) < 3;
+    const op = (need: string, d: number, who = me) => this.op({ k: 'need', who, need, delta: d });
+    if (id === 'aquarium') { op('fun', 10); op('love', 2); this.me.actor.play('love'); this.hud.toast('🐟 Peștișorii înoată liniștiți… ce relaxant'); }
+    if (id === 'piano') { op('fun', 14); this.me.actor.play('dance_wave'); Sfx.play('good'); if (near) { op('love', 12); op('love', 12, this.partner.id); this.hud.toast('🎹 Un cântec pentru doi 💕'); } else this.hud.toast('🎹 Cânți o melodie frumoasă'); this.op({ k: 'stat', key: 'pianoPlays', delta: 1 }); }
+    if (id === 'console') { if (this.w.chars[me].needs.energy < 10) { this.hud.toast('😴 Prea obosit' + (me === 'bubu' ? 'ă' : '') + ' pentru jocuri'); return; } op('fun', 22); op('energy', -5); if (near) { op('fun', 22, this.partner.id); op('love', 5); } this.me.actor.play('laugh'); this.hud.toast(near ? '🎮 Meci în doi! Cine câștigă? 😄' : '🎮 Ce joc bun!'); }
+    if (id === 'coffee') { if ((this.w.stats[`coffee-${me}-${this.w.day}`] ?? 0) > 0) { this.hud.toast('☕ Ai băut deja cafeaua de azi'); return; } this.op({ k: 'stat', key: `coffee-${me}-${this.w.day}`, delta: 1 }); op('energy', 18); this.me.actor.play('boba'); this.hud.toast('☕ Cafeluța de dimineață: +energie!'); }
+  }
+  /** pune mobila cumparata in apartament */
+  syncDecor() {
+    if (this.area !== 'apartment') return;
+    for (let i = FURNITURE.length - 1; i >= 0; i--) if (FURNITURE[i].id.startsWith('d-')) FURNITURE.splice(i, 1);
+    const owned = (this.w.town?.decor as string[] | undefined) ?? [];
+    for (const d of DECOR) if (owned.includes(d.id)) FURNITURE.push({ id: 'd-' + d.id, type: d.type as any, gx: d.gx, gy: d.gy, w: d.w, d: d.d, solid: true, action: d.action });
+    this.nav = new Nav([]);
   }
   /** scara la care desenam minijocurile (1 pe ecrane normale, <1 pe ecrane scunde) */
   miniScale() { return Math.min(1, this.game.h / 470); }
@@ -1261,6 +1309,7 @@ export class WorldScene implements Scene {
         }
       }
       this.checkGoals();
+      Town.dailyTick(this);
       this.growPlots();
       if (this.isHost && this.partnerOnline) { this.net.sendEvent({ t: 'op', op: { k: 'npcs', list: this.npcPublic() } }); this.net.sendEvent({ t: 'op', op: { k: 'clock', gameMin: this.w.gameMin ?? 0 } }); }
     }
@@ -1609,7 +1658,17 @@ export class WorldScene implements Scene {
     }
     if (home) for (const [k, p] of Object.entries(this.w.plots ?? {})) { if (!p.crop) continue; const [x, y] = k.split(',').map(Number); items.push({ x0: x + 0.3, y0: y + 0.3, x1: x + 0.7, y1: y + 0.7, draw: () => drawCropPlant(ctx, x, y, p as Plot, this.w.gameMin ?? 0, this.time) }); }
     if (this.area === 'city') for (const car of this.cars) { const cp = carPos(car); items.push({ x0: cp.x - 0.5, y0: cp.y - 0.3, x1: cp.x + 0.5, y1: cp.y + 0.3, draw: () => drawCar(ctx, car, this.time) }); }
-    if (this.area === 'village' || this.area === 'city') for (const v of this.walkers) items.push({ x0: v.x - 0.2, y0: v.y - 0.2, x1: v.x + 0.2, y1: v.y + 0.2, draw: () => v.a.draw(ctx) });
+    if (this.area === 'village' || this.area === 'city') for (const v of this.walkers) items.push({ x0: v.x - 0.2, y0: v.y - 0.2, x1: v.x + 0.2, y1: v.y + 0.2, draw: () => {
+      v.a.draw(ctx);
+      // numele sateanului (cand esti aproape) + inimioare de prietenie
+      if (v.name && Math.hypot(v.x - this.me.gx, v.y - this.me.gy) < 5) {
+        const q = iso(v.x, v.y); const fr = Math.min(5, Math.floor((this.w.stats['friend-' + v.vid] ?? 0) / 2));
+        ctx.font = '800 10.5px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.fillStyle = '#7a3a5a';
+        const lb = v.name + (fr ? ' ' + '💗'.repeat(fr) : ''); ctx.strokeText(lb, q.x, q.y + 14); ctx.fillText(lb, q.x, q.y + 14);
+        const hasQ = (this.w.town?.quests as any[] | undefined)?.some(x => x.who === v.vid && !x.done && x.day === this.w.day);
+        if (hasQ) { const by = q.y - 92 * ACTOR_SCALE * 0.92 - 18 + Math.sin(this.time * 4) * 2; ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = '#4a2a22'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q.x, by, 9, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#4a2a22'; ctx.font = '900 13px "Baloo 2", sans-serif'; ctx.textBaseline = 'middle'; ctx.fillText('!', q.x, by + 1); ctx.textBaseline = 'alphabetic'; }
+      }
+    } });
     for (const c of this.critters) if (this.area === 'forest') items.push({ x0: c.x - 0.2, y0: c.y - 0.2, x1: c.x + 0.2, y1: c.y + 0.2, draw: () => { const q = iso(c.x, c.y); drawCritter(ctx, c, q.x, q.y, this.time); } });
     if (home) for (const n of this.npcs) items.push({ x0: n.x - 0.2, y0: n.y - 0.2, x1: n.x + 0.2, y1: n.y + 0.2, draw: () => this.drawNpc(ctx, n) });
     for (const p of [this.me, this.partner]) {

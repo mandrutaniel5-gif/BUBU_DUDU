@@ -117,7 +117,7 @@ export class MergeGame extends Panel {
     const grassy = Object.keys(this.scene.w.grass ?? {}).length > 15;
     if (grassy) pay = Math.round(pay * 0.8);
     if (this.scene.myId === 'bubu') pay = Math.round(pay * 1.2); // e taraba ei :)
-    if (this.scene.storeMode === 'florarie') pay = Math.round(pay * 1.5);
+    if (this.scene.storeMode === 'florarie') pay = Math.round(pay * ((this.scene.w.stats['dipl-florist-' + this.scene.myId] ?? 0) > 0 ? 1.8 : 1.5)); // cursul de florist: +30%
     this.scene.serveNpc(npcId, pay);
     this.served++; this.earned += pay; this.paw = 1;
     Sfx.play('coin');
