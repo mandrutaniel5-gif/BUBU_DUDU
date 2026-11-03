@@ -3,3 +3,4 @@ dist
 out
 *.log
 server/data/
+dist-single

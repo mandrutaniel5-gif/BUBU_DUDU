@@ -7,12 +7,14 @@
     "dev": "vite --host",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
-    "server": "node server/server.mjs"
+    "server": "node server/server.mjs",
+    "build:single": "vite build -c vite.single.config.ts"
   },
   "devDependencies": {
+    "firebase": "^13.2.0",
     "typescript": "^5.9.3",
     "vite": "^8.3.5",
-    "firebase": "^13.2.0"
+    "vite-plugin-singlefile": "^2.3.4"
   },
   "dependencies": {
     "ws": "^8.22.1"
