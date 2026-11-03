@@ -34,6 +34,14 @@ export const SHOP_BUY: ShopItem[] = [
   { id: 'soil', label: 'Sac de pământ (1 răzor nou)', icon: '🟫', price: 15, give: { soil: 1 } },
   ...SHOP_ONLINE.filter(i => !i.id.startsWith('seed_')),
 ];
+/** supermarketul din oras: mancare gata, dulciuri, plus tot ce e in sat */
+export const SHOP_CITY: ShopItem[] = [
+  { id: 'pizza', label: 'Pizza familială (x3 porții)', icon: '🍕', price: 20, give: { meals: 3 } },
+  { id: 'bigcart', label: 'Coș mare de cumpărături (x6 porții)', icon: '🛒', price: 36, give: { meals: 6 } },
+  { id: 'cake', label: 'Tort de ciocolată (x2 porții)', icon: '🍰', price: 16, give: { meals: 2 } },
+  { id: 'coal', label: 'Brichete pentru sobă (x8 lemne)', icon: '📦', price: 18, give: { wood: 8 } },
+  ...SHOP_BUY,
+];
 export const SHOP_SELL = [
   ...Object.values(CROPS).map(c => ({ id: c.id, label: c.name, icon: (INV_INFO[c.id]?.icon ?? '🌱'), price: c.sell })),
   { id: 'fish', label: 'Pește', icon: '🐟', price: 5 },
@@ -101,7 +109,7 @@ export const CHAPTERS: Chapter[] = [
     ],
   },
   {
-    id: 3, title: 'Capitolul 3 · Satul', done: '🏙️ Satul vă iubește! Orașul vă așteaptă (în curând)',
+    id: 3, title: 'Capitolul 3 · Satul', done: '🏙️ Satul vă iubește! Luați autobuzul din sat spre oraș 🚌',
     intro: 'Cu bicicleta sau scuterul ajungeți în sat: magazine, croitorie, parc, școală. Bubu își deschide o florărie, Dudu o tâmplărie!',
     goals: [
       { id: 'village1', icon: '🏘️', text: 'Prima vizită în sat', hint: 'Indicatorul „Spre sat” de lângă drum', done: w => st(w, 'villageTrips') > 0, reward: { money: 10 } },
@@ -112,6 +120,21 @@ export const CHAPTERS: Chapter[] = [
       { id: 'florarie', icon: '💐', text: 'Deschide florăria lui Bubu', hint: 'Primăria → 200 lei', done: w => st(w, 'florarie') > 0, reward: { hearts: 10 } },
       { id: 'workshop', icon: '🪚', text: 'Deschide tâmplăria lui Dudu', hint: 'Primăria → 200 lei + 15 lemne', done: w => st(w, 'workshop') > 0, reward: { hearts: 10 } },
       { id: 'craft3', icon: '🪑', text: 'Meșterește 3 lucruri în tâmplărie', hint: 'Scăunel, măsuță, căsuță pentru păsări…', done: w => st(w, 'crafted') >= 3, reward: { money: 30 } },
+    ],
+  },
+  {
+    id: 4, title: 'Capitolul 4 · Orașul', done: '🏡 V-ați mutat la oraș! Povestea continuă…',
+    intro: 'Autobuzul din sat vă duce la oraș: blocuri înalte, mașini, cinema, restaurant. Munciți la cafenea sau la birou, ieșiți la întâlniri și cumpărați-vă un apartament!',
+    goals: [
+      { id: 'city1', icon: '🚌', text: 'Prima călătorie cu autobuzul la oraș', hint: 'Stația de autobuz din sat (5 lei de persoană)', done: w => st(w, 'cityTrips') > 0, reward: { money: 10 } },
+      { id: 'cafe3', icon: '☕', text: 'Lucrează 3 ture la cafenea', hint: 'Cafeneaua (7:00-21:00) — fă cafelele din comandă', done: w => st(w, 'cafeShifts') >= 3, reward: { money: 30 } },
+      { id: 'office1', icon: '💼', text: 'O zi de muncă la birou', hint: 'Turnul de birouri (8:00-18:00)', done: w => st(w, 'officeShifts') >= 1, reward: { money: 20 } },
+      { id: 'elegant', icon: '🎩', text: 'Cumpără haine elegante', hint: 'Buticul Elegant: rochie de seară, costum, joben', done: w => ['rochie', 'costum', 'joben', 'crown'].some(i => Object.values(w.chars).some(c => (c as any).owned?.includes(i))), reward: { hearts: 10 } },
+      { id: 'cinema', icon: '🎬', text: 'Mergeți la film împreună', hint: 'Cinema (20 lei) — mână în mână la scena cu inimioara', done: w => st(w, 'cinema') > 0, reward: { hearts: 10 } },
+      { id: 'resto', icon: '🕯️', text: 'Cină romantică la restaurant', hint: 'Restaurant La Doi (40 lei) — ghicește ce-și dorește partenerul', done: w => st(w, 'restoDates') > 0, reward: { hearts: 15 } },
+      { id: 'icecream', icon: '🍦', text: 'Înghețată în parc', hint: 'Căruciorul cu înghețată din parc (6 lei)', done: w => st(w, 'icecream') > 0, reward: { hearts: 5 } },
+      { id: 'apartment', icon: '🏙️', text: 'Cumpărați un apartament', hint: 'Blocul Lalelelor — 800 lei', done: w => st(w, 'apartment') > 0, reward: { hearts: 25 } },
+      { id: 'aptnight', icon: '🛏️', text: 'Prima noapte în apartamentul vostru', hint: 'Culcați-vă în patul cel mare din apartament', done: w => st(w, 'aptNights') > 0, reward: { money: 50, hearts: 20 } },
     ],
   },
 ];

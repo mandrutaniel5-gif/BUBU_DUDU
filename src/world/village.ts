@@ -1,3 +1,4 @@
+import { fillTextIcons } from '../ui/icons';
 // Satul (Capitolul 3): strazi pavate, piateta cu fantana, magazine, primarie, scoala, parc, florarie, tamplarie.
 import { AREAS, type Floor, type Furn } from './map';
 import { iso, isoBox, boxOf, shade, tilePath, type Pt } from './iso';
@@ -104,7 +105,7 @@ function drawBuilding(c: CanvasRenderingContext2D, b: BuildingDef, t: number, ni
   c.font = '800 10px "Baloo 2", sans-serif'; const tw = c.measureText(b.sign).width + 14;
   c.fillStyle = '#fff8ef'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(sp.x - tw / 2, sp.y - 9, tw, 18, 5); c.fill(); c.stroke();
   c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(b.sign, sp.x, sp.y + 0.5); c.textBaseline = 'alphabetic';
-  if (extra.open === false) { const lp = P(0.5, 20); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = '#fff'; c.strokeStyle = '#e63946'; c.lineWidth = 3; c.strokeText('🔒 de vânzare', lp.x, lp.y); c.fillStyle = '#e63946'; c.fillText('🔒 de vânzare', lp.x, lp.y); }
+  if (extra.open === false) { const lp = P(0.5, 20); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = '#fff'; c.strokeStyle = '#e63946'; c.lineWidth = 3; c.textAlign = 'center'; c.fillStyle = '#e63946'; fillTextIcons(c, '🔒 de vânzare', lp.x, lp.y, 9, true); }
 }
 
 export function drawVillageType(c: CanvasRenderingContext2D, f: Furn, t: number, night: number, extra: Record<string, boolean>): boolean {

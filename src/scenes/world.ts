@@ -1,3 +1,5 @@
+import { makeCars, updateCars, drawCar, carPos, CITY_PATHS, type Car } from '../world/city';
+import { fillTextIcons } from '../ui/icons';
 // Scena principala: casa izometrica, cei doi ursuleti, nevoi, activitati, multiplayer.
 import { Actor } from '../char/actor';
 import { ANIMS, ANIM_LIST } from '../char/anims';
@@ -17,7 +19,7 @@ import { drawItem, MAX_LVL } from '../world/items';
 import { CROPS, WET_MIN, plotStage, catCount, catPick, seedKey, drawPlotSoil, drawCropPlant, type Plot } from '../world/garden';
 import { ROAD_Y } from '../world/map';
 import { HOUSE, floorAt, AREAS, setArea } from '../world/map';
-import { drawTravelScene, irisWipe, drawScooterSide } from '../world/vehicles';
+import { drawTravelScene, irisWipe, drawScooterSide, drawTandemSide } from '../world/vehicles';
 import { VILLAGE_PATHS } from '../world/village';
 import { drawCritter, CRITTER_NAMES, type Critter, type CritterKind } from '../world/forest';
 import { ACTIVITIES, type Activity } from '../game/activities';
@@ -45,7 +47,8 @@ interface Pawn {
   fleeT?: number;
   lastFurn?: string;
   pendingCrop?: string;
-  riding?: boolean;     // conduce scuterul
+  riding?: boolean;     // conduce un vehicul
+  rideKind?: 'scooter' | 'bike';
   passenger?: boolean;  // sta in spate pe scuterul celuilalt
   miniObj?: any; miniScore?: number;
 }
@@ -60,6 +63,7 @@ export const PAIRS = [
   { id: 'fartatk', label: 'Atac cu pârț', icon: '☁️', aAnim: 'fartback', bAnim: 'faint', delay: 1.0, needs: { fun: 18 }, needsB: { fun: -4, hygiene: -6 }, fart: 30 },
   { id: 'tickle', label: 'Gâdilat', icon: '🤭', aAnim: 'laugh', bAnim: 'laugh', delay: 0.2, needs: { fun: 12, love: 6 }, needsB: { fun: 14, love: 6 } },
   { id: 'steal', label: 'Fură gustarea', icon: '🍰', aAnim: 'shakebutt', bAnim: 'angry', delay: 0.3, needs: { fun: 14, hunger: 6 }, needsB: { fun: -3 } },
+  { id: 'pinch', label: 'Astupă-i nasul (sforăie!)', icon: '😴', aAnim: 'wave', bAnim: 'act_sleepbed', delay: 0, needs: {}, needsB: {} },
   { id: 'ride', label: 'Urcă pe scuter', icon: '🛵', aAnim: 'wave', bAnim: 'love', delay: 0.2, needs: { fun: 5 }, needsB: { fun: 8, love: 4 } },
   { id: 'care', label: 'Îngrijește', icon: '🩹', aAnim: 'love', bAnim: 'shy', delay: 0.3, needs: { love: 8 }, needsB: { health: 26, love: 12 }, sickOnly: true },
 ];
@@ -80,8 +84,11 @@ export class WorldScene implements Scene {
   partnerOnline = false;
   sickT = 4;
   econT = 1;
+  cars: Car[] = [];
+  joyRun = false;
+  morningT = 0;
   area = 'home';
-  travel: { t: 0 | number; to: string; from?: string; switched?: boolean; vehicle?: 'tractor' | 'bike' | 'scooter'; withPartner?: boolean } | null = null;
+  travel: { t: 0 | number; to: string; from?: string; switched?: boolean; vehicle?: 'tractor' | 'bike' | 'scooter' | 'bus' | 'door'; withPartner?: boolean } | null = null;
   walkers: { a: Actor; x: number; y: number; tx: number; ty: number; t: number; greetT: number }[] = [];
   critters: Critter[] = [];
   timeMult = 1;
@@ -206,6 +213,9 @@ export class WorldScene implements Scene {
   syncPlaced() {
     if (this.area !== 'home') return;
     for (let i = FURNITURE.length - 1; i >= 0; i--) if (FURNITURE[i].id === 'h-tractor' || FURNITURE[i].id === 'h-wood') FURNITURE.splice(i, 1);
+    for (let i = FURNITURE.length - 1; i >= 0; i--) if (FURNITURE[i].id === 'h-bike' || FURNITURE[i].id === 'h-scooter') FURNITURE.splice(i, 1);
+    if ((this.w.stats.bike ?? 0) > 0) FURNITURE.push({ id: 'h-bike', type: 'parkedbike' as any, gx: 7, gy: 20, w: 1, d: 1, solid: false, action: { id: 'ridebike', label: 'Urcă pe bicicletă', icon: '🚲' } });
+    if ((this.w.stats.scooter ?? 0) > 0) FURNITURE.push({ id: 'h-scooter', type: 'parkedscooter' as any, gx: 8, gy: 20, w: 1, d: 1, solid: false, action: { id: 'ridescooter', label: 'Urcă pe scuter', icon: '🛵' } });
     if (this.chapter >= 2) {
       FURNITURE.push({ id: 'h-tractor', type: 'tractor' as any, gx: 18, gy: 15, w: 2, d: 1, solid: true, action: { id: 'forest', label: 'Spre pădure cu tractorașul', icon: '🚜' } });
       FURNITURE.push({ id: 'h-wood', type: 'logpile' as any, gx: 17, gy: 15, w: 1, d: 1, solid: true, action: { id: 'sellwood', label: 'Vinde lemne la cherestea', icon: '💰' } });
@@ -385,7 +395,6 @@ export class WorldScene implements Scene {
   actionFor(f: Furn): { id: string; label: string; icon: string } | null {
     if (!f.action) return null;
     if (f.id === 'toilet' && this.w.furn.clogged) return { id: 'unclog', label: 'Desfundă toaleta!', icon: '🪠' };
-    if (f.id === 'bed' && this.partner.activity?.a.id === 'sleep' && !this.me.activity) return { id: 'pinch', label: 'Astupă-i nasul 🤏', icon: '😴' };
     if (f.id === 'stand') {
       if (this.w.furn.standBroken) return { id: 'repairstand', label: 'Repară taraba (6 🪵)', icon: '🔨' };
       if (!this.w.furn.standOpen) return { id: 'openstand', label: 'Deschide taraba', icon: '🧺' };
@@ -409,7 +418,7 @@ export class WorldScene implements Scene {
   }
 
   interact(pawn: Pawn, f: Furn) {
-    if (pawn.riding && !['village', 'v-home', 'forest', 'gohome'].includes(this.actionFor(f)?.id ?? '')) { pawn.riding = false; if (this.partner.passenger && pawn === this.me) { this.partner.passenger = false; this.partner.gx = pawn.gx + 0.6; this.partner.gy = pawn.gy + 0.3; } }
+    if (pawn.riding && !['village', 'v-home', 'forest', 'gohome', 'ridebike', 'ridescooter'].includes(this.actionFor(f)?.id ?? '')) { pawn.riding = false; if (this.partner.passenger && pawn === this.me) { this.partner.passenger = false; this.partner.gx = pawn.gx + 0.6; this.partner.gy = pawn.gy + 0.3; } }
     const act = this.actionFor(f); if (!act) return;
     pawn.path = []; pawn.pendingInteract = null;
     if (act.id === 'lamp') { this.op({ k: 'furn', key: 'lampOn', value: !this.w.furn.lampOn }); Sfx.play('click'); return; }
@@ -418,6 +427,7 @@ export class WorldScene implements Scene {
     if (act.id === 'toilet' && this.w.furn.clogged) return;
     if (act.id === 'village') { if (pawn === this.me) { if ((this.w.stats.bike ?? 0) > 0 || (this.w.stats.scooter ?? 0) > 0) this.goArea('village'); else { this.hud.toast('🚲 Satul e departe! Aveți nevoie de o bicicletă sau un scuter (laptopul → Vehicule)'); Sfx.play('bad'); } } return; }
     if (act.id.startsWith('v-') && pawn === this.me) { this.villageAction(act.id, f); return; }
+    if ((act.id.startsWith('c-') || act.id === 'a-exit') && pawn === this.me) { this.cityAction(act.id, f); return; }
     if (act.id === 'growing') return;
     if (act.id === 'plant' && !pawn.pendingCrop) {
       const seeds = Object.keys(CROPS).filter(c => (this.w.res?.[seedKey(c)] ?? 0) > 0);
@@ -427,9 +437,10 @@ export class WorldScene implements Scene {
     }
     if (act.id === 'online') { if (pawn === this.me) this.hud.openVillage('online'); return; }
     const a = ACTIVITIES[act.id]; if (!a) return;
-    if (act.id === 'sleep') { const why = this.canSleep(pawn.id); if (why) { if (pawn === this.me) { this.hud.toast(why); Sfx.play('bad'); } return; } (this.w.chars[pawn.id] as any).sleptNight = this.nightKey(); }
+    if (act.id === 'sleep') { const why = this.canSleep(pawn.id); if (why) { if (pawn === this.me) { this.hud.toast(why); Sfx.play('bad'); } return; } (this.w.chars[pawn.id] as any).napStart = (this.w.minutes / 60 >= 6 && this.w.minutes / 60 < 20) ? (this.w.gameMin ?? 0) : null; }
     const need = this.missing(act.id);
     if (need) { if (pawn === this.me) { this.hud.toast(need); Sfx.play('bad'); pawn.actor.play('puppy'); } return; }
+    if (act.id === 'ridebike' || act.id === 'ridescooter') { if (pawn === this.me) { if (this.me.riding) this.toggleScooter(); this.toggleScooter(act.id === 'ridebike' ? 'bike' : 'scooter'); } return; }
     if (act.id === 'forest') { if (pawn === this.me) this.goArea('forest'); return; }
     if (act.id === 'gohome') { if (pawn === this.me) this.goArea('home'); return; }
     if (['chop', 'mine', 'pick', 'mushroom', 'berries'].includes(act.id) && this.depleted(f.id)) { if (pawn === this.me) this.hud.toast('Crește la loc curând… 🌱'); return; }
@@ -445,9 +456,10 @@ export class WorldScene implements Scene {
   /** null = te poti culca; altfel motivul */
   canSleep(id: CharId): string | null {
     const h = this.w.minutes / 60;
-    if (h >= 6 && h < 20) return `🌞 E zi (${clockText(this.w.minutes)})! Te poți culca doar seara, după ora 20:00`;
-    if ((this.w.chars[id] as any).sleptNight === this.nightKey()) return '😊 Ai dormit deja în noaptea asta';
-    return null;
+    if (h >= 20 || h < 6) return null;                       // noaptea: oricand
+    const e = this.w.chars[id].needs.energy;
+    if (e < 30) return null;                                  // ziua: pui de somn doar cand esti obosit
+    return `Nu ți-e somn acum (energie ${Math.round(e)}%). Te culci seara după 20:00 sau când ești obosit(ă) (sub 30%)`;
   }
   get isHost() { return this.myId === 'bubu' || !this.partnerOnline; }
   missing(id: string): string | null {
@@ -650,21 +662,26 @@ export class WorldScene implements Scene {
   goArea(name: string) {
     if (this.travel || name === this.area) return;
     this.stopActivity(this.me); this.me.path = []; this.hud.closeMenus();
-    const vehicle = name === 'village' || this.area === 'village' ? ((this.w.stats.scooter ?? 0) > 0 ? 'scooter' : 'bike') : 'tractor';
-    const withPartner = vehicle !== 'tractor' && this.partner.control !== 'remote' && this.sameArea() && (!!this.partner.passenger || Math.hypot(this.partner.gx - this.me.gx, this.partner.gy - this.me.gy) < 4);
+    const vehicle = name === 'apartment' || this.area === 'apartment' ? 'door' : name === 'city' || this.area === 'city' ? 'bus' : name === 'village' || this.area === 'village' ? (this.me.riding ? this.me.rideKind! : (this.w.stats.scooter ?? 0) > 0 ? 'scooter' : 'bike') : 'tractor';
+    if (vehicle === 'bus' || vehicle === 'door') { this.me.riding = false; this.partner.passenger = false; }
+    const withPartner = this.partner.control !== 'remote' ? (vehicle !== 'tractor' ? this.sameArea() || this.aiArea === name : this.sameArea() && Math.hypot(this.partner.gx - this.me.gx, this.partner.gy - this.me.gy) < 4) : false;
     this.travel = { t: 0, to: name, from: this.area, vehicle, withPartner };
     this.hud.setMinigame(true);
-    Sfx.play('burp');
+    Sfx.play(vehicle === 'door' ? 'click' : 'burp');
   }
   switchArea(name: string) {
     setArea(name); this.area = name;
     if (name === 'home') this.syncPlaced(); else this.nav = new Nav([]);
     this.floor = renderFloor();
-    const sp = AREAS[name].spawn; this.me.gx = sp.x; this.me.gy = sp.y; this.me.z = 0;
+    const from = this.travel?.from;
+    const sp = name === 'village' && from === 'city' ? { x: 19.4, y: 12.6 } : name === 'city' && from === 'apartment' ? { x: 6.7, y: 22.5 } : AREAS[name].spawn;
+    this.me.gx = sp.x; this.me.gy = sp.y; this.me.z = 0;
     (this.w.chars[this.myId] as any).area = name; this.sendCharSync();
     if (this.travel?.withPartner) { this.aiArea = name; this.stopActivity(this.partner); this.partner.path = []; this.partner.gx = sp.x + 0.8; this.partner.gy = sp.y + 0.3; this.partner.z = 0; }
     if (name === 'home' && this.partner.control !== 'remote' && this.aiArea !== 'home' && !this.travel?.withPartner) { /* ramane unde era */ }
     if (name === 'village') { this.spawnWalkers(); this.op({ k: 'stat', key: 'villageTrips', delta: 1 }); if (this.travel?.vehicle === 'scooter') this.op({ k: 'stat', key: 'scooterRides', delta: 1 }); }
+    if (name === 'city') { this.spawnWalkers(); this.cars = makeCars(); if (from !== 'apartment') this.op({ k: 'stat', key: 'cityTrips', delta: 1 }); }
+    if (name === 'apartment') this.op({ k: 'stat', key: 'aptVisits', delta: 1 });
     if (name === 'forest') { this.spawnCritters(); this.op({ k: 'stat', key: 'forestTrips', delta: 1 }); this.log(`${this.me.actor.spec.name} a plecat cu tractorașul la pădure 🚜🌲`); }
     const c = iso(this.me.gx, this.me.gy, 30); this.cam.x = c.x; this.cam.y = c.y;
   }
@@ -706,13 +723,14 @@ export class WorldScene implements Scene {
   }
   drawTravel(ctx: CanvasRenderingContext2D, w: number, h: number) {
     const t = this.travel!.t;
+    if (this.travel!.vehicle === 'door') { irisWipe(ctx, w, h, t < 0.5 ? 1 - t / 0.5 : (t - 0.5) / 0.5); return; }
     if (t < 0.6) { irisWipe(ctx, w, h, 1 - t / 0.6); return; }            // se inchide peste lume
     if (t > 3.4) { irisWipe(ctx, w, h, (t - 3.4) / 0.6); return; }        // se deschide peste zona noua
     const k = (t - 0.6) / 2.8;
     const tr = this.travel!; const veh = tr.vehicle ?? 'tractor';
-    drawTravelScene(ctx, w, h, k, this.time, tr.to === 'forest', nightAmount(this.w.minutes), this.me.actor.spec, tr.withPartner ? this.partner.actor.spec : undefined, veh === 'tractor' ? Math.min(9, Math.floor((this.w.res?.wood ?? 0) / 2)) : 0, veh, tr.to === 'village' ? 'village' : tr.from === 'village' ? 'home-from-village' : '');
+    drawTravelScene(ctx, w, h, k, this.time, tr.to === 'forest', nightAmount(this.w.minutes), this.me.actor.spec, tr.withPartner ? this.partner.actor.spec : undefined, veh === 'tractor' ? Math.min(9, Math.floor((this.w.res?.wood ?? 0) / 2)) : 0, veh, tr.to === 'city' ? 'city' : tr.from === 'city' ? 'village-from-city' : tr.to === 'village' ? 'village' : tr.from === 'village' ? 'home-from-village' : '');
     ctx.save(); ctx.font = '900 28px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.fillStyle = '#3a2a22';
-    const txt = this.travel!.to === 'forest' ? 'Spre pădure! 🌲' : this.travel!.to === 'village' ? 'Spre sat! 🏘️' : 'Înapoi acasă! 🏡'; ctx.strokeText(txt, w / 2, h * 0.12); ctx.fillText(txt, w / 2, h * 0.12); ctx.restore();
+    const txt = this.travel!.to === 'forest' ? 'Spre pădure! 🌲' : this.travel!.to === 'city' ? 'Spre oraș! 🏙️' : this.travel!.to === 'village' ? 'Spre sat! 🏘️' : 'Înapoi acasă! 🏡'; fillTextIcons(ctx, txt, w / 2, h * 0.12, 28, true); ctx.restore();
     if (t < 1.0) irisWipe(ctx, w, h, (t - 0.6) / 0.4);
     if (t > 3.0) irisWipe(ctx, w, h, 1 - (t - 3.0) / 0.4);
   }
@@ -722,20 +740,23 @@ export class WorldScene implements Scene {
   spawnWalkers() {
     const kinds = Object.keys(NPC_SPECS);
     this.walkers = [];
-    for (let i = 0; i < 8; i++) {
-      const p = VILLAGE_PATHS[i % VILLAGE_PATHS.length];
+    const PATHS = this.area === 'city' ? CITY_PATHS : VILLAGE_PATHS;
+    for (let i = 0; i < (this.area === 'city' ? 10 : 8); i++) {
+      const p = PATHS[i % PATHS.length];
       const a = new Actor('bubu', this.fx, NPC_SPECS[kinds[i % kinds.length]]); a.scale = ACTOR_SCALE * 0.92;
       if (kinds[i % kinds.length] === 'granny') a.outfit = { head: 'batic', face: 'none', neck: 'none', body: 'ie' };
+      else if (this.area === 'city') a.outfit = { head: ['none', 'joben', 'none', 'palarie'][i % 4], face: 'none', neck: 'none', body: ['costum', 'rochie', 'tricou', 'pulover', 'costum'][i % 5] };
       else if (i % 3 === 0) a.outfit = { head: i % 2 ? 'palarie' : 'none', face: 'none', neck: 'none', body: ['vesta', 'salopeta', 'tricou', 'rochita'][i % 4] };
       this.walkers.push({ a, x: p.x + (Math.random() - 0.5), y: p.y + (Math.random() - 0.5) * 0.6, tx: p.x, ty: p.y, t: Math.random() * 3, greetT: 0 });
     }
   }
   updateWalkers(dt: number) {
-    if (this.area !== 'village') return;
+    if (this.area !== 'village' && this.area !== 'city') return;
+    const PATHS = this.area === 'city' ? CITY_PATHS : VILLAGE_PATHS;
     const GREET = ['Bună ziua! 🌸', 'Ce zi frumoasă! ☀️', 'Să trăiți! 😊', 'Ați fost la piață? 🧺', 'Ce haine faine! 👗', 'Vă stă bine împreună! 💕'];
     for (const v of this.walkers) {
       v.t -= dt; v.greetT -= dt;
-      if (v.t <= 0 && Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1) { v.t = 2 + Math.random() * 5; const p = VILLAGE_PATHS[Math.floor(Math.random() * VILLAGE_PATHS.length)]; const tx = p.x + (Math.random() - 0.5) * 1.2, ty = p.y + (Math.random() - 0.5) * 0.8; if (!this.nav.hits(tx, ty)) { v.tx = tx; v.ty = ty; } }
+      if (v.t <= 0 && Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1) { v.t = 2 + Math.random() * 5; const p = PATHS[Math.floor(Math.random() * PATHS.length)]; const tx = p.x + (Math.random() - 0.5) * 1.2, ty = p.y + (Math.random() - 0.5) * 0.8; if (!this.nav.hits(tx, ty)) { v.tx = tx; v.ty = ty; } }
       const dx = v.tx - v.x, dy = v.ty - v.y, d = Math.hypot(dx, dy);
       if (d > 0.05 && v.t <= 0) { const sp = 1.1 * dt; const nx = v.x + dx / d * Math.min(sp, d), ny = v.y + dy / d * Math.min(sp, d); if (!this.nav.hits(nx, ny, 0.18)) { v.x = nx; v.y = ny; } else { v.tx = v.x; v.ty = v.y; } const s = iso(dx, dy); if (Math.abs(s.x) > 0.01) v.a.flip = s.x > 0 ? 1 : -1; v.a.moving = true; }
       else v.a.moving = false;
@@ -752,7 +773,11 @@ export class WorldScene implements Scene {
       case 'v-market': this.hud.openVillage('sell'); break;
       case 'v-hall': this.hud.openHall(); break;
       case 'v-home': this.goArea('home'); break;
-      case 'v-bus': this.hud.toast('🚌 Autobuzul spre oraș pleacă din Capitolul 4 — strângeți bani și faceți-vă afaceri în sat!'); break;
+      case 'v-bus': {
+        const n = this.partner.control !== 'remote' ? 2 : 1, cost = 5 * n;
+        if ((this.w.money ?? 0) < cost) { this.hud.toast(`🚌 Biletul de autobuz costă 5 lei de persoană (${cost} lei)`); Sfx.play('bad'); return; }
+        this.op({ k: 'money', delta: -cost }); this.hud.toast(`🎫 Bilete cumpărate (${cost} lei) — urcați în autobuz!`); this.goArea('city'); break;
+      }
       case 'v-fountain':
         if ((this.w.money ?? 0) < 1) { this.hud.toast('N-ai nicio monedă 🙂'); return; }
         this.op({ k: 'money', delta: -1 }); this.op({ k: 'need', who: this.myId, need: 'love', delta: 6 }); Sfx.play('coin');
@@ -774,6 +799,31 @@ export class WorldScene implements Scene {
         this.hud.openWorkshop(); break;
     }
   }
+  cityAction(id: string, f: Furn) {
+    const st = this.w.stats, money = this.w.money ?? 0;
+    const pay = (n: number, what: string) => { if (money < n) { this.hud.toast(`Nu ajung banii: ${what} costă ${n} lei 💰`); Sfx.play('bad'); return false; } this.op({ k: 'money', delta: -n }); Sfx.play('coin'); return true; };
+    const tired = () => { if (this.w.chars[this.myId].needs.energy < 20) { this.hud.toast(`Ești prea ${g(this.myId, 'obosit', 'obosită')} ca să muncești 😴 Odihnește-te întâi`); Sfx.play('bad'); return true; } return false; };
+    const h = this.w.minutes / 60;
+    switch (id) {
+      case 'c-bus': this.goArea('village'); break;
+      case 'c-boutique': this.hud.openClothes('oras'); break;
+      case 'c-super': this.hud.openVillage('city'); break;
+      case 'c-cafe': if (h < 7 || h >= 21) { this.hud.toast('☕ Cafeneaua e deschisă între 7:00 și 21:00'); return; } if (!tired()) this.startCustom('cafe'); break;
+      case 'c-office': if (h < 8 || h >= 18) { this.hud.toast('💼 La birou se lucrează între 8:00 și 18:00'); return; } if (!tired()) this.startCustom('office'); break;
+      case 'c-cinema': if (pay(20, 'Cinema-ul (2 bilete)')) this.startCustom('cinema'); break;
+      case 'c-resto': if (h < 11) { this.hud.toast('🍽️ Restaurantul se deschide la 11:00'); return; } if (pay(40, 'Cina pentru doi')) this.startCustom('resto'); break;
+      case 'c-ice':
+        if (!pay(6, 'Înghețata (două cornete)')) return;
+        this.op({ k: 'need', who: this.myId, need: 'fun', delta: 15 }); this.op({ k: 'need', who: this.myId, need: 'hunger', delta: 8 }); this.op({ k: 'stat', key: 'icecream', delta: 1 });
+        if (this.partner.control !== 'remote' && this.sameArea()) this.op({ k: 'need', who: this.partner.id, need: 'fun', delta: 15 });
+        this.me.actor.play('dance_hop'); { const p = iso(f.gx + 0.5, f.gy + 0.5, 70); this.fx.text(p.x, p.y, 'Mmm, înghețată! 🍦', '#ff4d6d', 0.9); } break;
+      case 'c-tower':
+        if (!st.apartment) { this.hud.openApartment(); return; }
+        this.goArea('apartment'); break;
+      case 'a-exit': this.goArea('city'); break;
+    }
+    void f;
+  }
   storeMode: '' | 'florarie' = '';
   /** porneste un minijoc fara activitate legata de un obiect */
   startCustom(mini: string) {
@@ -787,15 +837,22 @@ export class WorldScene implements Scene {
     this.hud.setMinigame(true);
   }
 
-  toggleScooter() {
-    if (!(this.w.stats.scooter ?? 0)) { this.hud.toast('🛵 N-aveți scuter încă — laptopul → Vehicule (300 lei)'); return; }
+  toggleScooter(kind?: 'scooter' | 'bike') {
+    const has = (k: string) => (this.w.stats[k] ?? 0) > 0;
     if (this.me.passenger) { this.me.passenger = false; return; }
+    if (this.me.riding) {
+      this.me.riding = false;
+      if (this.partner.passenger && this.partner.control !== 'remote') { this.partner.passenger = false; this.partner.gx = this.me.gx + 0.6; this.partner.gy = this.me.gy + 0.3; }
+      Sfx.play('pop'); this.hud.toast('Ai coborât'); return;
+    }
+    const k = kind ?? (has('scooter') ? 'scooter' : has('bike') ? 'bike' : null);
+    if (!k || !has(k)) { this.hud.toast('N-aveți încă vehicul — laptopul din casă → Vehicule (bicicletă 150, scuter 300 lei)'); return; }
     this.stopActivity(this.me);
-    this.me.riding = !this.me.riding;
-    if (!this.me.riding && this.partner.passenger && this.partner.control !== 'remote') { this.partner.passenger = false; this.partner.gx = this.me.gx + 0.6; this.partner.gy = this.me.gy + 0.3; }
-    Sfx.play(this.me.riding ? 'burp' : 'pop');
-    this.hud.toast(this.me.riding ? '🛵 Brrrm! Ține de mine 💕 (💞 → Urcă pe scuter pentru partener)' : 'Ai coborât de pe scuter');
+    this.me.riding = true; this.me.rideKind = k;
+    Sfx.play(k === 'scooter' ? 'burp' : 'pop');
+    this.hud.toast(k === 'scooter' ? '🛵 Pe scuter! Partenerul urcă în spate din meniul 💞' : '🚲 Pe bicicletă! Partenerul urcă în spate din meniul 💞');
   }
+
 
   /** ajutor (debug / AI): mergi la obiectul cu id-ul dat si interactioneaza */
   goTo(id: string, who: 'me' | 'partner' = 'me') { const f = FURNITURE.find(x => x.id === id); if (f) this.goInteract(who === 'me' ? this.me : this.partner, f); }
@@ -918,6 +975,11 @@ export class WorldScene implements Scene {
   pairAction(id: string) {
     const pr = PAIRS.find(p => p.id === id)!;
     if (pr.only && pr.only !== this.myId) return;
+    if (id === 'pinch') {
+      if (this.partner.activity?.a.id !== 'sleep') { this.hud.toast(`${this.partner.actor.spec.name} nu doarme acum 🙂`); return; }
+      if (Math.hypot(this.me.gx - this.partner.gx, this.me.gy - this.partner.gy) > 2.5) { this.hud.toast('Apropie-te de pat 😴'); return; }
+      this.hud.closeMenus(); this.startCustom('snore'); return;
+    }
     if (!this.nearPartner()) { this.hud.toast('Apropie-te de partener 💞'); return; }
     if (pr.fart && this.w.chars[this.myId].fart < pr.fart) { this.hud.toast('💨 Nu ai destule gaze!'); return; }
     if (pr.sickOnly && !this.w.chars[this.partner.id].sick) { this.hud.toast(`${this.partner.actor.spec.name} nu e ${g(this.partner.id, 'bolnav', 'bolnavă')} 🙂`); return; }
@@ -1050,7 +1112,7 @@ export class WorldScene implements Scene {
     this.w.gameMin ??= 8 * 60;
     const paused = this.minigame?.id === 'bedtime';
     const pawns = [this.me, this.partner];
-    const allAsleep = pawns.every(p => p.activity?.a.id === 'sleep' && (p.activity.t ?? 0) >= 0);
+    const allAsleep = pawns.every(p => (p === this.partner && !this.sameArea() && p.control !== 'remote') || (p.activity?.a.id === 'sleep' && (p.activity.t ?? 0) >= 0));
     const mult = paused ? 0 : allAsleep ? 30 : 1;
     this.timeMult = mult;
     this.w.gameMin += dt * speed * mult;
@@ -1058,9 +1120,14 @@ export class WorldScene implements Scene {
     const hours = dt * speed * mult / 60;
     // dimineata: va treziti
     const hr = this.w.minutes / 60;
-    if (hr >= 7 && hr < 9) for (const p of pawns) if (p.activity?.a.id === 'sleep' && p.control !== 'remote' && p.activity.t >= 0) {
-      this.stopActivity(p, true); p.actor.play('wave');
-      if (p === this.me) this.hud.toast('☀️ Bună dimineața! O zi nouă la căsuța voastră');
+    for (const p of pawns) if (p.activity?.a.id === 'sleep' && p.control !== 'remote' && p.activity.t >= 0) {
+      const nap = (this.w.chars[p.id] as any).napStart;
+      const napDone = nap != null && ((this.w.gameMin ?? 0) - nap > 180 || this.w.chars[p.id].needs.energy >= 85);
+      const morning = nap == null && hr >= 7 && hr < 12;
+      if (napDone || morning) {
+        this.stopActivity(p, true); p.actor.play('wave');
+        if (p === this.me) { if (morning) { this.morningT = 3; if (this.area === 'apartment') this.op({ k: 'stat', key: 'aptNights', delta: 1 }); } else this.hud.toast('😊 Te-ai odihnit! Energie: ' + Math.round(this.w.chars[p.id].needs.energy) + '%'); }
+      }
     }
 
     const night = nightAmount(this.w.minutes);
@@ -1133,12 +1200,14 @@ export class WorldScene implements Scene {
         if (sl !== this.me) this.shake = Math.max(this.shake, 3);
       }
     }
-    if (this.travel) { this.travel.t += dt; if (!this.travel.switched && this.travel.t >= 2.0) { this.travel.switched = true; this.switchArea(this.travel.to); } if (this.travel.t >= 4.0) { this.travel = null; this.hud.setMinigame(false); } }
+    if (this.travel) { const door = this.travel.vehicle === 'door'; this.travel.t += dt; if (!this.travel.switched && this.travel.t >= (door ? 0.5 : 2.0)) { this.travel.switched = true; this.switchArea(this.travel.to); } if (this.travel.t >= (door ? 1.0 : 4.0)) { this.travel = null; this.hud.setMinigame(false); } }
+    if (this.area === 'city') updateCars(this.cars, dt, this.time, [{ x: this.me.gx, y: this.me.gy }, ...(this.sameArea() ? [{ x: this.partner.gx, y: this.partner.gy }] : []), ...this.walkers.map(v => ({ x: v.x, y: v.y }))]);
     this.updateCritters(dt);
     this.updateWalkers(dt);
     (globalThis as any).__stand = { broken: !!this.w.furn.standBroken, open: !!this.w.furn.standOpen };
-    (globalThis as any).__villageOwned = { florarie: !!this.w.stats.florarie, workshop: !!this.w.stats.workshop };
+    (globalThis as any).__villageOwned = { florarie: !!this.w.stats.florarie, workshop: !!this.w.stats.workshop, apartment: !!this.w.stats.apartment };
     (globalThis as any).__trailerLogs = Math.min(6, Math.floor((this.w.res?.wood ?? 0) / 3));
+    this.morningT = Math.max(0, this.morningT - dt);
     this.updateNpcs(dt);
     this.updateMe(dt);
     this.updatePartner(dt);
@@ -1211,6 +1280,7 @@ export class WorldScene implements Scene {
         const jx = this.joy.x - this.joy.sx, jy = this.joy.y - this.joy.sy;
         const l = Math.hypot(jx, jy);
         if (l > 8) { ix = jx / Math.max(l, 50); iy = jy / Math.max(l, 50); }
+        this.joyRun = l > 62;
       }
     }
     if (ix || iy) {
@@ -1219,7 +1289,10 @@ export class WorldScene implements Scene {
       p.path = []; p.pendingInteract = null;
       const mag = Math.min(1, Math.hypot(ix, iy));
       const g = screenDirToGrid(ix, iy * 2); // compensare izometrica: "sus" pe ecran
-      const sp = SPEED * mag * (this.w.chars[p.id].sick ? 0.6 : 1) * (p.riding ? 2.2 : 1);
+      const run = !p.riding && (k.has('shift') || this.joyRun) && this.w.chars[p.id].needs.energy > 8;
+      p.actor.running = run;
+      if (run) this.w.chars[p.id].needs.energy = Math.max(0, this.w.chars[p.id].needs.energy - dt * 0.25);
+      const sp = SPEED * mag * (run ? 1.75 : 1) * (this.w.chars[p.id].sick ? 0.6 : 1) * (p.riding ? (p.rideKind === 'bike' ? 1.6 : 2.2) : 1);
       this.moveBy(p, g.x * sp, g.y * sp, dt);
       p.actor.moving = true;
       if (Math.random() < dt * 3) Sfx.play('step');
@@ -1334,9 +1407,15 @@ export class WorldScene implements Scene {
   draw(ctx: CanvasRenderingContext2D) {
     const { w, h } = this.game;
     const night = nightAmount(this.w.minutes);
-    if (this.chapter === 0) { const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, night > 0.5 ? '#2b3a67' : '#ffd6e4'); bg.addColorStop(1, night > 0.5 ? '#4a3f75' : '#ffeacc'); ctx.fillStyle = bg; }
+    if (this.area === 'apartment' || this.area === 'city') {
+      // fundal: cerul orasului cu blocuri in departare (apartamentul = vedere de la etaj)
+      const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, night > 0.5 ? '#1d2550' : '#9fd3f5'); bg.addColorStop(1, night > 0.5 ? '#4a3f75' : '#e8f4ff'); ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 26; i++) { const bw = 40 + ((i * 17) % 40), bx = i * (w / 22) - 30, bh = h * (0.2 + ((i * 37) % 50) / 100); ctx.fillStyle = night > 0.5 ? '#2f3a60' : ['#c9d8ee', '#b8c8e6', '#d6e2f2'][i % 3]; ctx.fillRect(bx, h - bh, bw, bh); ctx.fillStyle = night > 0.5 ? '#ffe68088' : '#ffffff88'; for (let yy = h - bh + 10; yy < h - 10; yy += 16) for (let xx = bx + 6; xx < bx + bw - 8; xx += 12) if (((xx * 3 + yy) | 0) % 5) ctx.fillRect(xx, yy, 5, 7); }
+      if (this.area === 'city') { ctx.fillStyle = night > 0.5 ? '#2a3050cc' : '#dfe6eecc'; ctx.fillRect(0, 0, w, h); }
+    }
+    else if (this.chapter === 0) { const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, night > 0.5 ? '#2b3a67' : '#ffd6e4'); bg.addColorStop(1, night > 0.5 ? '#4a3f75' : '#ffeacc'); ctx.fillStyle = bg; }
     else ctx.fillStyle = night > 0.5 ? '#1f2540' : '#bfe8c9';
-    ctx.fillRect(0, 0, w, h);
+    if (this.area !== 'apartment' && this.area !== 'city') ctx.fillRect(0, 0, w, h);
     ctx.save();
     ctx.translate(w / 2, h / 2);
     if (this.shake > 0.3) ctx.translate((Math.random() - 0.5) * this.shake, (Math.random() - 0.5) * this.shake);
@@ -1400,7 +1479,8 @@ export class WorldScene implements Scene {
       else items.push({ x0: x, y0: YARD_H - 0.02, x1: x + 1, y1: YARD_H, draw: () => drawYardFence(ctx, x, YARD_H, 'x') });
     }
     if (home) for (const [k, p] of Object.entries(this.w.plots ?? {})) { if (!p.crop) continue; const [x, y] = k.split(',').map(Number); items.push({ x0: x + 0.3, y0: y + 0.3, x1: x + 0.7, y1: y + 0.7, draw: () => drawCropPlant(ctx, x, y, p as Plot, this.w.gameMin ?? 0, this.time) }); }
-    if (this.area === 'village') for (const v of this.walkers) items.push({ x0: v.x - 0.2, y0: v.y - 0.2, x1: v.x + 0.2, y1: v.y + 0.2, draw: () => v.a.draw(ctx) });
+    if (this.area === 'city') for (const car of this.cars) { const cp = carPos(car); items.push({ x0: cp.x - 0.5, y0: cp.y - 0.3, x1: cp.x + 0.5, y1: cp.y + 0.3, draw: () => drawCar(ctx, car, this.time) }); }
+    if (this.area === 'village' || this.area === 'city') for (const v of this.walkers) items.push({ x0: v.x - 0.2, y0: v.y - 0.2, x1: v.x + 0.2, y1: v.y + 0.2, draw: () => v.a.draw(ctx) });
     for (const c of this.critters) if (this.area === 'forest') items.push({ x0: c.x - 0.2, y0: c.y - 0.2, x1: c.x + 0.2, y1: c.y + 0.2, draw: () => { const q = iso(c.x, c.y); drawCritter(ctx, c, q.x, q.y, this.time); } });
     if (home) for (const n of this.npcs) items.push({ x0: n.x - 0.2, y0: n.y - 0.2, x1: n.x + 0.2, y1: n.y + 0.2, draw: () => this.drawNpc(ctx, n) });
     for (const p of [this.me, this.partner]) {
@@ -1449,10 +1529,37 @@ export class WorldScene implements Scene {
       const jx = this.joy.x - this.joy.sx, jy = this.joy.y - this.joy.sy, l = Math.hypot(jx, jy), k = l > 50 ? 50 / l : 1;
       ctx.fillStyle = '#ff7aa2cc'; ctx.beginPath(); ctx.arc(this.joy.sx + jx * k, this.joy.sy + jy * k, 22, 0, 7); ctx.fill();
     }
+    // somnul: ecran intunecat, ceasul si cat mai e pana dimineata
+    if (this.me.activity?.a.id === 'sleep' && this.me.activity.t >= 0 && !this.minigame) this.drawSleepOverlay(ctx, w, h);
+    if (this.morningT > 0) {
+      const k = Math.min(1, this.morningT / 0.6);
+      ctx.save(); ctx.globalAlpha = Math.min(1, k); const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(255,214,165,0.85)'); g.addColorStop(1, 'rgba(255,241,214,0.0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      ctx.font = '900 38px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 7; ctx.strokeStyle = '#fff'; ctx.fillStyle = '#e07a2f';
+      ctx.strokeText('Bună dimineața!', w / 2, h * 0.3); ctx.fillText('Bună dimineața!', w / 2, h * 0.3);
+      ctx.font = '800 20px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.strokeText(`Ziua ${this.w.day} · ${clockText(this.w.minutes)}`, w / 2, h * 0.3 + 36); ctx.fillText(`Ziua ${this.w.day} · ${clockText(this.w.minutes)}`, w / 2, h * 0.3 + 36);
+      ctx.restore();
+    }
     if (this.minigame) this.minigame.obj.draw(ctx, w, h);
     if (this.travel) this.drawTravel(ctx, w, h);
   }
 
+  drawSleepOverlay(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(20,18,50,0.45)'; ctx.fillRect(0, 0, w, h);
+    const nap = (this.w.chars[this.myId] as any).napStart != null;
+    const fast = this.timeMult > 1;
+    const left = nap ? Math.max(0, 180 - ((this.w.gameMin ?? 0) - (this.w.chars[this.myId] as any).napStart)) : ((7 * 60 - this.w.minutes) + 1440) % 1440;
+    const cx = w / 2, cy = h * 0.2;
+    ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(cx - 170, cy - 46, 340, 112, 22); ctx.fill(); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.fillStyle = '#3a2a22';
+    ctx.font = '900 30px "Baloo 2", sans-serif'; ctx.fillText(`${clockText(this.w.minutes)}${fast ? '  ⏩' : ''}`, cx, cy - 8);
+    ctx.font = '800 15px "Baloo 2", sans-serif';
+    ctx.fillText(nap ? `Pui de somn · energie ${Math.round(this.w.chars[this.myId].needs.energy)}%` : `Dormiți… vă treziți la 07:00 (mai sunt ${Math.floor(left / 60)}h ${Math.round(left % 60)}m)`, cx, cy + 20);
+    ctx.font = '700 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a';
+    const pa = this.partner.actor.spec.name;
+    ctx.fillText(fast ? 'Noaptea trece repede pentru că dormiți amândoi 💤' : this.partner.activity?.a.id === 'sleep' ? '' : `Timpul trece normal până se culcă și ${pa}`, cx, cy + 44);
+    ctx.restore();
+  }
   drawLock(ctx: CanvasRenderingContext2D, x: number, y: number) {
     ctx.save(); ctx.translate(x, y + Math.sin(this.time * 2) * 2);
     ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, -8, 6, Math.PI, 0); ctx.stroke();
@@ -1466,7 +1573,8 @@ export class WorldScene implements Scene {
       const s = iso(p.gx, p.gy, 0); const other = p === this.me ? this.partner : this.me;
       ctx.save(); ctx.translate(s.x, s.y + 2); ctx.scale(p.actor.flip, 1);
       const bump = p.actor.moving ? Math.abs(Math.sin(this.time * 14)) * -1.2 : 0;
-      drawScooterSide(ctx, 0, 0, 0.42, this.time, { rot: p.actor.moving ? this.time * 18 : 0, bump, driver: p.actor.spec, passenger: other.passenger && this.sameArea() ? other.actor.spec : undefined });
+      const opt = { rot: p.actor.moving ? this.time * 18 : 0, bump, driver: p.actor.spec, passenger: other.passenger && this.sameArea() ? other.actor.spec : undefined };
+      if (p.rideKind === 'bike') drawTandemSide(ctx, 0, 0, 0.36, this.time, opt); else drawScooterSide(ctx, 0, 0, 0.42, this.time, opt);
       ctx.restore();
     } else p.actor.draw(ctx);
     if (p.activity?.a.place === 'sofa') { // spatarul canapelei acopera spatele personajului
@@ -1479,8 +1587,7 @@ export class WorldScene implements Scene {
     ctx.font = '800 11px "Baloo 2", sans-serif'; ctx.textAlign = 'center';
     const label = `${p.actor.spec.name}${c.sick ? ' ' + SICK_INFO[c.sick].icon : ''}${p.control === 'ai' ? ' 🤖' : ''}`;
     if (p.activity?.a.place !== 'bed' && p.activity?.a.place !== 'tub') {
-      ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeText(label, s.x, s.y + 14);
-      ctx.fillStyle = p === this.me ? '#ff4d6d' : '#3a2a22'; ctx.fillText(label, s.x, s.y + 14);
+      ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.fillStyle = p === this.me ? '#ff4d6d' : '#3a2a22'; fillTextIcons(ctx, label, s.x, s.y + 14, 11, true);
     }
     // balonasul cu cererea bolnavului
     if (c.sick && c.request && REQUESTS[c.request]) {
@@ -1489,7 +1596,7 @@ export class WorldScene implements Scene {
       ctx.fillStyle = '#fff'; ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.roundRect(bx - 16, by - 16, 32, 28, 10); ctx.fill(); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(bx - 8, by + 12); ctx.lineTo(bx - 14, by + 20); ctx.lineTo(bx - 2, by + 12); ctx.fill();
-      ctx.font = '18px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(REQUESTS[c.request].icon, bx, by - 2); ctx.textBaseline = 'alphabetic';
+      ctx.font = '18px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; fillTextIcons(ctx, REQUESTS[c.request].icon, bx, by - 2, 16); ctx.textBaseline = 'alphabetic';
     }
     // bara de progres a activitatii
     if (p.activity && p.activity.t >= 0) {

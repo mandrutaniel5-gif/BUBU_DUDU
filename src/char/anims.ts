@@ -56,6 +56,20 @@ export const WALK = def({
   },
 });
 
+export const RUN = def({
+  id: 'run', label: 'Fuge', icon: '🏃', who: 'both', kind: 'base', dur: 0.36, loop: true,
+  pose(P, t) {
+    const s = Math.sin(t * Math.PI * 2 / 0.36);
+    P.legL = Math.max(0, s) * 9; P.legR = Math.max(0, -s) * 9;
+    P.legLx = s * 3; P.legRx = -s * 3;
+    P.dy = -Math.abs(s) * 6; P.sy = 1 - Math.abs(s) * 0.03; P.sx = 1 + Math.abs(s) * 0.02;
+    P.armL = 0.9 + s * 0.8; P.armR = 0.9 - s * 0.8;
+    P.rot = 0.12; P.headRot = -0.06 + s * 0.03;
+    P.mouth = 'open'; P.eyes = 'happy'; P.blush = 1.1; P.earWiggle = s;
+  },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.18)) f.emit('puff', -14 + Math.random() * 8, -2, { vx: -30, vy: -12, max: 0.5, size: 0.45 }); },
+});
+
 // ---------------------------------------------------------------- emote-uri comune
 def({
   id: 'wave', label: 'Salut', icon: '👋', who: 'both', kind: 'emote', dur: 1.8,

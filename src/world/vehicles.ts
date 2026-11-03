@@ -1,3 +1,4 @@
+import { fillTextIcons } from '../ui/icons';
 // Tractorasul lui Dudu: desen lateral detaliat (pentru drum) si desen izometric (in lume).
 import { drawCharacter, type CharSpec } from '../char/draw';
 import { basePose } from '../char/pose';
@@ -119,12 +120,14 @@ export function drawTractorIso(c: CanvasRenderingContext2D, gx: number, gy: numb
 }
 
 /** scena de drum (side-scroller cu parallax); k = 0..1 progresul calatoriei */
-export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: number, k: number, t: number, toForest: boolean, night: number, driver: CharSpec, passenger?: CharSpec, logs = 0, vehicle: 'tractor' | 'bike' | 'scooter' = 'tractor', dest = '') {
+export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: number, k: number, t: number, toForest: boolean, night: number, driver: CharSpec, passenger?: CharSpec, logs = 0, vehicle: 'tractor' | 'bike' | 'scooter' | 'bus' | 'door' = 'tractor', dest = '') {
   const ground = h * 0.7;
-  const speed = vehicle === 'bike' ? 360 : 520; const off = t * speed;
+  const speed = vehicle === 'bike' ? 360 : vehicle === 'bus' ? 600 : 520; const off = t * speed;
   const toVillage = dest === 'village', fromVillage = dest === 'home-from-village';
-  const forestK = toVillage || fromVillage ? 0 : toForest ? k : 1 - k; // cat de "padure" e peisajul
-  const villageK = toVillage ? k : fromVillage ? 1 - k : 0;
+  const toCity = dest === 'city', fromCity = dest === 'village-from-city';
+  const forestK = toVillage || fromVillage || toCity || fromCity ? 0 : toForest ? k : 1 - k; // cat de "padure" e peisajul
+  const cityK = toCity ? k : fromCity ? 1 - k : 0;
+  const villageK = toVillage ? k : fromVillage ? 1 - k : toCity ? 1 - k : fromCity ? k : 0;
   // cerul
   const sky = c.createLinearGradient(0, 0, 0, ground);
   sky.addColorStop(0, night > 0.5 ? '#1d2550' : '#7cc8f5'); sky.addColorStop(1, night > 0.5 ? '#4a3f75' : '#ffe9cc');
@@ -141,11 +144,25 @@ export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: numbe
     c.lineTo(w, ground); c.closePath(); c.fill();
   };
   layer(0.06, h * 0.42, 70, night > 0.5 ? '#3b4570' : '#a9c7e8', 0.004, 1);
+  // orasul in departare (zgarie-nori cu ferestre)
+  if (cityK > 0.02) {
+    c.save(); c.globalAlpha = Math.min(1, cityK * 1.4);
+    for (let i = 0; i < 22; i++) {
+      const bw = 34 + ((i * 17) % 30), bx = ((i * 64 - off * 0.1) % (w + 200) + w + 200) % (w + 200) - 100, bh = (60 + ((i * 53) % 130)) * (0.5 + cityK * 0.7);
+      const by = h * 0.56;
+      c.fillStyle = night > 0.5 ? ['#3a4570', '#4a5585', '#2f3a60'][i % 3] : ['#b8c4e0', '#c9d4ea', '#a8b6d6'][i % 3];
+      c.fillRect(bx, by - bh, bw, bh);
+      c.fillStyle = night > 0.5 ? '#ffe680' : '#e8f4ff';
+      for (let yy = by - bh + 8; yy < by - 8; yy += 12) for (let xx = bx + 5; xx < bx + bw - 6; xx += 9) if (((xx * 7 + yy * 3) | 0) % 4 !== 0) c.fillRect(xx, yy, 4, 6);
+    }
+    c.restore();
+  }
   layer(0.15, h * 0.52, 50, night > 0.5 ? '#35514a' : '#9fd68c', 0.006, 4);
   // copaci pe dealul mijlociu (mai multi brazi spre padure)
   for (let i = 0; i < 26; i++) {
     const x = ((i * 70 - off * 0.3) % (w + 140) + w + 140) % (w + 140) - 70;
     const house = ((i * 53) % 100) / 100 < villageK * 0.8;
+    if (((i * 29) % 100) / 100 < cityK * 0.9) { const y0 = h * 0.6 + ((i * 13) % 20), bh = 50 + (i % 4) * 16; c.fillStyle = ['#e8f1ff', '#ffe1ea', '#fff6b8', '#e7f6e2'][i % 4]; c.strokeStyle = O; c.lineWidth = 1.5; c.fillRect(x - 16, y0 - bh, 32, bh); c.strokeRect(x - 16, y0 - bh, 32, bh); c.fillStyle = night > 0.5 ? '#ffe680' : '#bfe8ff'; for (let yy = y0 - bh + 6; yy < y0 - 6; yy += 11) { c.fillRect(x - 11, yy, 7, 6); c.fillRect(x + 4, yy, 7, 6); } continue; }
     if (house) { const y0 = h * 0.6 + ((i * 13) % 20); c.fillStyle = ['#fff1d6', '#ffe1ea', '#e8f1ff', '#fff6b8'][i % 4]; c.strokeStyle = O; c.lineWidth = 1.5; c.fillRect(x - 18, y0 - 26, 36, 26); c.strokeRect(x - 18, y0 - 26, 36, 26); c.fillStyle = ['#c0573e', '#e5809a', '#5b7fbf', '#7cb870'][i % 4]; c.beginPath(); c.moveTo(x - 22, y0 - 26); c.lineTo(x, y0 - 44); c.lineTo(x + 22, y0 - 26); c.closePath(); c.fill(); c.stroke(); c.fillStyle = night > 0.5 ? '#ffe680' : '#bfe8ff'; c.fillRect(x - 10, y0 - 18, 7, 7); c.fillRect(x + 3, y0 - 18, 7, 7); continue; }
     const pine = ((i * 37) % 100) / 100 < forestK * 0.9 + 0.1;
     const y = h * 0.58 + ((i * 13) % 20);
@@ -162,7 +179,7 @@ export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: numbe
   if (sx > -120 && sx < w + 120) {
     c.fillStyle = '#a0703f'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(sx - 3, ground - 90, 6, 90, 2); c.fill(); c.stroke();
     c.fillStyle = '#e7c08f'; c.beginPath(); c.moveTo(sx - 50, ground - 96); c.lineTo(sx + 40, ground - 96); c.lineTo(sx + 56, ground - 82); c.lineTo(sx + 40, ground - 68); c.lineTo(sx - 50, ground - 68); c.closePath(); c.fill(); c.stroke();
-    c.font = '800 15px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(toVillage ? 'Satul 🏘️' : toForest ? 'Pădurea 🌲' : 'Acasă 🏡', sx, ground - 82); c.textBaseline = 'alphabetic';
+    c.font = '800 15px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; fillTextIcons(c, toCity ? 'Orașul 🏙️' : toVillage || fromCity ? 'Satul 🏘️' : toForest ? 'Pădurea 🌲' : 'Acasă 🏡', sx, ground - 82, 15); c.textBaseline = 'alphabetic';
   }
   // drumul
   c.fillStyle = '#c9af89'; c.fillRect(0, ground, w, h - ground);
@@ -181,6 +198,8 @@ export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: numbe
   // fumul din teava
   for (let i = 0; i < 6; i++) { const q = ((t * 1.2 + i / 6) % 1); c.globalAlpha = 0.5 * (1 - q); c.fillStyle = '#dcdcdc'; c.beginPath(); c.arc(tx + 49 * sc - q * 140 * sc, ground - 100 * sc - q * 70 * sc + bump * sc, (5 + q * 16) * sc, 0, 7); c.fill(); }
   c.globalAlpha = 1;
+  if (cityK > 0.3) { c.fillStyle = '#8d8f9a'; c.globalAlpha = Math.min(1, (cityK - 0.3) * 2); c.fillRect(0, ground + 2, w, h - ground); for (let i = 0; i < 12; i++) { const x = ((i * 120 - off) % (w + 120) + w + 120) % (w + 120) - 60; c.fillStyle = '#fff'; c.fillRect(x, ground + (h - ground) * 0.55, 50, 5); } c.globalAlpha = 1; }
+  if (vehicle === 'bus') { drawBusSide(c, tx, ground + 10, sc * 1.05, t, { rot: off / 18, bump: bump * 0.5, driver, passenger }); return; }
   if (vehicle === 'scooter') drawScooterSide(c, tx, ground + 10, sc * 1.15, t, { rot: off / 18, bump, driver, passenger });
   else if (vehicle === 'bike') drawTandemSide(c, tx, ground + 10, sc * 1.1, t, { rot: off / 20, bump, driver, passenger });
   else drawTractorSide(c, tx, ground + 10, sc, t, { rot: off / 22, bump, logs, driver, passenger });
@@ -322,5 +341,53 @@ export function drawTandemSide(c: CanvasRenderingContext2D, x: number, y: number
   const pedal = Math.sin(opt.rot * 0.8) * 1.5;
   if (opt.passenger) drawDriverSide(c, opt.passenger, S1.x + 2, S1.y - 6 + pedal, 0.85, t + 1.3, 0, false);
   if (opt.driver) drawDriverSide(c, opt.driver, S2.x + 2, S2.y - 6 - pedal, 0.9, t, Math.sin(t * 1.5) * 0.1, true, false);
+  c.restore();
+}
+
+/** vehiculele parcate (in lume) */
+export function drawParked(c: CanvasRenderingContext2D, kind: 'bike' | 'scooter', x: number, y: number, t: number) {
+  c.save(); c.translate(x, y);
+  if (kind === 'bike') drawTandemSide(c, 0, 0, 0.36, t, { rot: 0, bump: 0 }); else drawScooterSide(c, 0, 0, 0.42, t, { rot: 0, bump: 0 });
+  c.restore();
+}
+
+/** autobuzul (din profil, spre dreapta) cu cei doi la geam */
+export function drawBusSide(c: CanvasRenderingContext2D, x: number, y: number, s: number, t: number, opt: { rot: number; bump: number; driver?: CharSpec; passenger?: CharSpec }) {
+  c.save(); c.translate(x, y); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round';
+  c.fillStyle = 'rgba(40,20,20,0.2)'; c.beginPath(); c.ellipse(0, 2, 150, 9, 0, 0, 7); c.fill();
+  c.save(); c.translate(0, opt.bump);
+  const Y = '#ffc94a', YD = '#e8a830';
+  // caroseria
+  c.fillStyle = Y; c.strokeStyle = O; c.lineWidth = 3; c.beginPath(); c.roundRect(-150, -128, 296, 112, 22); c.fill(); c.stroke();
+  c.fillStyle = YD; c.beginPath(); c.roundRect(-150, -40, 296, 24, { lower: [22, 22], upper: [0, 0] } as any); c.fill();
+  c.strokeStyle = O; c.lineWidth = 3; c.beginPath(); c.roundRect(-150, -128, 296, 112, 22); c.stroke();
+  c.fillStyle = '#ff7aa2'; c.fillRect(-146, -52, 288, 8);
+  // parbrizul
+  c.fillStyle = '#bfe8ff'; c.beginPath(); c.moveTo(118, -118); c.quadraticCurveTo(144, -116, 144, -80); c.lineTo(144, -62); c.lineTo(118, -62); c.closePath(); c.fill(); c.stroke();
+  // ferestrele
+  const wins = [-128, -78, -28, 22, 72];
+  wins.forEach(wx => { c.fillStyle = '#d4eefc'; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.roundRect(wx, -114, 42, 48, 8); c.fill(); c.stroke(); });
+  // cei doi la geam (doar capul si umerii)
+  const heads: [CharSpec | undefined, number][] = [[opt.passenger, wins[2] + 21], [opt.driver, wins[3] + 21]];
+  for (const [sp, hx] of heads) if (sp) {
+    c.save(); c.beginPath(); c.roundRect(hx - 21, -114, 42, 48, 8); c.clip();
+    const P = basePose(); P.eyes = 'happy'; P.mouth = 'open'; P.blush = 1.2; P.armR = 2.2 + Math.sin(t * 8) * 0.3;
+    drawCharacter(c, sp, P, hx, -40 + Math.sin(t * 9 + hx) * 1.2, 0.62, 1, t);
+    c.restore();
+    c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.roundRect(hx - 21, -114, 42, 48, 8); c.stroke();
+  }
+  // reflexe
+  wins.forEach(wx => { c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = 3; c.beginPath(); c.moveTo(wx + 8, -76); c.lineTo(wx + 20, -106); c.stroke(); });
+  // usa
+  c.fillStyle = '#d4eefc'; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.roundRect(96, -110, 18, 80, 4); c.fill(); c.stroke();
+  // farul si stopul
+  c.fillStyle = '#fff6b0'; c.beginPath(); c.arc(142, -34, 6, 0, 7); c.fill(); c.stroke();
+  c.fillStyle = '#e63946'; c.beginPath(); c.roundRect(-152, -46, 6, 14, 3); c.fill(); c.stroke();
+  // tabla cu destinatia
+  c.fillStyle = '#3a3a44'; c.beginPath(); c.roundRect(-60, -142, 120, 16, 4); c.fill(); c.stroke();
+  c.font = '800 11px "Baloo 2", sans-serif'; c.fillStyle = '#ffd23f'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('SAT ⇄ ORAȘ', 0, -133.5); c.textBaseline = 'alphabetic';
+  c.restore();
+  simpleWheel(c, -96, -14, 18, opt.rot, '#2b2b33', '#d9d9d9');
+  simpleWheel(c, 92, -14, 18, opt.rot, '#2b2b33', '#d9d9d9');
   c.restore();
 }

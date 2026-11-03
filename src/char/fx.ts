@@ -1,3 +1,4 @@
+import { fillTextIcons } from '../ui/icons';
 import { heartPath, starPath } from './draw';
 
 export type FxKind = 'heart' | 'fart' | 'note' | 'zzz' | 'star' | 'sparkle' | 'drop' | 'puff' | 'steam' | 'text' | 'rumble' | 'shock';
@@ -114,8 +115,7 @@ export class Fx {
           ctx.scale(pop, pop); ctx.rotate(-0.08);
           ctx.font = '900 20px "Baloo 2", "Comic Sans MS", sans-serif';
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.lineWidth = 5; ctx.strokeStyle = '#fff'; ctx.strokeText(p.text ?? '', 0, 0);
-          ctx.fillStyle = p.color ?? '#ff4d6d'; ctx.fillText(p.text ?? '', 0, 0);
+          ctx.lineWidth = 5; ctx.strokeStyle = '#fff'; ctx.fillStyle = p.color ?? '#ff4d6d'; fillTextIcons(ctx, p.text ?? '', 0, 0, 20, true);
           break;
         }
       }

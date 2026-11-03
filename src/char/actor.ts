@@ -1,6 +1,6 @@
 import { basePose, type Pose, type EyeType, type MouthType } from './pose';
 import { drawCharacter, SPECS, type CharId, type CharSpec } from './draw';
-import { ANIMS, IDLE, WALK, type Anim, type LocalFx } from './anims';
+import { ANIMS, IDLE, WALK, RUN, type Anim, type LocalFx } from './anims';
 import type { Fx } from './fx';
 import { Sfx } from '../engine/sfx';
 import type { Outfit } from './outfit';
@@ -28,6 +28,7 @@ export class Actor {
   anim: Anim = IDLE; animT = 0; private lastP = 0;
   baseT = Math.random() * 10;
   moving = false;
+  running = false;
   pose: Pose = basePose();
   private blinkT = 2 + Math.random() * 2;
   private onDone?: () => void;
@@ -37,7 +38,7 @@ export class Actor {
   constructor(id: CharId, public fx: Fx, spec?: CharSpec) { this.spec = spec ?? SPECS[id]; }
 
   get id() { return this.spec.id; }
-  get busy() { return this.anim !== IDLE && this.anim !== WALK; }
+  get busy() { return this.anim !== IDLE && this.anim !== WALK && this.anim !== RUN; }
 
   play(id: string, onDone?: () => void) {
     const a = ANIMS[id]; if (!a) return;
@@ -67,7 +68,7 @@ export class Actor {
   update(dt: number) {
     this.baseT += dt;
     // animatia de baza
-    if (!this.busy) this.anim = this.moving ? WALK : IDLE;
+    if (!this.busy) { const want = this.moving ? (this.running ? RUN : WALK) : IDLE; if (this.anim !== want) { this.anim = want; } }
     this.animT += dt;
     const a = this.anim;
     let p = Math.min(1, this.animT / a.dur);

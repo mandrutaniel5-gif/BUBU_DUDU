@@ -7,7 +7,9 @@ import { Sfx } from '../engine/sfx';
 import { moodText, g } from '../game/gender';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
-import { GOALS, CHAPTERS, chapterOf, currentGoal, INV_INFO, SHOP_BUY, SHOP_ONLINE, SHOP_SELL } from '../game/economy';
+import { GOALS, CHAPTERS, chapterOf, currentGoal, INV_INFO, SHOP_BUY, SHOP_ONLINE, SHOP_SELL, SHOP_CITY } from '../game/economy';
+import { drawCharacter, SPECS } from '../char/draw';
+import { basePose } from '../char/pose';
 import { CROPS, seedKey, catCount, drawCropPlant, WET_MIN } from '../world/garden';
 import { CRITTER_NAMES } from '../world/forest';
 import type { NetStatus } from '../net/types';
@@ -99,10 +101,10 @@ export class Hud {
     (this.root.querySelector('.clock .money') as HTMLElement).textContent = `💰 ${w.money ?? 0} lei`;
     const rs = (this.root.querySelector('.clock .res') as HTMLElement); const R = w.res ?? {}; const seeds = Object.keys(CROPS).reduce((a, c) => a + (R[seedKey(c)] ?? 0), 0); const rt = `🪵${R.wood ?? 0} 🪨${R.stone ?? 0} 🥕${catCount(R, 'veg')} 🌸${catCount(R, 'flower')} 🍲${R.meals ?? 0} 💧${R.water ?? 0} 🌰${seeds} · 🔥${Math.round((w.furn.fire as number) ?? 0)}% 🎒`; if (rs.textContent !== rt) rs.textContent = rt;
     const pc = w.chars[s.partner.id];
-    this.els['.pmood'].textContent = (s.sameArea() ? '' : s.partnerArea() === 'home' ? '🏡 acasă · ' : '🌲 la pădure · ') + moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : '');
+    this.els['.pmood'].textContent = (s.sameArea() ? '' : ({ home: '🏡 acasă · ', forest: '🌲 la pădure · ', village: '🏘️ în sat · ', city: '🏙️ la oraș · ', apartment: '🔑 în apartament · ' } as Record<string, string>)[s.partnerArea()] ?? '') + moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : '');
     (this.els['.fart .fill'] as HTMLElement).style.height = c.fart + '%';
     this.els['[data-a="pairs"]'].classList.toggle('glow', s.nearPartner());
-    (this.root.querySelector('.act.scooter') as HTMLElement).style.display = (w.stats.scooter ?? 0) > 0 ? '' : 'none';
+    (this.root.querySelector('.act.scooter') as HTMLElement).style.display = (w.stats.scooter ?? 0) > 0 || (w.stats.bike ?? 0) > 0 ? '' : 'none';
     (this.root.querySelector('.act.scooter') as HTMLElement).classList.toggle('glow', !!s.me.riding);
     // butonul de actiune
     let label = '…', icon = '✋';
@@ -173,7 +175,7 @@ export class Hud {
     const slots: Record<string, string> = { body: 'Haine', head: 'Pe cap', face: 'Pe față', neck: 'La gât' };
     const mine = ITEMS.filter(i => c.owned!.includes(i.id));
     const m = this.modal(`<h3>👗 Garderoba lui ${s.me.actor.spec.name}</h3><p class="sub">Haine noi găsești la <b>Croitoria din sat</b> 🧵 (cele elegante, la oraș)</p>
-      ${mine.length ? Object.entries(slots).map(([slot, name]) => { const list = mine.filter(i => i.slot === slot); return list.length ? `<h4>${name}</h4><div class="shop">${list.map(i => { const on = (c.outfit as any)[slot] === i.id; return `<button data-item="${i.id}" class="${on ? 'on' : ''}"><span>${i.icon}</span><b>${i.label}</b><small>${on ? '✔ porți' : 'Îmbracă'}</small></button>`; }).join('')}</div>` : ''; }).join('') : '<p>Dulapul e gol… 🙂</p>'}`);
+      ${mine.length ? Object.entries(slots).map(([slot, name]) => { const list = mine.filter(i => i.slot === slot); return list.length ? `<h4>${name}</h4><div class="shop">${list.map(i => { const on = (c.outfit as any)[slot] === i.id; return `<button data-item="${i.id}" class="${on ? 'on' : ''}"><span>${this.preview(i.id)}</span><b>${i.label}</b><small>${on ? '✔ porți' : 'Îmbracă'}</small></button>`; }).join('')}</div>` : ''; }).join('') : '<p>Dulapul e gol… 🙂</p>'}`);
     m.querySelectorAll('[data-item]').forEach(b => b.addEventListener('click', () => {
       const it = ITEMS.find(i => i.id === (b as HTMLElement).dataset.item)!;
       const cur = (c.outfit as any)[it.slot];
@@ -232,7 +234,7 @@ export class Hud {
     c.owned ??= []; c.outfit ??= { ...NO_OUTFIT };
     const list = ITEMS.filter(i => i.shop === tier);
     const m = this.modal(`<h3>${tier === 'sat' ? '🧵 Croitoria din sat' : '🛍️ Buticul de la oraș'}</h3><p class="sub">Ai 💰 ${s.w.money ?? 0} lei · cumperi pentru ${s.me.actor.spec.name}</p>
-      <div class="shop">${list.map(i => { const own = c.owned!.includes(i.id); return `<button data-cl="${i.id}" class="${own ? 'on' : (s.w.money ?? 0) < i.price ? 'poor' : ''}"><span>${i.icon}</span><b>${i.label}</b><small>${own ? '✔ al tău' : '💰 ' + i.price + ' lei'}</small></button>`; }).join('')}</div>`);
+      <div class="shop">${list.map(i => { const own = c.owned!.includes(i.id); return `<button data-cl="${i.id}" class="${own ? 'on' : (s.w.money ?? 0) < i.price ? 'poor' : ''}"><span>${this.preview(i.id)}</span><b>${i.label}</b><small>${own ? '✔ al tău' : '💰 ' + i.price + ' lei'}</small></button>`; }).join('')}</div>`);
     m.querySelectorAll('[data-cl]').forEach(b => b.addEventListener('click', () => {
       const it = ITEMS.find(i => i.id === (b as HTMLElement).dataset.cl)!;
       if (!c.owned!.includes(it.id)) {
@@ -305,34 +307,34 @@ export class Hud {
   }
   openVillage(tab = 'shop') {
     const s = this.s, w = s.w, r = w.res ?? {};
-    const online = tab === 'online';
-    const tabs: [string, string][] = online ? [] : [['shop', '🛒 Magazin'], ['sell', '💱 Piața'], ['hall', '🏛️ Primăria'], ['town', '🏙️ Orașul']];
-    if (online) tab = 'shop';
+    const online = tab === 'online', city = tab === 'city';
+    const tabs: [string, string][] = online || city ? [] : [['shop', '🛒 Magazin'], ['sell', '💱 Piața'], ['hall', '🏛️ Primăria'], ['town', '🏙️ Orașul']];
+    if (online || city) tab = 'shop';
     let body = '';
-    const LIST = online ? SHOP_ONLINE : SHOP_BUY;
+    const LIST = online ? SHOP_ONLINE : city ? SHOP_CITY : SHOP_BUY;
     if (tab === 'shop') body = `<div class="shop">${LIST.map(it => `<button data-buy="${it.id}" class="${(w.money ?? 0) < it.price ? 'poor' : ''}"><span>${it.icon}</span><b>${it.label}</b><small>💰 ${it.price} lei</small></button>`).join('')}</div>`;
     if (tab === 'sell') body = `<p class="sub">Vinde ce ai strâns (câte 1 la fiecare apăsare)</p><div class="shop">${SHOP_SELL.map(it => `<button data-sell="${it.id}" class="${(r[it.id] ?? 0) < 1 ? 'poor' : ''}"><span>${it.icon}</span><b>${it.label} (${r[it.id] ?? 0})</b><small>+${it.price} lei</small></button>`).join('')}</div>`;
     if (tab === 'hall') body = `<p class="sub">Investiții mari pentru familia voastră</p><div class="shop">${GOALS.filter(g => g.cost).map(g => { const done = !!w.stats['goal-' + g.id]; const c = g.cost!; return `<button data-goal="${g.id}" class="${done ? 'on' : ''}"><span>${g.icon}</span><b>${g.text}</b><small>${done ? '✔ gata' : [c.money ? '💰' + c.money : '', c.wood ? '🪵' + c.wood : '', c.stone ? '🪨' + c.stone : ''].join(' ')}</small></button>`; }).join('')}</div>`;
-    if (tab === 'town') body = `<p class="sub">🚌 Autobuzul spre oraș pleacă după ce vă mutați în Casa cea mare. Acolo: supermarket, magazin de haine, cinema, slujbe… (Capitolul 3)</p>`;
+    if (tab === 'town') body = `<p class="sub">🚌 Autobuzul spre oraș pleacă din stația din dreapta pieței (5 lei de persoană). La oraș: supermarket, buticul elegant, cinema, restaurant, cafeneaua și birourile (slujbe), parcul cu înghețată și apartamente de vânzare.</p>`;
     const bike = online ? `<h4>🚲 Vehicule</h4><div class="shop"><button data-bike class="${(w.stats.bike ?? 0) > 0 ? 'on' : (w.money ?? 0) < 150 ? 'poor' : ''}"><span>🚲</span><b>Bicicletă în tandem</b><small>${(w.stats.bike ?? 0) > 0 ? '✔ o aveți' : '💰 150 lei'}</small></button><button data-scooter class="${(w.stats.scooter ?? 0) > 0 ? 'on' : (w.money ?? 0) < 300 ? 'poor' : ''}"><span>🛵</span><b>Scuter albastru pentru doi</b><small>${(w.stats.scooter ?? 0) > 0 ? '✔ îl aveți' : '💰 300 lei'}</small></button></div>` : '';
-    const m = this.modal(`<h3>${online ? '💻 Magazin online · livrare la ușă' : '🏘️ Satul'}</h3><p class="sub">Ai 💰 ${w.money ?? 0} lei</p><div class="tabs">${tabs.map(([id, l]) => `<button data-tab="${id}" class="${id === tab ? 'on' : ''}">${l}</button>`).join('')}</div>${body}${bike}`);
+    const m = this.modal(`<h3>${online ? '💻 Magazin online · livrare la ușă' : city ? '🛒 Supermarketul din oraș' : '🏘️ Satul'}</h3><p class="sub">Ai 💰 ${w.money ?? 0} lei</p><div class="tabs">${tabs.map(([id, l]) => `<button data-tab="${id}" class="${id === tab ? 'on' : ''}">${l}</button>`).join('')}</div>${body}${bike}`);
     m.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => this.openVillage((b as HTMLElement).dataset.tab)));
     m.querySelectorAll('[data-buy]').forEach(b => b.addEventListener('click', () => {
       const it = LIST.find(i => i.id === (b as HTMLElement).dataset.buy)!;
       if ((w.money ?? 0) < it.price) { this.toast('Nu ai destui bani 💰 — vinde la piață sau la tarabă'); Sfx.play('bad'); return; }
       s.op({ k: 'money', delta: -it.price }); for (const [k, n] of Object.entries(it.give)) s.op({ k: 'res', res: k, delta: n });
-      Sfx.play('coin'); if (online) this.toast('📦 Curierul a lăsat coletul la ușă!'); this.openVillage(online ? 'online' : 'shop');
+      Sfx.play('coin'); if (online) this.toast('📦 Curierul a lăsat coletul la ușă!'); this.openVillage(online ? 'online' : city ? 'city' : 'shop');
     }));
     m.querySelector('[data-bike]')?.addEventListener('click', () => {
       if ((w.stats.bike ?? 0) > 0) return;
       if ((w.money ?? 0) < 150) { this.toast('Nu ajung banii 💰 — taraba și lemnele!'); Sfx.play('bad'); return; }
-      s.op({ k: 'money', delta: -150 }); s.op({ k: 'stat', key: 'bike', delta: 1 }); Sfx.play('good');
-      this.toast('🚲 Ați cumpărat bicicleta! Satul vă așteaptă (indicatorul de lângă drum)'); s.log('Ați cumpărat o bicicletă pentru doi 🚲'); this.openVillage('online');
+      s.op({ k: 'money', delta: -150 }); s.op({ k: 'stat', key: 'bike', delta: 1 }); Sfx.play('good'); s.syncPlaced();
+      this.toast('🚲 Ați cumpărat bicicleta! E parcată lângă poartă. Urcați pe ea și mergeți la indicatorul „Spre sat”'); s.log('Ați cumpărat o bicicletă pentru doi 🚲'); this.openVillage('online');
     });
     m.querySelector('[data-scooter]')?.addEventListener('click', () => {
       if ((w.stats.scooter ?? 0) > 0) return;
       if ((w.money ?? 0) < 300) { this.toast('Scuterul costă 300 lei 💰'); Sfx.play('bad'); return; }
-      s.op({ k: 'money', delta: -300 }); s.op({ k: 'stat', key: 'scooter', delta: 1 }); Sfx.play('good');
+      s.op({ k: 'money', delta: -300 }); s.op({ k: 'stat', key: 'scooter', delta: 1 }); Sfx.play('good'); s.syncPlaced();
       this.toast('🛵 Aveți scuter! Apasă butonul 🛵 ca să urci'); s.log('Ați cumpărat un scuter albastru 🛵💕'); this.openVillage('online');
     });
     m.querySelectorAll('[data-sell]').forEach(b => b.addEventListener('click', () => {
@@ -349,7 +351,37 @@ export class Hud {
     }));
   }
 
-  setMinigame(on: boolean) { this.root.classList.toggle('in-mini', on); }
+  /** previzualizare desenata: personajul tau purtand haina */
+  private prevCache: Record<string, string> = {};
+  preview(itemId: string) {
+    const s = this.s; const key = s.myId + itemId;
+    if (!this.prevCache[key]) {
+      const it = ITEMS.find(i => i.id === itemId)!;
+      const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d')!;
+      const head = it.slot !== 'body';
+      const P = basePose(); P.eyes = 'happy'; P.mouth = 'open'; P.blush = 1;
+      const of: any = { ...NO_OUTFIT, [it.slot]: it.id };
+      if (head) drawCharacter(c, SPECS[s.myId], P, 64, 196, 1.3, 1, 0, of);
+      else drawCharacter(c, SPECS[s.myId], P, 64, 116, 1.15, 1, 0, of);
+      this.prevCache[key] = cv.toDataURL();
+    }
+    return `<img class="prev" src="${this.prevCache[key]}" alt="">`;
+  }
+  openApartment() {
+    const s = this.s, w = s.w; const price = 800;
+    const m = this.modal(`<h3>🏙️ Blocul Lalelelor</h3><p class="sub">Un apartament luminos la etajul 3: dormitor cu pat mare, baie cu cadă, bucătărie, living cu televizor mare și vedere spre parc. Încălzire centrală — nu mai trebuie lemne! 🔥</p>
+      <p class="sub">Aveți 💰 ${w.money ?? 0} lei · prețul: <b>💰 ${price} lei</b></p>
+      <div class="shop"><button data-buyapt class="${(w.money ?? 0) < price ? 'poor' : ''}"><span>🔑</span><b>Cumpărăm apartamentul!</b><small>💰 ${price} lei</small></button></div>
+      <p class="sub">Bani faceți la cafenea ☕, la birou 💼, la florărie 💐, la tâmplărie 🪚 și la tarabă 🧺.</p>`);
+    m.querySelector('[data-buyapt]')?.addEventListener('click', () => {
+      if ((w.money ?? 0) < price) { this.toast(`Mai strângeți ${price - (w.money ?? 0)} lei 💪`); Sfx.play('bad'); return; }
+      s.op({ k: 'money', delta: -price }); s.op({ k: 'stat', key: 'apartment', delta: 1 }); Sfx.play('good');
+      s.log('Ați cumpărat un apartament la oraș! 🔑🏙️💕'); this.els['.modal'].classList.add('hidden'); this.toast('🔑 E al vostru! Intrați să-l vedeți');
+      s.goArea('apartment');
+    });
+  }
+
+  setMinigame(on: boolean) { this.root.classList.toggle('in-mini', on); if (on) this.els['.modal'].classList.add('hidden'); }
 }
 
 const esc = (t: string) => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));

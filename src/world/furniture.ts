@@ -5,6 +5,7 @@ import { heartPath } from '../char/draw';
 import { drawBuildType } from './build';
 import { drawForestType } from './forest';
 import { drawVillageType } from './village';
+import { drawCityType } from './city';
 
 const O = '#3a2a22';
 
@@ -22,6 +23,7 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
   const { gx, gy, w, d } = f;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   if (drawVillageType(ctx, f, t, st.night ?? 0, (globalThis as any).__villageOwned ?? {})) return;
+  if (drawCityType(ctx, f, t, st.night ?? 0, (globalThis as any).__villageOwned ?? {})) return;
   if (drawForestType(ctx, f, t, !!st.depleted?.[f.id])) return;
   if (drawBuildType(ctx, f, t, st.night ?? 0, !!st.depleted?.[f.id])) return;
   switch (f.type) {
@@ -329,6 +331,9 @@ export function renderFloor(): { canvas: HTMLCanvasElement; ox: number; oy: numb
       case 'dirt': col = '#a87a50'; break;
       case 'water': col = '#7ec8f0'; break;
       case 'sand': col = '#f4e2b5'; break;
+      case 'asphalt': col = '#8d8f9a'; break;
+      case 'sidewalk': col = (x + y) % 2 ? '#e6e2dc' : '#dedad3'; break;
+      case 'void': continue;
     }
     tilePath(ctx, x, y); ctx.fillStyle = col; ctx.fill();
     ctx.strokeStyle = 'rgba(58,42,34,0.12)'; ctx.lineWidth = 1; ctx.stroke();
@@ -342,6 +347,17 @@ export function renderFloor(): { canvas: HTMLCanvasElement; ox: number; oy: numb
       for (let k = 1; k < 3; k++) { const p = iso(x + k / 3, y), q = iso(x + k / 3, y + 1); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
     }
     if (f === 'path') { ctx.fillStyle = '#d6c19a'; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.ellipse(c.x + (rnd(x + k, y) - 0.5) * 30, c.y + (rnd(x, y + k) - 0.5) * 12, 6, 3, 0, 0, 7); ctx.fill(); } }
+    if (f === 'sidewalk') { ctx.strokeStyle = 'rgba(120,110,100,0.18)'; ctx.lineWidth = 1; const p = iso(x + 0.5, y), q = iso(x + 0.5, y + 1), a2 = iso(x, y + 0.5), b2 = iso(x + 1, y + 0.5); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y); ctx.stroke(); }
+    if (f === 'asphalt') {
+      const inter = (x === 10 || x === 11) && (y === 12 || y === 13);
+      ctx.fillStyle = '#ffffff';
+      if (!inter && (y === 12 || y === 13) && y === 12) { for (const u of [0.15, 0.6]) { const a2 = iso(x + u, y + 0.97), b2 = iso(x + u + 0.25, y + 0.97), c2 = iso(x + u + 0.25, y + 1.03), d2 = iso(x + u, y + 1.03); ctx.beginPath(); ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.fill(); } }
+      if (!inter && x === 10 && !(y === 12 || y === 13)) { for (const u of [0.15, 0.6]) { const a2 = iso(x + 0.97, y + u), b2 = iso(x + 0.97, y + u + 0.25), c2 = iso(x + 1.03, y + u + 0.25), d2 = iso(x + 1.03, y + u); ctx.beginPath(); ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.fill(); } }
+      // trecerile de pietoni
+      const zebraX = (x === 9 || x === 12) && (y === 12 || y === 13), zebraY = (y === 11 || y === 14) && (x === 10 || x === 11);
+      if (zebraX) for (let k = 0; k < 4; k++) { const v = k * 0.25 + 0.04; const a2 = iso(x + 0.1, y + v), b2 = iso(x + 0.9, y + v), c2 = iso(x + 0.9, y + v + 0.14), d2 = iso(x + 0.1, y + v + 0.14); ctx.beginPath(); ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.fill(); }
+      if (zebraY) for (let k = 0; k < 4; k++) { const u = k * 0.25 + 0.04; const a2 = iso(x + u, y + 0.1), b2 = iso(x + u, y + 0.9), c2 = iso(x + u + 0.14, y + 0.9), d2 = iso(x + u + 0.14, y + 0.1); ctx.beginPath(); ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.fill(); }
+    }
     if (f === 'water') { ctx.strokeStyle = '#ffffff88'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(c.x - 10, c.y); ctx.quadraticCurveTo(c.x - 5, c.y - 3, c.x, c.y); ctx.quadraticCurveTo(c.x + 5, c.y + 3, c.x + 10, c.y); ctx.stroke(); }
   }
   if (AREA !== 'home') return { canvas: cv, ox: minX, oy: minY };

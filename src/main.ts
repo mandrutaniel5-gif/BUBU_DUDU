@@ -8,6 +8,8 @@ import { WorldScene } from './scenes/world';
 import { Settings } from './game/settings';
 import { makeAdapter } from './net/adapters';
 import { Sfx } from './engine/sfx';
+import { iconizeDom } from './ui/icons';
+iconizeDom();
 
 const game = new Game(document.getElementById('game') as HTMLCanvasElement);
 game.scenes.menu = () => new MenuScene(game);

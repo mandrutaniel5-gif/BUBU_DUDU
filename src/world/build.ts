@@ -1,3 +1,4 @@
+import { fillTextIcons } from '../ui/icons';
 // Constructie "gen Minecraft": resurse, catalog de obiecte, desenul lor.
 import { iso, isoBox, boxOf, tilePath, type Pt } from './iso';
 import { heartPath } from '../char/draw';
@@ -75,7 +76,7 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
       const p = iso(gx + 0.5, gy + 0.5, 46);
       ctx.fillStyle = '#e7c08f'; ctx.strokeStyle = O; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(p.x - 26, p.y - 8); ctx.lineTo(p.x + 18, p.y - 8); ctx.lineTo(p.x + 28, p.y); ctx.lineTo(p.x + 18, p.y + 8); ctx.lineTo(p.x - 26, p.y + 8); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.font = '800 9px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(f.id === 'v-home' ? 'Spre casă' : 'Spre sat', p.x - 2, p.y + 0.5); ctx.textBaseline = 'alphabetic';
+      ctx.font = '800 9px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(f.id === 'v-home' ? 'Spre casă' : f.id === 'a-exit' ? 'Ieșire' : 'Spre sat', p.x - 2, p.y + 0.5); ctx.textBaseline = 'alphabetic';
       return true;
     }
     case 'fireplace': {
@@ -115,7 +116,7 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
         isoBox(ctx, gx + 0.05, gy + 0.3, w - 0.1, 0.6, 12, { top: '#c9a57c', left: '#a87a50', right: '#946a44' });
         for (const [u, v, a] of [[0.4, 0.95, 0.3], [1.3, 1.05, -0.4], [0.9, 0.6, 0.1]]) { const p = iso(gx + u, gy + v, 13); ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a); ctx.fillStyle = '#c98e5f'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.fillRect(-16, -3, 32, 6); ctx.strokeRect(-16, -3, 32, 6); ctx.restore(); }
         const sg = iso(gx + w / 2, gy + 0.9, 18); ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.save(); ctx.translate(sg.x, sg.y); ctx.rotate(0.25); ctx.beginPath(); ctx.roundRect(-26, -7, 52, 14, 3); ctx.fill(); ctx.stroke();
-        ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#e63946'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('STRICATĂ 🔨', 0, 0); ctx.restore(); ctx.textBaseline = 'alphabetic';
+        ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#e63946'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; fillTextIcons(ctx, 'STRICATĂ 🔨', 0, 0, 8); ctx.restore(); ctx.textBaseline = 'alphabetic';
         return true;
       }
       if (!S.open) {

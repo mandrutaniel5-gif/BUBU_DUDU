@@ -1,6 +1,6 @@
 import { RESOURCE_NODES } from './build';
 // Harta casei si a curtii.
-export type Floor = 'forest' | 'road' | 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand';
+export type Floor = 'forest' | 'road' | 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand' | 'asphalt' | 'sidewalk' | 'void';
 
 export interface Wall { x: number; y: number; dir: 'x' | 'y'; h: number; kind: 'back' | 'inner' | 'low'; window?: boolean; color: string }
 
@@ -124,9 +124,9 @@ export function colliders(): Rect[] {
     const inset = f.type === 'tree' || f.type === 'bush' ? 0.25 : 0.04;
     R.push({ x0: f.gx + inset, y0: f.gy + inset, x1: f.gx + f.w - inset, y1: f.gy + f.d - inset });
   }
-  for (let x = 0; x < MAP_W; x++) for (let y = 0; y < MAP_H; y++) if (floorAt(x, y) === 'water') R.push({ x0: x, y0: y, x1: x + 1, y1: y + 1 });
+  for (let x = 0; x < MAP_W; x++) for (let y = 0; y < MAP_H; y++) if (floorAt(x, y) === 'water' || floorAt(x, y) === 'void') R.push({ x0: x, y0: y, x1: x + 1, y1: y + 1 });
   // gardul curtii (cu portita)
-  for (let x = 0; x < MAP_W; x++) if (x !== YARD_GATE) R.push({ x0: x, y0: YARD_H - t, x1: x + 1, y1: YARD_H + t });
+  if (AREA === 'home') for (let x = 0; x < MAP_W; x++) if (x !== YARD_GATE) R.push({ x0: x, y0: YARD_H - t, x1: x + 1, y1: YARD_H + t });
   // marginile hartii
   R.push({ x0: -1, y0: -1, x1: MAP_W + 1, y1: 0 }, { x0: -1, y0: MAP_H, x1: MAP_W + 1, y1: MAP_H + 1 });
   R.push({ x0: -1, y0: -1, x1: 0, y1: MAP_H + 1 }, { x0: MAP_W, y0: -1, x1: MAP_W + 1, y1: MAP_H + 1 });

@@ -2,7 +2,7 @@
 import { AREAS, type Floor, type Furn } from './map';
 import { iso, isoBox, boxOf } from './iso';
 import { heartPath } from '../char/draw';
-import { drawTractorIso } from './vehicles';
+import { drawTractorIso, drawParked } from './vehicles';
 
 const O = '#3a2a22';
 const act = (id: string, label: string, icon: string) => ({ id, label, icon });
@@ -88,6 +88,8 @@ export function drawForestType(ctx: CanvasRenderingContext2D, f: Furn, t: number
       e(ctx, a.x + 40, a.y + 10 + Math.sin(t * 3) * 1.5, 3, 3, '#e63946', true, 1);
       return true;
     }
+    case 'parkedbike': { const p = iso(gx + 0.5, gy + 0.6); drawParked(ctx, 'bike', p.x, p.y, t); return true; }
+    case 'parkedscooter': { const p = iso(gx + 0.5, gy + 0.6); drawParked(ctx, 'scooter', p.x, p.y, t); return true; }
     case 'tractor': drawTractorIso(ctx, gx, gy, t, (globalThis as any).__trailerLogs ?? 0); return true;
     case 'logpile': { for (let i = 0; i < 6; i++) { const p = iso(gx + 0.3 + (i % 3) * 0.2, gy + 0.5, 4 + Math.floor(i / 3) * 9); e(ctx, p.x, p.y, 7, 5, '#a0703f'); e(ctx, p.x, p.y, 3.5, 2.5, '#e7c08f', false); } return true; }
   }
