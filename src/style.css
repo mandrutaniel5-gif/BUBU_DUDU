@@ -101,3 +101,8 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 .log { padding-left:18px; } .log li { margin:3px 0; font-weight:600; }
 .hud.in-mini .actions, .hud.in-mini .pop { display:none; }
 .hud.in-mini .card, .hud.in-mini .clock { opacity:0; pointer-events:none; }
+.bed-input { position:absolute; left:50%; top:52%; transform:translate(-50%,-50%); width:min(440px, 86vw); display:flex; flex-direction:column; gap:8px; }
+.bed-input textarea { font-family:inherit; font-size:16px; border:3px solid var(--ink); border-radius:16px; padding:10px; min-height:90px; }
+.bed-input div { display:flex; gap:8px; justify-content:flex-end; }
+.bed-input button { border:3px solid var(--ink); border-radius:14px; font-weight:800; padding:6px 14px; background:#fff; box-shadow:0 3px 0 var(--ink); }
+.bed-input .ok { background:var(--pink); color:#fff; }

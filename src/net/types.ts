@@ -9,7 +9,8 @@ export type NetEvent =
   | { t: 'pair'; who: CharId; pair: string }
   | { t: 'op'; op: WorldOp }
   | { t: 'chat'; who: CharId; text: string }
-  | { t: 'mini'; who: CharId; data: unknown };
+  | { t: 'mini'; who: CharId; data: unknown }
+  | { t: 'act'; who: CharId; act: string | null; furn?: string };
 
 export type WorldOp =
   | { k: 'furn'; key: string; value: unknown }

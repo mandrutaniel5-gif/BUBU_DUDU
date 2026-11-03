@@ -58,6 +58,7 @@ export class WorldScene implements Scene {
   saveT = 0; syncT = 0; stateT = 0;
   partnerOnline = false;
   sickT = 4;
+  miniInbox: unknown[] = [];
   minigame: { id: string; obj: any } | null = null;
   private listeners: [EventTarget, string, any][] = [];
 
@@ -125,6 +126,12 @@ export class WorldScene implements Scene {
       case 'op': this.applyLocal(e.op); break;
       case 'chat': this.hud.toast(`${e.who === 'bubu' ? '🐼' : '🐻'} ${e.text}`); break;
       case 'mini': this.onMiniEvent(e.who, e.data); break;
+      case 'act': {
+        const p = this.pawnOf(e.who); if (p.control !== 'remote') break;
+        if (e.act && ACTIVITIES[e.act]) { const f = FURNITURE.find(x => x.id === e.furn); if (f) this.startActivity(p, ACTIVITIES[e.act], f, true); }
+        else if (!e.act && p.activity) { p.activity = null; p.actor.stop(); p.z = 0; p.facingBack = false; }
+        break;
+      }
     }
   }
   /** aplica local si trimite partenerului */
@@ -265,7 +272,7 @@ export class WorldScene implements Scene {
   /** ajutor (debug / AI): mergi la obiectul cu id-ul dat si interactioneaza */
   goTo(id: string, who: 'me' | 'partner' = 'me') { const f = FURNITURE.find(x => x.id === id); if (f) this.goInteract(who === 'me' ? this.me : this.partner, f); }
 
-  startActivity(pawn: Pawn, a: Activity, f: Furn) {
+  startActivity(pawn: Pawn, a: Activity, f: Furn, fromNet = false) {
     if (a.place === 'sofa') f = FURNITURE.find(x => x.id === 'sofa')!;
     pawn.activity = { a, t: 0, furn: f };
     // pozitionare pe obiect
@@ -283,13 +290,15 @@ export class WorldScene implements Scene {
     if (a.place === 'sofa') { pawn.actor.flip = -1; pawn.facingBack = true; }
     if (a.place === 'bed' || a.place === 'tub' || a.place === 'toilet') { pawn.facingBack = false; pawn.actor.flip = 1; }
     pawn.actor.play(a.anim);
+    if (fromNet) return;
     if (a.furnFlag) this.op({ k: 'furn', key: a.furnFlag[0], value: a.furnFlag[1] });
-    if (pawn !== this.me || true) this.net.sendEvent({ t: 'emote', who: pawn.id, anim: a.anim });
+    this.net.sendEvent({ t: 'act', who: pawn.id, act: a.id, furn: f.id });
   }
 
   stopActivity(pawn: Pawn, completed = false) {
     const act = pawn.activity; if (!act) return;
     pawn.activity = null; pawn.actor.stop();
+    if (pawn.control !== 'remote') this.net.sendEvent({ t: 'act', who: pawn.id, act: null });
     if (act.a.furnFlag) this.op({ k: 'furn', key: act.a.furnFlag[0], value: act.a.furnFlag[2] });
     // coboara de pe obiect
     if (pawn.z > 0 || this.nav.hits(pawn.gx, pawn.gy)) {
@@ -376,6 +385,19 @@ export class WorldScene implements Scene {
     this.hud.closeMenus();
   }
 
+  startBedtime() {
+    const M = MINIGAMES.bedtime;
+    for (const p of [this.me, this.partner]) if (p.activity) p.activity.t = -9999;
+    this.minigame = { id: 'bedtime', obj: new M(this, (score: number) => {
+      this.minigame = null; this.hud.setMinigame(false);
+      for (const p of [this.me, this.partner]) if (p.activity) p.activity.t = 0;
+      this.op({ k: 'hearts', delta: Math.round(score * 5) });
+      for (const p of [this.me, this.partner]) if (p.control !== 'remote') { this.op({ k: 'need', who: p.id, need: 'love', delta: 25 }); this.op({ k: 'need', who: p.id, need: 'fun', delta: 10 }); }
+      this.log('Ați adormit îmbrățișați 🌙💕');
+    }) };
+    this.hud.setMinigame(true);
+  }
+
   /** minijoc de ingrijire; la succes -> actiunea 'care' pentru partener */
   startCare(mini: string) {
     const M = MINIGAMES[mini];
@@ -442,7 +464,10 @@ export class WorldScene implements Scene {
     };
     this.hud.setMinigame(true);
   }
-  onMiniEvent(_who: CharId, _data: unknown) { /* minijocuri co-op (urmeaza) */ }
+  onMiniEvent(_who: CharId, data: unknown) {
+    if (this.minigame?.obj.net) this.minigame.obj.net(data);
+    else { this.miniInbox.push(data); if (this.miniInbox.length > 20) this.miniInbox.shift(); }
+  }
 
   /** bolnavul suna din clopotel */
   ringBell() {
@@ -491,6 +516,11 @@ export class WorldScene implements Scene {
       }
     }
 
+    // rutina de seara: amandoi in pat, o data pe zi de joc
+    if (!this.minigame && this.me.activity?.a.id === 'sleep' && this.partner.activity?.a.id === 'sleep') {
+      const key = 'bed-' + this.w.day;
+      if (!this.w.stats[key]) { this.w.stats[key] = 1; this.startBedtime(); }
+    }
     this.updateMe(dt);
     this.updatePartner(dt);
     for (const p of [this.me, this.partner]) this.updateActivity(p, dt);
@@ -595,6 +625,8 @@ export class WorldScene implements Scene {
     if (p.aiT > 0) return;
     p.aiT = 3 + Math.random() * 5;
     const c = this.w.chars[p.id];
+    // AI-ul vine si el in pat cand te culci
+    if (this.me.activity?.a.id === 'sleep' && !p.activity) { this.goTo('bed', 'partner'); p.aiT = 4; return; }
     // AI-ul are grija de tine cand esti bolnav(a)
     if (this.w.chars[this.me.id].sick && !c.sick) {
       if (this.nearPartnerAI()) { this.runPair(p.id, 'care', true); this.hud.toast(`${p.actor.spec.name} are grijă de tine 🩹💕`); p.aiT = 12; }
