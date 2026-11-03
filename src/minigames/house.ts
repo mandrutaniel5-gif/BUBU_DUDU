@@ -33,7 +33,8 @@ export class FridgeCleanGame extends Panel {
     for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) spots.push([0.25 + c * 0.17, 0.3 + r * 0.2]);
     spots.sort(() => Math.random() - 0.5);
     spots.slice(0, 11).forEach(([x, y], i) => this.items.push(i < 6 ? { x, y, bad: true, kind: i % 3, gone: 0 } : { x, y, bad: false, kind: 0, code: good[i - 6], gone: 0 }));
-    for (let i = 0; i < 5; i++) this.stains.push({ x: rnd(0.25, 0.75), y: rnd(0.28, 0.72), d: 1 });
+    // petele: cate una pe fiecare raft, bine vizibile
+    for (let i = 0; i < 5; i++) this.stains.push({ x: [0.3, 0.68, 0.45, 0.32, 0.66][i] + rnd(-0.04, 0.04), y: [0.3, 0.32, 0.5, 0.7, 0.68][i] + rnd(-0.02, 0.02), d: 1 });
   }
   tick(dt: number) {
     for (const it of this.items) if (it.gone > 0) it.gone += dt * 2;
@@ -55,10 +56,15 @@ export class FridgeCleanGame extends Panel {
       return;
     }
     if (type === 'down') { this.down = true; this.lx = x; this.ly = y; }
+    if (type === 'move' && !this.down) { this.lx = x; this.ly = y; }
     if (type === 'up') this.down = false;
     if (type === 'move' && this.down) {
       const d = Math.hypot(x - this.lx, y - this.ly); this.lx = x; this.ly = y;
-      for (const s of this.stains) if (Math.hypot(x - (B.x + s.x * B.w), y - (B.y + s.y * B.h)) < 40 && s.d > 0) { s.d -= d / 500; if (Math.random() < 0.3) this.fx.emit('puff', x, y, { vy: -20, max: 0.5, size: 0.5 }); }
+      for (const s of this.stains) if (Math.hypot(x - (B.x + s.x * B.w), y - (B.y + s.y * B.h)) < 55 && s.d > 0) {
+        s.d -= Math.min(d, 40) / 260;
+        if (Math.random() < 0.35) this.fx.emit('sparkle', x, y, { vy: -25, max: 0.5, size: 0.6 });
+        if (s.d <= 0) { Sfx.play('good'); this.fx.text(B.x + s.x * B.w, B.y + s.y * B.h - 20, 'Curat! ✨', '#2ec4b6', 0.8); }
+      }
     }
   }
   key(k: string, d: boolean) {
@@ -80,7 +86,26 @@ export class FridgeCleanGame extends Panel {
       const px = x + it.x * w + (it.gone ? k * (w * 0.92 - it.x * w) : 0), py = y + it.y * h + (it.gone ? -Math.sin(k * Math.PI) * 120 + k * (h * 0.85 - it.y * h) : 0);
       if (k >= 1) continue;
       ctx.save(); if (it.gone) { ctx.translate(px, py); ctx.rotate(k * 8); ctx.translate(-px, -py); }
+      if (this.phase === 'wipe') ctx.globalAlpha = 0.28; // mancarea buna e mutata deoparte cat stergi
       if (it.bad) spoiled(ctx, px, py, it.kind, this.t); else drawItem(ctx, it.code!, px, py, 44, this.t);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+    // in faza de sters: petele deasupra, cu contur, si buretele sub deget
+    if (this.phase === 'wipe') {
+      for (const st of this.stains) if (st.d > 0) {
+        const sx = x + st.x * w, sy = y + st.y * h;
+        ctx.globalAlpha = 0.35 + st.d * 0.65; ctx.fillStyle = '#a8782f'; ctx.strokeStyle = '#7a5520'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(sx, sy, 34, 18, 0.3, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#c9a060'; ctx.beginPath(); ctx.ellipse(sx + 10, sy - 4, 12, 7, 0, 0, 7); ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#2ec4b6'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(sx, sy, 40, -Math.PI / 2, -Math.PI / 2 + (1 - st.d) * Math.PI * 2); ctx.stroke();
+      }
+      const bx = this.lx || x + w / 2, by = this.ly || y + h / 2, wob = this.down ? Math.sin(this.t * 30) * 0.15 : 0;
+      ctx.save(); ctx.translate(bx, by); ctx.rotate(-0.3 + wob);
+      ctx.fillStyle = '#ffe14f'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(-26, -16, 52, 26, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#6bb35a'; ctx.beginPath(); ctx.roundRect(-26, 4, 52, 10, 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#e8c030'; for (const [px, py] of [[-12, -6], [4, -9], [14, -2]]) { ctx.beginPath(); ctx.arc(px, py, 2.5, 0, 7); ctx.fill(); }
       ctx.restore();
     }
     // cosul de gunoi

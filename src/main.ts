@@ -11,6 +11,20 @@ import { Sfx } from './engine/sfx';
 import { iconizeDom } from './ui/icons';
 iconizeDom();
 
+// ---- jocul se joaca pe orizontala (ca un joc normal) ----
+const rot = document.createElement('div');
+rot.className = 'rotate-hint';
+rot.innerHTML = '<div><div class="ph">📱</div><b>Întoarce telefonul pe orizontală</b><small>Bubu & Dudu se joacă pe lat</small></div>';
+document.body.appendChild(rot);
+const lockLandscape = () => { try { (screen.orientation as any)?.lock?.('landscape').catch(() => {}); } catch { /* */ } };
+lockLandscape();
+// pe telefon: la prima atingere intram pe tot ecranul si blocam orizontala (browserul permite doar dupa o atingere)
+addEventListener('pointerdown', () => {
+  const touch = matchMedia('(pointer: coarse)').matches;
+  if (touch && !document.fullscreenElement && document.documentElement.requestFullscreen && !(window as any).Capacitor) document.documentElement.requestFullscreen({ navigationUI: 'hide' } as any).then(lockLandscape).catch(() => {});
+  else lockLandscape();
+}, { once: true });
+
 const game = new Game(document.getElementById('game') as HTMLCanvasElement);
 game.scenes.menu = () => new MenuScene(game);
 game.scenes.studio = () => new StudioScene(game);

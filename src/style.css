@@ -181,3 +181,26 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 @media (min-width: 701px) and (max-width: 1100px) and (min-height: 501px) {
   .hud .clock { top:auto; bottom:12px; left:12px; transform:none; }
 }
+
+/* butonul de inchidere: mereu vizibil sus, nu mai trebuie scroll */
+.modal .box { position:relative; }
+.modal .xclose { position:sticky; top:0; float:right; z-index:5; width:38px; height:38px; margin:-6px -8px 0 8px; border-radius:50%; border:3px solid var(--ink); background:#fff; font-size:18px; font-weight:900; color:var(--ink); box-shadow:0 3px 0 var(--ink); line-height:1; }
+.modal .xclose:active { transform:translateY(2px); box-shadow:0 1px 0 var(--ink); }
+
+/* telefon tinut vertical: rugam jucatorul sa-l intoarca */
+.rotate-hint { display:none; position:fixed; inset:0; z-index:9999; background:linear-gradient(#ffd6e4,#ffeacc); align-items:center; justify-content:center; text-align:center; color:var(--ink); font-family:inherit; }
+.rotate-hint b { display:block; font-size:22px; margin-top:12px; } .rotate-hint small { font-size:14px; opacity:.7; }
+.rotate-hint .ph { font-size:64px; display:inline-block; animation:rot 1.8s ease-in-out infinite; }
+@keyframes rot { 0%,30% { transform:rotate(0) } 60%,100% { transform:rotate(-90deg) } }
+@media (orientation: portrait) and (pointer: coarse) and (max-width: 900px) { .rotate-hint { display:flex; } }
+
+/* pe lat (telefon): stanga-jos ramane libera pentru joystick */
+@media (max-height: 500px) {
+  .hud .card.me { transform:scale(.62); }
+  .hud .card.partner { transform:scale(.62); }
+  .hud .clock { top:8px; bottom:auto; left:50%; transform:translateX(-50%) scale(.78); transform-origin:top center; }
+  .hud .goal { top:calc(8px + 150px * .62 + 30px); bottom:auto; left:8px; transform:scale(.75); transform-origin:top left; }
+}
+
+.srvrow { display:flex; gap:6px; } .srvrow input { flex:1; min-width:0; }
+.srvrow .paste { flex:0 0 auto; border:3px solid var(--ink); border-radius:12px; background:#fff6d6; font-weight:800; padding:0 10px; box-shadow:0 3px 0 var(--ink); white-space:nowrap; }

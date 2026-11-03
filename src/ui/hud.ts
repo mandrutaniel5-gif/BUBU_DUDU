@@ -104,7 +104,7 @@ export class Hud {
     this.els['.pmood'].textContent = (s.sameArea() ? '' : ({ home: '🏡 acasă · ', forest: '🌲 la pădure · ', village: '🏘️ în sat · ', city: '🏙️ la oraș · ', apartment: '🔑 în apartament · ' } as Record<string, string>)[s.partnerArea()] ?? '') + moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : '');
     (this.els['.fart .fill'] as HTMLElement).style.height = c.fart + '%';
     this.els['[data-a="pairs"]'].classList.toggle('glow', s.nearPartner());
-    (this.root.querySelector('.act.scooter') as HTMLElement).style.display = (w.stats.scooter ?? 0) > 0 || (w.stats.bike ?? 0) > 0 ? '' : 'none';
+    (this.root.querySelector('.act.scooter') as HTMLElement).style.display = 'none'; // vehiculele se folosesc de la poarta
     (this.root.querySelector('.act.scooter') as HTMLElement).classList.toggle('glow', !!s.me.riding);
     // butonul de actiune
     let label = '…', icon = '✋';
@@ -143,7 +143,7 @@ export class Hud {
   togglePairs(force?: boolean) { this.els['.emotes'].classList.add('hidden'); if (force) this.els['.pairs'].classList.remove('hidden'); else this.els['.pairs'].classList.toggle('hidden'); }
   closeMenus() { this.els['.emotes'].classList.add('hidden'); this.els['.pairs'].classList.add('hidden'); }
 
-  modal(html: string) { const m = this.els['.modal']; m.innerHTML = `<div class="box">${html}<button class="close" data-close>Închide</button></div>`; m.classList.remove('hidden'); return m; }
+  modal(html: string) { const m = this.els['.modal']; m.innerHTML = `<div class="box"><button class="xclose" data-close aria-label="Închide">✕</button>${html}<button class="close" data-close>Închide</button></div>`; m.classList.remove('hidden'); return m; }
   closeModal() { this.els['.modal'].classList.add('hidden'); }
 
   showLog(items: string[]) {
@@ -329,13 +329,13 @@ export class Hud {
       if ((w.stats.bike ?? 0) > 0) return;
       if ((w.money ?? 0) < 150) { this.toast('Nu ajung banii 💰 — taraba și lemnele!'); Sfx.play('bad'); return; }
       s.op({ k: 'money', delta: -150 }); s.op({ k: 'stat', key: 'bike', delta: 1 }); Sfx.play('good'); s.syncPlaced();
-      this.toast('🚲 Ați cumpărat bicicleta! E parcată lângă poartă. Urcați pe ea și mergeți la indicatorul „Spre sat”'); s.log('Ați cumpărat o bicicletă pentru doi 🚲'); this.openVillage('online');
+      this.toast('🚲 Ați cumpărat bicicleta! E parcată lângă poartă. Atinge-o ca să mergeți amândoi în sat'); s.log('Ați cumpărat o bicicletă pentru doi 🚲'); this.openVillage('online');
     });
     m.querySelector('[data-scooter]')?.addEventListener('click', () => {
       if ((w.stats.scooter ?? 0) > 0) return;
       if ((w.money ?? 0) < 300) { this.toast('Scuterul costă 300 lei 💰'); Sfx.play('bad'); return; }
       s.op({ k: 'money', delta: -300 }); s.op({ k: 'stat', key: 'scooter', delta: 1 }); Sfx.play('good'); s.syncPlaced();
-      this.toast('🛵 Aveți scuter! Apasă butonul 🛵 ca să urci'); s.log('Ați cumpărat un scuter albastru 🛵💕'); this.openVillage('online');
+      this.toast('🛵 Aveți scuter! E parcat la poartă: atinge-l ca să mergeți în sat'); s.log('Ați cumpărat un scuter albastru 🛵💕'); this.openVillage('online');
     });
     m.querySelectorAll('[data-sell]').forEach(b => b.addEventListener('click', () => {
       const it = SHOP_SELL.find(i => i.id === (b as HTMLElement).dataset.sell)!;

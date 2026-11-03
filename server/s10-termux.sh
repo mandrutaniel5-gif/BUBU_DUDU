@@ -20,6 +20,7 @@ npm install --omit=dev --no-audit --no-fund
 rm -rf dist && git clone --depth 1 -b gh-pages "$REPO" dist && rm -rf dist/.git
 # tine telefonul treaz cat ruleaza serverul
 command -v termux-wake-lock >/dev/null && termux-wake-lock || true
+echo "Sfat: daca serverul se opreste singur (signal 9), e Android care inchide procesele din fundal -> vezi docs/SERVER-S10.md, sectiunea 'Se opreste singur'."
 IP=$(ip -4 addr show wlan0 2>/dev/null | grep -oE 'inet [0-9.]+' | cut -d' ' -f2)
 echo "Server pe ws://${IP:-IP-ul-telefonului}:8787  — pune adresa asta in joc la Setari -> Server (S10)"
 # --- acces de la distanta (alte retele / date mobile): tunel Cloudflare gratuit, cu HTTPS ---
@@ -34,6 +35,10 @@ if [ "${TUNEL:-0}" = "1" ]; then
       U=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$HOME/tunel.log" 2>/dev/null | head -1)
       if [ -n "$U" ]; then
         echo "$U" > "$HOME/tunel-adresa.txt"
+        # linkul se copiaza singur (cu aplicatia Termux:API) - il lipesti in joc sau il trimiti pe WhatsApp
+        command -v termux-clipboard-set >/dev/null && echo -n "$U" | termux-clipboard-set && echo " 📋 Linkul a fost COPIAT. In joc apasa 📋 Lipeste."
+        # deschide jocul direct pe S10 (optional): JOACA=1
+        [ "${JOACA:-0}" = "1" ] && command -v termux-open-url >/dev/null && termux-open-url "$U"
         echo ""; echo "=============================================================="
         echo " DE LA DISTANTA: deschide $U"
         echo " (sau in joc: Serverul nostru -> Adresa serverului: $U)"

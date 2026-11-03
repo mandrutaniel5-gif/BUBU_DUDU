@@ -108,7 +108,7 @@ export const FURNITURE: Furn[] = [
   { id: 'fireplace', type: 'fireplace', gx: 7, gy: 7, w: 1, d: 1, solid: true, action: act('stove', 'Soba', '🔥') },
   { id: 'shed', type: 'shed', gx: 16, gy: 13, w: 1, d: 1, solid: true, action: act('mow', 'Tunde iarba', '✂️') },
   { id: 'stand', type: 'stand', gx: 7, gy: 23, w: 2, d: 1, solid: true, action: act('stand', 'Taraba lui Bubu', '🧺') },
-  { id: 'gateway', type: 'signpost', gx: 2, gy: 23, w: 1, d: 1, solid: true, action: act('village', 'Spre sat', '🏘️') },
+  { id: 'gateway', type: 'signpost', gx: 3, gy: 23, w: 1, d: 1, solid: true, action: act('village', 'Spre sat', '🏘️') },
 ];
 
 /** dreptunghiuri de coliziune in grid */

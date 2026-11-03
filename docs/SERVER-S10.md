@@ -24,6 +24,26 @@ Legătura e criptată (HTTPS) și nu trebuie să umbli la router. Ai doar două 
 - **Adresa se schimbă la fiecare repornire.** Ultima adresă e salvată în `~/tunel-adresa.txt`. Pentru o adresă fixă îți faci un cont gratuit Cloudflare și un „named tunnel”, sau folosești Tailscale.
 - **S10 trebuie să rămână pornit și conectat la internet.** Dacă nu e, folosiți Firebase (vezi `docs/FIREBASE.md`): merge oricând, fără telefon-server.
 
+## 🛑 Se oprește singur („Process completed (signal 9)”)
+Android 12 (S10) are un „ucigaș de procese fantomă”: închide programele din fundal ale Termux. Ca să nu mai facă asta:
+
+1. **Bateria:** Setări → Aplicații → Termux → Baterie → **Nerestricționat**. La fel pentru **Termux:API**.
+2. **Ține ecranul S10 deblocat**, sau lasă notificarea Termux cu „Acquire wakelock” (scriptul o pornește singur).
+3. **Oprește limita de procese** (o singură dată). Pe S10 activezi Opțiuni dezvoltator → **Depanare USB**, conectezi telefonul la PC și rulezi pe PC:
+   ```bash
+   adb shell "/system/bin/device_config set_sync_disabled_for_tests persistent"
+   adb shell "/system/bin/device_config put activity_manager max_phantom_processes 2147483647"
+   adb shell settings put global settings_enable_monitor_phantom_procs false
+   ```
+   `adb` vine în „Android SDK Platform-Tools” (de la Google). Setarea rămâne și după repornirea telefonului.
+4. **Nu rula două servere deodată.** Scriptul oprește singur serverul vechi.
+
+## 📋 Cel mai simplu: linkul se copiază singur
+Instalează **Termux:API** din F-Droid și rulează o dată `pkg install termux-api`. La pornirea cu tunel, linkul ajunge direct în clipboard, așa că:
+- **în aplicație:** apeși **📋 Lipește** la „Adresa serverului”;
+- **pentru partener:** îi trimiți linkul pe WhatsApp, iar el îl deschide în browser. Jocul se conectează singur la server.
+- **ca să deschizi jocul direct pe S10:** pornești cu `TUNEL=1 JOACA=1 ~/bubu_dudu/server/s10-termux.sh`.
+
 ## 1. Instalare pe S10
 1. Instalează **Termux** din **F-Droid** (versiunea din Play Store e veche): https://f-droid.org/packages/com.termux/
 2. Deschide Termux și rulează:

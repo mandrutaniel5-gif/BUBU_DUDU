@@ -3,7 +3,7 @@
   "short_name": "Bubu & Dudu",
   "start_url": "./",
   "display": "fullscreen",
-  "orientation": "any",
+  "orientation": "landscape",
   "background_color": "#ffe9f0",
   "theme_color": "#ff7aa2",
   "icons": [

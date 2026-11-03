@@ -74,9 +74,11 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
     case 'signpost': {
       isoBox(ctx, gx + 0.45, gy + 0.45, 0.1, 0.1, 50, boxOf('#a0703f'));
       const p = iso(gx + 0.5, gy + 0.5, 46);
+      // sageata arata spre unde duce drumul (din curte, satul e la stanga, pe drum)
+      const dir = f.id === 'gateway' ? -1 : 1;
       ctx.fillStyle = '#e7c08f'; ctx.strokeStyle = O; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(p.x - 26, p.y - 8); ctx.lineTo(p.x + 18, p.y - 8); ctx.lineTo(p.x + 28, p.y); ctx.lineTo(p.x + 18, p.y + 8); ctx.lineTo(p.x - 26, p.y + 8); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.font = '800 9px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(f.id === 'v-home' ? 'Spre casă' : f.id === 'a-exit' ? 'Ieșire' : 'Spre sat', p.x - 2, p.y + 0.5); ctx.textBaseline = 'alphabetic';
+      ctx.beginPath(); ctx.moveTo(p.x - 30 * dir, p.y - 9); ctx.lineTo(p.x + 20 * dir, p.y - 9); ctx.lineTo(p.x + 31 * dir, p.y); ctx.lineTo(p.x + 20 * dir, p.y + 9); ctx.lineTo(p.x - 30 * dir, p.y + 9); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.font = '800 9px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(f.id === 'v-home' ? 'Spre casă 🏡' : f.id === 'a-exit' ? 'Ieșire' : 'Spre sat 🏘️', p.x + 2 * dir, p.y + 0.5); ctx.textBaseline = 'alphabetic';
       return true;
     }
     case 'fireplace': {

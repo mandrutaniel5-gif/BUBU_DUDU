@@ -36,7 +36,7 @@ export class MenuScene implements Scene {
           <option value="local">🧪 Test: 2 tab-uri pe același dispozitiv</option>
         </select>
         <label>Codul casei (același pentru amândoi)<input name="room" value="${s.net.room}" maxlength="40" /></label>
-        <label class="m-server">Adresa serverului<input name="serverUrl" value="${s.net.serverUrl}" placeholder="ws://192.168.1.50:8787" /></label>
+        <label class="m-server">Adresa serverului (linkul de pe S10)<span class="srvrow"><input name="serverUrl" value="${s.net.serverUrl}" placeholder="https://….trycloudflare.com" /><button type="button" class="paste" title="Lipește linkul copiat">📋 Lipește</button></span></label>
         <label class="m-firebase">Config Firebase (JSON din consola Firebase)<textarea name="fb" rows="4" placeholder='{"apiKey":"...","databaseURL":"https://...firebaseio.com", ...}'>${s.net.firebase.apiKey ? JSON.stringify(s.net.firebase) : ''}</textarea></label>
         <button class="play">▶ Intră în casă</button>
         <div class="row2"><button class="studio">🎬 Studio animații</button><button class="reset">🔄 Joc nou</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button></div>
@@ -59,6 +59,16 @@ export class MenuScene implements Scene {
         (b.dataset.who === 'bubu' ? this.bubu : this.dudu).play('wave');
       }
       if (b.classList.contains('mute')) { const m = !Settings.get().muted; Settings.set({ muted: m }); Sfx.setMuted(m); b.textContent = m ? '🔇' : '🔊'; }
+      if (b.classList.contains('paste')) {
+        const inp = this.ui.querySelector('[name=serverUrl]') as HTMLInputElement;
+        const sel = this.ui.querySelector('select') as HTMLSelectElement | null;
+        navigator.clipboard?.readText?.().then(t => {
+          const m = /(https?|wss?):\/\/[^\s"'<>]+/i.exec(t || '');
+          if (m) { inp.value = m[0]; b.textContent = '✔ Lipit'; if (sel) { sel.value = 'server'; sel.dispatchEvent(new Event('change', { bubbles: true })); } }
+          else { b.textContent = '❌ Nimic copiat'; inp.focus(); }
+          setTimeout(() => (b.textContent = '📋 Lipește'), 1600);
+        }).catch(() => { inp.focus(); inp.select(); b.textContent = 'Ține apăsat → Lipește'; setTimeout(() => (b.textContent = '📋 Lipește'), 2000); });
+      }
       if (b.classList.contains('studio')) this.game.go('studio');
       if (b.classList.contains('reset')) {
         if (!confirm('Începeți un joc nou?\n\nSe șterge tot progresul (casa, banii, grădina, Borcanul cu iubire) și o luați de la Capitolul 0.')) return;
