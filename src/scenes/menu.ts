@@ -31,13 +31,13 @@ export class MenuScene implements Scene {
         <h4>Cum jucăm?</h4>
         <select name="mode">
           <option value="solo">🏠 Joc solo — partenerul e controlat de AI</option>
+          <option value="firebase">🌍 Online (Firebase): de oriunde, fără server</option>
           <option value="server">📱 Serverul nostru (Samsung S10 / PC)</option>
-          <option value="firebase">🔥 Firebase (online, fără server)</option>
           <option value="local">🧪 Test: 2 tab-uri pe același dispozitiv</option>
         </select>
         <label>Codul casei (același pentru amândoi)<input name="room" value="${s.net.room}" maxlength="40" /></label>
         <label class="m-server">Adresa serverului: lasă <b>auto</b> ca să se conecteze singur la S10<span class="srvrow"><input name="serverUrl" value="${s.net.serverUrl}" placeholder="auto (se conectează singur la S10)" /><button type="button" class="paste" title="Lipește linkul copiat">📋 Lipește</button></span></label>
-        <label class="m-firebase">Config Firebase (JSON din consola Firebase)<textarea name="fb" rows="4" placeholder='{"apiKey":"...","databaseURL":"https://...firebaseio.com", ...}'>${s.net.firebase.apiKey ? JSON.stringify(s.net.firebase) : ''}</textarea></label>
+        <label class="m-firebase hidden">Config Firebase (JSON din consola Firebase)<textarea name="fb" rows="4" placeholder='{"apiKey":"...","databaseURL":"https://...firebaseio.com", ...}'>${s.net.firebase.apiKey ? JSON.stringify(s.net.firebase) : ''}</textarea></label>
         <button class="play">▶ Intră în casă</button>
         <div class="row2"><button class="studio">🎬 Studio animații</button><button class="reset">🔄 Joc nou</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button></div>
         <p class="ver">v0.2 · făcut cu 💕 pentru noi doi</p>
@@ -47,7 +47,7 @@ export class MenuScene implements Scene {
     mode.value = s.net.mode;
     const sync = () => {
       this.ui.querySelector('.m-server')!.classList.toggle('hidden', mode.value !== 'server');
-      this.ui.querySelector('.m-firebase')!.classList.toggle('hidden', mode.value !== 'firebase');
+      this.ui.querySelector('.m-firebase')!.classList.add('hidden'); // config-ul Firebase e deja in joc
     };
     mode.onchange = sync; sync();
     this.ui.addEventListener('click', e => {

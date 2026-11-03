@@ -155,8 +155,11 @@ export class FirebaseAdapter extends Base {
         const v = snap.val(); this.onPresence?.(other, !!v?.online);
         if (v?.state) this.onState?.(v.state);
       }));
-      const evRef = fb.query(fb.ref(this.db, `rooms/${room}/events`), fb.orderByChild('ts'), fb.startAt(this.startTs));
-      this.unsub.push(fb.onChildAdded(evRef, (snap: any) => { const v = snap.val(); if (v.from !== me) this.onEvent?.(v.e); }));
+      // evenimentele partenerului: le citim si le stergem (baza de date ramane mica); 30 s toleranta la ceasuri diferite
+      const evRef = fb.query(fb.ref(this.db, `rooms/${room}/events`), fb.orderByChild('ts'), fb.startAt(this.startTs - 30000));
+      this.unsub.push(fb.onChildAdded(evRef, (snap: any) => { const v = snap.val(); if (!v || v.from === me) return; this.onEvent?.(v.e); fb.remove(snap.ref).catch(() => {}); }));
+      // conexiunea reala cu Firebase (online / reconectare)
+      this.unsub.push(fb.onValue(fb.ref(this.db, '.info/connected'), (snap: any) => { if (snap.val() === true) { this.setStatus('online'); fb.set(meRef, { online: true, ts: Date.now() }); fb.onDisconnect(meRef).set({ online: false, ts: Date.now() }); } else this.setStatus('connecting'); }));
       this.setStatus('online');
     } catch (e) { this.setStatus('error', 'Firebase: ' + (e as Error).message); }
   }
