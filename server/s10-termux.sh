@@ -2,6 +2,7 @@
 # Serverul Bubu & Dudu pe Samsung S10 (Termux), luat direct de pe GitHub.
 # Prima data:  pkg install -y git nodejs && curl -fsSL https://raw.githubusercontent.com/mandrutaniel5-gif/bubu_dudu/main/server/s10-termux.sh | bash
 # Apoi, oricand:  ~/bubu_dudu/server/s10-termux.sh   (isi ia singur ultima versiune si porneste)
+# Oprire:         ~/bubu_dudu/server/s10-termux.sh stop
 set -e
 REPO=https://github.com/mandrutaniel5-gif/bubu_dudu.git
 DIR=$HOME/bubu_dudu
@@ -9,6 +10,11 @@ command -v git >/dev/null || pkg install -y git
 command -v node >/dev/null || pkg install -y nodejs
 if [ -d "$DIR/.git" ]; then git -C "$DIR" pull --ff-only || true; else git clone --depth 1 "$REPO" "$DIR"; fi
 cd "$DIR"
+# opreste serverul / tunelul pornite inainte (altfel portul 8787 e ocupat: EADDRINUSE)
+pkill -f "node server/server.mjs" 2>/dev/null || true
+pkill -f "cloudflared tunnel" 2>/dev/null || true
+sleep 1
+if [ "$1" = "stop" ]; then echo "Serverul Bubu & Dudu a fost oprit."; exit 0; fi
 npm install --omit=dev --no-audit --no-fund
 # jocul gata compilat (construit automat de GitHub Actions pe ramura gh-pages)
 rm -rf dist && git clone --depth 1 -b gh-pages "$REPO" dist && rm -rf dist/.git
@@ -27,4 +33,12 @@ if [ "${TUNEL:-0}" = "1" ]; then
       echo "=============================================================="; echo "$U" > "$HOME/tunel-adresa.txt"; done ) &
 fi
 # reporneste automat daca se opreste
-while true; do PORT=8787 node server/server.mjs || true; echo "Repornesc in 3s..."; sleep 3; done
+trap 'pkill -f "cloudflared tunnel" 2>/dev/null; exit 0' INT TERM
+while true; do
+  PORT=8787 node server/server.mjs 2> "$HOME/server-err.log" || true
+  if grep -q EADDRINUSE "$HOME/server-err.log"; then
+    echo "Portul 8787 e ocupat de alt program. Opresc ce era pornit si reincerc..."
+    pkill -f "node server/server.mjs" 2>/dev/null; fuser -k 8787/tcp 2>/dev/null || true
+  else cat "$HOME/server-err.log"; fi
+  echo "Repornesc in 3s... (CTRL+C ca sa opresti)"; sleep 3
+done
