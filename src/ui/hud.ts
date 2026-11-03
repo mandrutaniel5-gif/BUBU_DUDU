@@ -7,7 +7,8 @@ import { Sfx } from '../engine/sfx';
 import { moodText, g } from '../game/gender';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
-import { GOALS, CHAPTERS, chapterOf, currentGoal, INV_INFO, SHOP_BUY, SHOP_SELL } from '../game/economy';
+import { GOALS, CHAPTERS, chapterOf, currentGoal, INV_INFO, SHOP_BUY, SHOP_ONLINE, SHOP_SELL } from '../game/economy';
+import { CROPS, seedKey, catCount, drawCropPlant, WET_MIN } from '../world/garden';
 import type { NetStatus } from '../net/types';
 
 
@@ -27,7 +28,7 @@ export class Hud {
         <div class="needs">${NEEDS.map(n => `<div class="need" data-n="${n}" title="${NEED_INFO[n].label}"><span>${NEED_INFO[n].icon}</span><i><b style="background:${NEED_INFO[n].color}"></b></i></div>`).join('')}</div>
         <div class="sick hidden"></div>
       </div>
-      <div class="clock"><span class="time">09:00</span><span class="day">Ziua 1</span><span class="hearts">💗 0</span><span class="money">💰 0</span><span class="res"></span></div>
+      <div class="clock"><span class="time">09:00</span><span class="day">Ziua 1</span><span class="hearts">💗 0</span><span class="money">💰 0</span><span class="res" data-inv></span></div>
       <button class="goal" data-a="goals"><b>📜 Obiectiv</b><span class="gtxt"></span></button>
       <div class="card partner">
         <div class="name">${pa.id === 'bubu' ? '🐼' : '🐻'} ${pa.name} <span class="pst">🤖 AI</span></div>
@@ -53,6 +54,7 @@ export class Hud {
     this.root = root;
     for (const sel of ['.me .mood', '.me .sick', '.clock .time', '.clock .day', '.clock .hearts', '.pst', '.pmood', '.net', '.dot', '[data-a="action"]', '.emotes', '.pairs', '.toasts', '.modal', '.fart .fill', '[data-a="pairs"]']) this.els[sel] = root.querySelector(sel)!;
     root.addEventListener('click', e => {
+      if ((e.target as HTMLElement).closest('[data-inv]')) { this.openInventory(); return; }
       const b = (e.target as HTMLElement).closest('button') as HTMLButtonElement | null; if (!b) return;
       Sfx.unlock(); Sfx.play('click');
       const a = b.dataset.a;
@@ -64,6 +66,7 @@ export class Hud {
       if (a === 'build') s.build ? s.endBuild() : this.openBuild();
       if (a === 'bok') s.confirmBuild();
       if (a === 'goals') this.openGoals();
+      if (a === 'inv') this.openInventory();
       if (a === 'bend') s.endBuild();
       if (a === 'menu') { s.save(); (window as any).game.go('menu'); }
       if (b.dataset.emote) s.emote(b.dataset.emote);
@@ -90,7 +93,7 @@ export class Hud {
     this.els['.clock .day'].textContent = `Ziua ${w.day}`;
     this.els['.clock .hearts'].textContent = `💗 ${w.hearts}`;
     (this.root.querySelector('.clock .money') as HTMLElement).textContent = `💰 ${w.money ?? 0} lei`;
-    const rs = (this.root.querySelector('.clock .res') as HTMLElement); const rt = [...Object.entries(RES_INFO), ...Object.entries(INV_INFO)].map(([r, i]) => `${i.icon}${w.res?.[r] ?? 0}`).join(' ') + ` · 🔥${Math.round((w.furn.fire as number) ?? 0)}%`; if (rs.textContent !== rt) rs.textContent = rt;
+    const rs = (this.root.querySelector('.clock .res') as HTMLElement); const R = w.res ?? {}; const seeds = Object.keys(CROPS).reduce((a, c) => a + (R[seedKey(c)] ?? 0), 0); const rt = `🪵${R.wood ?? 0} 🪨${R.stone ?? 0} 🥕${catCount(R, 'veg')} 🌸${catCount(R, 'flower')} 🍲${R.meals ?? 0} 💧${R.water ?? 0} 🌰${seeds} · 🔥${Math.round((w.furn.fire as number) ?? 0)}% 🎒`; if (rs.textContent !== rt) rs.textContent = rt;
     const pc = w.chars[s.partner.id];
     this.els['.pmood'].textContent = moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : '');
     (this.els['.fart .fill'] as HTMLElement).style.height = c.fart + '%';
@@ -216,6 +219,23 @@ export class Hud {
       <ul class="goals">${ch.goals.map(g => { const done = !!w.stats['goal-' + g.id]; return `<li class="${done ? 'done' : g === cur ? 'cur' : ''}"><b>${done ? '✅' : g.icon} ${g.text}</b>${!done ? `<small>${g.hint}</small>` : ''}<i>${g.reward.money ? '+' + g.reward.money + ' lei ' : ''}${g.reward.hearts ? '+' + g.reward.hearts + '💗' : ''}</i></li>`; }).join('')}</ul>
       <h4>🗺️ Povestea voastră</h4><p class="sub">${CHAPTERS.map(c => (c.id < ch.id ? '✅ ' : c.id === ch.id ? '👉 ' : '🔒 ') + c.title).join('<br>')}<br>🔒 Satul: florăria lui Bubu, afacerea lui Dudu, magazine, parc, școală<br>🔒 Orașul: mutarea la oraș 🏙️</p>`);
   }
+  /** alege samanta pentru un razor (cu desenul plantei) */
+  openSeeds(seeds: string[], pick: (crop: string) => void) {
+    const r = this.s.w.res ?? {};
+    const m = this.modal(`<h3>🌱 Ce plantăm?</h3><p class="sub">Udă planta 💧 ca să crească (o udătură ține ~${Math.round(WET_MIN / 60)} ore). Îngrășământul ✨ o grăbește.</p>
+      <div class="shop">${seeds.map(c => `<button data-seed="${c}"><canvas width="96" height="96"></canvas><b>${CROPS[c].name}</b><small>🌰 ${r[seedKey(c)]} · ~${Math.round(CROPS[c].grow / 60)} h · recoltă ${CROPS[c].yield}</small></button>`).join('')}</div>`);
+    m.querySelectorAll('[data-seed]').forEach(b => {
+      const crop = (b as HTMLElement).dataset.seed!;
+      const cv = b.querySelector('canvas') as HTMLCanvasElement; const ctx = cv.getContext('2d')!;
+      ctx.scale(2, 2); ctx.translate(24, 26); drawCropPlant(ctx, 0, 0, { crop, prog: 1, wetUntil: 1e9, fert: 0 }, 0, 0);
+      b.addEventListener('click', () => { this.closeModal(); pick(crop); });
+    });
+  }
+  openInventory() {
+    const r = this.s.w.res ?? {};
+    const rows = [...Object.entries(RES_INFO), ...Object.entries(INV_INFO)].filter(([k]) => (r[k] ?? 0) > 0).map(([k, i]) => `<li><b>${i.icon} ${i.label}</b><i>${r[k]}</i></li>`).join('') || '<li>Gol… 🙂</li>';
+    this.modal(`<h3>🎒 Cămara voastră</h3><p class="sub">💰 ${this.s.w.money ?? 0} lei</p><ul class="goals inv">${rows}</ul>`);
+  }
   showChapter(doneText?: string) {
     const ch = chapterOf(this.s.w);
     this.modal(`${doneText ? `<h3>${doneText}</h3>` : ''}<h3>📖 ${ch.title}</h3><p>${ch.intro}</p><ul class="goals">${ch.goals.map(g => `<li><b>${g.icon} ${g.text}</b><small>${g.hint}</small></li>`).join('')}</ul>`);
@@ -227,7 +247,8 @@ export class Hud {
     const tabs: [string, string][] = online ? [] : [['shop', '🛒 Magazin'], ['sell', '💱 Piața'], ['hall', '🏛️ Primăria'], ['town', '🏙️ Orașul']];
     if (online) tab = 'shop';
     let body = '';
-    if (tab === 'shop') body = `<div class="shop">${SHOP_BUY.map(it => `<button data-buy="${it.id}" class="${(w.money ?? 0) < it.price ? 'poor' : ''}"><span>${it.icon}</span><b>${it.label}</b><small>💰 ${it.price} lei</small></button>`).join('')}</div>`;
+    const LIST = online ? SHOP_ONLINE : SHOP_BUY;
+    if (tab === 'shop') body = `<div class="shop">${LIST.map(it => `<button data-buy="${it.id}" class="${(w.money ?? 0) < it.price ? 'poor' : ''}"><span>${it.icon}</span><b>${it.label}</b><small>💰 ${it.price} lei</small></button>`).join('')}</div>`;
     if (tab === 'sell') body = `<p class="sub">Vinde ce ai strâns (câte 1 la fiecare apăsare)</p><div class="shop">${SHOP_SELL.map(it => `<button data-sell="${it.id}" class="${(r[it.id] ?? 0) < 1 ? 'poor' : ''}"><span>${it.icon}</span><b>${it.label} (${r[it.id] ?? 0})</b><small>+${it.price} lei</small></button>`).join('')}</div>`;
     if (tab === 'hall') body = `<p class="sub">Investiții mari pentru familia voastră</p><div class="shop">${GOALS.filter(g => g.cost).map(g => { const done = !!w.stats['goal-' + g.id]; const c = g.cost!; return `<button data-goal="${g.id}" class="${done ? 'on' : ''}"><span>${g.icon}</span><b>${g.text}</b><small>${done ? '✔ gata' : [c.money ? '💰' + c.money : '', c.wood ? '🪵' + c.wood : '', c.stone ? '🪨' + c.stone : ''].join(' ')}</small></button>`; }).join('')}</div>`;
     if (tab === 'town') body = `<p class="sub">🚌 Autobuzul spre oraș pleacă după ce vă mutați în Casa cea mare. Acolo: supermarket, magazin de haine, cinema, slujbe… (Capitolul 3)</p>`;
@@ -235,7 +256,7 @@ export class Hud {
     const m = this.modal(`<h3>${online ? '💻 Magazin online · livrare la ușă' : '🏘️ Satul'}</h3><p class="sub">Ai 💰 ${w.money ?? 0} lei</p><div class="tabs">${tabs.map(([id, l]) => `<button data-tab="${id}" class="${id === tab ? 'on' : ''}">${l}</button>`).join('')}</div>${body}${bike}`);
     m.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => this.openVillage((b as HTMLElement).dataset.tab)));
     m.querySelectorAll('[data-buy]').forEach(b => b.addEventListener('click', () => {
-      const it = SHOP_BUY.find(i => i.id === (b as HTMLElement).dataset.buy)!;
+      const it = LIST.find(i => i.id === (b as HTMLElement).dataset.buy)!;
       if ((w.money ?? 0) < it.price) { this.toast('Nu ai destui bani 💰 — vinde la piață sau la tarabă'); Sfx.play('bad'); return; }
       s.op({ k: 'money', delta: -it.price }); for (const [k, n] of Object.entries(it.give)) s.op({ k: 'res', res: k, delta: n });
       Sfx.play('coin'); if (online) this.toast('📦 Curierul a lăsat coletul la ușă!'); this.openVillage(online ? 'online' : 'shop');

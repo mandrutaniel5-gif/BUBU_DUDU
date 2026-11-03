@@ -14,6 +14,7 @@ import { CATALOG, drawGhost, drawTallGrass, type BuildItem } from '../world/buil
 import { GOALS, CHAPTERS, chapterOf } from '../game/economy';
 import { orderableChains, itemValue } from '../minigames/merge';
 import { drawItem, MAX_LVL } from '../world/items';
+import { CROPS, WET_MIN, plotStage, catCount, catPick, seedKey, drawPlotSoil, drawCropPlant, type Plot } from '../world/garden';
 import { ROAD_Y } from '../world/map';
 import { HOUSE, floorAt } from '../world/map';
 import { ACTIVITIES, type Activity } from '../game/activities';
@@ -40,6 +41,7 @@ interface Pawn {
   facingBack: boolean;
   fleeT?: number;
   lastFurn?: string;
+  pendingCrop?: string;
   miniObj?: any; miniScore?: number;
 }
 
@@ -115,6 +117,9 @@ export class WorldScene implements Scene {
     this.w.money ??= fresh.money; this.w.grass ??= {}; this.w.res = { ...fresh.res, ...(this.w.res ?? {}) };
     if (this.w.furn.fire === undefined) this.w.furn.fire = 0;
     for (const id of ['bubu', 'dudu'] as const) this.w.chars[id].needs = { ...fresh.chars[id].needs, ...this.w.chars[id].needs };
+    if (!this.w.plots) { this.w.plots = {}; for (let x = 9; x <= 11; x++) for (let y = 13; y <= 14; y++) this.w.plots[`${x},${y}`] = { crop: null, prog: 0, wetUntil: 0, fert: 0 }; }
+    if ((this.w.res as any).seeds) { this.w.res![seedKey('carrot')] = (this.w.res![seedKey('carrot')] ?? 0) + (this.w.res as any).seeds; delete (this.w.res as any).seeds; }
+    this.w.res![seedKey('carrot')] ??= 4; this.w.res![seedKey('tulip')] ??= 2; this.w.res!.water ??= 0;
     this.syncPlaced();
     setTimeout(() => this.hud.refreshGoal(), 50);
     this.cam.x = iso(this.me.gx, this.me.gy).x; this.cam.y = iso(this.me.gx, this.me.gy).y;
@@ -184,7 +189,8 @@ export class WorldScene implements Scene {
   }
   /** reconstruieste obiectele construite + navigarea */
   syncPlaced() {
-    for (let i = FURNITURE.length - 1; i >= 0; i--) if (FURNITURE[i].id.startsWith('p-')) FURNITURE.splice(i, 1);
+    for (let i = FURNITURE.length - 1; i >= 0; i--) if (FURNITURE[i].id.startsWith('p-') || FURNITURE[i].id.startsWith('plot:')) FURNITURE.splice(i, 1);
+    for (const key of Object.keys(this.w.plots ?? {})) { const [x, y] = key.split(',').map(Number); FURNITURE.push({ id: 'plot:' + key, type: 'soilplot', gx: x, gy: y, w: 1, d: 1, solid: false, action: { id: 'plot', label: 'Răzor', icon: '🌱' } }); }
     for (const p of this.w.placed ?? []) {
       const it = CATALOG.find(c => c.type === p.type); if (!it) continue;
       FURNITURE.push({ id: 'p-' + p.uid, type: it.type as any, gx: p.gx, gy: p.gy, w: it.w, d: it.d, solid: it.solid, action: it.action });
@@ -192,7 +198,7 @@ export class WorldScene implements Scene {
     this.nav = new Nav(this.doorBlocks());
   }
   depleted(id: string) { return (this.w.nodes?.[id] ?? 0) > Date.now(); }
-  isDecor(f: Furn) { return !f.solid && ['rug', 'plot', 'doormat', 'flowers', 'stonepath', 'heartstone', 'flowerbed', 'wildflower'].includes(f.type); }
+  isDecor(f: Furn) { return !f.solid && ['soilplot', 'rug', 'plot', 'doormat', 'flowers', 'stonepath', 'heartstone', 'flowerbed', 'wildflower'].includes(f.type); }
 
   // ------------------------------------------------------------------ constructie
   startBuild(item: BuildItem | null, remove = false) {
@@ -231,6 +237,7 @@ export class WorldScene implements Scene {
     if (!this.canAfford(it)) { this.hud.toast('Nu ai destule materiale 🪵🪨🌸 — taie copaci, sparge pietre, culege flori!'); Sfx.play('bad'); return; }
     if (!this.canPlace(it, b.gx, b.gy)) { this.hud.toast('Nu încape aici ✖'); Sfx.play('bad'); return; }
     for (const [r, n] of Object.entries(it.cost)) this.op({ k: 'res', res: r, delta: -(n ?? 0) });
+    if (it.type === 'soilplot') { this.op({ k: 'plot', key: `${b.gx},${b.gy}`, plot: { crop: null, prog: 0, wetUntil: 0, fert: 0 } }); this.syncPlaced(); Sfx.play('good'); return; }
     const uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     this.op({ k: 'place', uid, type: it.type, gx: b.gx, gy: b.gy });
     const p = iso(b.gx + it.w / 2, b.gy + it.d / 2, 40);
@@ -357,6 +364,15 @@ export class WorldScene implements Scene {
     if (!f.action) return null;
     if (f.id === 'toilet' && this.w.furn.clogged) return { id: 'unclog', label: 'Desfundă toaleta!', icon: '🪠' };
     if (f.id === 'bed' && this.partner.activity?.a.id === 'sleep' && !this.me.activity) return { id: 'pinch', label: 'Astupă-i nasul 🤏', icon: '😴' };
+    if (f.type === 'soilplot') {
+      const p = this.w.plots?.[f.id.slice(5)]; if (!p) return null;
+      const st = plotStage(p);
+      if (st < 0) return { id: 'plant', label: 'Plantează', icon: '🌱' };
+      if (st === 3) return { id: 'harvest', label: `Culege ${CROPS[p.crop!].name.toLowerCase()}`, icon: '🧺' };
+      if (p.wetUntil <= (this.w.gameMin ?? 0)) return { id: 'waterplot', label: 'Udă planta', icon: '💧' };
+      if (!p.fert && (this.w.res?.fert ?? 0) > 0) return { id: 'fertilize', label: 'Pune îngrășământ', icon: '✨' };
+      return { id: 'growing', label: `Crește… ${Math.round(p.prog * 100)}%`, icon: '⏳' };
+    }
     if (f.id === 'fridge' && this.w.furn.fridgeDirty) return { id: 'cleanfridge', label: 'Curăță frigiderul', icon: '🧽' };
     if (f.id === 'tub' && this.w.furn.tubDirty) return { id: 'scrubtub', label: 'Spală cada', icon: '🧽' };
     if (f.id === 'tv' && this.w.furn.tvBroken) return { id: 'fixtv', label: 'Repară televizorul', icon: '🔧' };
@@ -374,6 +390,13 @@ export class WorldScene implements Scene {
     if (act.id === 'dress') { if (pawn === this.me) this.hud.openWardrobe(); return; }
     if (act.id === 'toilet' && this.w.furn.clogged) return;
     if (act.id === 'village') { if (pawn === this.me) { if ((this.w.stats.bike ?? 0) > 0) this.hud.openVillage(); else { this.hud.toast('🚲 Satul e departe! Aveți nevoie de o bicicletă (Capitolul 2)'); Sfx.play('bad'); } } return; }
+    if (act.id === 'growing') return;
+    if (act.id === 'plant' && !pawn.pendingCrop) {
+      const seeds = Object.keys(CROPS).filter(c => (this.w.res?.[seedKey(c)] ?? 0) > 0);
+      if (!seeds.length) { if (pawn === this.me) { this.hud.toast('N-ai semințe 🌰 — cumpără de la laptop (online) sau din sat'); Sfx.play('bad'); } return; }
+      if (pawn === this.me) { this.hud.openSeeds(seeds, crop => { pawn.pendingCrop = crop; this.interact(pawn, f); }); return; }
+      pawn.pendingCrop = seeds[Math.floor(Math.random() * seeds.length)];
+    }
     if (act.id === 'online') { if (pawn === this.me) this.hud.openVillage('online'); return; }
     const a = ACTIVITIES[act.id]; if (!a) return;
     if (act.id === 'sleep') { const why = this.canSleep(pawn.id); if (why) { if (pawn === this.me) { this.hud.toast(why); Sfx.play('bad'); } return; } (this.w.chars[pawn.id] as any).sleptNight = this.nightKey(); }
@@ -403,10 +426,12 @@ export class WorldScene implements Scene {
     switch (id) {
       case 'addwood': return (r.wood ?? 0) < 1 ? 'N-ai lemne! 🪵 Taie un copac din curte (sau cumpără din sat)' : fuel > 90 ? 'Soba e plină 🔥' : null;
       case 'lightfire': return (r.wood ?? 0) < 1 ? 'Ai nevoie de un lemn ca să aprinzi focul 🪵' : null;
-      case 'snack': return (r.meals ?? 0) + (r.veg ?? 0) < 1 ? 'Frigiderul e gol! 🧊 Gătește, culege din grădină sau cumpără din sat' : null;
+      case 'snack': return (r.meals ?? 0) + catCount(r, 'veg') < 1 ? 'Frigiderul e gol! 🧊 Gătește, culege din grădină sau cumpără din sat' : null;
       case 'eat': return (r.meals ?? 0) < 1 ? 'Nu e nimic gătit 🍽️ Gătește la aragaz (cu legume) sau cumpără mâncare' : null;
-      case 'cook': return (r.veg ?? 0) < 1 ? 'Nu ai legume 🥕 Culege din grădină sau cumpără din sat' : null;
-      case 'garden': return (r.seeds ?? 0) < 1 ? 'N-ai semințe 🌰 Cumpără din sat (de la poartă)' : null;
+      case 'cook': return catCount(r, 'veg') < 1 ? 'Nu ai legume 🥕 Culege din grădină sau cumpără din sat' : null;
+      case 'drawwater': return (r.water ?? 0) >= 9 ? 'Ai deja 9 găleți de apă 🪣' : null;
+      case 'waterplot': return (r.water ?? 0) < 1 ? 'N-ai apă! 🪣 Scoate apă din fântână' : null;
+      case 'fertilize': return (r.fert ?? 0) < 1 ? 'N-ai îngrășământ ✨ (se cumpără din sat)' : null;
       case 'mow': return Object.keys(this.w.grass ?? {}).length < 3 ? 'Iarba e încă scurtă 🌱' : null;
     }
     return null;
@@ -420,13 +445,11 @@ export class WorldScene implements Scene {
     switch (a.id) {
       case 'addwood': this.op({ k: 'res', res: 'wood', delta: -1 }); this.op({ k: 'furn', key: 'fire', value: Math.min(100, ((this.w.furn.fire as number) ?? 0) + 25) }); say('-1 🪵  +🔥'); break;
       case 'lightfire': this.op({ k: 'res', res: 'wood', delta: -1 }); this.op({ k: 'furn', key: 'fire', value: 30 }); this.op({ k: 'stat', key: 'fireLit', delta: 1 }); say('Focul arde! 🔥'); this.log(`${pawn.actor.spec.name} a aprins focul în sobă 🔥`); break;
-      case 'snack': if ((r.meals ?? 0) > 0) this.op({ k: 'res', res: 'meals', delta: -1 }); else this.op({ k: 'res', res: 'veg', delta: -1 }); break;
+      case 'snack': if ((r.meals ?? 0) > 0) this.op({ k: 'res', res: 'meals', delta: -1 }); else { const k = catPick(r, 'veg'); if (k) this.op({ k: 'res', res: k, delta: -1 }); } break;
       case 'eat': this.op({ k: 'res', res: 'meals', delta: -1 }); break;
-      case 'cook': this.op({ k: 'res', res: 'veg', delta: -1 }); this.op({ k: 'res', res: 'meals', delta: 3 }); this.op({ k: 'stat', key: 'cooked', delta: 1 }); say('+3 🍲'); break;
-      case 'garden': {
-        const got = mini?.harvested ?? 2; const planted = Math.min(r.seeds ?? 0, Math.max(1, got));
-        this.op({ k: 'res', res: 'seeds', delta: -planted }); this.op({ k: 'res', res: 'veg', delta: got }); this.op({ k: 'stat', key: 'vegTotal', delta: got }); say(`+${got} 🥕`); break;
-      }
+      case 'cook': { const k = catPick(r, 'veg'); if (k) this.op({ k: 'res', res: k, delta: -1 }); } this.op({ k: 'res', res: 'meals', delta: 3 }); this.op({ k: 'stat', key: 'cooked', delta: 1 }); say('+3 🍲'); break;
+      case 'drawwater': this.op({ k: 'res', res: 'water', delta: Math.min(3, 9 - (r.water ?? 0)) }); this.op({ k: 'stat', key: 'waterDrawn', delta: 1 }); say('+3 💧'); break;
+      case 'waterplot': case 'fertilize': case 'harvest': case 'plant': this.plotDone(pawn, a.id); break;
       case 'chop': this.op({ k: 'stat', key: 'woodTotal', delta: pawn.id === 'dudu' ? 4 : 3 }); break;
       case 'pick': this.op({ k: 'stat', key: 'flowerTotal', delta: 2 }); break;
       case 'cleanfridge': this.op({ k: 'furn', key: 'fridgeDirty', value: false }); break;
@@ -537,6 +560,40 @@ export class WorldScene implements Scene {
       ctx.fillStyle = pk > 0.4 ? '#7cc576' : '#e63946'; ctx.fillRect(s.x - bw / 2 + 4, by + 12, (bw - 8) * pk, 3);
     }
   }
+
+  plotDone(pawn: Pawn, id: string) {
+    const key = (pawn.lastFurn ?? '').replace('plot:', ''); const p = this.w.plots?.[key]; if (!p) return;
+    const now = this.w.gameMin ?? 0; const P = iso(pawn.gx, pawn.gy, 96);
+    const say = (t: string) => this.fx.text(P.x, P.y, t, '#2ec4b6', 0.8);
+    if (id === 'plant' && pawn.pendingCrop && !p.crop) {
+      const c = pawn.pendingCrop; pawn.pendingCrop = undefined;
+      this.op({ k: 'res', res: seedKey(c), delta: -1 }); this.op({ k: 'plot', key, plot: { crop: c, prog: 0, wetUntil: 0, fert: 0 } });
+      this.op({ k: 'stat', key: 'planted', delta: 1 }); say(`🌱 ${CROPS[c].name}`);
+    } else if (id === 'waterplot') {
+      this.op({ k: 'res', res: 'water', delta: -1 }); this.op({ k: 'plot', key, plot: { ...p, wetUntil: now + WET_MIN } }); say('💧 Udat');
+    } else if (id === 'fertilize') {
+      this.op({ k: 'res', res: 'fert', delta: -1 }); this.op({ k: 'plot', key, plot: { ...p, fert: 1 } }); say('✨ Îngrășat');
+    } else if (id === 'harvest' && p.crop && p.prog >= 1) {
+      const c = CROPS[p.crop]; const n = c.yield + (p.fert ? 1 : 0);
+      this.op({ k: 'res', res: c.id, delta: n }); this.op({ k: 'plot', key, plot: { crop: null, prog: 0, wetUntil: 0, fert: 0 } });
+      this.op({ k: 'stat', key: 'harvested', delta: 1 }); this.op({ k: 'stat', key: c.cat === 'veg' ? 'vegTotal' : 'flowerTotal', delta: n });
+      say(`+${n} ${c.name}`); this.fx.hearts(P.x, P.y, 3);
+    }
+  }
+  /** cresterea plantelor (in minute de joc; merge si cand noaptea trece repede) */
+  growPlots() {
+    const now = this.w.gameMin ?? 0;
+    const last = this.lastGrow ?? now; this.lastGrow = now;
+    const dMin = Math.max(0, Math.min(600, now - last)); if (!dMin) return;
+    for (const [key, p] of Object.entries(this.w.plots ?? {})) {
+      if (!p.crop || p.prog >= 1) continue;
+      const wetMin = Math.max(0, Math.min(dMin, p.wetUntil - (now - dMin)));
+      const before = plotStage(p);
+      p.prog = Math.min(1, p.prog + (wetMin + (dMin - wetMin) * 0.1) * (p.fert ? 1.6 : 1) / CROPS[p.crop].grow);
+      if (plotStage(p) !== before && this.isHost) this.op({ k: 'plot', key, plot: { ...p } });
+    }
+  }
+  lastGrow?: number;
 
   /** ajutor (debug / AI): mergi la obiectul cu id-ul dat si interactioneaza */
   goTo(id: string, who: 'me' | 'partner' = 'me') { const f = FURNITURE.find(x => x.id === id); if (f) this.goInteract(who === 'me' ? this.me : this.partner, f); }
@@ -809,6 +866,7 @@ export class WorldScene implements Scene {
         }
       }
       this.checkGoals();
+      this.growPlots();
       if (this.isHost && this.partnerOnline) { this.net.sendEvent({ t: 'op', op: { k: 'npcs', list: this.npcPublic() } }); this.net.sendEvent({ t: 'op', op: { k: 'clock', gameMin: this.w.gameMin ?? 0 } }); }
     }
     const inside = (p: Pawn) => p.gx >= HOUSE.x0 && p.gx <= HOUSE.x1 + 1 && p.gy >= HOUSE.y0 && p.gy <= HOUSE.y1 + 1;
@@ -981,7 +1039,12 @@ export class WorldScene implements Scene {
     if (fuel < 30 && (R.wood ?? 0) >= 1) target = FURNITURE.find(f => f.id === 'fireplace');
     else if ((R.wood ?? 0) < 3 && Math.random() < 0.6) target = tree();
     else if (c.needs.hunger < 50 && (R.meals ?? 0) + (R.veg ?? 0) > 0) target = pick(['snack']);
-    else if (c.needs.hunger < 50 && (R.veg ?? 0) === 0 && (R.seeds ?? 0) > 0) target = pick(['garden']);
+    else if (Math.random() < 0.5) {
+      const now = this.w.gameMin ?? 0;
+      const plots = FURNITURE.filter(f => f.type === 'soilplot').filter(f => { const p = this.w.plots?.[f.id.slice(5)]; if (!p) return false; const st = plotStage(p); return st === 3 || (st >= 0 && p.wetUntil <= now && (R.water ?? 0) > 0) || (st < 0 && Object.keys(CROPS).some(cc => (R[seedKey(cc)] ?? 0) > 0)); });
+      if (plots.length) target = plots[0];
+      else if ((R.water ?? 0) < 2 && Object.values(this.w.plots ?? {}).some(p => p.crop)) target = FURNITURE.find(f => f.id === 'well');
+    }
     else if (p.id === 'dudu' && Object.keys(this.w.grass ?? {}).length > 10 && Math.random() < 0.5) target = pick(['mow']);
     if (target) { this.goInteract(p, target); return; }
     if (low[1] < 55) {
@@ -997,7 +1060,7 @@ export class WorldScene implements Scene {
       }
     }
     if (!target && Math.random() < 0.15 && this.w.chars[p.id].needs.hygiene > 30) target = pick(['toilet']);
-    if (!target && Math.random() < 0.25) { const opts = FURNITURE.filter(f => f.action && ['chop', 'mine', 'pick'].includes(f.action.id) && !this.depleted(f.id)); if (opts.length) target = opts[Math.floor(Math.random() * opts.length)]; }
+    if (!target && Math.random() < 0.25 && this.chapter > 0) { const opts = FURNITURE.filter(f => f.action && ['chop', 'mine', 'pick'].includes(f.action.id) && !this.depleted(f.id)); if (opts.length) target = opts[Math.floor(Math.random() * opts.length)]; }
     if (!target && p.id === 'dudu' && Math.random() < 0.08 && this.nearPartnerAI()) { this.runPair(p.id, 'steal', true); return; }
     if (target) { this.goInteract(p, target); return; }
     // altfel: plimbare sau un emote
@@ -1044,7 +1107,7 @@ export class WorldScene implements Scene {
   draw(ctx: CanvasRenderingContext2D) {
     const { w, h } = this.game;
     const night = nightAmount(this.w.minutes);
-    ctx.fillStyle = night > 0.5 ? '#1f2540' : '#bfe8c9';
+    ctx.fillStyle = this.chapter === 0 ? (night > 0.5 ? '#4a4566' : '#f6eef6') : night > 0.5 ? '#1f2540' : '#bfe8c9';
     ctx.fillRect(0, 0, w, h);
     ctx.save();
     ctx.translate(w / 2, h / 2);
@@ -1052,6 +1115,14 @@ export class WorldScene implements Scene {
     ctx.scale(this.cam.zoom, this.cam.zoom);
     ctx.translate(-this.cam.x, -this.cam.y);
 
+    // Capitolul 0: se vede doar casa; afara e ceata
+    if (this.chapter === 0) {
+      ctx.save(); ctx.globalAlpha = 0.9;
+      for (let i = 0; i < 14; i++) { const p = iso(-2 + (i * 7) % 24, -2 + (i * 11) % 28); ctx.fillStyle = i % 2 ? '#fdf6fb' : '#efe4f0'; ctx.beginPath(); ctx.arc(p.x + Math.sin(this.time * 0.2 + i) * 30, p.y, 120 + (i % 3) * 40, 0, 7); ctx.fill(); }
+      ctx.restore();
+      const A = iso(2, 2), B = iso(14, 2), C = iso(14, 12.3), D = iso(2, 12.3);
+      ctx.save(); ctx.beginPath(); ctx.moveTo(A.x, A.y - 150); ctx.lineTo(B.x + 10, B.y - 150); ctx.lineTo(C.x + 10, C.y + 20); ctx.lineTo(D.x - 10, D.y + 20); ctx.lineTo(D.x - 10, D.y - 150); ctx.closePath(); ctx.clip();
+    }
     // podea pre-randata
     const F = this.floor;
     ctx.drawImage(F.canvas, F.ox, F.oy, F.canvas.width / 2, F.canvas.height / 2);
@@ -1060,6 +1131,7 @@ export class WorldScene implements Scene {
     const st: FurnState = { ...(this.w.furn as FurnState), night, depleted: dep };
     // decoruri pe sol
     for (const f of FURNITURE) if (this.isDecor(f)) drawFurn(ctx, f, this.time, st);
+    for (const [k, p] of Object.entries(this.w.plots ?? {})) { const [x, y] = k.split(',').map(Number); drawPlotSoil(ctx, x, y, p as Plot, this.w.gameMin ?? 0, this.time); }
     for (const k in this.w.grass ?? {}) { const [x, y] = k.split(',').map(Number); drawTallGrass(ctx, x, y, this.w.grass![k], this.time); }
     if (this.build?.item) drawGhost(ctx, this.build.item, this.build.gx, this.build.gy, this.canPlace(this.build.item, this.build.gx, this.build.gy) && this.canAfford(this.build.item), this.time);
     // indicator obiect apropiat
@@ -1098,6 +1170,7 @@ export class WorldScene implements Scene {
       if (x === YARD_GATE) items.push({ x0: x, y0: YARD_H - 0.02, x1: x + 1, y1: YARD_H, draw: () => drawYardGate(ctx, YARD_GATE, YARD_H) });
       else items.push({ x0: x, y0: YARD_H - 0.02, x1: x + 1, y1: YARD_H, draw: () => drawYardFence(ctx, x, YARD_H, 'x') });
     }
+    for (const [k, p] of Object.entries(this.w.plots ?? {})) { if (!p.crop) continue; const [x, y] = k.split(',').map(Number); items.push({ x0: x + 0.3, y0: y + 0.3, x1: x + 0.7, y1: y + 0.7, draw: () => drawCropPlant(ctx, x, y, p as Plot, this.w.gameMin ?? 0, this.time) }); }
     for (const n of this.npcs) items.push({ x0: n.x - 0.2, y0: n.y - 0.2, x1: n.x + 0.2, y1: n.y + 0.2, draw: () => this.drawNpc(ctx, n) });
     for (const p of [this.me, this.partner]) {
       const inside = p.activity?.a.place;
@@ -1121,6 +1194,7 @@ export class WorldScene implements Scene {
     for (let y = 0; y < YARD_H; y++) drawYardFence(ctx, MAP_W, y, 'y');
 
     this.fx.draw(ctx);
+    if (this.chapter === 0) ctx.restore();
 
     // noaptea
     ctx.restore();

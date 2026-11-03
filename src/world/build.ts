@@ -2,11 +2,12 @@
 import { iso, isoBox, boxOf, tilePath, type Pt } from './iso';
 import { heartPath } from '../char/draw';
 import { drawItem } from './items';
+import { drawWell } from './garden';
 import type { Furn } from './map';
 
-export type Res = 'wood' | 'stone' | 'flower';
+export type Res = 'wood' | 'stone' | 'flower' | 'soil';
 export const RES_INFO: Record<Res, { icon: string; label: string }> = {
-  wood: { icon: '🪵', label: 'Lemn' }, stone: { icon: '🪨', label: 'Piatră' }, flower: { icon: '🌸', label: 'Flori' },
+  wood: { icon: '🪵', label: 'Lemn' }, stone: { icon: '🪨', label: 'Piatră' }, flower: { icon: '🌸', label: 'Flori' }, soil: { icon: '🟫', label: 'Pământ' },
 };
 
 export interface BuildItem {
@@ -15,6 +16,7 @@ export interface BuildItem {
 }
 
 export const CATALOG: BuildItem[] = [
+  { type: 'soilplot', label: 'Răzor nou de grădină', icon: '🟫', w: 1, d: 1, solid: false, floor: true, cost: { soil: 1 } },
   { type: 'stonepath', label: 'Alee de piatră', icon: '🪨', w: 1, d: 1, solid: false, floor: true, cost: { stone: 1 } },
   { type: 'fence', label: 'Gărduleț', icon: '🪵', w: 1, d: 1, solid: true, cost: { wood: 1 } },
   { type: 'pot', label: 'Ghiveci cu flori', icon: '🌷', w: 1, d: 1, solid: true, cost: { stone: 1, flower: 2 } },
@@ -57,7 +59,8 @@ function ell(ctx: CanvasRenderingContext2D, p: Pt, rx: number, ry: number, fill:
 export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number, night: number, depleted: boolean): boolean {
   const { gx, gy, w, d } = f;
   switch (f.type) {
-    case 'gateway': return true;
+    case 'gateway': case 'soilplot': return true;
+    case 'well': drawWell(ctx, gx, gy, t); return true;
     case 'laptop': {
       for (const [u, v] of [[0.15, 0.2], [0.75, 0.2], [0.15, 0.75], [0.75, 0.75]]) isoBox(ctx, gx + u, gy + v, 0.08, 0.08, 22, boxOf('#c98e5f'));
       isoBox(ctx, gx + 0.08, gy + 0.12, 0.84, 0.76, 4, boxOf('#e7b98a'), 22);

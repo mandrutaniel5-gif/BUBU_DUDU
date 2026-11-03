@@ -8,7 +8,7 @@ export type FurnType =
   | 'bed' | 'nightstand' | 'wardrobe' | 'toilet' | 'bathtub' | 'sink' | 'washer' | 'fridge' | 'stove'
   | 'counter' | 'table' | 'sofa' | 'tv' | 'plant' | 'bookshelf' | 'tree' | 'plot' | 'bench' | 'mailbox'
   | 'rug' | 'lamp' | 'flowers' | 'doormat' | 'bush'
-  | 'laptop' | 'fireplace' | 'shed' | 'stand' | 'gateway' | 'signpost'
+  | 'well' | 'soilplot' | 'laptop' | 'fireplace' | 'shed' | 'stand' | 'gateway' | 'signpost'
   | 'rock' | 'wildflower' | 'stonepath' | 'heartstone' | 'fence' | 'pot' | 'lamppost' | 'sapling' | 'flowerbed' | 'swing' | 'snowman' | 'gazebo';
 
 export interface Furn {
@@ -35,7 +35,6 @@ export function floorAt(x: number, y: number): Floor {
   }
   if (x === 5 && y >= 12) return 'path';
   if (x === 14 && y >= 9 && y <= 10) return 'path';
-  if (x >= 9 && x <= 11 && y >= 13 && y <= 14) return 'dirt';
   if (x >= 17 && x <= 19 && y >= 17 && y <= 19 && !(x === 19 && y === 19)) return 'water';
   if (x === 5 && y > 15) return 'path';
   return 'grass';
@@ -87,7 +86,6 @@ export const FURNITURE: Furn[] = [
   { id: 'plantL', type: 'plant', gx: 2, gy: 11, w: 1, d: 1, solid: true, action: act('water_plant', 'Udă floarea', '🪴') },
   // curte
   { id: 'mat', type: 'doormat', gx: 5, gy: 12, w: 1, d: 1, solid: false },
-  { id: 'plot', type: 'plot', gx: 9, gy: 13, w: 3, d: 2, solid: false, action: act('garden', 'Grădina', '🌱') },
   { id: 'tree1', type: 'tree', gx: 0, gy: 1, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
   { id: 'tree2', type: 'tree', gx: 14, gy: 14, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
   { id: 'tree3', type: 'tree', gx: 1, gy: 13, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
@@ -101,6 +99,7 @@ export const FURNITURE: Furn[] = [
   { id: 'bush2', type: 'bush', gx: 8, gy: 15, w: 1, d: 1, solid: true },
   ...RESOURCE_NODES,
   // supravietuire si economie
+  { id: 'well', type: 'well', gx: 12, gy: 13, w: 1, d: 1, solid: true, action: act('drawwater', 'Scoate apă din fântână', '🪣') },
   { id: 'laptop', type: 'laptop', gx: 7, gy: 4, w: 1, d: 1, solid: true, action: act('online', 'Laptopul (magazin online)', '💻') },
   { id: 'fireplace', type: 'fireplace', gx: 7, gy: 7, w: 1, d: 1, solid: true, action: act('stove', 'Soba', '🔥') },
   { id: 'shed', type: 'shed', gx: 16, gy: 13, w: 1, d: 1, solid: true, action: act('mow', 'Tunde iarba', '✂️') },

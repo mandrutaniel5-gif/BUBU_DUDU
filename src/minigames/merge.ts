@@ -9,17 +9,20 @@ import { drawItem, ITEM_NAMES, MAX_LVL } from '../world/items';
 import { drawCharacter, heartPath, type CharSpec } from '../char/draw';
 import { basePose } from '../char/pose';
 import { nightAmount } from '../game/state';
+import { catCount, catPick, type CropCat } from '../world/garden';
+
+const have = (res: Record<string, number>, src: string) => src.startsWith('cat:') ? catCount(res, src.slice(4) as CropCat) : (res[src] ?? 0);
 
 /** produsele prestabilite ale tarabei si sursa lor reala din inventar */
 export const CHAIN_INFO: { id: string; src: string; srcLabel: string; where: string }[] = [
-  { id: 'flower', src: 'flower', srcLabel: 'Flori', where: 'culege din curte 🌸' },
-  { id: 'veg', src: 'veg', srcLabel: 'Legume', where: 'grădina sau magazinul 🥕' },
+  { id: 'flower', src: 'cat:flower', srcLabel: 'Flori', where: 'culege sau crește în grădină 🌸' },
+  { id: 'veg', src: 'cat:veg', srcLabel: 'Legume', where: 'crește-le în grădină 🥕' },
   { id: 'sweet', src: 'flour', srcLabel: 'Făină', where: 'magazinul online 🛒' },
   { id: 'drink', src: 'lemon', srcLabel: 'Lămâi', where: 'magazinul online 🛒' },
 ];
 /** ce poate cere un client: lanturile pentru care ai (sau ai avut) resursa */
 export function orderableChains(res: Record<string, number>, stats: Record<string, number>) {
-  const list = CHAIN_INFO.filter(c => (res[c.src] ?? 0) > 0 || (stats['had-' + c.src] ?? 0) > 0).map(c => c.id);
+  const list = CHAIN_INFO.filter(c => have(res, c.src) > 0 || (stats['had-' + c.src] ?? 0) > 0).map(c => c.id);
   return list.length ? list : ['flower'];
 }
 export const itemValue = (code: string) => { const l = +code.split(':')[1]; return Math.round(3 * 2.2 ** l); };
@@ -92,14 +95,15 @@ export class MergeGame extends Panel {
     const ci = CHAIN_INFO[k]; if (!ci) return;
     const msg = (t: string) => { this.fx.text(this.W / 2, this.counterY + 30, t, '#e63946', 0.9); Sfx.play('bad'); };
     const r = this.scene.w.res ?? {};
-    if ((r[ci.src] ?? 0) < 1) return msg(`N-ai ${ci.srcLabel.toLowerCase()} — ${ci.where}`);
+    if (have(r, ci.src) < 1) return msg(`N-ai ${ci.srcLabel.toLowerCase()} — ${ci.where}`);
     const c = this.scene.w.chars[this.scene.myId];
     if (c.needs.energy < 6) return msg(`${g(this.scene.myId, 'Ești prea obosit', 'Ești prea obosită')} 😴`);
     const empty = this.b.cells.map((v, i) => v ? -1 : i).filter(i => i >= 0);
     if (!empty.length) return msg('Tava e plină! Unește ceva 🙂');
     const i = empty[0];
     this.b.cells[i] = `${ci.id}:0`; this.pop[i] = 1; Sfx.play('pop'); this.paw = 1;
-    this.scene.op({ k: 'res', res: ci.src, delta: -1 });
+    const key = ci.src.startsWith('cat:') ? catPick(r, ci.src.slice(4) as CropCat)! : ci.src;
+    this.scene.op({ k: 'res', res: key, delta: -1 });
     this.scene.op({ k: 'stat', key: 'had-' + ci.src, delta: 1 });
     this.scene.op({ k: 'need', who: this.scene.myId, need: 'energy', delta: -0.5 });
   }
@@ -300,7 +304,7 @@ export class MergeGame extends Panel {
     // ladițele cu resurse reale
     const w4 = (W - 40) / 4; const r = this.scene.w.res ?? {};
     CHAIN_INFO.forEach((ci, k) => {
-      const bx = 20 + k * w4, by = L.genY, n = r[ci.src] ?? 0;
+      const bx = 20 + k * w4, by = L.genY, n = have(r, ci.src);
       ctx.fillStyle = '#c98e5f'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by + L.crateH * 0.35, w4 - 10, L.crateH * 0.62, 8); ctx.fill(); ctx.stroke();
       ctx.strokeStyle = '#a0703f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx + 4, by + L.crateH * 0.62); ctx.lineTo(bx + w4 - 14, by + L.crateH * 0.62); ctx.stroke();
       ctx.save(); if (!n) ctx.globalAlpha = 0.3;

@@ -1,30 +1,44 @@
 // Economia: bani, inventar, preturi, obiective pe capitole.
 import type { WorldState } from './state';
+import { CROPS, seedKey } from '../world/garden';
 
 export const INV_INFO: Record<string, { icon: string; label: string }> = {
-  seeds: { icon: '🌰', label: 'Semințe' },
+  water: { icon: '💧', label: 'Apă (găleți)' },
+  fert: { icon: '✨', label: 'Îngrășământ' },
   veg: { icon: '🥕', label: 'Legume' },
   meals: { icon: '🍲', label: 'Porții de mâncare' },
   hay: { icon: '🌾', label: 'Fân' },
   flour: { icon: '🥡', label: 'Făină' },
   lemon: { icon: '🍋', label: 'Lămâi' },
+  carrot: { icon: '🥕', label: 'Morcovi' }, potato: { icon: '🥔', label: 'Cartofi' }, tomato: { icon: '🍅', label: 'Roșii' },
+  cabbage: { icon: '🥬', label: 'Varză' }, strawberry: { icon: '🍓', label: 'Căpșuni' },
+  tulip: { icon: '🌷', label: 'Lalele' }, rose: { icon: '🌹', label: 'Trandafiri' }, sunflower: { icon: '🌻', label: 'Floarea-soarelui' },
+  ...Object.fromEntries(Object.values(CROPS).map(c => [seedKey(c.id), { icon: '🌰', label: 'Semințe: ' + c.name }])),
 };
 
-/** magazinul din sat */
-export const SHOP_BUY = [
-  { id: 'seeds', label: 'Pachet de semințe (x3)', icon: '🌰', price: 6, give: { seeds: 3 } },
+type ShopItem = { id: string; label: string; icon: string; price: number; give: Record<string, number> };
+const seedItem = (c: (typeof CROPS)[string]): ShopItem => ({ id: seedKey(c.id), label: `Semințe de ${c.name.toLowerCase()} (x3)`, icon: '🌰', price: c.seed * 3, give: { [seedKey(c.id)]: 3 } });
+/** magazinul online (din casa, cu laptopul): de baza */
+export const SHOP_ONLINE: ShopItem[] = [
+  ...Object.values(CROPS).filter(c => c.where === 'online').map(seedItem),
   { id: 'meals', label: 'Mâncare gata (x2 porții)', icon: '🍱', price: 14, give: { meals: 2 } },
-  { id: 'veg', label: 'Legume de la piață (x3)', icon: '🥕', price: 9, give: { veg: 3 } },
   { id: 'wood', label: 'Lemne de foc (x4)', icon: '🪵', price: 10, give: { wood: 4 } },
-  { id: 'flour', label: 'Sac de făină (x3)', icon: '🌾', price: 8, give: { flour: 3 } },
+  { id: 'flour', label: 'Sac de făină (x3)', icon: '🥡', price: 8, give: { flour: 3 } },
   { id: 'lemon', label: 'Lămâi (x3)', icon: '🍋', price: 9, give: { lemon: 3 } },
 ];
+/** magazinul din sat: tot ce e online + seminte variate, ingrasamant, pamant */
+export const SHOP_BUY: ShopItem[] = [
+  ...Object.values(CROPS).map(seedItem),
+  { id: 'fert', label: 'Îngrășământ (x3)', icon: '✨', price: 10, give: { fert: 3 } },
+  { id: 'soil', label: 'Sac de pământ (1 răzor nou)', icon: '🟫', price: 15, give: { soil: 1 } },
+  ...SHOP_ONLINE.filter(i => !i.id.startsWith('seed_')),
+];
 export const SHOP_SELL = [
+  ...Object.values(CROPS).map(c => ({ id: c.id, label: c.name, icon: (INV_INFO[c.id]?.icon ?? '🌱'), price: c.sell })),
   { id: 'wood', label: 'Lemne', icon: '🪵', price: 2 },
-  { id: 'veg', label: 'Legume', icon: '🥕', price: 3 },
   { id: 'hay', label: 'Fân', icon: '🌾', price: 2 },
   { id: 'stone', label: 'Piatră', icon: '🪨', price: 2 },
-  { id: 'flower', label: 'Flori', icon: '🌸', price: 2 },
+  { id: 'flower', label: 'Flori sălbatice', icon: '🌸', price: 2 },
 ];
 
 export interface Goal {
@@ -61,7 +75,9 @@ export const CHAPTERS: Chapter[] = [
       { id: 'mow', icon: '✂️', text: 'Tunde iarba din curte', hint: 'Magazia din curte → mașina de tuns', done: w => st(w, 'mowed') >= 1, reward: { money: 10 } },
       { id: 'wood5', icon: '🪓', text: 'Taie 8 lemne de foc', hint: 'Copacii din curte — Dudu e cel mai bun tăietor', done: w => st(w, 'woodTotal') >= 8, reward: { money: 10 } },
       { id: 'flowers', icon: '🌸', text: 'Culege 6 flori', hint: 'Flori sălbatice în curte și lângă drum', done: w => st(w, 'flowerTotal') >= 6, reward: { money: 5 } },
-      { id: 'veg3', icon: '🥕', text: 'Culege 3 legume din grădină', hint: 'Grădina din curte (ai nevoie de semințe 🌰)', done: w => st(w, 'vegTotal') >= 3, reward: { money: 10, hearts: 5 } },
+      { id: 'well', icon: '🪣', text: 'Scoate apă din fântână', hint: 'Fântâna de lângă grădină', done: w => st(w, 'waterDrawn') >= 1, reward: { hearts: 3 } },
+      { id: 'plant3', icon: '🌱', text: 'Plantează 3 răzoare', hint: 'Atinge un răzor gol din grădină și alege semințele', done: w => st(w, 'planted') >= 3, reward: { money: 5 } },
+      { id: 'harvest3', icon: '🧺', text: 'Culege 3 recolte', hint: 'Udă plantele 💧 și așteaptă să crească', done: w => st(w, 'harvested') >= 3, reward: { money: 15, hearts: 5 } },
       { id: 'serve3', icon: '🧺', text: 'Servește 3 clienți la tarabă', hint: 'Taraba de lângă drum (ieși pe portiță)', done: w => st(w, 'served') >= 3, reward: { money: 20 } },
       { id: 'money100', icon: '💰', text: 'Strânge 100 de lei', hint: 'Taraba, vânzarea în sat', done: w => (w.money ?? 0) >= 100, reward: { hearts: 10 } },
     ],
