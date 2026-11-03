@@ -96,13 +96,13 @@ export class MenuScene implements Scene {
     this.t += dt;
     const { w, h } = this.game;
     const sc = Math.max(1, Math.min(2.2, h / 380));
-    const narrow = w < 760;
+    const narrow = w < 760 && h > w; // telefon pe lat: personajele stanga, meniul dreapta
     const cx = narrow ? w / 2 : w * 0.28;
     this.bubu.scale = this.dudu.scale = sc;
     this.bubu.x = cx - 55 * sc; this.dudu.x = cx + 55 * sc; this.dudu.flip = -1;
     this.bubu.y = this.dudu.y = narrow ? h * 0.26 : h * 0.68;
     if (narrow) { const s2 = 1.25; this.bubu.scale = this.dudu.scale = s2; this.bubu.x = cx - 50 * s2; this.dudu.x = cx + 50 * s2; this.bubu.y = this.dudu.y = 150; }
-    else if (h < 520) { const s2 = h / 300; this.bubu.scale = this.dudu.scale = s2; this.bubu.y = this.dudu.y = h * 0.78; this.bubu.x = cx - 50 * s2; this.dudu.x = cx + 50 * s2; }
+    else if (h < 520) { const s2 = Math.min(h / 300, w * 0.36 / 220); const cx = w * 0.2; this.bubu.scale = this.dudu.scale = s2; this.bubu.y = this.dudu.y = h * 0.78; this.bubu.x = cx - 50 * s2; this.dudu.x = cx + 50 * s2; }
     this.nextEmote -= dt;
     if (this.nextEmote < 0) {
       this.nextEmote = 3 + Math.random() * 2;

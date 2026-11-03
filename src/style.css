@@ -204,3 +204,10 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 
 .srvrow { display:flex; gap:6px; } .srvrow input { flex:1; min-width:0; }
 .srvrow .paste { flex:0 0 auto; border:3px solid var(--ink); border-radius:12px; background:#fff6d6; font-weight:800; padding:0 10px; box-shadow:0 3px 0 var(--ink); white-space:nowrap; }
+/* meniul pe telefon tinut pe lat: cardul in dreapta, cu scroll, personajele in stanga */
+@media (max-height: 520px) and (orientation: landscape) {
+  .menu { justify-content:flex-end; align-items:flex-start; padding:8px !important; }
+  .menu-card { width:min(400px, 60vw); max-height:calc(100vh - 16px); overflow:auto; margin-right:2vw; padding:10px 14px; }
+  .menu-card h1 { font-size:24px; } .menu-card .tag { display:none; }
+  .who2 button { font-size:20px; flex-direction:row; justify-content:center; gap:8px; padding:2px; } .who2 button small { display:none; }
+}
