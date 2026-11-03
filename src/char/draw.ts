@@ -1,5 +1,5 @@
 import type { Pose, EyeType, MouthType, PropType } from './pose';
-import { drawHeadItem, drawFaceItem, drawNeckItem, type Outfit } from './outfit';
+import { drawHeadItem, drawFaceItem, drawNeckItem, drawBodyItem, type Outfit } from './outfit';
 
 export type CharId = 'bubu' | 'dudu';
 
@@ -134,6 +134,9 @@ export function drawCharacter(
   silhouette('stroke');
   ctx.fillStyle = bodyFill;
   silhouette('fill');
+  if (outfit?.body && outfit.body !== 'none' && !p.headOnly) drawBodyItem(ctx, outfit.body, bodyPath, fn => {
+    for (const [side, ang] of [[-1, p.armL], [1, p.armR]] as const) { if (ang + ARM_OFS >= 1.75) continue; ctx.save(); armTf(side, ang); armPath(); ctx.clip(); fn(); ctx.restore(); }
+  }, p.hip, time);
   // linia scurta dintre manuta si burtica (doar pe marginea interioara, nu tot conturul)
   ctx.strokeStyle = O; ctx.lineWidth = LW;
   for (const [side, ang] of [[-1, p.armL], [1, p.armR]] as const) {

@@ -166,25 +166,37 @@ export class Hud {
   openWardrobe() {
     const s = this.s; const c = s.w.chars[s.myId];
     c.owned ??= []; c.outfit ??= { ...NO_OUTFIT };
-    const slots: Record<string, string> = { head: 'Pe cap', face: 'Pe față', neck: 'La gât' };
-    const m = this.modal(`<h3>👗 Garderoba lui ${s.me.actor.spec.name}</h3><p class="sub">Ai 💗 ${s.w.hearts} inimioare (le câștigați împreună)</p>
-      ${Object.entries(slots).map(([slot, name]) => `<h4>${name}</h4><div class="shop">${ITEMS.filter(i => i.slot === slot).map(i => {
-        const own = c.owned!.includes(i.id), on = (c.outfit as any)[slot] === i.id;
-        return `<button data-item="${i.id}" class="${on ? 'on' : ''}"><span>${i.icon}</span><b>${i.label}</b><small>${on ? '✔ purtat' : own ? 'Poartă' : '💗 ' + i.price}</small></button>`;
-      }).join('')}</div>`).join('')}`);
+    const slots: Record<string, string> = { body: 'Haine', head: 'Pe cap', face: 'Pe față', neck: 'La gât' };
+    const mine = ITEMS.filter(i => c.owned!.includes(i.id));
+    const m = this.modal(`<h3>👗 Garderoba lui ${s.me.actor.spec.name}</h3><p class="sub">Haine noi găsești la <b>Croitoria din sat</b> 🧵 (cele elegante, la oraș)</p>
+      ${mine.length ? Object.entries(slots).map(([slot, name]) => { const list = mine.filter(i => i.slot === slot); return list.length ? `<h4>${name}</h4><div class="shop">${list.map(i => { const on = (c.outfit as any)[slot] === i.id; return `<button data-item="${i.id}" class="${on ? 'on' : ''}"><span>${i.icon}</span><b>${i.label}</b><small>${on ? '✔ porți' : 'Îmbracă'}</small></button>`; }).join('')}</div>` : ''; }).join('') : '<p>Dulapul e gol… 🙂</p>'}`);
     m.querySelectorAll('[data-item]').forEach(b => b.addEventListener('click', () => {
       const it = ITEMS.find(i => i.id === (b as HTMLElement).dataset.item)!;
-      const own = c.owned!.includes(it.id);
-      if (!own) {
-        if (s.w.hearts < it.price) { this.toast('Nu ai destule inimioare 💗 — faceți treburi împreună!'); Sfx.play('bad'); return; }
-        s.op({ k: 'hearts', delta: -it.price }); c.owned!.push(it.id); Sfx.play('coin');
-      }
       const cur = (c.outfit as any)[it.slot];
       (c.outfit as any)[it.slot] = cur === it.id ? 'none' : it.id;
-      s.sendCharSync(); s.me.actor.play('shy');
+      s.sendCharSync(); s.me.actor.play('shy'); Sfx.play('pop');
       this.openWardrobe();
     }));
   }
+
+  /** magazinul de haine (Croitoria din sat / buticul de la oras) */
+  openClothes(tier: 'sat' | 'oras') {
+    const s = this.s; const c = s.w.chars[s.myId];
+    c.owned ??= []; c.outfit ??= { ...NO_OUTFIT };
+    const list = ITEMS.filter(i => i.shop === tier);
+    const m = this.modal(`<h3>${tier === 'sat' ? '🧵 Croitoria din sat' : '🛍️ Buticul de la oraș'}</h3><p class="sub">Ai 💰 ${s.w.money ?? 0} lei · cumperi pentru ${s.me.actor.spec.name}</p>
+      <div class="shop">${list.map(i => { const own = c.owned!.includes(i.id); return `<button data-cl="${i.id}" class="${own ? 'on' : (s.w.money ?? 0) < i.price ? 'poor' : ''}"><span>${i.icon}</span><b>${i.label}</b><small>${own ? '✔ al tău' : '💰 ' + i.price + ' lei'}</small></button>`; }).join('')}</div>`);
+    m.querySelectorAll('[data-cl]').forEach(b => b.addEventListener('click', () => {
+      const it = ITEMS.find(i => i.id === (b as HTMLElement).dataset.cl)!;
+      if (!c.owned!.includes(it.id)) {
+        if ((s.w.money ?? 0) < it.price) { this.toast('Nu ajung banii 💰'); Sfx.play('bad'); return; }
+        s.op({ k: 'money', delta: -it.price }); c.owned!.push(it.id); s.op({ k: 'stat', key: 'clothesBought', delta: 1 }); Sfx.play('coin');
+      }
+      (c.outfit as any)[it.slot] = it.id; s.sendCharSync(); s.me.actor.play('shy');
+      this.openClothes(tier);
+    }));
+  }
+
 
   openBuild() {
     const s = this.s; const r = s.w.res ?? {};
