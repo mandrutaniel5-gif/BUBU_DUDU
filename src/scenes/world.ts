@@ -10,7 +10,7 @@ import { FURNITURE, WALLS, type Furn, type Wall } from '../world/map';
 import { drawFurn, drawWall, renderFloor, type FurnState } from '../world/furniture';
 import { Nav } from '../world/nav';
 import { ACTIVITIES, type Activity } from '../game/activities';
-import { newWorld, moodFrom, tickNeeds, applyOp, clockText, nightAmount, NEEDS, NEED_INFO, SICK_INFO, type WorldState, type NeedKey } from '../game/state';
+import { newWorld, moodFrom, tickNeeds, applyOp, clockText, nightAmount, NEEDS, NEED_INFO, SICK_INFO, REQUESTS, type WorldState, type NeedKey } from '../game/state';
 import type { NetAdapter, NetEvent, PlayerState, WorldOp } from '../net/types';
 import { Hud } from '../ui/hud';
 import { Settings } from '../game/settings';
@@ -40,7 +40,7 @@ export const PAIRS = [
   { id: 'bonk', label: 'Tigaia în cap', icon: '🍳', aAnim: 'pan', bAnim: 'dizzy', delay: 1.2, needs: { fun: 15 }, needsB: { fun: 4, health: -2 }, only: 'bubu' as CharId },
   { id: 'fartatk', label: 'Atac cu pârț', icon: '☁️', aAnim: 'fartback', bAnim: 'faint', delay: 1.0, needs: { fun: 18 }, needsB: { fun: -4, hygiene: -6 }, fart: 30 },
   { id: 'tickle', label: 'Gâdilat', icon: '🤭', aAnim: 'laugh', bAnim: 'laugh', delay: 0.2, needs: { fun: 12, love: 6 }, needsB: { fun: 14, love: 6 } },
-  { id: 'care', label: 'Îngrijește', icon: '🩹', aAnim: 'love', bAnim: 'shy', delay: 0.3, needs: { love: 8 }, needsB: { health: 18, love: 12 }, sickOnly: true },
+  { id: 'care', label: 'Îngrijește', icon: '🩹', aAnim: 'love', bAnim: 'shy', delay: 0.3, needs: { love: 8 }, needsB: { health: 26, love: 12 }, sickOnly: true },
 ];
 
 export class WorldScene implements Scene {
@@ -57,6 +57,7 @@ export class WorldScene implements Scene {
   time = 0;
   saveT = 0; syncT = 0; stateT = 0;
   partnerOnline = false;
+  sickT = 4;
   minigame: { id: string; obj: any } | null = null;
   private listeners: [EventTarget, string, any][] = [];
 
@@ -364,9 +365,31 @@ export class WorldScene implements Scene {
     if (!this.nearPartner()) { this.hud.toast('Apropie-te de partener 💞'); return; }
     if (pr.fart && this.w.chars[this.myId].fart < pr.fart) { this.hud.toast('💨 Nu ai destule gaze!'); return; }
     if (pr.sickOnly && !this.w.chars[this.partner.id].sick) { this.hud.toast(`${this.partner.actor.spec.name} nu e bolnav(ă) 🙂`); return; }
+    if (id === 'care') {
+      const req = this.w.chars[this.partner.id].request ?? 'kiss';
+      const mini = REQUESTS[req]?.mini;
+      this.hud.closeMenus();
+      if (mini && MINIGAMES[mini]) { this.startCare(mini); return; }
+    }
     this.net.sendEvent({ t: 'pair', who: this.myId, pair: id });
     this.runPair(this.myId, id, true);
     this.hud.closeMenus();
+  }
+
+  /** minijoc de ingrijire; la succes -> actiunea 'care' pentru partener */
+  startCare(mini: string) {
+    const M = MINIGAMES[mini];
+    this.stopActivity(this.me); this.me.path = [];
+    this.minigame = { id: mini, obj: new M(this, (score: number) => {
+      this.minigame = null; this.hud.setMinigame(false);
+      if (score > 0) {
+        this.net.sendEvent({ t: 'pair', who: this.myId, pair: 'care' });
+        this.runPair(this.myId, 'care', true);
+        this.op({ k: 'hearts', delta: Math.round(score * 6) });
+        this.log(`${this.me.actor.spec.name} a avut grijă de ${this.partner.actor.spec.name} 🩹💕`);
+      }
+    }) };
+    this.hud.setMinigame(true);
   }
 
   runPair(initiator: CharId, id: string, local: boolean) {
@@ -391,7 +414,15 @@ export class WorldScene implements Scene {
     if (ctrlA) for (const [k, v] of Object.entries(pr.needs)) this.op({ k: 'need', who: A.id, need: k, delta: v });
     if (ctrlB) for (const [k, v] of Object.entries(pr.needsB)) this.op({ k: 'need', who: B.id, need: k, delta: v });
     if (ctrlA && pr.fart) this.op({ k: 'need', who: A.id, need: 'fart', delta: -pr.fart });
-    if (id === 'care' && ctrlB && this.w.chars[B.id].sick && this.w.chars[B.id].needs.health > 70) this.op({ k: 'sick', who: B.id, value: null });
+    if (id === 'care' && ctrlB) {
+      this.w.chars[B.id].request = null;
+      if (this.w.chars[B.id].sick && this.w.chars[B.id].needs.health > 68) {
+        this.op({ k: 'sick', who: B.id, value: null });
+        setTimeout(() => { B.actor.play('dance_hop'); this.hud.toast(`🎉 ${B.actor.spec.name} s-a vindecat! Mulțumită lui/ei ${A.actor.spec.name} 💕`); }, 2600);
+        this.log(`${B.actor.spec.name} s-a vindecat datorită lui/ei ${A.actor.spec.name} 🎉`);
+      }
+      this.sendCharSync();
+    }
     if (local) this.op({ k: 'hearts', delta: 1 });
     void local;
   }
@@ -412,6 +443,17 @@ export class WorldScene implements Scene {
     this.hud.setMinigame(true);
   }
   onMiniEvent(_who: CharId, _data: unknown) { /* minijocuri co-op (urmeaza) */ }
+
+  /** bolnavul suna din clopotel */
+  ringBell() {
+    const c = this.w.chars[this.myId]; if (!c.sick) return;
+    const r = REQUESTS[c.request ?? 'kiss'];
+    const text = `🔔 ${this.me.actor.spec.name} te cheamă: vrea ${r.icon} ${r.label}!`;
+    this.net.sendEvent({ t: 'chat', who: this.myId, text });
+    this.me.actor.play('puppy'); this.net.sendEvent({ t: 'emote', who: this.myId, anim: 'puppy' });
+    this.hud.toast('🔔 Ai sunat din clopoțel...');
+    Sfx.play('coin');
+  }
 
   // ------------------------------------------------------------------ update
   update(dt: number) {
@@ -435,6 +477,19 @@ export class WorldScene implements Scene {
       }
     }
     for (const p of [this.me, this.partner]) p.actor.mood = moodFrom(this.w.chars[p.id]);
+    this.sickT -= dt;
+    if (this.sickT <= 0) {
+      this.sickT = 7 + Math.random() * 6;
+      for (const p of [this.me, this.partner]) {
+        const c = this.w.chars[p.id];
+        if (p.control === 'remote' || !c.sick) continue;
+        if (!c.request) { const keys = Object.keys(REQUESTS); c.request = keys[Math.floor(Math.random() * keys.length)]; this.sendCharSync(); }
+        if (!p.activity && !p.actor.busy) {
+          const sym = c.sick === 'cold' ? 'sneeze' : c.sick === 'tummy' ? 'fart' : 'sick';
+          p.actor.play(sym); this.net.sendEvent({ t: 'emote', who: p.id, anim: sym });
+        }
+      }
+    }
 
     this.updateMe(dt);
     this.updatePartner(dt);
@@ -540,6 +595,12 @@ export class WorldScene implements Scene {
     if (p.aiT > 0) return;
     p.aiT = 3 + Math.random() * 5;
     const c = this.w.chars[p.id];
+    // AI-ul are grija de tine cand esti bolnav(a)
+    if (this.w.chars[this.me.id].sick && !c.sick) {
+      if (this.nearPartnerAI()) { this.runPair(p.id, 'care', true); this.hud.toast(`${p.actor.spec.name} are grijă de tine 🩹💕`); p.aiT = 12; }
+      else { const path = this.nav.path(p.gx, p.gy, this.me.gx + 0.6, this.me.gy + 0.3) ?? this.nav.path(p.gx, p.gy, this.me.gx - 0.6, this.me.gy); if (path) p.path = path; p.aiT = 1.5; }
+      return;
+    }
     const low = (Object.entries(c.needs) as [NeedKey, number][]).filter(([k]) => k !== 'health').sort((a, b) => a[1] - b[1])[0];
     const pick = (ids: string[]) => FURNITURE.find(f => f.action && ids.includes(f.action.id));
     let target: Furn | undefined;
@@ -681,6 +742,15 @@ export class WorldScene implements Scene {
     if (p.activity?.a.place !== 'bed' && p.activity?.a.place !== 'tub') {
       ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeText(label, s.x, s.y + 14);
       ctx.fillStyle = p === this.me ? '#ff4d6d' : '#3a2a22'; ctx.fillText(label, s.x, s.y + 14);
+    }
+    // balonasul cu cererea bolnavului
+    if (c.sick && c.request && REQUESTS[c.request]) {
+      const by = s.y - (p.activity?.a.place === 'bed' ? 50 : 98) * ACTOR_SCALE - 26 + Math.sin(this.time * 3) * 3;
+      const bx = s.x + 22;
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(bx - 16, by - 16, 32, 28, 10); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bx - 8, by + 12); ctx.lineTo(bx - 14, by + 20); ctx.lineTo(bx - 2, by + 12); ctx.fill();
+      ctx.font = '18px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(REQUESTS[c.request].icon, bx, by - 2); ctx.textBaseline = 'alphabetic';
     }
     // bara de progres a activitatii
     if (p.activity && p.activity.t >= 0) {

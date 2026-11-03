@@ -15,6 +15,14 @@ export const NEED_INFO: Record<NeedKey, { icon: string; label: string; color: st
 };
 
 export type Sickness = 'cold' | 'fever' | 'tummy';
+export const REQUESTS: Record<string, { icon: string; label: string; mini?: string }> = {
+  soup: { icon: '🍲', label: 'supă caldă', mini: 'soup' },
+  medicine: { icon: '💊', label: 'medicamentul', mini: 'medicine' },
+  compress: { icon: '🧊', label: 'o compresă rece', mini: 'compress' },
+  kiss: { icon: '💋', label: 'un pupic de vindecare' },
+  water: { icon: '💧', label: 'un pahar cu apă' },
+};
+
 export const SICK_INFO: Record<Sickness, { label: string; icon: string }> = {
   cold: { label: 'Răceală', icon: '🤧' }, fever: { label: 'Febră', icon: '🌡️' }, tummy: { label: 'Burtică', icon: '☁️' },
 };
@@ -23,6 +31,7 @@ export interface CharState {
   needs: Record<NeedKey, number>;   // 0..100 (100 = perfect)
   sick: Sickness | null;
   fart: number;                     // 0..100 bara de pârț
+  request?: string | null;          // ce cere bolnavul: soup / medicine / compress / kiss / water
   gx: number; gy: number;
 }
 
@@ -106,7 +115,7 @@ export function applyOp(w: WorldState, op: WorldOp) {
     case 'furn': w.furn[op.key] = op.value; break;
     case 'need': { const c = w.chars[op.who]; const k = op.need as NeedKey; if (k in c.needs) c.needs[k] = clamp100(c.needs[k] + op.delta); else if (op.need === 'fart') c.fart = Math.max(0, Math.min(100, c.fart + op.delta)); break; }
     case 'hearts': w.hearts = Math.max(0, w.hearts + op.delta); break;
-    case 'sick': w.chars[op.who].sick = op.value as Sickness | null; break;
+    case 'sick': w.chars[op.who].sick = op.value as Sickness | null; if (!op.value) w.chars[op.who].request = null; break;
     case 'jar': w.jar.push({ from: op.from, text: op.text, ts: op.ts }); break;
     case 'char': return;
     case 'log': w.log.push({ text: op.text, ts: op.ts }); if (w.log.length > 60) w.log.splice(0, w.log.length - 60); break;

@@ -2,7 +2,7 @@
 import type { WorldScene } from '../scenes/world';
 import { PAIRS } from '../scenes/world';
 import { ANIM_LIST } from '../char/anims';
-import { NEEDS, NEED_INFO, SICK_INFO, clockText, nightAmount } from '../game/state';
+import { NEEDS, NEED_INFO, SICK_INFO, REQUESTS, clockText, nightAmount } from '../game/state';
 import { Sfx } from '../engine/sfx';
 import type { NetStatus } from '../net/types';
 
@@ -57,6 +57,7 @@ export class Hud {
       if (a === 'emotes') this.toggleEmotes();
       if (a === 'pairs') this.togglePairs();
       if (a === 'fart') s.fartJump();
+      if (a === 'bell') s.ringBell();
       if (a === 'menu') { s.save(); (window as any).game.go('menu'); }
       if (b.dataset.emote) s.emote(b.dataset.emote);
       if (b.dataset.pair) s.pairAction(b.dataset.pair);
@@ -77,7 +78,7 @@ export class Hud {
     this.els['.me .mood'].textContent = MOOD_TXT[s.me.actor.mood] ?? '';
     const sk = this.els['.me .sick'];
     sk.classList.toggle('hidden', !c.sick);
-    if (c.sick) sk.textContent = `${SICK_INFO[c.sick].icon} ${SICK_INFO[c.sick].label} — cere îngrijire de la ${s.partner.actor.spec.name}!`;
+    if (c.sick) { const t = `${SICK_INFO[c.sick].icon} ${SICK_INFO[c.sick].label}${c.request ? ' · vrei ' + (REQUESTS[c.request]?.icon ?? '') : ''}`; if (sk.dataset.t !== t) { sk.dataset.t = t; sk.innerHTML = `${t} <button class="mini-btn" data-a="bell">🔔 Cheamă</button>`; } }
     this.els['.clock .time'].textContent = (nightAmount(w.minutes) > 0.5 ? '🌙 ' : '☀️ ') + clockText(w.minutes);
     this.els['.clock .day'].textContent = `Ziua ${w.day}`;
     this.els['.clock .hearts'].textContent = `💗 ${w.hearts}`;
