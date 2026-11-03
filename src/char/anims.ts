@@ -40,7 +40,7 @@ export const IDLE = def({
     const b = wave(t, 0.45, 1);
     P.sy = 1 + b * 0.022; P.sx = 1 - b * 0.012;
     P.headDy = b * 0.8;
-    P.armL = 0.25 + wave(t, 0.45, 0.04); P.armR = 0.25 + wave(t, 0.45, 0.04, 1);
+    P.armL = 0.55 + wave(t, 0.45, 0.05); P.armR = 0.55 + wave(t, 0.45, 0.05, 1);
   },
 });
 

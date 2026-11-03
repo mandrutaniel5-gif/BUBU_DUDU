@@ -9,8 +9,8 @@ import type { Outfit } from './outfit';
 export type Mood = 'happy' | 'calm' | 'sad' | 'angry' | 'sleepy' | 'sick' | 'hungry' | 'love' | 'sulky' | 'cold';
 
 const MOOD_FACE: Record<Mood, Partial<Pose>> = {
-  happy: { eyes: 'dot', mouth: 'w', blush: 0.7 },
-  calm: { eyes: 'dot', mouth: 'smile', blush: 0.5 },
+  happy: { eyes: 'dot', mouth: 'open', blush: 1 },
+  calm: { eyes: 'dot', mouth: 'w', blush: 0.9 },
   sad: { eyes: 'sad', mouth: 'frown', brows: 'sad', blush: 0.4, headDy: 2 },
   angry: { eyes: 'angry', mouth: 'frown', brows: 'angry', vein: 0.7, blush: 0.9 },
   sleepy: { eyes: 'half', mouth: 'o', blush: 0.4, headDy: 2, snot: 0.4 },

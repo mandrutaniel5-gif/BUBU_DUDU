@@ -38,7 +38,7 @@ export interface Pose {
 export const basePose = (): Pose => ({
   dx: 0, dy: 0, sx: 1, sy: 1, rot: 0,
   headDx: 0, headDy: 0, headRot: 0,
-  armL: 0.25, armR: 0.25, legL: 0, legR: 0, legLx: 0, legRx: 0, hip: 0,
+  armL: 0.55, armR: 0.55, legL: 0, legR: 0, legLx: 0, legRx: 0, hip: 0,
   eyes: 'dot', mouth: 'smile', brows: 'none', blush: 0.55,
   pupilDx: 0, pupilDy: 0, back: false,
   propL: 'none', propR: 'none', propRotL: 0, propRotR: 0,
