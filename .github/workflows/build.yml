@@ -15,8 +15,8 @@ jobs:
   web:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run build
@@ -38,24 +38,27 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - run: npm run dist:win
+      - name: Build Windows
+        shell: bash
         env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", CSC_IDENTITY_AUTO_DISCOVERY: "false" }
+        run: |
+          npm run dist:win 2>&1 | tee build.log; code=${PIPESTATUS[0]}
+          if [ $code -ne 0 ]; then echo "::error::$(tail -c 1500 build.log | tr '\n' ' ')"; exit $code; fi
       - uses: actions/upload-artifact@v4
         with: { name: windows-exe, path: release/*.exe }
 
   android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with: { node-version: 22, cache: npm }
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with: { distribution: temurin, java-version: 17 }
-      - uses: android-actions/setup-android@v3
       - run: npm ci
       - run: npm run build
       - run: npx cap add android
@@ -80,6 +83,10 @@ jobs:
           KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
+          set -eo pipefail
+          exec > >(tee /tmp/b.log) 2>&1
+          trap 'sleep 1; echo "::error::$(tail -c 1500 /tmp/b.log | tr "\n" " ")"' ERR
+          echo "ANDROID_HOME=$ANDROID_HOME"
           chmod +x gradlew
           if [ -f app/release.jks ]; then
             ./gradlew assembleRelease \
@@ -99,8 +106,8 @@ jobs:
   ios:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run build
