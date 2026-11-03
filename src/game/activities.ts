@@ -29,5 +29,6 @@ export const ACTIVITIES: Record<string, Activity> = {
   water_plant: { id: 'water_plant', anim: 'act_water', dur: 3, needs: { fun: 6 }, text: 'Floarea e fericită 🪴' },
   garden: { id: 'garden', anim: 'act_garden', dur: 6, needs: { fun: 12, hygiene: -8 }, text: 'Grădina crește! 🌱' , minigame: 'garden' },
   bench: { id: 'bench', anim: 'act_sit', dur: 6, needs: { fun: 8, love: 6, energy: 4 }, text: 'Ce apus frumos 🌅' },
+  pinch: { id: 'pinch', anim: 'act_plunge', dur: 1, needs: { fun: 10, energy: 4 }, text: 'Liniște 🤫', minigame: 'snore' },
   read_mail: { id: 'read_mail', anim: 'love', dur: 2.6, needs: { love: 8 }, text: 'Un bilețel de dragoste 💌' },
 };

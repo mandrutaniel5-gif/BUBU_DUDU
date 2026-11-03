@@ -31,6 +31,7 @@ interface Pawn {
   z: number; // inaltimea (cand sta pe obiecte)
   aiT: number;
   facingBack: boolean;
+  fleeT?: number;
 }
 
 export const PAIRS = [
@@ -40,6 +41,7 @@ export const PAIRS = [
   { id: 'bonk', label: 'Tigaia în cap', icon: '🍳', aAnim: 'pan', bAnim: 'dizzy', delay: 1.2, needs: { fun: 15 }, needsB: { fun: 4, health: -2 }, only: 'bubu' as CharId },
   { id: 'fartatk', label: 'Atac cu pârț', icon: '☁️', aAnim: 'fartback', bAnim: 'faint', delay: 1.0, needs: { fun: 18 }, needsB: { fun: -4, hygiene: -6 }, fart: 30 },
   { id: 'tickle', label: 'Gâdilat', icon: '🤭', aAnim: 'laugh', bAnim: 'laugh', delay: 0.2, needs: { fun: 12, love: 6 }, needsB: { fun: 14, love: 6 } },
+  { id: 'steal', label: 'Fură gustarea', icon: '🍰', aAnim: 'shakebutt', bAnim: 'angry', delay: 0.3, needs: { fun: 14, hunger: 6 }, needsB: { fun: -3 } },
   { id: 'care', label: 'Îngrijește', icon: '🩹', aAnim: 'love', bAnim: 'shy', delay: 0.3, needs: { love: 8 }, needsB: { health: 26, love: 12 }, sickOnly: true },
 ];
 
@@ -58,6 +60,7 @@ export class WorldScene implements Scene {
   saveT = 0; syncT = 0; stateT = 0;
   partnerOnline = false;
   sickT = 4;
+  snoring = false; snoreT = 3;
   miniInbox: unknown[] = [];
   minigame: { id: string; obj: any } | null = null;
   private listeners: [EventTarget, string, any][] = [];
@@ -255,6 +258,7 @@ export class WorldScene implements Scene {
   actionFor(f: Furn): { id: string; label: string; icon: string } | null {
     if (!f.action) return null;
     if (f.id === 'toilet' && this.w.furn.clogged) return { id: 'unclog', label: 'Desfundă toaleta!', icon: '🪠' };
+    if (f.id === 'bed' && this.partner.activity?.a.id === 'sleep' && !this.me.activity) return { id: 'pinch', label: 'Astupă-i nasul 🤏', icon: '😴' };
     if (f.id === 'ns1') return { id: 'lamp', label: this.w.furn.lampOn ? 'Stinge lampa' : 'Aprinde lampa', icon: '💡' };
     if (f.id === 'mail') return { id: 'mail', label: 'Borcanul cu iubire', icon: '💌' };
     return f.action;
@@ -268,6 +272,7 @@ export class WorldScene implements Scene {
     if (act.id === 'dress') { if (pawn === this.me) this.hud.openWardrobe(); return; }
     if (act.id === 'toilet' && this.w.furn.clogged) return;
     const a = ACTIVITIES[act.id]; if (!a) return;
+    if (act.id === 'pinch' && pawn === this.me) { this.startMinigame('snore', a, f); return; }
     // minijoc pentru jucator (daca exista)
     if (pawn === this.me && a.minigame && MINIGAMES[a.minigame]) { this.startMinigame(a.minigame, a, f); return; }
     this.startActivity(pawn, a, f);
@@ -449,6 +454,11 @@ export class WorldScene implements Scene {
       }
       this.sendCharSync();
     }
+    if (id === 'steal') {
+      const p = iso(A.gx, A.gy, 90); this.fx.text(p.x, p.y, 'Hihihi! 🍰', '#c77dff', 0.9);
+      if (A.control === 'ai') { A.fleeT = 12; }
+      if (B === this.me) this.hud.toast(`${A.actor.spec.name} ți-a furat prăjitura! Prinde-l/o! 🏃`);
+    }
     if (local) this.op({ k: 'hearts', delta: 1 });
     void local;
   }
@@ -528,6 +538,18 @@ export class WorldScene implements Scene {
     if (!this.minigame && this.me.activity?.a.id === 'sleep' && this.partner.activity?.a.id === 'sleep') {
       const key = 'bed-' + this.w.day;
       if (!this.w.stats[key]) { this.w.stats[key] = 1; this.startBedtime(); }
+    }
+    // sforaitul (cand partenerul doarme si tu esti treaz/treaza)
+    this.snoreT -= dt;
+    if (this.snoreT <= 0) {
+      this.snoreT = 2.2;
+      const sl = [this.me, this.partner].find(p => p.activity?.a.id === 'sleep' && (p.id === 'dudu' || Math.random() < 0.4));
+      this.snoring = !!sl && !(this.me.activity?.a.id === 'sleep' && this.partner.activity?.a.id === 'sleep');
+      if (sl && this.snoring) {
+        const pp = iso(sl.gx, sl.gy, sl.z + 40);
+        this.fx.text(pp.x + 20, pp.y - 20, Math.random() < 0.5 ? 'HRRRR…' : 'PSHHH…', '#6a4c93', 0.7);
+        if (sl !== this.me) this.shake = Math.max(this.shake, 3);
+      }
     }
     this.updateMe(dt);
     this.updatePartner(dt);
@@ -626,6 +648,7 @@ export class WorldScene implements Scene {
       return;
     }
     // ---- AI simplu: ce nevoie e cea mai mica -> mergi la obiectul potrivit
+    if (p.fleeT && p.fleeT > 0 && !p.activity) { this.aiFlee(p, dt); return; }
     if (p.activity || p.actor.busy && p.actor.anim.kind !== 'base') { p.actor.moving = false; return; }
     if (this.followPath(p, dt)) { p.actor.moving = true; return; }
     p.actor.moving = false;
@@ -657,6 +680,7 @@ export class WorldScene implements Scene {
       }
     }
     if (!target && Math.random() < 0.15 && this.w.chars[p.id].needs.hygiene > 30) target = pick(['toilet']);
+    if (!target && p.id === 'dudu' && Math.random() < 0.08 && this.nearPartnerAI()) { this.runPair(p.id, 'steal', true); return; }
     if (target) { this.goInteract(p, target); return; }
     // altfel: plimbare sau un emote
     const r = Math.random();
@@ -668,6 +692,25 @@ export class WorldScene implements Scene {
         const tx = 2.5 + Math.random() * 11, ty = 2.5 + Math.random() * 12;
         if (!this.nav.hits(tx, ty)) { const path = this.nav.path(p.gx, p.gy, tx, ty); if (path) { p.path = path; break; } }
       }
+    }
+  }
+  aiFlee(p: Pawn, dt: number) {
+    // a furat gustarea: fuge de tine pana il/o prinzi
+    {
+      p.fleeT = (p.fleeT ?? 0) - dt;
+      if (p.fleeT < 10.3 && Math.hypot(this.me.gx - p.gx, this.me.gy - p.gy) < 0.75) {
+        p.fleeT = 0; p.path = []; p.actor.play('puppy'); this.hud.toast(`Prins(ă)! ${p.actor.spec.name} îți dă prăjitura înapoi 🥺🍰`);
+        this.op({ k: 'need', who: this.me.id, need: 'fun', delta: 15 }); this.op({ k: 'need', who: this.me.id, need: 'hunger', delta: 10 }); this.op({ k: 'hearts', delta: 3 });
+        return;
+      }
+      if (!p.path.length) {
+        let best: { x: number; y: number } | null = null, bd = -1;
+        for (let i = 0; i < 14; i++) { const tx = 2.5 + Math.random() * 11, ty = 2.5 + Math.random() * 12; if (this.nav.hits(tx, ty)) continue; const d = Math.hypot(tx - this.me.gx, ty - this.me.gy); if (d > bd) { bd = d; best = { x: tx, y: ty }; } }
+        if (best) { const path = this.nav.path(p.gx, p.gy, best.x, best.y); if (path) p.path = path; }
+      }
+      p.actor.moving = this.followPath(p, dt * 0.85);
+      if (Math.random() < dt * 0.6) { const pp = iso(p.gx, p.gy, 80); this.fx.text(pp.x, pp.y, 'Hihi! 🍰', '#c77dff', 0.6); }
+      return;
     }
   }
   nearPartnerAI() { return Math.hypot(this.me.gx - this.partner.gx, this.me.gy - this.partner.gy) < 1.3; }
