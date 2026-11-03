@@ -106,55 +106,50 @@ export function drawCharacter(
 
   const bodyFill = p.sickTint > 0 ? mix(spec.body, '#bfe3a6', p.sickTint * 0.45) : spec.body;
 
-  // --- piciorușe scurte (in mare parte ascunse sub burtica) ---
-  for (const side of [-1, 1] as const) {
-    const lift2 = side < 0 ? p.legL : p.legR;
-    const ox = side < 0 ? p.legLx : p.legRx;
+  // Corpul, manutele si piciorusele sunt O SINGURA forma moale (ca la stickere):
+  // intai conturam toate bucatile cu linie dubla, apoi le umplem fara contur,
+  // asa ca nu se mai vad "incheieturi" intre ele.
+  const legPath = (side: -1 | 1) => {
+    const lift2 = side < 0 ? p.legL : p.legR, ox = side < 0 ? p.legLx : p.legRx;
+    ctx.beginPath(); ctx.ellipse(side * 11 + ox, -5 - lift2, 8.5, 6.5, 0, 0, 7);
+  };
+  const bodyPath = () => {
     ctx.beginPath();
-    ctx.roundRect(side * 11 - 7 + ox, -9 - lift2, 14, 10, 6);
-    fillStroke(ctx, bodyFill, O);
-    if (!p.back) { // pernite
-      ctx.fillStyle = spec.id === 'dudu' ? '#c8917a' : spec.id === 'bubu' ? '#4a2a22' : '#ffd3dd';
-      ell(ctx, side * 11 + ox, -3.5 - lift2, 3.4, 2); ctx.fill();
-    }
-  }
-
-  // --- corp: mic si rotofei ca o para ---
-  ctx.save();
-  ctx.translate(p.hip, 0);
-  ctx.beginPath();
-  ctx.moveTo(-18, -34);
-  ctx.bezierCurveTo(-28, -26, -29, -3, -15, -2);
-  ctx.lineTo(15, -2);
-  ctx.bezierCurveTo(29, -3, 28, -26, 18, -34);
-  ctx.closePath();
-  fillStroke(ctx, bodyFill, O);
-  ctx.save(); ctx.clip();
-  ctx.fillStyle = spec.shade; ctx.globalAlpha = 0.4;
-  ell(ctx, 5, -4, 24, 8); ctx.fill();
+    ctx.moveTo(p.hip - 18, -34);
+    ctx.bezierCurveTo(p.hip - 29, -26, p.hip - 30, -4, p.hip - 15, -3);
+    ctx.lineTo(p.hip + 15, -3);
+    ctx.bezierCurveTo(p.hip + 30, -4, p.hip + 29, -26, p.hip + 18, -34);
+    ctx.closePath();
+  };
+  const armTf = (side: -1 | 1, ang: number) => { ctx.translate(side * 19 + p.hip * 0.5, -25); ctx.rotate(side < 0 ? ang : -ang); };
+  const armPath = () => { ctx.beginPath(); ctx.ellipse(0, 5, 6.5, 8.5, 0, 0, 7); };
+  const silhouette = (mode: 'stroke' | 'fill') => {
+    const doIt = () => { if (mode === 'stroke') ctx.stroke(); else ctx.fill(); };
+    for (const side of [-1, 1] as const) { legPath(side); doIt(); }
+    bodyPath(); doIt();
+    for (const [side, ang] of [[-1, p.armL], [1, p.armR]] as const) { ctx.save(); armTf(side, ang); armPath(); doIt(); ctx.restore(); }
+  };
+  ctx.lineJoin = 'round'; ctx.strokeStyle = O; ctx.lineWidth = LW * 2;
+  silhouette('stroke');
+  ctx.fillStyle = bodyFill;
+  silhouette('fill');
+  // umbra moale pe burtica + talpile
+  ctx.save(); bodyPath(); ctx.clip();
+  ctx.fillStyle = spec.shade; ctx.globalAlpha = 0.35; ell(ctx, p.hip + 5, -4, 24, 7); ctx.fill();
   ctx.restore();
-  if (p.back) { // codita
-    ell(ctx, 0, -12, 6, 5.5); fillStroke(ctx, spec.tail, O, 2);
+  if (!p.back) for (const side of [-1, 1] as const) {
+    const lift2 = side < 0 ? p.legL : p.legR, ox = side < 0 ? p.legLx : p.legRx;
+    ctx.fillStyle = spec.id === 'dudu' ? '#c8917a' : spec.id === 'bubu' ? '#4a2a22' : '#ffd3dd';
+    ell(ctx, side * 11 + ox, -2.5 - lift2, 4.2, 2.2); ctx.fill();
   }
-  ctx.restore();
+  if (p.back) { ell(ctx, p.hip, -10, 6, 5.5); fillStroke(ctx, spec.tail, O, 2); }
 
   if (outfit && outfit.neck !== 'none' && !p.back) drawNeckItem(ctx, outfit.neck, time);
-  // --- manute scurte ---
-  const arm = (side: -1 | 1, ang: number, prop: PropType, propRot: number) => {
-    ctx.save();
-    ctx.translate(side * 21 + p.hip * 0.5, -25);
-    ctx.rotate(side < 0 ? ang : -ang);
-    capsule(ctx, 11, 7);
-    fillStroke(ctx, bodyFill, O);
-    if (prop !== 'none') {
-      ctx.translate(0, 11);
-      ctx.rotate(propRot * (side < 0 ? 1 : -1));
-      drawProp(ctx, prop, O, time);
-    }
-    ctx.restore();
-  };
-  arm(-1, p.armL, p.propL, p.propRotL);
-  arm(1, p.armR, p.propR, p.propRotR);
+  // recuzita din labute
+  for (const [side, ang, prop, pr] of [[-1, p.armL, p.propL, p.propRotL], [1, p.armR, p.propR, p.propRotR]] as const) {
+    if (prop === 'none') continue;
+    ctx.save(); armTf(side, ang); ctx.translate(0, 11); ctx.rotate(pr * (side < 0 ? 1 : -1)); drawProp(ctx, prop, O, time); ctx.restore();
+  }
 
   drawHead(ctx, spec, p, time, -56);
   ctx.restore();

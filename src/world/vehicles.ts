@@ -198,22 +198,25 @@ export function drawDriverSide(c: CanvasRenderingContext2D, spec: CharSpec, x: n
   const fill = (col: string, lw = 2.4) => { c.fillStyle = col; c.fill(); c.strokeStyle = O; c.lineWidth = lw; c.stroke(); };
   // piciorul din spate (mai inchis)
   c.save(); c.globalAlpha = 0.9;
-  c.beginPath(); c.roundRect(-2, -8, 20, 12, 6); fill(dark);
-  c.beginPath(); c.roundRect(12, -5, 11, 15, 5.5); fill(dark);
+  c.beginPath(); c.ellipse(8, -2, 11, 7, 0, 0, 7); fill(dark);
+  c.beginPath(); c.ellipse(17, 7, 6, 8, 0, 0, 7); fill(dark);
   c.restore();
   // mana din spate (pe volan, partial ascunsa)
-  if (drive) { c.save(); c.translate(-2, -24); c.rotate(-0.2 + steer * 0.4); c.beginPath(); c.roundRect(-5, -5.5, 26, 11, 5.5); fill(dark); c.restore(); }
-  // corpul asezat, aplecat putin in fata
-  c.save(); c.rotate(0.12);
-  c.beginPath(); c.moveTo(-17, 2); c.bezierCurveTo(-25, -14, -18, -32, 0, -33); c.bezierCurveTo(18, -33, 24, -14, 16, 2); c.closePath(); fill(body);
-  // codita
-  c.beginPath(); c.arc(-15, -4, 5, 0, 7); fill(spec.tail, 1.8);
-  c.restore();
-  // piciorul din fata: coapsa inainte, gamba in jos spre pedala, talpa cu pernite
-  c.beginPath(); c.roundRect(-2, -10, 23, 13, 6.5); fill(body);
-  c.beginPath(); c.roundRect(14, -6, 12, 16, 6); fill(body);
-  c.beginPath(); c.ellipse(21, 11, 8, 4.5, 0, 0, 7); fill(body);
-  c.fillStyle = pad; c.beginPath(); c.ellipse(23, 12.5, 3.4, 2, 0, 0, 7); c.fill();
+  if (drive) { c.save(); c.translate(-2, -24); c.rotate(-0.2 + steer * 0.4); c.beginPath(); c.ellipse(10, 0, 12, 6, 0, 0, 7); fill(dark); c.restore(); }
+  // corpul, piciorul din fata si manuta din fata = o singura forma moale (fara "incheieturi")
+  const parts = (mode: 'stroke' | 'fill') => {
+    const go = () => (mode === 'stroke' ? c.stroke() : c.fill());
+    c.save(); c.rotate(0.12); c.beginPath(); c.moveTo(-17, 2); c.bezierCurveTo(-25, -14, -18, -32, 0, -33); c.bezierCurveTo(18, -33, 24, -14, 16, 2); c.closePath(); go(); c.restore();
+    c.beginPath(); c.ellipse(10, -3, 13, 8.5, 0, 0, 7); go();          // coapsa
+    c.beginPath(); c.ellipse(21, 6, 6.5, 9, 0, 0, 7); go();             // gamba
+    c.beginPath(); c.ellipse(23, 12, 7.5, 4.5, 0, 0, 7); go();          // talpa
+    if (drive) { c.save(); c.translate(4, -22); c.rotate(-0.15 + steer * 0.4); c.beginPath(); c.ellipse(11, 0, 13, 7, 0, 0, 7); go(); c.restore(); }
+    else { c.save(); c.translate(4, -24); c.rotate(-2.3 + Math.sin(t * 8) * 0.3); c.beginPath(); c.ellipse(9, 0, 11, 6.5, 0, 0, 7); go(); c.restore(); }
+  };
+  c.strokeStyle = O; c.lineWidth = 5.4; parts('stroke');
+  c.fillStyle = body; parts('fill');
+  c.fillStyle = pad; c.beginPath(); c.ellipse(25, 13, 3.4, 2, 0, 0, 7); c.fill();
+  c.beginPath(); c.arc(-15, -4, 5, 0, 7); fill(spec.tail, 1.8); // codita
   // capul din profil: mare si rotund (ca la stickere), fata spre dreapta
   c.save(); c.translate(6, -56); c.rotate(-0.04 + steer * 0.12);
   const earCol = spec.ear, inner = spec.earInner;
@@ -236,9 +239,6 @@ export function drawDriverSide(c: CanvasRenderingContext2D, spec: CharSpec, x: n
   c.beginPath(); c.moveTo(26, 9); c.quadraticCurveTo(28, 11, 30, 9); c.quadraticCurveTo(30.5, 15, 27, 15.5); c.quadraticCurveTo(25, 14, 26, 9); c.closePath();
   c.fillStyle = '#ff8a9a'; c.fill(); c.lineWidth = 1.8; c.stroke();
   c.restore();
-  // mana din fata: pe volan (sau salut, ca pasager)
-  if (drive) { c.save(); c.translate(4, -24); c.rotate(-0.15 + steer * 0.4); c.beginPath(); c.roundRect(-5, -6, 25, 12, 6); fill(body); c.beginPath(); c.arc(21, 0, 7, 0, 7); fill(body); c.restore(); }
-  else { c.save(); c.translate(4, -26); c.rotate(-2.3 + Math.sin(t * 8) * 0.3); c.beginPath(); c.roundRect(-5, -5.5, 26, 11, 5.5); fill(body); c.restore(); }
   c.restore();
   // volanul (desenat peste labute), doar pentru sofer
   if (drive) {
