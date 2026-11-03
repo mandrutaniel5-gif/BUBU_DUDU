@@ -73,22 +73,17 @@ export function drawTractorSide(c: CanvasRenderingContext2D, x: number, y: numbe
   // cabina: aripa spate, scaun, stalpi, acoperis
   c.fillStyle = RED_D; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.moveTo(-40, -40); c.quadraticCurveTo(-40, -74, -8, -74); c.lineTo(6, -74); c.lineTo(6, -40); c.closePath(); c.fill(); c.stroke();
   c.fillStyle = '#5a4a42'; c.beginPath(); c.roundRect(-24, -84, 20, 10, 3); c.fill(); c.stroke(); // scaunul
-  c.beginPath(); c.roundRect(-28, -110, 8, 28, 3); c.fill(); c.stroke(); // spatarul
-  // soferul (personaj intreg, asezat, cu manutele pe volan)
-  const drv = (spec: CharSpec, dx: number, wave: boolean) => {
-    const P = basePose(); P.legL = P.legR = 5; P.sy = 0.93; P.armR = wave ? 2.6 + Math.sin(t * 8) * 0.3 : 1.3; P.armL = 1.25; P.eyes = 'happy'; P.mouth = 'open'; P.blush = 1; P.headRot = Math.sin(t * 2) * 0.05;
-    drawCharacter(c, spec, P, dx, -82, 0.82, 1, t);
-  };
-  if (opt.passenger) drv(opt.passenger, -30, true);
-  if (opt.driver) drv(opt.driver, -12, false);
-  // volanul
-  c.strokeStyle = '#333'; c.lineWidth = 3; c.beginPath(); c.moveTo(6, -76); c.lineTo(14, -94); c.stroke();
-  c.save(); c.translate(14, -96); c.rotate(-0.5); c.beginPath(); c.ellipse(0, 0, 9, 3.5, 0, 0, 7); c.stroke(); c.restore();
-  // stalpii cabinei si acoperisul (desenati peste sofer, ca un cadru)
-  c.fillStyle = '#3d3d47'; c.strokeStyle = O; c.lineWidth = 2;
-  for (const px of [-34, 2]) { c.beginPath(); c.roundRect(px, -136, 5, 64, 2); c.fill(); c.stroke(); }
-  c.fillStyle = RED; c.beginPath(); c.roundRect(-42, -144, 52, 10, 5); c.fill(); c.stroke();
-  c.fillStyle = RED_L; c.beginPath(); c.roundRect(-38, -142, 40, 3, 2); c.fill();
+  // stalpul din spate al cabinei (in spatele soferului)
+  c.fillStyle = '#3d3d47'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(-40, -182, 5, 110, 2); c.fill(); c.stroke();
+  c.fillStyle = '#5a4a42'; c.beginPath(); c.roundRect(-32, -118, 9, 36, 4); c.fill(); c.stroke(); // spatarul scaunului
+  // soferul (sprite din profil, asezat, cu labutele pe volan)
+  const steer = Math.sin(t * 1.7) * 0.18 + Math.sin(t * 4.3) * 0.05;
+  if (opt.passenger) drawDriverSide(c, opt.passenger, -40, -84, 0.85, t + 1, 0, false);
+  if (opt.driver) drawDriverSide(c, opt.driver, -14, -84, 1, t, steer, true);
+  // stalpul din fata + acoperisul (cadru peste sofer)
+  c.fillStyle = '#3d3d47'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(30, -182, 5, 112, 2); c.fill(); c.stroke();
+  c.fillStyle = RED; c.beginPath(); c.roundRect(-48, -190, 88, 11, 5); c.fill(); c.stroke();
+  c.fillStyle = RED_L; c.beginPath(); c.roundRect(-44, -188, 76, 3, 2); c.fill();
   // aripa fata
   c.fillStyle = RED_D; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.arc(52, -28, 17, Math.PI * 1.05, Math.PI * 1.95); c.lineTo(66, -30); c.lineTo(38, -30); c.closePath(); c.fill(); c.stroke();
   c.restore();
@@ -189,4 +184,71 @@ export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: numbe
 export function irisWipe(c: CanvasRenderingContext2D, w: number, h: number, open: number) {
   const R = Math.hypot(w, h) * 0.6 * Math.max(0, Math.min(1, open));
   c.save(); c.fillStyle = '#2b1d17'; c.beginPath(); c.rect(0, 0, w, h); c.arc(w / 2, h / 2, R, 0, Math.PI * 2, true); c.fill('evenodd'); c.restore();
+}
+
+/**
+ * Personajul la volan, din profil (spre dreapta). (x,y) = sezutul pe scaun.
+ * steer = cat roteste volanul; drive = tine volanul (altfel saluta, ca pasager).
+ */
+export function drawDriverSide(c: CanvasRenderingContext2D, spec: CharSpec, x: number, y: number, s: number, t: number, steer: number, drive: boolean) {
+  const body = spec.body, dark = spec.shade, isDudu = spec.id === 'dudu';
+  const pad = isDudu ? '#ecc39a' : '#ffd3dd';
+  const bob = Math.sin(t * 9) * 0.8;
+  c.save(); c.translate(x, y + bob); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round';
+  const fill = (col: string, lw = 2.4) => { c.fillStyle = col; c.fill(); c.strokeStyle = O; c.lineWidth = lw; c.stroke(); };
+  // piciorul din spate (mai inchis)
+  c.save(); c.globalAlpha = 0.9;
+  c.beginPath(); c.roundRect(-2, -8, 24, 11, 5.5); fill(dark);
+  c.beginPath(); c.roundRect(16, -6, 10, 22, 5); fill(dark);
+  c.restore();
+  // mana din spate (pe volan, partial ascunsa)
+  if (drive) { c.save(); c.translate(-2, -32); c.rotate(-0.18 + steer * 0.4); c.beginPath(); c.roundRect(-5, -5, 38, 10, 5); fill(dark); c.restore(); }
+  // corpul asezat, aplecat putin in fata
+  c.save(); c.rotate(0.12);
+  c.beginPath(); c.moveTo(-14, 2); c.bezierCurveTo(-20, -18, -14, -40, 2, -42); c.bezierCurveTo(16, -42, 20, -18, 14, 2); c.closePath(); fill(body);
+  if (isDudu) { c.fillStyle = '#dcae80'; c.globalAlpha = 0.6; c.beginPath(); c.ellipse(8, -18, 7, 11, 0, 0, 7); c.fill(); c.globalAlpha = 1; }
+  // codita
+  c.beginPath(); c.arc(-15, -4, 5, 0, 7); fill(spec.tail, 1.8);
+  c.restore();
+  // piciorul din fata: coapsa inainte, gamba in jos spre pedala, talpa cu pernite
+  c.beginPath(); c.roundRect(-2, -10, 28, 12, 6); fill(body);
+  c.beginPath(); c.roundRect(18, -8, 12, 24, 6); fill(body);
+  c.beginPath(); c.ellipse(26, 16, 9, 5, 0, 0, 7); fill(body);
+  c.fillStyle = pad; c.beginPath(); c.ellipse(28, 18, 4, 2.4, 0, 0, 7); c.fill();
+  // capul din profil (mochi), cu urechea si fata spre dreapta
+  c.save(); c.translate(6, -64); c.rotate(-0.04 + steer * 0.15);
+  // urechea din spate
+  c.beginPath(); c.ellipse(-12, -22, 8, 8, 0, 0, 7); fill(spec.ear);
+  c.beginPath(); c.moveTo(-28, 2); c.bezierCurveTo(-28, -26, 24, -28, 27, -2); c.bezierCurveTo(29, 18, 14, 24, 0, 24); c.bezierCurveTo(-18, 24, -28, 18, -28, 2); c.closePath(); fill(body);
+  c.save(); c.clip(); c.fillStyle = dark; c.globalAlpha = 0.3; c.beginPath(); c.ellipse(-4, 26, 30, 9, 0, 0, 7); c.fill(); c.restore();
+  // urechea din fata
+  c.beginPath(); c.ellipse(2, -24, 9, 8.5, 0.2, 0, 7); fill(spec.ear);
+  if (spec.earInner) { c.fillStyle = spec.earInner; c.beginPath(); c.ellipse(2, -23, 4.5, 4, 0.2, 0, 7); c.fill(); }
+  if (isDudu) { // smocul de par
+    c.strokeStyle = O; c.lineWidth = 2; c.fillStyle = body; c.beginPath(); c.moveTo(-6, -23); c.quadraticCurveTo(-6, -32, 0, -31); c.quadraticCurveTo(-3, -28, -2, -23); c.fill(); c.stroke();
+  }
+  // botul (Dudu) / obrazul (Bubu)
+  if (isDudu) { c.beginPath(); c.ellipse(24, 6, 9, 7, 0, 0, 7); c.fillStyle = '#d6a77a'; c.fill(); c.strokeStyle = O; c.lineWidth = 2; c.stroke(); c.fillStyle = O; c.beginPath(); c.ellipse(31, 3, 3, 2.2, 0, 0, 7); c.fill(); }
+  c.fillStyle = spec.cheek; c.globalAlpha = 0.85; c.beginPath(); c.ellipse(11, 8, 6.5, 4, 0, 0, 7); c.fill(); c.globalAlpha = 1;
+  // ochiul (fericit, privind drumul) + gene la Bubu
+  const blink = (t % 3.6) < 0.12;
+  c.strokeStyle = O; c.fillStyle = O; c.lineWidth = 2.2;
+  if (blink) { c.beginPath(); c.moveTo(10, 0); c.lineTo(17, 0); c.stroke(); }
+  else { c.beginPath(); c.ellipse(14, -1, 3.2, 3.8, 0, 0, 7); c.fill(); c.fillStyle = '#fff'; c.beginPath(); c.arc(13, -2.5, 1.1, 0, 7); c.fill(); }
+  if (!isDudu) { c.lineWidth = 1.4; c.beginPath(); c.moveTo(16, -4); c.lineTo(19, -7); c.moveTo(17, -2); c.lineTo(20.5, -3.5); c.stroke(); }
+  // gura: zambet deschis
+  c.beginPath(); c.moveTo(isDudu ? 22 : 18, isDudu ? 12 : 10); c.quadraticCurveTo(isDudu ? 26 : 22, isDudu ? 16 : 14, isDudu ? 29 : 25, isDudu ? 11 : 9); c.strokeStyle = O; c.lineWidth = 2; c.stroke();
+  c.restore();
+  // mana din fata: pe volan (sau salut, ca pasager)
+  if (drive) { c.save(); c.translate(4, -32); c.rotate(-0.12 + steer * 0.4); c.beginPath(); c.roundRect(-5, -5.5, 34, 11, 5.5); fill(body); c.beginPath(); c.arc(31, 0, 6.5, 0, 7); fill(body); c.restore(); }
+  else { c.save(); c.translate(4, -34); c.rotate(-2.3 + Math.sin(t * 8) * 0.3); c.beginPath(); c.roundRect(-5, -5.5, 26, 11, 5.5); fill(body); c.restore(); }
+  c.restore();
+  // volanul (desenat peste labute), doar pentru sofer
+  if (drive) {
+    c.save(); c.translate(x + 38 * s, y - 36 * s + bob);
+    c.strokeStyle = '#333'; c.lineWidth = 3.5; c.beginPath(); c.moveTo(0, 0); c.lineTo(10, 30); c.stroke(); // coloana
+    c.rotate(-0.45); c.lineWidth = 3.5; c.beginPath(); c.ellipse(0, 0, 4, 13, 0, 0, 7); c.stroke();
+    c.save(); c.rotate(steer * 2); c.lineWidth = 2; c.beginPath(); c.moveTo(0, -12); c.lineTo(0, 12); c.stroke(); c.restore();
+    c.restore();
+  }
 }
