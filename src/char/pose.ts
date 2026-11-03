@@ -32,6 +32,7 @@ export interface Pose {
   vein: number; sweat: number; tears: number; snot: number; sickTint: number;
   dizzy: number; shadowScale: number;
   earWiggle: number;
+  headOnly: boolean;             // doar capul (in pat / in cada)
 }
 
 export const basePose = (): Pose => ({
@@ -42,7 +43,7 @@ export const basePose = (): Pose => ({
   pupilDx: 0, pupilDy: 0, back: false,
   propL: 'none', propR: 'none', propRotL: 0, propRotR: 0,
   vein: 0, sweat: 0, tears: 0, snot: 0, sickTint: 0, dizzy: 0, shadowScale: 1,
-  earWiggle: 0,
+  earWiggle: 0, headOnly: false,
 });
 
 // --- utilitare pentru animatii ---

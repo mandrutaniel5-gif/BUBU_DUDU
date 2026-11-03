@@ -486,5 +486,81 @@ def({
   events: [[0.4, f => { f.fart(30, -16, 1.8); f.fart(40, -26, 1.4); f.text(0, -118, 'PRRRT!', '#7cb342', 1.2); f.shake(5); f.sound('bigfart'); }]],
 });
 
+
+// ---------------------------------------------------------------- activitati (bucla, folosite in casa)
+def({
+  id: 'act_eat', label: 'Mănâncă', icon: '🍪', who: 'both', kind: 'base', dur: 0.8, loop: true,
+  pose(P, t) {
+    const c = Math.max(0, Math.sin(t * Math.PI * 2 / 0.8));
+    P.armR = 2.3 + c * 0.3; P.propR = 'heart'; P.propRotR = 0.3;
+    P.mouth = c > 0.5 ? 'open' : 'w'; P.eyes = 'happy'; P.blush = 1; P.sx = 1 + c * 0.02;
+  },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.8, 0.2)) f.burst('drop', 6, -52, 3, 1.5, 40, { rot: Math.PI / 2, grav: 160, max: 0.5, color: '#c98e5f' }); },
+});
+def({
+  id: 'act_brush', label: 'Spălat pe dinți', icon: '🪥', who: 'both', kind: 'base', dur: 0.3, loop: true,
+  pose(P, t) { P.armR = 2.0 + wave(t, 3.3, 0.25); P.propR = 'spoon'; P.propRotR = 1.4; P.mouth = 'grin'; P.eyes = 'half'; P.headRot = wave(t, 3.3, 0.04); },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.25)) f.emit('puff', 10, -50, { vx: 20, vy: -15, max: 0.6, size: 0.4 }); },
+});
+def({
+  id: 'act_plunge', label: 'Desfundă', icon: '🪠', who: 'both', kind: 'base', dur: 0.7, loop: true,
+  pose(P, t) {
+    const c = Math.sin(t * Math.PI * 2 / 0.7);
+    P.armL = P.armR = 1.0 + c * 0.25; P.propR = 'plunger'; P.propRotR = -0.4;
+    P.sy = 1 - Math.max(0, c) * 0.08; P.dy = Math.max(0, c) * 2; P.eyes = 'strain'; P.mouth = 'flat'; P.sweat = 1; P.blush = 1;
+  },
+});
+def({
+  id: 'act_cook', label: 'Gătește', icon: '🍳', who: 'both', kind: 'base', dur: 1, loop: true,
+  pose(P, t) { P.armR = 1.3 + wave(t, 1, 0.3); P.propR = 'spoon'; P.propRotR = 0.6; P.mouth = 'w'; P.eyes = 'happy'; P.hip = wave(t, 1, 2); P.back = true; },
+});
+def({
+  id: 'act_scrub', label: 'Freacă', icon: '🧽', who: 'both', kind: 'base', dur: 0.4, loop: true,
+  pose(P, t) { P.armL = P.armR = 1.2 + wave(t, 2.5, 0.25); P.back = true; P.hip = wave(t, 2.5, 2); },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.3)) f.emit('puff', (Math.random() - 0.5) * 30, -60, { vy: -30, max: 0.8, size: 0.5 }); },
+});
+def({
+  id: 'act_water', label: 'Udă', icon: '💧', who: 'both', kind: 'base', dur: 1.2, loop: true,
+  pose(P, t) { P.armR = 1.5; P.propR = 'flower'; P.propRotR = 1.2; P.eyes = 'happy'; P.mouth = 'w'; P.rot = 0.05; },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.12)) f.emit('drop', 40, -40, { vx: 20, vy: 30, grav: 200, max: 0.5 }); },
+});
+def({
+  id: 'act_read', label: 'Citește', icon: '📖', who: 'both', kind: 'base', dur: 3, loop: true,
+  pose(P, t, p) { P.armL = P.armR = -0.2; P.propR = 'pillow'; P.propRotR = 2.9; P.eyes = 'half'; P.pupilDy = 2; P.mouth = p > 0.7 ? 'o' : 'smile'; P.headDy = 2; },
+});
+def({
+  id: 'act_sit', label: 'Stă jos', icon: '🪑', who: 'both', kind: 'base', dur: 4, loop: true,
+  pose(P, t) { P.legL = P.legR = 5; P.sy = 0.94; P.dy = 2; P.armL = P.armR = 0.5; P.eyes = 'happy'; P.mouth = 'w'; P.headRot = wave(t, 0.25, 0.06); },
+});
+def({
+  id: 'act_tv', label: 'TV', icon: '📺', who: 'both', kind: 'base', dur: 6, loop: true,
+  pose(P, t, p) { P.back = true; P.legL = P.legR = 5; P.sy = 0.94; P.dy = 2; P.armL = P.armR = 0.5; P.headRot = wave(t, 0.2, 0.05); if (p > 0.6 && p < 0.75) P.dy = -Math.abs(Math.sin(t * 12)) * 3; },
+  events: [[0.62, f => f.text(0, -110, 'HAHA', '#ff9f1c', 0.8)]],
+});
+def({
+  id: 'act_sleepbed', label: 'Doarme', icon: '😴', who: 'both', kind: 'base', dur: 4, loop: true,
+  pose(P, t) { P.headOnly = true; P.eyes = 'closed'; P.mouth = 'o'; P.rot = -0.25; P.snot = 0.5 + 0.5 * Math.sin(t * 1.6); P.blush = 0.5; },
+  tick(f, t, _p, dt) { if (every(t, dt, 1.1, 0.3)) f.emit('zzz', 20, -30, { vx: 10, vy: -20, max: 1.8, size: 0.8 }); },
+});
+def({
+  id: 'act_bath', label: 'Baie', icon: '🛁', who: 'both', kind: 'base', dur: 3, loop: true,
+  pose(P, t) { P.headOnly = true; P.eyes = 'happy'; P.mouth = 'w'; P.blush = 1.2; P.rot = wave(t, 0.4, 0.1); },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.4)) f.emit('puff', (Math.random() - 0.5) * 50, -10, { vy: -25, max: 1.2, size: 0.4 + Math.random() * 0.3 }); },
+});
+def({
+  id: 'act_toilet', label: 'Toaleta', icon: '🚽', who: 'both', kind: 'base', dur: 3, loop: true,
+  pose(P, t, p) {
+    P.legL = P.legR = 5; P.sy = 0.93; P.dy = 3; P.armL = P.armR = -0.3;
+    if (p < 0.5) { P.eyes = 'strain'; P.mouth = 'flat'; P.blush = 1.3; P.sweat = 1; P.dx = wave(t, 12, 0.8); }
+    else { P.eyes = 'happy'; P.mouth = 'smirk'; P.blush = 0.9; }
+  },
+  events: [[0.5, f => { f.fart(0, -8, 0.8); f.text(0, -100, 'Ahhh~', '#8d6e63', 0.8); f.sound('fart'); }]],
+});
+def({
+  id: 'act_garden', label: 'Grădinărit', icon: '🌱', who: 'both', kind: 'base', dur: 0.9, loop: true,
+  pose(P, t) { const c = Math.max(0, Math.sin(t * 7)); P.sy = 0.9 + c * 0.05; P.rot = 0.12; P.armL = P.armR = 0.8 + c * 0.5; P.eyes = 'happy'; P.mouth = 'w'; },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.45)) f.burst('drop', 20, -6, 3, 1.4, 50, { grav: 180, max: 0.5, color: '#8b5e34' }); },
+});
+
 export const ANIMS: Record<string, Anim> = Object.fromEntries(A.map(a => [a.id, a]));
 export const ANIM_LIST = A;

@@ -47,7 +47,7 @@ export class StudioScene implements Scene {
           <button class="tg" data-who="bubu">Bubu 🐼</button>
           <button class="tg" data-who="dudu">Dudu 🐻</button>
         </div>
-        <button class="tg" data-act="play">▶ Intră în casă</button>
+        <button class="tg" data-act="play">🏠 Meniu</button>
       </div>
       <div class="panel">
         ${sec('Emote-uri', common.map(a => btn(`data-anim="${a.id}"`, a.icon, a.label)).join(''))}
@@ -67,7 +67,7 @@ export class StudioScene implements Scene {
         this.ui.querySelectorAll('[data-who]').forEach(x => x.classList.toggle('on', x === b));
         return;
       }
-      if (b.dataset.act === 'play') { this.game.go('world'); return; }
+      if (b.dataset.act === 'play') { this.game.go('menu'); return; }
       const targets = (force?: string) => force ? [force === 'bubu' ? this.bubu : this.dudu] : who === 'both' ? [this.bubu, this.dudu] : [who === 'bubu' ? this.bubu : this.dudu];
       if (b.dataset.anim) {
         this.pairing = null; this.resetPos();

@@ -65,6 +65,12 @@ export function drawCharacter(
   ctx.scale(scale * flip, scale);
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
 
+  if (p.headOnly) { // doar capul, de ex. pe perna sau in spuma din cada
+    ctx.translate(p.dx, p.dy); ctx.rotate(p.rot);
+    drawHead(ctx, spec, p, time, 0);
+    ctx.restore();
+    return;
+  }
   // umbra pe sol (nu se misca cu corpul pe verticala)
   const lift = Math.max(0, -p.dy);
   const sh = p.shadowScale * Math.max(0.35, 1 - lift / 160);
@@ -126,9 +132,16 @@ export function drawCharacter(
   arm(-1, p.armL, p.propL, p.propRotL);
   arm(1, p.armR, p.propR, p.propRotR);
 
+  drawHead(ctx, spec, p, time, -60);
+  ctx.restore();
+}
+
+function drawHead(ctx: CanvasRenderingContext2D, spec: CharSpec, p: Pose, time: number, baseY: number) {
+  const O = spec.outline;
+  const bodyFill = p.sickTint > 0 ? mix(spec.body, '#bfe3a6', p.sickTint * 0.45) : spec.body;
   // --- cap ---
   ctx.save();
-  ctx.translate(p.headDx, -60 + p.headDy);
+  ctx.translate(p.headDx, baseY + p.headDy);
   ctx.rotate(p.headRot);
   const ew = p.earWiggle;
   for (const side of [-1, 1]) {
@@ -151,8 +164,6 @@ export function drawCharacter(
   if (p.vein > 0) drawVein(ctx, 21, -14, p.vein, time);
   if (p.sweat > 0) drawSweat(ctx, -27, -10, p.sweat, time);
   if (p.dizzy > 0) drawDizzy(ctx, p.dizzy, time);
-  ctx.restore();
-
   ctx.restore();
 }
 
