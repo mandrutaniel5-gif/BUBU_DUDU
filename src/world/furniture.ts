@@ -340,3 +340,47 @@ export function renderFloor(): { canvas: HTMLCanvasElement; ox: number; oy: numb
 }
 
 export { TW, TH };
+
+/** gardul care inconjoara curtea: un segment pe marginea dalei (x,y), de-a lungul lui x sau y */
+export function drawYardFence(ctx: CanvasRenderingContext2D, x: number, y: number, dir: 'x' | 'y') {
+  const P = (u: number, z: number) => dir === 'x' ? iso(x + u, y, z) : iso(x, y + u, z);
+  const wood = '#e7c08f', dark = '#c4935f';
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  // sipci
+  for (const u of [0.25, 0.5, 0.75]) {
+    const a = P(u, 0), b = P(u, 26);
+    ctx.strokeStyle = O; ctx.lineWidth = 6.5; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.strokeStyle = wood; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.fillStyle = wood; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(b.x - 3.2, b.y); ctx.lineTo(b.x, b.y - 4); ctx.lineTo(b.x + 3.2, b.y); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  // traverse
+  for (const z of [9, 19]) {
+    const a = P(0, z), b = P(1, z);
+    ctx.strokeStyle = O; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.strokeStyle = dark; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  // stalpi la capete
+  for (const u of [0, 1]) {
+    const a = P(u, 0), b = P(u, 32);
+    ctx.strokeStyle = O; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.strokeStyle = dark; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.fillStyle = wood; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(b.x, b.y, 4, 2.2, 0, 0, 7); ctx.fill(); ctx.stroke();
+  }
+}
+
+/** portita de la intrarea in curte (deschisa), cu arcada cu inimioara */
+export function drawYardGate(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  const L = iso(x, y), R = iso(x + 1, y);
+  for (const p of [L, R]) {
+    ctx.strokeStyle = O; ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - 50); ctx.stroke();
+    ctx.strokeStyle = '#c4935f'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - 50); ctx.stroke();
+  }
+  // arcada
+  ctx.strokeStyle = O; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(L.x, L.y - 48); ctx.quadraticCurveTo((L.x + R.x) / 2, Math.min(L.y, R.y) - 76, R.x, R.y - 48); ctx.stroke();
+  ctx.strokeStyle = '#ff9ab8'; ctx.lineWidth = 4; ctx.stroke();
+  const m = { x: (L.x + R.x) / 2, y: Math.min(L.y, R.y) - 66 };
+  heartPath(ctx, m.x, m.y, 8); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.stroke();
+  // usita deschisa spre interior (o jumatate de gard rotita)
+  const a = iso(x + 0.02, y - 0.05, 0), b = iso(x + 0.15, y - 0.55, 0);
+  for (const z of [8, 20]) { ctx.strokeStyle = O; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(a.x, a.y - z); ctx.lineTo(b.x, b.y - z); ctx.stroke(); ctx.strokeStyle = '#e7c08f'; ctx.lineWidth = 2.5; ctx.stroke(); }
+}

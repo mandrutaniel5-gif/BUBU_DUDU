@@ -8,7 +8,7 @@ import { g } from '../game/gender';
 import type { Scene, Game } from '../engine/game';
 import { iso, unIso, screenDirToGrid, isoBox, boxOf, TW, TH } from '../world/iso';
 import { FURNITURE, WALLS, MAP_W, MAP_H, type Furn, type Wall } from '../world/map';
-import { drawFurn, drawWall, renderFloor, type FurnState } from '../world/furniture';
+import { drawFurn, drawWall, renderFloor, drawYardFence, drawYardGate, type FurnState } from '../world/furniture';
 import { Nav } from '../world/nav';
 import { CATALOG, drawGhost, type BuildItem } from '../world/build';
 import { ACTIVITIES, type Activity } from '../game/activities';
@@ -19,6 +19,7 @@ import { Settings } from '../game/settings';
 import { MINIGAMES } from '../minigames/registry';
 
 const ACTOR_SCALE = 0.62;
+const YARD_GATE = 5; // portita, in dreptul aleii
 const SPEED = 2.6; // dale / secunda
 
 interface Pawn {
@@ -836,6 +837,9 @@ export class WorldScene implements Scene {
       ctx.strokeStyle = '#ff7aa2'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(p.x, p.y, 12 + Math.sin(this.time * 8) * 2, 6, 0, 0, 7); ctx.stroke();
     }
 
+    // gardul curtii: laturile din spate
+    for (let x = 0; x < MAP_W; x++) drawYardFence(ctx, x, 0, 'x');
+    for (let y = 0; y < MAP_H; y++) drawYardFence(ctx, 0, y, 'y');
     // pereti din spate
     for (const wl of WALLS) if (wl.kind === 'back') drawWall(ctx, wl, this.time, night);
 
@@ -866,6 +870,11 @@ export class WorldScene implements Scene {
       return (a.x0 + a.x1 + a.y0 + a.y1) - (b.x0 + b.x1 + b.y0 + b.y1);
     });
     for (const it of items) it.draw();
+
+    // gardul curtii: laturile din fata (cu portita la alee)
+    for (let y = 0; y < MAP_H; y++) drawYardFence(ctx, MAP_W, y, 'y');
+    for (let x = 0; x < MAP_W; x++) if (x !== YARD_GATE) drawYardFence(ctx, x, MAP_H, 'x');
+    drawYardGate(ctx, YARD_GATE, MAP_H);
 
     this.fx.draw(ctx);
 
