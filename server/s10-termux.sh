@@ -26,11 +26,19 @@ echo "Server pe ws://${IP:-IP-ul-telefonului}:8787  — pune adresa asta in joc 
 # porneste cu:  TUNEL=1 ~/bubu_dudu/server/s10-termux.sh
 if [ "${TUNEL:-0}" = "1" ]; then
   command -v cloudflared >/dev/null || pkg install -y cloudflared
-  ( sleep 4; cloudflared tunnel --no-autoupdate --url http://localhost:8787 2>&1 | tee "$HOME/tunel.log" | grep -m1 -oE 'https://[a-z0-9-]+\.trycloudflare\.com' | while read U; do
-      echo ""; echo "=============================================================="
-      echo " DE LA DISTANTA: deschide $U pe orice telefon"
-      echo " sau in joc: Setari -> Server: ${U/https:/wss:}"
-      echo "=============================================================="; echo "$U" > "$HOME/tunel-adresa.txt"; done ) &
+  rm -f "$HOME/tunel.log" "$HOME/tunel-adresa.txt"
+  # logurile merg DOAR in fisier (un pipe inchis ar opri tunelul)
+  nohup cloudflared tunnel --no-autoupdate --url http://localhost:8787 > "$HOME/tunel.log" 2>&1 &
+  ( for i in $(seq 1 60); do
+      U=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$HOME/tunel.log" 2>/dev/null | head -1)
+      if [ -n "$U" ]; then
+        echo "$U" > "$HOME/tunel-adresa.txt"
+        echo ""; echo "=============================================================="
+        echo " DE LA DISTANTA: deschide $U"
+        echo " (sau in joc: Serverul nostru -> Adresa serverului: $U)"
+        echo "=============================================================="; break
+      fi; sleep 1
+    done ) &
 fi
 # reporneste automat daca se opreste
 trap 'pkill -f "cloudflared tunnel" 2>/dev/null; exit 0' INT TERM
