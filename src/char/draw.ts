@@ -16,19 +16,19 @@ export interface CharSpec {
 }
 
 export const SPECS: Record<CharId, CharSpec> = {
-  // Bubu = panda (fata)
+  // Bubu = panda (fata): alba ca un mochi, urechi negre, obrajori roz, gene mici
   bubu: {
-    id: 'bubu', name: 'Bubu', body: '#fffdf9', shade: '#ebe2d8', ear: '#2d2624',
-    earInner: null, cheek: '#ff9fb3', outline: '#3a2a22', tail: '#2d2624', accessory: 'none',
+    id: 'bubu', name: 'Bubu', body: '#ffffff', shade: '#e9e1dc', ear: '#2a2222',
+    earInner: null, cheek: '#ffa3b8', outline: '#2b1d17', tail: '#2a2222', accessory: 'none',
   },
-  // Dudu = ursul brun (baiatul)
+  // Dudu = ursul brun (baiatul): maro cald, botic mai deschis, smoc de par
   dudu: {
-    id: 'dudu', name: 'Dudu', body: '#b9875c', shade: '#9a6c45', ear: '#b9875c',
-    earInner: '#8c5f3c', cheek: '#ff8f8f', outline: '#3a2418', tail: '#9a6c45', accessory: 'none',
+    id: 'dudu', name: 'Dudu', body: '#bb875a', shade: '#9c6b43', ear: '#bb875a',
+    earInner: '#8f5f3b', cheek: '#ff9a9a', outline: '#2b1d17', tail: '#9c6b43', accessory: 'none',
   },
 };
 
-const LW = 2.6; // grosimea conturului
+const LW = 2.4; // grosimea conturului
 
 function ell(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number) {
   ctx.beginPath();
@@ -41,6 +41,14 @@ function fillStroke(ctx: CanvasRenderingContext2D, fill: string, stroke: string,
 function capsule(ctx: CanvasRenderingContext2D, w: number, len: number) {
   ctx.beginPath();
   ctx.roundRect(-w / 2, -w / 2, w, len + w, w / 2);
+}
+/** capul in forma de "mochi": lat, crestet putin turtit, obrajori plini jos */
+function mochiPath(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  ctx.beginPath();
+  ctx.moveTo(-w, 2);
+  ctx.bezierCurveTo(-w * 1.0, -h * 1.02, w * 1.0, -h * 1.02, w, 2);
+  ctx.bezierCurveTo(w * 1.04, h * 1.08, -w * 1.04, h * 1.08, -w, 2);
+  ctx.closePath();
 }
 
 export function heartPath(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
@@ -75,7 +83,7 @@ export function drawCharacter(
   const lift = Math.max(0, -p.dy);
   const sh = p.shadowScale * Math.max(0.35, 1 - lift / 160);
   ctx.fillStyle = 'rgba(60,35,30,0.18)';
-  ell(ctx, p.dx * 0.6, 1, 27 * sh, 7 * sh); ctx.fill();
+  ell(ctx, p.dx * 0.6, 1, 25 * sh, 6.5 * sh); ctx.fill();
 
   ctx.translate(p.dx, p.dy);
   ctx.rotate(p.rot);
@@ -83,133 +91,169 @@ export function drawCharacter(
 
   const bodyFill = p.sickTint > 0 ? mix(spec.body, '#bfe3a6', p.sickTint * 0.45) : spec.body;
 
-  // --- picioare ---
+  // --- piciorușe scurte (in mare parte ascunse sub burtica) ---
   for (const side of [-1, 1] as const) {
     const lift2 = side < 0 ? p.legL : p.legR;
     const ox = side < 0 ? p.legLx : p.legRx;
     ctx.beginPath();
-    ctx.roundRect(side * 12 - 8 + ox, -14 - lift2, 16, 15, 7);
+    ctx.roundRect(side * 10 - 7.5 + ox, -11 - lift2, 15, 12, 6);
     fillStroke(ctx, bodyFill, O);
     if (!p.back) { // pernite
-      ctx.fillStyle = spec.id === 'dudu' ? '#e8c39c' : '#ffd6de';
-      ell(ctx, side * 12 + ox, -5 - lift2, 4, 2.6); ctx.fill();
+      ctx.fillStyle = spec.id === 'dudu' ? '#ecc39a' : '#ffd3dd';
+      ell(ctx, side * 10 + ox, -4 - lift2, 3.8, 2.4); ctx.fill();
+      for (const k of [-3, 0, 3]) { ell(ctx, side * 10 + ox + k, -8 - lift2, 1.2, 1.1); ctx.fill(); }
     }
   }
 
-  // --- corp ---
+  // --- corp: mic si rotofei ca o para ---
   ctx.save();
   ctx.translate(p.hip, 0);
-  ell(ctx, 0, -30, 25, 22);
+  ctx.beginPath();
+  ctx.moveTo(-16, -36);
+  ctx.bezierCurveTo(-27, -30, -28, -4, -15, -3);
+  ctx.lineTo(15, -3);
+  ctx.bezierCurveTo(28, -4, 27, -30, 16, -36);
+  ctx.closePath();
   fillStroke(ctx, bodyFill, O);
-  // umbrire usoara
-  ctx.save(); ell(ctx, 0, -30, 25, 22); ctx.clip();
-  ctx.fillStyle = spec.shade; ctx.globalAlpha = 0.35;
-  ell(ctx, 4, -14, 26, 12); ctx.fill();
+  ctx.save(); ctx.clip();
+  ctx.fillStyle = spec.shade; ctx.globalAlpha = 0.4;
+  ell(ctx, 5, -4, 24, 8); ctx.fill();
   ctx.restore();
   if (p.back) { // codita
-    ell(ctx, 0, -20, 6.5, 6); fillStroke(ctx, spec.tail, O);
+    ell(ctx, 0, -12, 6, 5.5); fillStroke(ctx, spec.tail, O, 2);
   } else if (spec.id === 'dudu') { // burtica mai deschisa
-    ctx.fillStyle = '#d6ab80'; ctx.globalAlpha = 0.55;
-    ell(ctx, 0, -27, 14, 12); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillStyle = '#dcae80'; ctx.globalAlpha = 0.6;
+    ell(ctx, 0, -16, 11, 9); ctx.fill(); ctx.globalAlpha = 1;
   }
   ctx.restore();
 
-  // --- maini ---
+  // --- manute scurte ---
   const arm = (side: -1 | 1, ang: number, prop: PropType, propRot: number) => {
     ctx.save();
-    ctx.translate(side * 20 + p.hip * 0.5, -40);
+    ctx.translate(side * 19 + p.hip * 0.5, -27);
     ctx.rotate(side < 0 ? ang : -ang);
-    capsule(ctx, 12, 15);
+    capsule(ctx, 11, 9);
     fillStroke(ctx, bodyFill, O);
     if (prop !== 'none') {
-      ctx.translate(0, 17);
+      ctx.translate(0, 11);
       ctx.rotate(propRot * (side < 0 ? 1 : -1));
       drawProp(ctx, prop, O, time);
     }
     ctx.restore();
   };
-  // in spate: mainile sunt desenate inainte de cap (oricum la lateral)
   arm(-1, p.armL, p.propL, p.propRotL);
   arm(1, p.armR, p.propR, p.propRotR);
 
-  drawHead(ctx, spec, p, time, -60);
+  drawHead(ctx, spec, p, time, -52);
   ctx.restore();
 }
+
+const HW = 35, HH = 28; // marimea capului (mare, ca la stickere)
 
 function drawHead(ctx: CanvasRenderingContext2D, spec: CharSpec, p: Pose, time: number, baseY: number) {
   const O = spec.outline;
   const bodyFill = p.sickTint > 0 ? mix(spec.body, '#bfe3a6', p.sickTint * 0.45) : spec.body;
-  // --- cap ---
   ctx.save();
   ctx.translate(p.headDx, baseY + p.headDy);
   ctx.rotate(p.headRot);
   const ew = p.earWiggle;
+  // urechi mici, rotunde, pe "colturile" capului
   for (const side of [-1, 1]) {
     ctx.save();
-    ctx.translate(side * 20, -19);
-    ctx.rotate(side * ew * 0.3);
+    ctx.translate(side * 24, -20);
+    ctx.rotate(side * (0.25 + ew * 0.3));
     ell(ctx, 0, 0, 9.5, 9); fillStroke(ctx, spec.ear, O);
-    if (spec.earInner) { ctx.fillStyle = spec.earInner; ell(ctx, 0, 1, 4.8, 4.4); ctx.fill(); }
+    if (spec.earInner) { ctx.fillStyle = spec.earInner; ell(ctx, 0, 1.5, 5, 4.4); ctx.fill(); }
+    else { ctx.fillStyle = 'rgba(255,255,255,0.18)'; ell(ctx, -2, -2.5, 3.5, 2.5); ctx.fill(); }
     ctx.restore();
   }
-  ell(ctx, 0, 0, 31, 25.5);
+  mochiPath(ctx, HW, HH);
   fillStroke(ctx, bodyFill, O);
-  if (spec.accessory === 'bow') drawBow(ctx, 14, -20, O);
+  // umbra fina jos + luciu sus
+  ctx.save(); mochiPath(ctx, HW, HH); ctx.clip();
+  ctx.fillStyle = spec.shade; ctx.globalAlpha = spec.id === 'bubu' ? 0.45 : 0.35;
+  ell(ctx, 4, HH + 6, HW * 1.05, 11); ctx.fill();
+  ctx.globalAlpha = spec.id === 'bubu' ? 0 : 0.22; ctx.fillStyle = '#f3cfa6';
+  ell(ctx, -14, -11, 7, 4); ctx.fill();
+  ctx.restore();
+  // smocul de par al lui Dudu
+  if (spec.id === 'dudu') {
+    ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.fillStyle = bodyFill;
+    ctx.beginPath(); ctx.moveTo(-2, -20.5); ctx.quadraticCurveTo(-3, -29, 3, -29); ctx.quadraticCurveTo(-0.5, -26, 1.5, -21); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(1.5, -21); ctx.quadraticCurveTo(6, -26, 9, -23.5); ctx.stroke();
+  }
+  if (spec.accessory === 'bow') drawBow(ctx, 17, -23, O);
 
   if (!p.back) drawFace(ctx, spec, p, time);
-  else { // ceafa: smoc mic
-    ctx.strokeStyle = O; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(-4, 18); ctx.quadraticCurveTo(0, 14, 4, 18); ctx.stroke();
+  else { // ceafa
+    ctx.strokeStyle = O; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.moveTo(-5, 22); ctx.quadraticCurveTo(0, 18, 5, 22); ctx.stroke();
   }
-  if (p.vein > 0) drawVein(ctx, 21, -14, p.vein, time);
-  if (p.sweat > 0) drawSweat(ctx, -27, -10, p.sweat, time);
+  if (p.vein > 0) drawVein(ctx, 23, -14, p.vein, time);
+  if (p.sweat > 0) drawSweat(ctx, -31, -8, p.sweat, time);
   if (p.dizzy > 0) drawDizzy(ctx, p.dizzy, time);
   ctx.restore();
 }
 
 function drawFace(ctx: CanvasRenderingContext2D, spec: CharSpec, p: Pose, t: number) {
-  const O = '#231915';
-  const ex = 11.5, ey = 1 + p.pupilDy;
-  // obrajori
+  const O = '#1f1512';
+  const ex = 13, ey = 3 + p.pupilDy;
+  // obrajori roz, cu un mic luciu
   if (p.blush > 0) {
-    ctx.fillStyle = spec.cheek; ctx.globalAlpha = Math.min(1, p.blush) * 0.75;
-    ell(ctx, -20, 7, 6.5, 3.8); ctx.fill();
-    ell(ctx, 20, 7, 6.5, 3.8); ctx.fill();
+    const a = Math.min(1, p.blush);
+    ctx.fillStyle = spec.cheek; ctx.globalAlpha = a * 0.85;
+    ell(ctx, -22, 11, 6.8, 4); ctx.fill();
+    ell(ctx, 22, 11, 6.8, 4); ctx.fill();
+    ctx.globalAlpha = a * 0.8; ctx.fillStyle = '#fff';
+    ell(ctx, -24, 9.6, 1.4, 1); ctx.fill(); ell(ctx, 20, 9.6, 1.4, 1); ctx.fill();
     if (p.blush > 1) { // linii de rusine
       ctx.strokeStyle = '#e0607e'; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.9;
       for (const s of [-1, 1]) for (let i = 0; i < 3; i++) {
-        ctx.beginPath(); ctx.moveTo(s * 17 + i * 3 - 3, 5); ctx.lineTo(s * 17 + i * 3 - 5, 9); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(s * 19 + i * 3 - 3, 8.5); ctx.lineTo(s * 19 + i * 3 - 5, 12.5); ctx.stroke();
       }
     }
     ctx.globalAlpha = 1;
   }
+  // botic deschis + nasuc (Dudu)
+  if (spec.id === 'dudu') {
+    ctx.fillStyle = '#d6a77a'; ctx.globalAlpha = 0.75; ell(ctx, 0, 10.5, 9, 6.2); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillStyle = O; ell(ctx, 0, 7.4, 2.8, 1.9); ctx.fill();
+    ctx.fillStyle = '#ffffff88'; ell(ctx, -0.8, 6.9, 0.9, 0.5); ctx.fill();
+  }
   drawEye(ctx, -ex + p.pupilDx, ey, -1, p.eyes, O, t);
   drawEye(ctx, ex + p.pupilDx, ey, 1, p.eyesR ?? p.eyes, O, t);
+  // genele mici ale lui Bubu
+  if (spec.id === 'bubu') {
+    ctx.strokeStyle = O; ctx.lineWidth = 1.4;
+    for (const s of [-1, 1]) {
+      const et = s < 0 ? p.eyes : (p.eyesR ?? p.eyes);
+      if (et === 'dot' || et === 'happy' || et === 'closed' || et === 'wink' || et === 'sad' || et === 'half') {
+        const x0 = s * ex + p.pupilDx + s * 3, y0 = ey - (et === 'dot' || et === 'sad' ? 3 : 1);
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + s * 3, y0 - 2.5);
+        ctx.moveTo(x0 + s * 0.8, y0 + 2); ctx.lineTo(x0 + s * 4, y0 + 0.5); ctx.stroke();
+      }
+    }
+  }
 
   // sprancene
   if (p.brows !== 'none') {
-    ctx.strokeStyle = O; ctx.lineWidth = 2.2;
+    ctx.strokeStyle = O; ctx.lineWidth = 2.1;
     for (const s of [-1, 1]) {
       ctx.beginPath();
-      if (p.brows === 'angry') { ctx.moveTo(s * 16, -8); ctx.lineTo(s * 6, -4); }
-      else if (p.brows === 'sad') { ctx.moveTo(s * 16, -4); ctx.lineTo(s * 7, -8); }
-      else { ctx.moveTo(s * 15, -9); ctx.quadraticCurveTo(s * 11, -12, s * 7, -9); }
+      if (p.brows === 'angry') { ctx.moveTo(s * 18, -6); ctx.lineTo(s * 8, -2); }
+      else if (p.brows === 'sad') { ctx.moveTo(s * 18, -2); ctx.lineTo(s * 9, -6); }
+      else { ctx.moveTo(s * 17, -7); ctx.quadraticCurveTo(s * 13, -10, s * 9, -7); }
       ctx.stroke();
     }
   }
-  // nasuc (doar Dudu are bot mai vizibil)
-  if (spec.id === 'dudu') {
-    ctx.fillStyle = '#d9b088'; ell(ctx, 0, 8.5, 8, 5.5); ctx.fill();
-    ctx.fillStyle = O; ell(ctx, 0, 5.8, 2.6, 1.8); ctx.fill();
-  }
-  drawMouth(ctx, p.mouth, spec.id === 'dudu' ? 10.5 : 8.5, O, t);
+  drawMouth(ctx, p.mouth, spec.id === 'dudu' ? 12 : 9.5, O, t);
 
   if (p.tears > 0) drawTears(ctx, ex, ey, p.tears, t);
   if (p.snot > 0) {
     const r = 2 + p.snot * 6 * (0.75 + 0.25 * Math.sin(t * 2.5));
     ctx.fillStyle = 'rgba(170,220,255,0.55)'; ctx.strokeStyle = 'rgba(90,150,210,0.9)'; ctx.lineWidth = 1;
-    ell(ctx, 4 + r * 0.6, 7, r, r * 0.9); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,0.9)'; ell(ctx, 3 + r * 0.4, 5.5, r * 0.25, r * 0.2); ctx.fill();
+    ell(ctx, 4 + r * 0.6, 8, r, r * 0.9); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'; ell(ctx, 3 + r * 0.4, 6.5, r * 0.25, r * 0.2); ctx.fill();
   }
 }
 

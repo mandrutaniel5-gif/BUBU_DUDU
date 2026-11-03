@@ -21,6 +21,7 @@ export abstract class Panel implements Minigame {
   constructor(protected scene: WorldScene, private done: (score: number) => void, public title: string, public help: string) {
     this.hero = new Actor(scene.myId, this.fx);
   }
+  abort() { if (!this.ended) { this.ended = { score: 0, text: 'Altă dată 🙂', t: 1.8 }; } }
   finish(score: number, text: string) { if (!this.ended) this.ended = { score, text, t: 0 }; }
   update(dt: number) {
     this.t += dt; this.fx.update(dt); this.hero.update(dt);
@@ -47,6 +48,9 @@ export abstract class Panel implements Minigame {
     ctx.fillStyle = '#ff7aa2'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 150, y - 18, 300, 40, 20); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#fff'; ctx.font = '800 20px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(this.title, x + w / 2, y + 2);
+    // butonul X (renunta)
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x + w - 20, y + 18, 15, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + w - 26, y + 12); ctx.lineTo(x + w - 14, y + 24); ctx.moveTo(x + w - 14, y + 12); ctx.lineTo(x + w - 26, y + 24); ctx.stroke();
     ctx.fillStyle = '#7a5a4a'; ctx.font = '700 14px "Baloo 2", sans-serif';
     ctx.fillText(this.help, x + w / 2, y + h - 18);
     if (this.ended) {

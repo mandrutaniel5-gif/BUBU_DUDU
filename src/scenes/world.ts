@@ -159,7 +159,7 @@ export class WorldScene implements Scene {
     this.on(window, 'keydown', (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.tagName === 'INPUT' || (e.target as HTMLElement)?.tagName === 'TEXTAREA') return;
       this.keys.add(e.key.toLowerCase());
-      if (this.minigame) { this.minigame.obj.key?.(e.key.toLowerCase(), true); return; }
+      if (this.minigame) { if (e.key === 'Escape') { this.minigame.obj.abort?.(); return; } this.minigame.obj.key?.(e.key.toLowerCase(), true); return; }
       const k = e.key.toLowerCase();
       if (k === 'e' || k === ' ') { e.preventDefault(); this.doAction(); }
       if (k === 'f') this.fartJump();
@@ -171,7 +171,11 @@ export class WorldScene implements Scene {
     const cv = this.game.canvas;
     this.on(cv, 'pointerdown', (e: PointerEvent) => {
       Sfx.unlock();
-      if (this.minigame) { this.minigame.obj.pointer?.('down', e.clientX, e.clientY); return; }
+      if (this.minigame) {
+        const b = this.minigame.obj.box;
+        if (b && e.clientX > b.x + b.w - 44 && e.clientX < b.x + b.w + 6 && e.clientY > b.y - 6 && e.clientY < b.y + 40) { this.minigame.obj.abort?.(); return; }
+        this.minigame.obj.pointer?.('down', e.clientX, e.clientY); return;
+      }
       if (e.clientX < this.game.w * 0.45 && e.clientY > this.game.h * 0.45 && e.pointerType !== 'mouse') {
         this.joy = { active: true, id: e.pointerId, sx: e.clientX, sy: e.clientY, x: e.clientX, y: e.clientY };
         return;
@@ -458,7 +462,11 @@ export class WorldScene implements Scene {
       id, obj: new M(this, (score: number) => {
         this.minigame = null; this.hud.setMinigame(false);
         const done = score > 0;
-        if (done) { this.stopActivity(this.me, true); this.op({ k: 'hearts', delta: Math.round(score * 6) }); }
+        if (done) {
+          const extra = (this.minigame as any)?.obj?.bonusFart;
+          this.stopActivity(this.me, true); this.op({ k: 'hearts', delta: Math.round(score * 6) });
+          if (id === 'fridge' && extra) this.op({ k: 'need', who: this.myId, need: 'fart', delta: extra });
+        }
         else this.stopActivity(this.me, false);
       }),
     };
