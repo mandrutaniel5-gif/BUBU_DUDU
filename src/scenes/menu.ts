@@ -84,7 +84,8 @@ export class MenuScene implements Scene {
     this.bubu.scale = this.dudu.scale = sc;
     this.bubu.x = cx - 55 * sc; this.dudu.x = cx + 55 * sc; this.dudu.flip = -1;
     this.bubu.y = this.dudu.y = narrow ? h * 0.26 : h * 0.68;
-    if (narrow) { this.bubu.scale = this.dudu.scale = sc * 0.6; this.bubu.x = cx - 40 * sc; this.dudu.x = cx + 40 * sc; this.bubu.y = this.dudu.y = 150 * sc * 0.6 + 20; }
+    if (narrow) { const s2 = 1.25; this.bubu.scale = this.dudu.scale = s2; this.bubu.x = cx - 50 * s2; this.dudu.x = cx + 50 * s2; this.bubu.y = this.dudu.y = 150; }
+    else if (h < 520) { const s2 = h / 300; this.bubu.scale = this.dudu.scale = s2; this.bubu.y = this.dudu.y = h * 0.78; this.bubu.x = cx - 50 * s2; this.dudu.x = cx + 50 * s2; }
     this.nextEmote -= dt;
     if (this.nextEmote < 0) {
       this.nextEmote = 3 + Math.random() * 2;

@@ -106,3 +106,28 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 .bed-input div { display:flex; gap:8px; justify-content:flex-end; }
 .bed-input button { border:3px solid var(--ink); border-radius:14px; font-weight:800; padding:6px 14px; background:#fff; box-shadow:0 3px 0 var(--ink); }
 .bed-input .ok { background:var(--pink); color:#fff; }
+
+/* meniu compact pe telefon */
+@media (max-width: 759px) {
+  .menu { padding-top:170px; padding-bottom:12px; align-items:flex-start; }
+  .menu-card { padding:12px 14px; border-radius:22px; }
+  .menu-card h1 { font-size:30px; }
+  .menu-card .tag { margin:2px 0 4px; font-size:14px; }
+  .menu-card h4 { margin:6px 0 4px; font-size:14px; }
+  .who2 button { font-size:26px; padding:4px; flex-direction:row; justify-content:center; gap:8px; }
+  .who2 button small { display:none; }
+  .menu-card .play { font-size:19px; padding:6px; }
+  .menu-card select, .menu-card input { font-size:14px; padding:5px 8px; }
+}
+@media (max-height: 520px) and (min-width: 760px) {
+  .menu { align-items:flex-start; padding:8px; }
+  .menu-card { padding:10px 14px; margin-right:3vw; }
+  .menu-card h1 { font-size:26px; } .menu-card .tag { display:none; }
+  .menu-card h4 { margin:4px 0 3px; font-size:13px; }
+  .who2 button { font-size:22px; flex-direction:row; justify-content:center; gap:8px; padding:2px; } .who2 button small { display:none; }
+  .menu-card .play { font-size:17px; padding:4px; margin-top:8px; }
+  .menu-card label { margin-top:4px; }
+  .ver { display:none; }
+  .hud .card.me { transform:scale(.85); transform-origin:top left; }
+  .hud .card.partner { transform:scale(.85); transform-origin:top right; }
+}

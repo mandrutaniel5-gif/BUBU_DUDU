@@ -29,6 +29,7 @@ Sfx.setMuted(Settings.get().muted);
 const start = location.hash.slice(1);
 game.go(start in game.scenes ? start : 'menu');
 game.start();
+addEventListener('hashchange', () => { const n = location.hash.slice(1); if (n in game.scenes && n !== game.sceneName) game.go(n); });
 
 // aplicatie instalabila (PWA): functioneaza si offline
 if ('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorker.register('./sw.js').catch(() => {});
