@@ -17,7 +17,8 @@ import { drawItem, MAX_LVL } from '../world/items';
 import { CROPS, WET_MIN, plotStage, catCount, catPick, seedKey, drawPlotSoil, drawCropPlant, type Plot } from '../world/garden';
 import { ROAD_Y } from '../world/map';
 import { HOUSE, floorAt, AREAS, setArea } from '../world/map';
-import { drawCritter, drawTractor, CRITTER_NAMES, type Critter, type CritterKind } from '../world/forest';
+import { drawTravelScene, irisWipe } from '../world/vehicles';
+import { drawCritter, CRITTER_NAMES, type Critter, type CritterKind } from '../world/forest';
 import { ACTIVITIES, type Activity } from '../game/activities';
 import { newWorld, moodFrom, tickNeeds, applyOp, clockText, nightAmount, NEEDS, NEED_INFO, SICK_INFO, REQUESTS, type WorldState, type NeedKey } from '../game/state';
 import type { NetAdapter, NetEvent, PlayerState, WorldOp } from '../net/types';
@@ -498,10 +499,19 @@ export class WorldScene implements Scene {
     for (const g of ch.goals) if (!g.cost && !this.w.stats['goal-' + g.id] && g.done(this.w)) this.completeGoal(g.id);
     if (ch.goals.every(g => this.w.stats['goal-' + g.id]) && this.chapter < CHAPTERS.length - 1) this.advanceChapter();
   }
+  /** PROVIZORIU (pentru test): sari la capitolul urmator */
+  devSkipChapter() {
+    if (this.chapter >= CHAPTERS.length - 1) { this.hud.toast('Ești deja la ultimul capitol făcut'); return; }
+    const ch = chapterOf(this.w);
+    for (const g of ch.goals) this.w.stats['goal-' + g.id] = 1;
+    if (this.chapter === 0) Object.assign(this.w.furn, { clogged: false, fridgeDirty: false, tubDirty: false, dishesDirty: false, tvBroken: false, fire: Math.max(40, (this.w.furn.fire as number) ?? 0) });
+    this.op({ k: 'res', res: 'wood', delta: 15 }); this.op({ k: 'money', delta: 60 });
+    this.advanceChapter();
+  }
   advanceChapter() {
     const old = chapterOf(this.w);
     this.op({ k: 'stat', key: 'chapter', delta: 1 });
-    this.nav = new Nav(this.doorBlocks());
+    this.syncPlaced();
     this.log(old.done);
     Sfx.play('good');
     for (const p of [this.me, this.partner]) p.actor.play('dance_hop');
@@ -630,6 +640,7 @@ export class WorldScene implements Scene {
     if (this.travel || name === this.area) return;
     this.stopActivity(this.me); this.me.path = []; this.hud.closeMenus();
     this.travel = { t: 0, to: name };
+    this.hud.setMinigame(true);
     Sfx.play('burp');
   }
   switchArea(name: string) {
@@ -678,22 +689,17 @@ export class WorldScene implements Scene {
     else this.fx.text(p.x, p.y - 30, `${CRITTER_NAMES[c.kind]} ${c.friend >= 1 ? '💕' : 'se apropie…'}`, '#ff4d6d', 0.8);
   }
   drawTravel(ctx: CanvasRenderingContext2D, w: number, h: number) {
-    const k = this.travel!.t / 2.4;
-    const fade = Math.min(1, Math.min(k, 1 - k) * 5);
-    ctx.save(); ctx.globalAlpha = Math.max(0, fade);
-    const sky = ctx.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, '#8fd3ff'); sky.addColorStop(0.6, '#fff1d6'); sky.addColorStop(0.61, '#a6dc93'); sky.addColorStop(1, '#8cc97c');
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
-    const off = this.time * 260;
-    for (let i = 0; i < 12; i++) { const x = ((i * 180 - off * 0.4) % (w + 200) + w + 200) % (w + 200) - 100; ctx.fillStyle = '#4aa267'; ctx.beginPath(); ctx.moveTo(x - 40, h * 0.6); ctx.lineTo(x, h * 0.6 - 90); ctx.lineTo(x + 40, h * 0.6); ctx.fill(); }
-    ctx.fillStyle = '#c9af89'; ctx.fillRect(0, h * 0.68, w, h * 0.12);
-    for (let i = 0; i < 20; i++) { const x = ((i * 90 - off) % (w + 90) + w + 90) % (w + 90) - 45; ctx.fillStyle = '#a88f6a'; ctx.beginPath(); ctx.ellipse(x, h * 0.74, 6, 2, 0, 0, 7); ctx.fill(); }
-    const tx = w / 2 + Math.sin(this.time * 3) * 6, ty = h * 0.76;
-    drawTractor(ctx, tx, ty, 2.2, this.time, this.travel!.to === 'forest' ? 1 : -1, Math.min(6, Math.floor((this.w.res?.wood ?? 0) / 3)));
-    const head = this.me.actor; const P = { ...head.pose, headOnly: true, eyes: 'happy' as const, mouth: 'open' as const };
-    drawCharacter(ctx, head.spec, P, tx - (this.travel!.to === 'forest' ? 30 : -30), ty - 120, 1.1, 1, this.time);
-    ctx.font = '900 30px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#3a2a22'; ctx.fillText(this.travel!.to === 'forest' ? '🚜 Brum-brum… spre pădure!' : '🚜 Înapoi acasă!', w / 2, h * 0.25);
-    ctx.restore();
+    const t = this.travel!.t;
+    if (t < 0.6) { irisWipe(ctx, w, h, 1 - t / 0.6); return; }            // se inchide peste lume
+    if (t > 3.4) { irisWipe(ctx, w, h, (t - 3.4) / 0.6); return; }        // se deschide peste zona noua
+    const k = (t - 0.6) / 2.8;
+    drawTravelScene(ctx, w, h, k, this.time, this.travel!.to === 'forest', nightAmount(this.w.minutes), this.me.actor.spec, undefined, Math.min(9, Math.floor((this.w.res?.wood ?? 0) / 2)));
+    ctx.save(); ctx.font = '900 28px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.fillStyle = '#3a2a22';
+    const txt = this.travel!.to === 'forest' ? 'Spre pădure! 🌲' : 'Înapoi acasă! 🏡'; ctx.strokeText(txt, w / 2, h * 0.12); ctx.fillText(txt, w / 2, h * 0.12); ctx.restore();
+    if (t < 1.0) irisWipe(ctx, w, h, (t - 0.6) / 0.4);
+    if (t > 3.0) irisWipe(ctx, w, h, 1 - (t - 3.0) / 0.4);
   }
+
 
   /** ajutor (debug / AI): mergi la obiectul cu id-ul dat si interactioneaza */
   goTo(id: string, who: 'me' | 'partner' = 'me') { const f = FURNITURE.find(x => x.id === id); if (f) this.goInteract(who === 'me' ? this.me : this.partner, f); }
@@ -1027,7 +1033,7 @@ export class WorldScene implements Scene {
         if (sl !== this.me) this.shake = Math.max(this.shake, 3);
       }
     }
-    if (this.travel) { this.travel.t += dt; if (!this.travel.switched && this.travel.t >= 1.2) { this.travel.switched = true; this.switchArea(this.travel.to); } if (this.travel.t >= 2.4) this.travel = null; }
+    if (this.travel) { this.travel.t += dt; if (!this.travel.switched && this.travel.t >= 2.0) { this.travel.switched = true; this.switchArea(this.travel.to); } if (this.travel.t >= 4.0) { this.travel = null; this.hud.setMinigame(false); } }
     this.updateCritters(dt);
     (globalThis as any).__stand = { broken: !!this.w.furn.standBroken, open: !!this.w.furn.standOpen };
     (globalThis as any).__trailerLogs = Math.min(6, Math.floor((this.w.res?.wood ?? 0) / 3));
