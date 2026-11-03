@@ -7,6 +7,7 @@ import { Sfx } from '../engine/sfx';
 import { moodText, g } from '../game/gender';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
+import { GOALS, currentGoal, INV_INFO, SHOP_BUY, SHOP_SELL } from '../game/economy';
 import type { NetStatus } from '../net/types';
 
 
@@ -26,7 +27,8 @@ export class Hud {
         <div class="needs">${NEEDS.map(n => `<div class="need" data-n="${n}" title="${NEED_INFO[n].label}"><span>${NEED_INFO[n].icon}</span><i><b style="background:${NEED_INFO[n].color}"></b></i></div>`).join('')}</div>
         <div class="sick hidden"></div>
       </div>
-      <div class="clock"><span class="time">09:00</span><span class="day">Ziua 1</span><span class="hearts">💗 0</span><span class="res"></span></div>
+      <div class="clock"><span class="time">09:00</span><span class="day">Ziua 1</span><span class="hearts">💗 0</span><span class="money">💰 0</span><span class="res"></span></div>
+      <button class="goal" data-a="goals"><b>📜 Obiectiv</b><span class="gtxt"></span></button>
       <div class="card partner">
         <div class="name">${pa.id === 'bubu' ? '🐼' : '🐻'} ${pa.name} <span class="pst">🤖 AI</span></div>
         <div class="pmood"></div>
@@ -61,6 +63,7 @@ export class Hud {
       if (a === 'bell') s.ringBell();
       if (a === 'build') s.build ? s.endBuild() : this.openBuild();
       if (a === 'bok') s.confirmBuild();
+      if (a === 'goals') this.openGoals();
       if (a === 'bend') s.endBuild();
       if (a === 'menu') { s.save(); (window as any).game.go('menu'); }
       if (b.dataset.emote) s.emote(b.dataset.emote);
@@ -86,7 +89,8 @@ export class Hud {
     this.els['.clock .time'].textContent = (nightAmount(w.minutes) > 0.5 ? '🌙 ' : '☀️ ') + clockText(w.minutes);
     this.els['.clock .day'].textContent = `Ziua ${w.day}`;
     this.els['.clock .hearts'].textContent = `💗 ${w.hearts}`;
-    const rs = (this.root.querySelector('.clock .res') as HTMLElement); const rt = (Object.keys(RES_INFO) as Res[]).map(r => `${RES_INFO[r].icon}${w.res?.[r] ?? 0}`).join(' '); if (rs.textContent !== rt) rs.textContent = rt;
+    (this.root.querySelector('.clock .money') as HTMLElement).textContent = `💰 ${w.money ?? 0} lei`;
+    const rs = (this.root.querySelector('.clock .res') as HTMLElement); const rt = [...Object.entries(RES_INFO), ...Object.entries(INV_INFO)].map(([r, i]) => `${i.icon}${w.res?.[r] ?? 0}`).join(' ') + ` · 🔥${Math.round((w.furn.fire as number) ?? 0)}%`; if (rs.textContent !== rt) rs.textContent = rt;
     const pc = w.chars[s.partner.id];
     this.els['.pmood'].textContent = moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : '');
     (this.els['.fart .fill'] as HTMLElement).style.height = c.fart + '%';
@@ -196,6 +200,48 @@ export class Hud {
     this.root.classList.toggle('building', !!b);
     if (b) (bar.querySelector('.bt') as HTMLElement).textContent = b.remove ? '🧹 Atinge un obiect ca să-l strângi' : `${b.item!.icon} ${b.item!.label}: atinge locul, apoi ✔`;
     (bar.querySelector('[data-a="bok"]') as HTMLElement).classList.toggle('hidden', !!b?.remove);
+  }
+
+  refreshGoal() {
+    const g = currentGoal(this.s.w);
+    const el = this.root.querySelector('.goal .gtxt') as HTMLElement;
+    el.textContent = g ? `${g.icon} ${g.text}` : '🎉 Capitolul 1 terminat!';
+  }
+  openGoals() {
+    const w = this.s.w; const cur = currentGoal(w);
+    this.modal(`<h3>📜 Capitolul 1 · Căsuța de la țară</h3>
+      <p class="sub">Trebuie să aveți grijă să nu înghețați 🥶, să aveți ce mânca 🍲 și să strângeți bani 💰 pentru casa cea mare. Apoi: săteni angajați și mutarea la oraș 🏙️</p>
+      <ul class="goals">${GOALS.map(g => { const done = !!w.stats['goal-' + g.id]; return `<li class="${done ? 'done' : g === cur ? 'cur' : ''}"><b>${done ? '✅' : g.icon} ${g.text}</b>${!done ? `<small>${g.hint}</small>` : ''}<i>${g.reward.money ? '+' + g.reward.money + ' lei ' : ''}${g.reward.hearts ? '+' + g.reward.hearts + '💗' : ''}</i></li>`; }).join('')}</ul>
+      <h4>🏙️ Urmează</h4><p class="sub">Capitolul 2: Casa cea mare + săteni angajați. Capitolul 3: Mutarea la oraș (magazine, cinema, slujbe).</p>`);
+  }
+  openVillage(tab = 'shop') {
+    const s = this.s, w = s.w, r = w.res ?? {};
+    const tabs: [string, string][] = [['shop', '🛒 Magazin'], ['sell', '💱 Piața'], ['hall', '🏛️ Primăria'], ['town', '🏙️ Orașul']];
+    let body = '';
+    if (tab === 'shop') body = `<div class="shop">${SHOP_BUY.map(it => `<button data-buy="${it.id}" class="${(w.money ?? 0) < it.price ? 'poor' : ''}"><span>${it.icon}</span><b>${it.label}</b><small>💰 ${it.price} lei</small></button>`).join('')}</div>`;
+    if (tab === 'sell') body = `<p class="sub">Vinde ce ai strâns (câte 1 la fiecare apăsare)</p><div class="shop">${SHOP_SELL.map(it => `<button data-sell="${it.id}" class="${(r[it.id] ?? 0) < 1 ? 'poor' : ''}"><span>${it.icon}</span><b>${it.label} (${r[it.id] ?? 0})</b><small>+${it.price} lei</small></button>`).join('')}</div>`;
+    if (tab === 'hall') body = `<p class="sub">Investiții mari pentru familia voastră</p><div class="shop">${GOALS.filter(g => g.cost).map(g => { const done = !!w.stats['goal-' + g.id]; const c = g.cost!; return `<button data-goal="${g.id}" class="${done ? 'on' : ''}"><span>${g.icon}</span><b>${g.text}</b><small>${done ? '✔ gata' : [c.money ? '💰' + c.money : '', c.wood ? '🪵' + c.wood : '', c.stone ? '🪨' + c.stone : ''].join(' ')}</small></button>`; }).join('')}</div>`;
+    if (tab === 'town') body = `<p class="sub">🚌 Autobuzul spre oraș pleacă după ce vă mutați în Casa cea mare. Acolo: supermarket, magazin de haine, cinema, slujbe… (Capitolul 3)</p>`;
+    const m = this.modal(`<h3>🏘️ Satul</h3><p class="sub">Ai 💰 ${w.money ?? 0} lei</p><div class="tabs">${tabs.map(([id, l]) => `<button data-tab="${id}" class="${id === tab ? 'on' : ''}">${l}</button>`).join('')}</div>${body}`);
+    m.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => this.openVillage((b as HTMLElement).dataset.tab)));
+    m.querySelectorAll('[data-buy]').forEach(b => b.addEventListener('click', () => {
+      const it = SHOP_BUY.find(i => i.id === (b as HTMLElement).dataset.buy)!;
+      if ((w.money ?? 0) < it.price) { this.toast('Nu ai destui bani 💰 — vinde la piață sau la tarabă'); Sfx.play('bad'); return; }
+      s.op({ k: 'money', delta: -it.price }); for (const [k, n] of Object.entries(it.give)) s.op({ k: 'res', res: k, delta: n });
+      Sfx.play('coin'); this.openVillage('shop');
+    }));
+    m.querySelectorAll('[data-sell]').forEach(b => b.addEventListener('click', () => {
+      const it = SHOP_SELL.find(i => i.id === (b as HTMLElement).dataset.sell)!;
+      if ((r[it.id] ?? 0) < 1) return;
+      s.op({ k: 'res', res: it.id, delta: -1 }); s.op({ k: 'money', delta: it.price }); Sfx.play('coin'); this.openVillage('sell');
+    }));
+    m.querySelectorAll('[data-goal]').forEach(b => b.addEventListener('click', () => {
+      const g = GOALS.find(x => x.id === (b as HTMLElement).dataset.goal)!; if (w.stats['goal-' + g.id]) return;
+      const c = g.cost!;
+      if ((w.money ?? 0) < (c.money ?? 0) || (r.wood ?? 0) < (c.wood ?? 0) || (r.stone ?? 0) < (c.stone ?? 0)) { this.toast('Încă nu aveți destul… continuați! 💪'); Sfx.play('bad'); return; }
+      if (c.money) s.op({ k: 'money', delta: -c.money }); if (c.wood) s.op({ k: 'res', res: 'wood', delta: -c.wood }); if (c.stone) s.op({ k: 'res', res: 'stone', delta: -c.stone });
+      s.op({ k: 'stat', key: g.id, delta: 1 }); s.completeGoal(g.id); this.openVillage('hall');
+    }));
   }
 
   setMinigame(on: boolean) { this.root.classList.toggle('in-mini', on); }

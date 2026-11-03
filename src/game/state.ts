@@ -3,11 +3,12 @@ import type { CharId } from '../char/draw';
 import type { Mood } from '../char/actor';
 import type { WorldOp } from '../net/types';
 
-export const NEEDS = ['hunger', 'energy', 'hygiene', 'fun', 'love', 'health'] as const;
+export const NEEDS = ['hunger', 'energy', 'warmth', 'hygiene', 'fun', 'love', 'health'] as const;
 export type NeedKey = typeof NEEDS[number];
 export const NEED_INFO: Record<NeedKey, { icon: string; label: string; color: string }> = {
   hunger: { icon: '🍔', label: 'Foame', color: '#ff9f1c' },
   energy: { icon: '😴', label: 'Energie', color: '#7a8cff' },
+  warmth: { icon: '🔥', label: 'Căldură', color: '#ff6b3d' },
   hygiene: { icon: '🛁', label: 'Igienă', color: '#4cc9f0' },
   fun: { icon: '🎈', label: 'Distracție', color: '#c77dff' },
   love: { icon: '💕', label: 'Iubire', color: '#ff4d6d' },
@@ -52,9 +53,11 @@ export interface WorldState {
   res?: Record<string, number>;                         // lemn, piatra, flori
   placed?: { uid: string; type: string; gx: number; gy: number }[]; // constructii
   nodes?: Record<string, number>;                       // resurse epuizate pana la (ms)
+  money?: number;                                       // lei
+  grass?: Record<string, number>;                       // iarba inalta: 'x,y' -> inaltime 1..3
 }
 
-const fullNeeds = (): Record<NeedKey, number> => ({ hunger: 80, energy: 85, hygiene: 80, fun: 70, love: 75, health: 100 });
+const fullNeeds = (): Record<NeedKey, number> => ({ hunger: 70, energy: 85, warmth: 60, hygiene: 80, fun: 70, love: 75, health: 100 });
 
 export function newWorld(): WorldState {
   return {
@@ -64,7 +67,7 @@ export function newWorld(): WorldState {
       dudu: { needs: fullNeeds(), sick: null, fart: 50, gx: 7.3, gy: 9.0 },
     },
     furn: { lampOn: false, tvOn: false, clogged: false, bathFoam: 0.2, cooking: false, crops: [0, 0, 0, 0, 0, 0] },
-    jar: [], log: [], stats: {}, res: { wood: 4, stone: 3, flower: 2 }, placed: [], nodes: {},
+    jar: [], log: [], stats: {}, res: { wood: 3, stone: 2, flower: 1, seeds: 3, veg: 1, meals: 2 }, placed: [], nodes: {}, money: 20, grass: {},
   };
 }
 
@@ -80,6 +83,7 @@ export function moodFrom(c: CharState): Mood {
       case 'fun': return 'sad';
       case 'hygiene': return 'sulky';
       case 'health': return 'sick';
+      case 'warmth': return 'cold';
     }
   }
   if (n.love > 85 && n.fun > 50) return 'love';
@@ -88,25 +92,27 @@ export function moodFrom(c: CharState): Mood {
 }
 
 // ritmul de scadere pe ora de joc
-const DECAY: Record<NeedKey, number> = { hunger: 4.2, energy: 3.4, hygiene: 2.8, fun: 3.2, love: 2.6, health: 0 };
+const DECAY: Record<NeedKey, number> = { hunger: 4.2, energy: 3.4, warmth: 4, hygiene: 2.8, fun: 3.2, love: 2.6, health: 0 };
 
 /** trece timpul; intoarce evenimente (ex. s-a imbolnavit) */
-export function tickNeeds(c: CharState, hours: number, asleep: boolean): string[] {
+export function tickNeeds(c: CharState, hours: number, asleep: boolean, warmGain = 0, cold = 1): string[] {
   const ev: string[] = [];
+  c.needs.warmth ??= 60;
   for (const k of NEEDS) {
     let r = DECAY[k];
     if (asleep && k === 'energy') r = -14;     // somnul reface energia
     if (asleep && k === 'hunger') r *= 0.5;
     if (c.sick) r *= k === 'energy' ? 2 : 1.3;
+    if (k === 'warmth') r = r * cold - warmGain;
     c.needs[k] = clamp100(c.needs[k] - r * hours);
   }
   // sanatatea
-  const bad = (c.needs.hygiene < 20 ? 1 : 0) + (c.needs.energy < 15 ? 1 : 0) + (c.needs.hunger < 15 ? 1 : 0);
+  const bad = (c.needs.hygiene < 20 ? 1 : 0) + (c.needs.energy < 15 ? 1 : 0) + (c.needs.hunger < 15 ? 1 : 0) + (c.needs.warmth < 15 ? 2 : 0);
   if (c.sick) c.needs.health = clamp100(c.needs.health - 2.5 * hours);
   else if (bad) c.needs.health = clamp100(c.needs.health - bad * 3 * hours);
   else c.needs.health = clamp100(c.needs.health + 1.5 * hours);
   if (!c.sick && c.needs.health < 45 && Math.random() < 0.25 * hours) {
-    c.sick = c.needs.hunger < 20 ? 'tummy' : c.needs.energy < 20 ? 'fever' : 'cold';
+    c.sick = c.needs.warmth < 25 ? 'cold' : c.needs.hunger < 20 ? 'tummy' : c.needs.energy < 20 ? 'fever' : 'cold';
     ev.push('sick');
   }
   c.fart = Math.min(100, c.fart + 6 * hours);
@@ -127,6 +133,10 @@ export function applyOp(w: WorldState, op: WorldOp) {
     case 'place': { w.placed ??= []; if (!w.placed.some(p => p.uid === op.uid)) w.placed.push({ uid: op.uid, type: op.type, gx: op.gx, gy: op.gy }); break; }
     case 'unplace': { w.placed = (w.placed ?? []).filter(p => p.uid !== op.uid); break; }
     case 'node': { w.nodes ??= {}; w.nodes[op.id] = op.until; break; }
+    case 'money': w.money = Math.max(0, (w.money ?? 0) + op.delta); break;
+    case 'stat': w.stats[op.key] = (w.stats[op.key] ?? 0) + op.delta; break;
+    case 'grass': { w.grass ??= {}; if (op.value <= 0) delete w.grass[op.key]; else w.grass[op.key] = op.value; break; }
+    case 'grassAll': w.grass = {}; break;
     case 'log': w.log.push({ text: op.text, ts: op.ts }); if (w.log.length > 60) w.log.splice(0, w.log.length - 60); break;
   }
   w.ts = Date.now();

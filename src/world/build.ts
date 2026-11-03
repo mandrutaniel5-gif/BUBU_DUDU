@@ -53,6 +53,50 @@ function ell(ctx: CanvasRenderingContext2D, p: Pt, rx: number, ry: number, fill:
 export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number, night: number, depleted: boolean): boolean {
   const { gx, gy, w, d } = f;
   switch (f.type) {
+    case 'gateway': return true;
+    case 'fireplace': {
+      const fuel = (globalThis as any).__fireFuel ?? 0;
+      isoBox(ctx, gx + 0.1, gy + 0.1, 0.8, 0.8, 40, { top: '#e8e2d8', left: '#c0573e', right: '#a84a35' });
+      for (let r = 0; r < 4; r++) { const a = iso(gx + 0.1, gy + 0.9, 6 + r * 9), b = iso(gx + 0.9, gy + 0.9, 6 + r * 9); ctx.strokeStyle = '#8e3d2b'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+      // usita focului (pe fata stanga)
+      const c = iso(gx + 0.5, gy + 0.9, 16);
+      ctx.fillStyle = fuel > 0 ? '#ff8c42' : '#2a1a1a'; ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(c.x, c.y, 10, 8, 0, 0, 7); ctx.fill(); ctx.stroke();
+      if (fuel > 0) for (let i = 0; i < 3; i++) { const fh = 5 + Math.sin(t * 14 + i * 2) * 2 + fuel / 30; ctx.fillStyle = i === 1 ? '#ffd23f' : '#ff6b3d'; ctx.beginPath(); ctx.moveTo(c.x - 6 + i * 6 - 3, c.y + 5); ctx.quadraticCurveTo(c.x - 6 + i * 6, c.y + 5 - fh * 2, c.x - 6 + i * 6 + 3, c.y + 5); ctx.fill(); }
+      // hornul
+      isoBox(ctx, gx + 0.35, gy + 0.35, 0.3, 0.3, 46, boxOf('#8e8e99'), 40);
+      if (fuel > 0) for (let i = 0; i < 3; i++) { const k = (t * 0.5 + i / 3) % 1; const p = iso(gx + 0.5, gy + 0.5, 90 + k * 40); ctx.globalAlpha = 0.5 * (1 - k); ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.arc(p.x + k * 10, p.y, 5 + k * 8, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+      if (fuel > 0) { const g2 = ctx.createRadialGradient(c.x, c.y, 4, c.x, c.y, 120); g2.addColorStop(0, `rgba(255,150,60,${0.18 + night * 0.25})`); g2.addColorStop(1, 'rgba(255,150,60,0)'); ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(c.x, c.y, 120, 0, 7); ctx.fill(); }
+      // bara de combustibil
+      const p = iso(gx + 0.5, gy + 0.5, 96);
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(p.x - 18, p.y - 4, 36, 7, 3); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = fuel > 25 ? '#ff6b3d' : '#e63946'; ctx.beginPath(); ctx.roundRect(p.x - 17, p.y - 3, 34 * Math.min(1, fuel / 100), 5, 2); ctx.fill();
+      return true;
+    }
+    case 'shed': {
+      isoBox(ctx, gx + 0.05, gy + 0.05, 0.9, 0.9, 40, { top: '#c98e5f', left: '#e7c08f', right: '#d9a273' });
+      const a = iso(gx + 0.05, gy + 0.05, 40), b = iso(gx + 0.95, gy + 0.05, 40), c2 = iso(gx + 0.95, gy + 0.95, 40), d2 = iso(gx + 0.05, gy + 0.95, 40), top = iso(gx + 0.5, gy + 0.5, 70);
+      for (const [p, q, col] of [[d2, c2, '#b5543c'], [b, c2, '#9e4330']] as const) { ctx.beginPath(); ctx.moveTo(top.x, top.y); ctx.lineTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.closePath(); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.stroke(); }
+      void a;
+      const dr = iso(gx + 0.5, gy + 0.95, 14); ctx.fillStyle = '#8a5d32'; ctx.strokeStyle = O; ctx.beginPath(); ctx.roundRect(dr.x - 7, dr.y - 14, 14, 24, 3); ctx.fill(); ctx.stroke();
+      // stiva de lemne langa magazie
+      for (let i = 0; i < 3; i++) { const p = iso(gx + 1.05, gy + 0.3 + i * 0.2, 4); ell(ctx, p, 5, 4, '#c98e5f'); ell(ctx, p, 2.5, 2, '#e7c08f', false); }
+      return true;
+    }
+    case 'stand': {
+      for (const u of [0.1, w - 0.15]) isoBox(ctx, gx + u, gy + 0.2, 0.06, 0.06, 64, boxOf('#c98e5f'));
+      isoBox(ctx, gx + 0.05, gy + 0.3, w - 0.1, 0.6, 26, { top: '#f6e7d3', left: '#d9a273', right: '#c48b5c' });
+      // copertina cu dungi
+      const n = 6;
+      for (let i = 0; i < n; i++) {
+        const p0 = iso(gx + i / n * w, gy + 0.1, 66), p1 = iso(gx + (i + 1) / n * w, gy + 0.1, 66), p2 = iso(gx + (i + 1) / n * w, gy + 0.9, 54), p3 = iso(gx + i / n * w, gy + 0.9, 54);
+        ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.closePath(); ctx.fillStyle = i % 2 ? '#fff' : '#ff9ab8'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+      ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ['🥕', '🍰', '🌷', '🧋'].forEach((e, i) => { const p = iso(gx + 0.3 + i * 0.45, gy + 0.6, 32); ctx.fillText(e, p.x, p.y); });
+      const sg = iso(gx + w / 2, gy + 0.9, 12); ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(sg.x - 30, sg.y - 7, 60, 14, 4); ctx.fill(); ctx.stroke();
+      ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText('Taraba lui Bubu', sg.x, sg.y); ctx.textBaseline = 'alphabetic';
+      return true;
+    }
     case 'rock': {
       if (depleted) { ell(ctx, iso(gx + 0.5, gy + 0.5), 10, 5, '#b8b2a7'); return true; }
       const c = iso(gx + 0.5, gy + 0.5);
@@ -154,4 +198,14 @@ export function drawGhost(ctx: CanvasRenderingContext2D, it: BuildItem, gx: numb
   ctx.strokeStyle = ok ? '#2ec4b6' : '#e63946'; ctx.lineWidth = 3; ctx.stroke();
   drawBuildType(ctx, { id: 'ghost', type: it.type as any, gx, gy, w: it.w, d: it.d, solid: false }, t, 0, false);
   ctx.restore();
+}
+
+/** iarba inalta care creste in curte (1..3) */
+export function drawTallGrass(ctx: CanvasRenderingContext2D, gx: number, gy: number, lv: number, t: number) {
+  for (let k = 0; k < 6; k++) {
+    const p = iso(gx + 0.2 + (k * 0.37) % 0.7, gy + 0.2 + (k * 0.61) % 0.7);
+    const sw = Math.sin(t * 1.8 + gx + k) * 2;
+    ctx.strokeStyle = k % 2 ? '#4f9d4a' : '#3d8b3d'; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.quadraticCurveTo(p.x + sw, p.y - 5 - lv * 4, p.x + sw * 2, p.y - 8 - lv * 6); ctx.stroke();
+  }
 }

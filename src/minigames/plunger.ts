@@ -1,5 +1,5 @@
 // Minijoc: "Desfundă toaleta după Dudu" — apasă in ritm cand indicatorul e in zona verde.
-import { Panel } from './base';
+import { Panel, sweep, HIT_SLACK } from './base';
 import { Sfx } from '../engine/sfx';
 import type { WorldScene } from '../scenes/world';
 
@@ -9,7 +9,7 @@ export class PlungerGame extends Panel {
   misses = 0;
   marker = 0;        // pozitia indicatorului -1..1
   speed = 1.6;
-  zone = 0.28;       // jumatatea latimii zonei verzi
+  zone = 0.34;       // latimea zonei verzi (fractiune din bara)
   push = 0;          // animatia pompei
   combo = 0;
   flush = 0;
@@ -19,7 +19,7 @@ export class PlungerGame extends Panel {
     this.hero.play('act_plunge');
   }
   tick(dt: number) {
-    this.marker = Math.sin(this.t * this.speed * Math.PI);
+    this.marker = sweep(this.t, this.speed * 0.5);
     this.push = Math.max(0, this.push - dt * 4);
     if (this.flush > 0) { this.flush += dt; if (this.flush > 1.2) this.finish(1 + Math.max(0, 3 - this.misses) * 0.5, 'FLUUUSH! ✨'); }
     // apa urca incet daca nu faci nimic
@@ -28,7 +28,7 @@ export class PlungerGame extends Panel {
   }
   hit() {
     if (this.ended || this.flush) return;
-    const good = Math.abs(this.marker) < this.zone;
+    const good = Math.abs(this.marker * 0.95) < this.zone + HIT_SLACK;
     const cx = this.box.x + this.box.w / 2, cy = this.box.y + this.box.h * 0.55;
     this.push = 1;
     if (good) {
@@ -39,8 +39,8 @@ export class PlungerGame extends Panel {
       this.fx.text(cx + (Math.random() - 0.5) * 120, cy - 120, ['BLURP!', 'GLGLG!', 'PLOP!', 'FLOSC!'][Math.floor(Math.random() * 4)], '#7a5532', 1.3);
       this.fx.burst('drop', cx, cy - 30, 8, 2.2, 160, { grav: 400, max: 0.8, color: '#a9d6f5' });
       this.shake = 5;
-      this.speed = Math.min(3.2, this.speed + 0.12);
-      this.zone = Math.max(0.14, this.zone - 0.012);
+      this.speed = Math.min(2.4, this.speed + 0.08);
+      this.zone = Math.max(0.24, this.zone - 0.01);
       if (this.progress >= 1) { this.flush = 0.01; Sfx.play('splash'); }
     } else {
       this.combo = 0; this.misses++;

@@ -6,7 +6,7 @@ import { Sfx } from '../engine/sfx';
 import type { Outfit } from './outfit';
 
 /** Starea emotionala de baza (influenteaza fata cand nu ruleaza un emote). */
-export type Mood = 'happy' | 'calm' | 'sad' | 'angry' | 'sleepy' | 'sick' | 'hungry' | 'love' | 'sulky';
+export type Mood = 'happy' | 'calm' | 'sad' | 'angry' | 'sleepy' | 'sick' | 'hungry' | 'love' | 'sulky' | 'cold';
 
 const MOOD_FACE: Record<Mood, Partial<Pose>> = {
   happy: { eyes: 'dot', mouth: 'w', blush: 0.7 },
@@ -18,6 +18,7 @@ const MOOD_FACE: Record<Mood, Partial<Pose>> = {
   hungry: { eyes: 'dot', mouth: 'drool', brows: 'up', blush: 0.5 },
   love: { eyes: 'happy', mouth: 'w', blush: 1.2 },
   sulky: { eyes: 'side', mouth: 'flat', brows: 'angry', blush: 1.0 },
+  cold: { eyes: 'strain', mouth: 'wavy', brows: 'sad', blush: 0.3, snot: 0.5 },
 };
 
 export class Actor {
@@ -90,6 +91,7 @@ export class Actor {
     // clipit (doar cand ochii sunt deschisi normal)
     this.blinkT -= dt;
     if (this.blinkT < 0) { if (this.blinkT < -0.12) this.blinkT = 2.5 + Math.random() * 3; else if (P.eyes === 'dot' || P.eyes === 'sad' || P.eyes === 'angry') P.eyes = 'closed'; }
+    if (this.mood === 'cold' && !this.busy) { P.dx += (Math.random() - 0.5) * 2.2; P.armL = P.armR = -0.6; P.sickTint = 0; }
     this.pose = P;
 
     if (!a.loop && this.animT >= a.dur && this.busy) {

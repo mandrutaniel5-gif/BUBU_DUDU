@@ -23,7 +23,11 @@ export type WorldOp =
   | { k: 'res'; res: string; delta: number }
   | { k: 'place'; uid: string; type: string; gx: number; gy: number }
   | { k: 'unplace'; uid: string }
-  | { k: 'node'; id: string; until: number };
+  | { k: 'node'; id: string; until: number }
+  | { k: 'money'; delta: number }
+  | { k: 'stat'; key: string; delta: number }
+  | { k: 'grass'; key: string; value: number }
+  | { k: 'grassAll' };
 
 export type NetStatus = 'offline' | 'connecting' | 'online' | 'error';
 

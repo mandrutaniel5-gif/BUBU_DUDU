@@ -2,6 +2,11 @@ import type { WorldScene } from '../scenes/world';
 import { Actor } from '../char/actor';
 import { Fx } from '../char/fx';
 
+/** ac care merge cu viteza constanta de la -1 la 1 si inapoi (nu accelereaza prin mijloc) */
+export function sweep(t: number, perSec: number) { const x = (t * perSec) % 2; return x < 1 ? x * 2 - 1 : 1 - (x - 1) * 2; }
+/** toleranta in plus fata de zona desenata (degetul/tasta au mereu putina intarziere) */
+export const HIT_SLACK = 0.07;
+
 export interface Minigame {
   update(dt: number): void;
   draw(ctx: CanvasRenderingContext2D, w: number, h: number): void;

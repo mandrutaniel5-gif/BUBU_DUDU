@@ -4,6 +4,8 @@ import { PancakeGame } from './pancakes';
 import { BedtimeGame } from './bedtime';
 import { SnoreGame } from './night';
 import { ChopGame, MineGame } from './gather';
+import { FireGame, MowGame } from './fire';
+import { MergeGame } from './merge';
 import { BathGame, TeethGame, DishesGame, SocksGame, GardenGame, FridgeGame } from './chores';
 import { SoupGame, MedicineGame, CompressGame } from './care';
 
@@ -14,7 +16,7 @@ export const MINIGAMES: Record<string, MinigameCtor> = {
   soup: SoupGame,
   bedtime: BedtimeGame,
   snore: SnoreGame,
-  chop: ChopGame, mine: MineGame,
+  chop: ChopGame, mine: MineGame, fire: FireGame, mow: MowGame, merge: MergeGame,
   bath: BathGame, teeth: TeethGame, dishes: DishesGame, socks: SocksGame, garden: GardenGame, fridge: FridgeGame,
   medicine: MedicineGame,
   compress: CompressGame,

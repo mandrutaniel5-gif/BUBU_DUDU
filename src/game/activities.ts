@@ -35,5 +35,9 @@ export const ACTIVITIES: Record<string, Activity> = {
   pick: { id: 'pick', anim: 'act_garden', dur: 2.5, needs: { fun: 4, love: 2 }, text: 'Flori pentru iubire 🌸' },
   swing: { id: 'swing', anim: 'act_sit', dur: 7, needs: { fun: 22, love: 10 }, text: 'Hușca-hușca! 🎠' },
   gazebo: { id: 'gazebo', anim: 'love', dur: 2.6, needs: { love: 20, fun: 6 }, text: 'Momentul nostru în foișor 💞' },
+  addwood: { id: 'addwood', anim: 'act_scrub', dur: 1.6, needs: { warmth: 4 }, text: 'Trosc-pocnesc 🔥' },
+  lightfire: { id: 'lightfire', anim: 'kiss', dur: 2, needs: { warmth: 6, fun: 4 }, text: 'Ne e cald! 🔥', minigame: 'fire' },
+  mow: { id: 'mow', anim: 'act_scrub', dur: 5, needs: { fun: 6, energy: -8, hygiene: -6 }, text: 'Miroase a iarbă tunsă 🌾', minigame: 'mow' },
+  stand: { id: 'stand', anim: 'wave', dur: 6, needs: { fun: 10, energy: -4 }, text: 'Clienți mulțumiți 🧺', minigame: 'merge' },
   read_mail: { id: 'read_mail', anim: 'love', dur: 2.6, needs: { love: 8 }, text: 'Un bilețel de dragoste 💌' },
 };

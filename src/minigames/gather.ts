@@ -1,5 +1,5 @@
 // Minijocuri de strans resurse: taiat lemne, spart piatra.
-import { Panel } from './base';
+import { Panel, sweep, HIT_SLACK } from './base';
 import { Sfx } from '../engine/sfx';
 import type { WorldScene } from '../scenes/world';
 
@@ -7,13 +7,13 @@ const O = '#3a2a22';
 
 /** 🪓 Taie copacul: loveste cand acul e in zona verde */
 export class ChopGame extends Panel {
-  hits = 0; need = 5; marker = 0; zone = 0.3; swing = 0; tilt = 0; fall = 0; miss = 0;
+  hits = 0; need = 5; marker = 0; zone = 0.34; swing = 0; tilt = 0; fall = 0; miss = 0;
   constructor(s: WorldScene, d: (n: number) => void) {
     super(s, d, '🪓 Taie lemne', s.myId === 'dudu' ? 'Lovește în zona verde! (Dudu e mai puternic 💪)' : 'Lovește în zona verde!');
-    if (s.myId === 'dudu') { this.need = 4; this.zone = 0.36; }
+    if (s.myId === 'dudu') { this.need = 4; this.zone = 0.42; }
   }
   tick(dt: number) {
-    this.marker = Math.sin(this.t * (1.8 + this.hits * 0.25) * Math.PI);
+    this.marker = sweep(this.t, 0.8 + this.hits * 0.08);
     this.swing = Math.max(0, this.swing - dt * 5);
     if (this.fall > 0) { this.fall += dt * 1.4; if (this.fall > 1.4) this.finish(1 + Math.max(0, 3 - this.miss) * 0.3, 'TIMBEEER! 🪵🪵🪵'); }
     if (!this.hero.busy) this.hero.play('idle');
@@ -21,7 +21,7 @@ export class ChopGame extends Panel {
   hit() {
     if (this.fall || this.ended) return;
     this.swing = 1; const b = this.box;
-    if (Math.abs(this.marker) < this.zone) {
+    if (Math.abs(this.marker * 0.95) < this.zone + HIT_SLACK) {
       this.hits++; this.tilt = this.hits / this.need * 0.15; Sfx.play('bonk'); this.shake = 6;
       this.fx.burst('drop', b.x + b.w * 0.55, b.y + b.h * 0.7, 8, 2, 160, { grav: 400, max: 0.7, color: '#c98e5f' });
       this.fx.text(b.x + b.w * 0.6, b.y + b.h * 0.45, ['TOC!', 'POC!', 'ZDANG!', 'TRANC!'][this.hits % 4], '#8b5e34', 1.1);

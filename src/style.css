@@ -142,3 +142,11 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 .buildbar button { border:2.5px solid var(--ink); border-radius:12px; font-weight:800; padding:4px 10px; background:#fff; white-space:nowrap; }
 .buildbar [data-a="bok"] { background:#9be38f; }
 .hud.building .actions .big { display:none; }
+.hud .goal { position:absolute; left:10px; top:150px; max-width:min(240px, 46vw); text-align:left; border:3px solid var(--ink); background:#fff6d6; border-radius:14px; padding:4px 10px; box-shadow:0 3px 0 var(--ink); display:flex; flex-direction:column; }
+.hud .goal b { font-size:12px; } .hud .goal .gtxt { font-size:13px; font-weight:700; line-height:1.15; }
+.hud.in-mini .goal { opacity:0; pointer-events:none; }
+.goals { padding:0; list-style:none; display:flex; flex-direction:column; gap:6px; }
+.goals li { border:2.5px solid var(--ink); border-radius:12px; padding:5px 10px; background:#fff; display:flex; flex-direction:column; }
+.goals li.done { background:#e3f8e0; opacity:.75; } .goals li.cur { background:#fff6d6; outline:3px solid #ffb703; }
+.goals small { font-size:12px; opacity:.75; } .goals i { font-size:12px; font-style:normal; color:#c77d00; font-weight:800; }
+.tabs { display:flex; gap:6px; margin:6px 0 10px; flex-wrap:wrap; } .tabs button { border:2.5px solid var(--ink); border-radius:12px; background:#fff; font-weight:800; padding:3px 10px; } .tabs button.on { background:var(--pink); color:#fff; }
