@@ -212,6 +212,16 @@ const D: Record<string, (c: C) => void> = {
   '🧤': c => { qd(c, c => { c.moveTo(18, 56); c.lineTo(18, 24); c.quadraticCurveTo(18, 14, 26, 14); c.lineTo(42, 14); c.quadraticCurveTo(50, 14, 50, 24); c.lineTo(50, 30); c.lineTo(56, 26); c.quadraticCurveTo(62, 32, 50, 44); c.lineTo(46, 56); c.closePath(); }, '#e07a5f'); rr(c, 16, 50, 32, 8, 3, '#fff'); },
   '🎪': c => { po(c, [6, 30, 32, 8, 58, 30], '#ff5d8f'); rr(c, 10, 30, 44, 26, 2, '#fff'); for (let i = 0; i < 4; i++) rr(c, 12 + i * 11, 30, 5, 26, 0, '#ff8fab', false); rr(c, 26, 40, 12, 16, 2, '#7a4a2a'); },
   '📮': c => { rr(c, 18, 14, 28, 40, 8, '#e63946'); rr(c, 22, 24, 20, 5, 2, '#3a3a44'); ln(c, [32, 54, 32, 60], 5); },
+  '💕': c => { const hh = (x: number, y: number, r: number, f: string) => qd(c, c => { c.moveTo(x, y + r * 0.9); c.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.7, y - r * 1.4, x, y - r * 0.5); c.bezierCurveTo(x + r * 0.7, y - r * 1.4, x + r * 1.6, y - r * 0.2, x, y + r * 0.9); }, f); hh(24, 38, 14, '#ff5d8f'); hh(42, 24, 10, '#ff8fab'); },
+  '💗': c => { qd(c, c => { c.moveTo(32, 54); c.bezierCurveTo(4, 34, 14, 10, 32, 22); c.bezierCurveTo(50, 10, 60, 34, 32, 54); }, '#ff5d8f'); shine(c, 22, 26, 4); },
+  '❤️': c => { qd(c, c => { c.moveTo(32, 54); c.bezierCurveTo(4, 34, 14, 10, 32, 22); c.bezierCurveTo(50, 10, 60, 34, 32, 54); }, '#e63946'); shine(c, 22, 26, 4); },
+  '🤍': c => { qd(c, c => { c.moveTo(32, 54); c.bezierCurveTo(4, 34, 14, 10, 32, 22); c.bezierCurveTo(50, 10, 60, 34, 32, 54); }, '#fff'); },
+  '🚕': c => { rr(c, 6, 28, 52, 18, 6, '#ffd23f'); po(c, [16, 28, 22, 16, 42, 16, 48, 28], '#ffd23f'); rr(c, 24, 19, 8, 8, 2, '#bfe8ff'); rr(c, 34, 19, 8, 8, 2, '#bfe8ff'); rr(c, 26, 10, 12, 6, 2, '#fff'); wheel(c, 18, 46, 6); wheel(c, 46, 46, 6); },
+  '⬇': c => { po(c, [24, 8, 40, 8, 40, 32, 52, 32, 32, 56, 12, 32, 24, 32], '#9be38f'); },
+  '⬆': c => { po(c, [24, 56, 40, 56, 40, 32, 52, 32, 32, 8, 12, 32, 24, 32], '#ffd23f'); },
+  '🐷': c => { ci(c, 32, 34, 20, '#ffb3c7'); el(c, 32, 38, 9, 6, '#ff8fab'); ci(c, 29, 38, 1.8, O, false); ci(c, 35, 38, 1.8, O, false); ci(c, 24, 28, 2.5, O, false); ci(c, 40, 28, 2.5, O, false); po(c, [14, 20, 20, 10, 24, 20], '#ffb3c7'); po(c, [40, 20, 44, 10, 50, 20], '#ffb3c7'); },
+  '🤝': c => { qd(c, c => { c.moveTo(6, 30); c.lineTo(22, 22); c.lineTo(34, 30); c.lineTo(46, 22); c.lineTo(58, 30); c.lineTo(48, 44); c.lineTo(30, 46); c.lineTo(16, 42); c.closePath(); }, '#ffd8b0'); ln(c, [26, 34, 34, 40], 2); ln(c, [30, 30, 38, 36], 2); },
+  '🧑‍🍳': c => { D['🍞'](c); },
   '🏮': c => { el(c, 32, 32, 18, 20, '#e63946'); rr(c, 24, 8, 16, 6, 2, '#ffd23f'); rr(c, 24, 50, 16, 6, 2, '#ffd23f'); },
 };
 // Alias (fara selectorul de varianta)

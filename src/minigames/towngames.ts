@@ -290,7 +290,7 @@ export class ShopScene extends Panel {
   }
   get perPage() { return 8; }
   get pages() { return Math.max(1, Math.ceil(this.cfg.items.length / this.perPage)); }
-  slot(i: number): Box { const B = this.box; const cols = 4, sw = (B.w - 60) / cols, sh = Math.min(96, (B.h * 0.52) / 2); const r = Math.floor(i / cols), c = i % cols; return { x: B.x + 30 + c * sw + 4, y: B.y + 70 + r * (sh + 8), w: sw - 8, h: sh }; }
+  slot(i: number): Box { const B = this.box; const cols = 4, sw = (B.w - 60) / cols, sh = Math.min(96, (B.h * 0.53 - 72) / 2); const r = Math.floor(i / cols), c = i % cols; return { x: B.x + 30 + c * sw + 4, y: B.y + 70 + r * (sh + 8), w: sw - 8, h: sh }; }
   buyBtn(): Box { const B = this.box; return { x: B.x + B.w - 210, y: B.y + B.h - 84, w: 190, h: 50 }; }
   pgBtn(d: -1 | 1): Box { const B = this.box; return { x: d < 0 ? B.x + 20 : B.x + 72, y: B.y + B.h - 84, w: 44, h: 44 }; }
   tick(dt: number) { this.msgT = Math.max(0, this.msgT - dt); }
@@ -344,12 +344,12 @@ export class ShopScene extends Panel {
     const cy = y + h * 0.8;
     const keeper = NPC_SPECS[this.cfg.keeper] ?? NPC_SPECS.bunny;
     const P = pose({ eyes: this.keeperMood === 'love' ? 'happy' : this.keeperMood === 'sad' ? 'sad' : 'dot', mouth: this.keeperMood === 'sad' ? 'frown' : 'open', armR: this.keeperMood === 'love' ? 1.8 : 0.55, blush: 1 });
-    drawCharacter(ctx, keeper, P, x + w * 0.5, cy + 6, Math.min(0.9, h / 640), 1, this.t);
+    drawCharacter(ctx, keeper, P, x + w * 0.5, cy + 6, Math.min(0.9, h / 760), 1, this.t);
     ctx.fillStyle = '#8a5d32'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x + w * 0.3, cy - 14, w * 0.4, 30, 6); ctx.fill(); ctx.stroke();
     // balonul vanzatorului
     const say = this.msgT > 0 ? this.msg : this.sel >= 0 ? `${this.cfg.items[this.sel].name}${this.cfg.items[this.sel].note ? ' · ' + this.cfg.items[this.sel].note : ''}` : this.cfg.hello;
     ctx.font = '800 13px "Baloo 2", sans-serif'; const tw = Math.min(w * 0.6, ctx.measureText(say).width + 28);
-    const sbx = x + w * 0.5 - tw / 2, sby = cy - Math.min(0.9, h / 640) * 150 - 34;
+    const sbx = x + w * 0.5 - tw / 2, sby = Math.max(this.slot(7).y + this.slot(7).h + 6, cy - Math.min(0.9, h / 760) * 150 - 34);
     ctx.fillStyle = this.msgT > 0 ? '#ffe1e1' : '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(sbx, sby, tw, 28, 10); ctx.fill(); ctx.stroke();
     T(ctx, say, x + w * 0.5, sby + 14, 13, O, 'center', tw - 16);
     // portofelul

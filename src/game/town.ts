@@ -122,6 +122,13 @@ export function makeQuests(w: WorldState, prices: Record<string, number>): Quest
 }
 function mulberry(a: number) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
+// ------------------------------------------------------------------ programul institutiilor
+export const HOURS: Record<string, [number, number]> = {
+  'v-grocery': [7, 20], 'v-clothes': [9, 18], 'v-market': [7, 15], 'v-bakery': [6, 19], 'v-clinic': [8, 18], 'v-post': [8, 17], 'v-hall': [8, 16], 'v-school': [8, 14],
+  'c-super': [7, 22], 'c-boutique': [10, 20], 'c-bank': [9, 17], 'c-uni': [8, 20], 'c-mall': [10, 21], 'c-cinema': [12, 24], 'c-resto': [11, 23], 'c-cafe': [7, 21], 'c-office': [8, 18],
+};
+export const isOpen = (id: string, hour: number) => { const h = HOURS[id]; return !h || (hour >= h[0] && hour < h[1]); };
+
 // ------------------------------------------------------------------ banca + apartament
 export const APT_PRICE = 2400, APT_DOWN = 400, LOAN_RATE = 110, LOAN_DAYS = 20, APT_BILLS = 18;
 export interface Bank { savings: number; loanLeft: number; late: number }

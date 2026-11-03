@@ -22,3 +22,44 @@
 - **Autobuzul:** pleacă din stația din sat spre oraș și costă 5 lei de persoană. Din oraș te întorci cu autobuzul la sat.
 - **Partenerul AI:** vine mereu cu tine când pleci cu bicicleta, scuterul sau autobuzul.
 - **Fuga:** ții apăsat Shift (pe telefon: joystick-ul împins până la capăt). Alergi de 1,75 ori mai repede, dar consumi puțină energie.
+
+## Satul (Capitolul 3)
+- **Sătenii** (Bunica Leana, Ina, Nea Gogu, Miți, Rita, Rex) au nume. Te apropii de unul și apeși „Vorbește cu…”. Cei care au o cerere pentru voi au un semn „!” deasupra.
+- **Avizierul** de lângă primărie arată 3 cereri pe zi, de exemplu legume, pește, lemne sau flori. Primești bani și prietenie. Poți să le dăruiești și câte o floare pe zi.
+- **Reputația** este suma prieteniilor cu sătenii. Are patru trepte: Nou-veniți, Cunoscuți, Vecini dragi și Sufletul satului. Cu cât e mai mare, cu atât ai reducere mai mare la magazinele din sat (până la 15%) și prețuri mai bune la piață.
+- **Ziua de târg** e duminica (ziua 7, 14, 21…): piața plătește cu 40% mai mult.
+- **Joburile din sat**, câte o tură pe zi:
+  - Poștaș/ă: arunci scrisorile la cutia potrivită, de pe bicicletă.
+  - Brutar/ă: frămânți, modelezi și coci pâinea.
+- **Dispensarul**: doctorul vindecă boala pentru 20 de lei, iar la farmacie găsești ceai și vitamine.
+- **Programul**: magazinele au ore de funcționare. Noaptea, semnul de deasupra lor arată o lună.
+
+## Orașul (Capitolul 4)
+- **Joburi cu carieră**: barista (cafenea), funcționar/ă (birou) și asistent/ă (spital).
+  - Se lucrează o tură pe zi, cu energie suficientă.
+  - Plata depinde de cât de bine lucrezi și de nivel: Începător → Priceput → Expert → Șef de tură.
+  - Urci un nivel după câteva ture bune.
+- **Universitatea**:
+  - Cursul de birou și cursul de prim ajutor deschid jobul de la birou, respectiv de la spital.
+  - Cursul de florist face florăria să câștige cu 30% mai mult.
+  - Cursul de tâmplar face tâmplăria să câștige cu 30% mai mult.
+  - Plătești o dată, iar examenul se poate relua gratuit.
+- **Banca**:
+  - Economiile cresc cu 2% pe zi.
+  - Apartamentul costă 2400 de lei pe loc, sau 400 de lei avans plus 20 de rate de 110 lei.
+  - Ratele se iau singure în fiecare dimineață. Dacă nu ai bani, primești o penalizare de 10 lei.
+- **Apartamentul**: facturi de 18 lei pe zi și încălzire centrală. La mall cumperi mobilă care apare în apartament: acvariu, pian, consolă, espressor, tablou, plantă, lampă.
+- **Spitalul**: consult (vindecă boala) pentru 30 de lei, farmacie și job.
+- **Taxi**: direct acasă, pentru 40 de lei.
+
+## Bicicleta și scuterul
+Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în sat). Le atingi ca să te urci, apoi alegi:
+- **Pornește singur(ă)**: partenerul rămâne unde e.
+- **Cheamă partenerul**: AI-ul vine și urcă în spate. Partenerul de pe celălalt telefon primește un mesaj și atinge vehiculul ca să urce.
+- **Coboară**.
+
+## Salvarea
+- **Pe telefon**: jocul salvează la 2 secunde după fiecare schimbare importantă și imediat când închizi sau minimizezi aplicația.
+- **În cloud (Firebase)**: păstrează o copie după codul casei. După o reinstalare, pui același cod al casei și progresul revine.
+- **Unde erai**: la redeschidere te întorci în aceeași zonă și în același loc.
+- **În fișier**: din meniu, „💾 Salvează în fișier” și „📂 Încarcă”.

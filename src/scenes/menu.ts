@@ -39,6 +39,7 @@ export class MenuScene implements Scene {
         <label class="m-server">Adresa serverului: lasă <b>auto</b> ca să se conecteze singur la S10<span class="srvrow"><input name="serverUrl" value="${s.net.serverUrl}" placeholder="auto (se conectează singur la S10)" /><button type="button" class="paste" title="Lipește linkul copiat">📋 Lipește</button></span></label>
         <label class="m-firebase hidden">Config Firebase (JSON din consola Firebase)<textarea name="fb" rows="4" placeholder='{"apiKey":"...","databaseURL":"https://...firebaseio.com", ...}'>${s.net.firebase.apiKey ? JSON.stringify(s.net.firebase) : ''}</textarea></label>
         <button class="play">▶ Intră în casă</button>
+        <div class="row2"><button class="export" title="Salvează progresul într-un fișier">💾 Salvează în fișier</button><button class="import" title="Încarcă progresul dintr-un fișier">📂 Încarcă</button></div>
         <div class="row2"><button class="studio">🎬 Studio animații</button><button class="reset">🔄 Joc nou</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button></div>
         <p class="ver">v0.2 · făcut cu 💕 pentru noi doi</p>
       </div>`;
@@ -68,6 +69,34 @@ export class MenuScene implements Scene {
           else { b.textContent = '❌ Nimic copiat'; inp.focus(); }
           setTimeout(() => (b.textContent = '📋 Lipește'), 1600);
         }).catch(() => { inp.focus(); inp.select(); b.textContent = 'Ține apăsat → Lipește'; setTimeout(() => (b.textContent = '📋 Lipește'), 2000); });
+      }
+      if (b.classList.contains('export')) {
+        // salvarea casei curente intr-un fisier .json (o pastrezi sau o trimiti pe alt telefon)
+        const room = (this.ui.querySelector('[name=room]') as HTMLInputElement).value.trim() || Settings.get().net.room;
+        const raw = localStorage.getItem(`bd-save-${room}`);
+        if (!raw) { alert('Încă nu există o salvare pentru casa „' + room + '”. Intră în joc o dată.'); return; }
+        const blob = new Blob([JSON.stringify({ app: 'bubu-dudu', room, save: JSON.parse(raw) })], { type: 'application/json' });
+        const name = `BubuDudu-salvare-${room}-${new Date().toISOString().slice(0, 10)}.json`;
+        const file = new File([blob], name, { type: 'application/json' });
+        const nav = navigator as any;
+        if (nav.canShare?.({ files: [file] })) nav.share({ files: [file], title: 'Salvare Bubu & Dudu' }).catch(() => {});
+        else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+        b.textContent = '✔ Salvat'; setTimeout(() => (b.textContent = '💾 Salvează în fișier'), 1600);
+      }
+      if (b.classList.contains('import')) {
+        const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+        inp.onchange = async () => {
+          const f = inp.files?.[0]; if (!f) return;
+          try {
+            const d = JSON.parse(await f.text()); const save = d.save ?? d; if (!save?.json) throw new Error('format');
+            const room = d.room ?? Settings.get().net.room;
+            localStorage.setItem(`bd-save-${room}`, JSON.stringify({ json: save.json, ts: Date.now() }));
+            Settings.set({ net: { ...Settings.get().net, room }, resetAt: 0 });
+            (this.ui.querySelector('[name=room]') as HTMLInputElement).value = room;
+            alert('✔ Salvarea a fost încărcată (casa „' + room + '”). Apasă „Intră în casă”.');
+          } catch { alert('Fișierul nu e o salvare Bubu & Dudu.'); }
+        };
+        inp.click();
       }
       if (b.classList.contains('studio')) this.game.go('studio');
       if (b.classList.contains('reset')) {

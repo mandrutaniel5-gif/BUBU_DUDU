@@ -120,7 +120,7 @@ export function drawTractorIso(c: CanvasRenderingContext2D, gx: number, gy: numb
 }
 
 /** scena de drum (side-scroller cu parallax); k = 0..1 progresul calatoriei */
-export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: number, k: number, t: number, toForest: boolean, night: number, driver: CharSpec, passenger?: CharSpec, logs = 0, vehicle: 'tractor' | 'bike' | 'scooter' | 'bus' | 'door' = 'tractor', dest = '') {
+export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: number, k: number, t: number, toForest: boolean, night: number, driver: CharSpec, passenger?: CharSpec, logs = 0, vehicle: 'tractor' | 'bike' | 'scooter' | 'bus' | 'door' | 'taxi' = 'tractor', dest = '') {
   const ground = h * 0.7;
   const speed = vehicle === 'bike' ? 360 : vehicle === 'bus' ? 600 : 520; const off = t * speed;
   const toVillage = dest === 'village', fromVillage = dest === 'home-from-village';
@@ -199,6 +199,7 @@ export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: numbe
   for (let i = 0; i < 6; i++) { const q = ((t * 1.2 + i / 6) % 1); c.globalAlpha = 0.5 * (1 - q); c.fillStyle = '#dcdcdc'; c.beginPath(); c.arc(tx + 49 * sc - q * 140 * sc, ground - 100 * sc - q * 70 * sc + bump * sc, (5 + q * 16) * sc, 0, 7); c.fill(); }
   c.globalAlpha = 1;
   if (cityK > 0.3) { c.fillStyle = '#8d8f9a'; c.globalAlpha = Math.min(1, (cityK - 0.3) * 2); c.fillRect(0, ground + 2, w, h - ground); for (let i = 0; i < 12; i++) { const x = ((i * 120 - off) % (w + 120) + w + 120) % (w + 120) - 60; c.fillStyle = '#fff'; c.fillRect(x, ground + (h - ground) * 0.55, 50, 5); } c.globalAlpha = 1; }
+  if (vehicle === 'taxi') { drawTaxiSide(c, tx, ground + 10, sc * 1.1, t, { rot: off / 16, bump: bump * 0.4, driver, passenger }); return; }
   if (vehicle === 'bus') { drawBusSide(c, tx, ground + 10, sc * 1.05, t, { rot: off / 18, bump: bump * 0.5, driver, passenger }); return; }
   if (vehicle === 'scooter') drawScooterSide(c, tx, ground + 10, sc * 1.15, t, { rot: off / 18, bump, driver, passenger });
   else if (vehicle === 'bike') drawTandemSide(c, tx, ground + 10, sc * 1.1, t, { rot: off / 20, bump, driver, passenger });
@@ -389,5 +390,27 @@ export function drawBusSide(c: CanvasRenderingContext2D, x: number, y: number, s
   c.restore();
   simpleWheel(c, -96, -14, 18, opt.rot, '#2b2b33', '#d9d9d9');
   simpleWheel(c, 92, -14, 18, opt.rot, '#2b2b33', '#d9d9d9');
+  c.restore();
+}
+
+/** taxiul galben (din profil) cu cei doi pe bancheta din spate */
+export function drawTaxiSide(c: CanvasRenderingContext2D, x: number, y: number, s: number, t: number, opt: { rot: number; bump: number; driver?: CharSpec; passenger?: CharSpec }) {
+  c.save(); c.translate(x, y); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round';
+  c.fillStyle = 'rgba(40,20,20,0.2)'; c.beginPath(); c.ellipse(0, 2, 120, 8, 0, 0, 7); c.fill();
+  c.save(); c.translate(0, opt.bump);
+  c.fillStyle = '#ffd23f'; c.strokeStyle = O; c.lineWidth = 3;
+  c.beginPath(); c.moveTo(-118, -20); c.quadraticCurveTo(-120, -52, -96, -54); c.lineTo(-64, -56); c.quadraticCurveTo(-44, -96, 0, -96); c.lineTo(36, -96); c.quadraticCurveTo(66, -94, 80, -56); c.lineTo(108, -52); c.quadraticCurveTo(122, -48, 120, -20); c.closePath(); c.fill(); c.stroke();
+  for (let i = 0; i < 9; i++) { c.fillStyle = i % 2 ? '#3a3a44' : '#fff'; c.fillRect(-110 + i * 24, -40, 24, 8); }
+  c.strokeRect(-110, -40, 216, 8);
+  const wins: [number, number][] = [[-50, -2], [6, 46]];
+  wins.forEach(([a, b2]) => { c.fillStyle = '#d4eefc'; c.beginPath(); c.roundRect(a, -88, b2 - a, 30, 8); c.fill(); c.stroke(); });
+  const heads: [CharSpec | undefined, number][] = [[opt.passenger, -26], [opt.driver, 26]];
+  for (const [sp, hx] of heads) if (sp) { c.save(); c.beginPath(); c.rect(hx - 26, -88, 52, 30); c.clip(); const P = basePose(); P.eyes = 'happy'; P.mouth = 'open'; P.blush = 1.2; drawCharacter(c, sp, P, hx, -28 + Math.sin(t * 9 + hx) * 1, 0.5, 1, t); c.restore(); }
+  c.fillStyle = '#fff'; c.beginPath(); c.roundRect(-18, -112, 36, 16, 4); c.fill(); c.stroke();
+  c.font = '800 10px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('TAXI', 0, -104); c.textBaseline = 'alphabetic';
+  c.fillStyle = '#fff6b0'; c.beginPath(); c.arc(114, -36, 5, 0, 7); c.fill(); c.stroke();
+  c.restore();
+  simpleWheel(c, -72, -14, 17, opt.rot, '#2b2b33', '#d9d9d9');
+  simpleWheel(c, 72, -14, 17, opt.rot, '#2b2b33', '#d9d9d9');
   c.restore();
 }

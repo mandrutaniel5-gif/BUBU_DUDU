@@ -4,6 +4,7 @@ import { AREAS, type Floor, type Furn } from './map';
 import { iso, isoBox, boxOf, shade, tilePath, type Pt } from './iso';
 import { heartPath } from '../char/draw';
 import { drawPOI, drawSign } from './poi';
+import { isOpen } from '../game/town';
 
 const O = '#4a2a22';
 const act = (id: string, label: string, icon: string) => ({ id, label, icon });
@@ -109,7 +110,8 @@ function drawBuilding(c: CanvasRenderingContext2D, b: BuildingDef, t: number, ni
   const sp = P(0.5, h - 10);
   drawSign(c, sp.x, sp.y, b.sign, b.action.icon, '#fff8ef', O, 11);
   const top = iso(gx + w / 2, gy + d / 2, h + (b.tower ? 120 : 58));
-  drawPOI(c, top.x, top.y, b.action.icon, t, b.awning ?? b.roof, extra.open === false);
+  const hr = (globalThis as any).__hour ?? 12, open = isOpen(b.id, hr);
+  drawPOI(c, top.x, top.y, open ? b.action.icon : '🌙', t, open ? b.awning ?? b.roof : '#9aa0ae', extra.open === false);
   if (extra.open === false) { const lp = P(0.5, 20); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = '#fff'; c.strokeStyle = '#e63946'; c.lineWidth = 3; c.textAlign = 'center'; c.fillStyle = '#e63946'; fillTextIcons(c, '🔒 de vânzare', lp.x, lp.y, 9, true); }
 }
 

@@ -5,6 +5,7 @@ import { AREAS, type Floor, type Furn, type Wall } from './map';
 import { iso, isoBox, shade, boxOf, type Pt } from './iso';
 import { heartPath } from '../char/draw';
 import { drawPOI, drawSign } from './poi';
+import { isOpen } from '../game/town';
 
 const O = '#4a2a22';
 const act = (id: string, label: string, icon: string) => ({ id, label, icon });
@@ -35,6 +36,7 @@ export const CITY_BUILDINGS: CityBuilding[] = [
 const F: Furn[] = [];
 for (const b of CITY_BUILDINGS) F.push({ id: b.id, type: 'cbuilding' as any, gx: b.gx, gy: b.gy, w: b.w, d: b.d, solid: true, action: b.action.id === 'c-flat' ? undefined : b.action });
 F.push({ id: 'c-bus', type: 'busstop' as any, gx: 20, gy: 14, w: 1, d: 1, solid: true, action: act('c-bus', 'Autobuzul spre sat', '🚌') });
+F.push({ id: 'c-taxi', type: 'taxistand' as any, gx: 12, gy: 15, w: 1, d: 1, solid: true, action: act('c-taxi', 'Taxi direct acasă (40 lei)', '🚕') });
 F.push({ id: 'c-ice', type: 'icecart' as any, gx: 15, gy: 21, w: 1, d: 1, solid: true, action: act('c-ice', 'Înghețată (6 lei)', '🍦') });
 F.push({ id: 'c-fountain', type: 'cfountain' as any, gx: 18, gy: 17, w: 2, d: 2, solid: true, action: act('v-fountain', 'Aruncă o monedă', '🪙') });
 F.push({ id: 'c-lights', type: 'trafficlight' as any, gx: 9, gy: 11, w: 1, d: 1, solid: true });
@@ -163,7 +165,7 @@ function drawCityBuilding(c: CanvasRenderingContext2D, b: CityBuilding, t: numbe
   isoBox(c, gx + w * 0.2, gy + d * 0.2, 0.8, 0.6, 10, { top: '#e6e6ee', left: '#c9ccd6', right: '#b0b4c0' }, h);
   if (b.floors > 4) { const tp = iso(gx + w * 0.7, gy + d * 0.35, h); c.fillStyle = '#c99a5a'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(tp.x - 9, tp.y - 30, 18, 22, 4); c.fill(); c.stroke(); c.beginPath(); c.moveTo(tp.x - 7, tp.y - 8); c.lineTo(tp.x - 7, tp.y); c.moveTo(tp.x + 7, tp.y - 8); c.lineTo(tp.x + 7, tp.y); c.stroke(); }
   // semnul plutitor deasupra institutiei
-  if (b.sign) { const top = iso(gx + w / 2, gy + d / 2, h + 34); drawPOI(c, top.x, top.y, b.action.icon, t, b.signCol); }
+  if (b.sign) { const hr = (globalThis as any).__hour ?? 12; const top = iso(gx + w / 2, gy + d / 2, h + 34); drawPOI(c, top.x, top.y, isOpen(b.id, hr) ? b.action.icon : '🌙', t, isOpen(b.id, hr) ? b.signCol : '#9aa0ae'); }
   // firma
   if (b.sign && !b.marquee) { const sp = P(0.5, 46); drawSign(c, sp.x, sp.y, b.sign, b.action.icon, '#fff8ef', b.signCol, 12); }
   else if (b.sign) {
@@ -193,6 +195,13 @@ export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, ni
       // cornetul uriaș
       const cp = iso(gx + 0.5, gy + 0.5, 30); c.fillStyle = '#e8b06a'; c.beginPath(); c.moveTo(cp.x - 6, cp.y - 4); c.lineTo(cp.x + 6, cp.y - 4); c.lineTo(cp.x, cp.y + 10); c.closePath(); c.fill(); c.stroke();
       e(c, cp.x - 3, cp.y - 8, 5, 5, '#ffb3c7', true, 1.5); e(c, cp.x + 3, cp.y - 9, 5, 5, '#fff3b0', true, 1.5);
+      return true;
+    }
+    case 'taxistand': {
+      isoBox(c, gx + 0.42, gy + 0.42, 0.16, 0.16, 46, boxOf('#5a5a66'));
+      const p = iso(gx + 0.5, gy + 0.5, 50); c.fillStyle = '#ffd23f'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(p.x - 18, p.y - 10, 36, 16, 4); c.fill(); c.stroke();
+      c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('TAXI', p.x, p.y - 1.5); c.textBaseline = 'alphabetic';
+      drawPOI(c, p.x, p.y - 34, '🚕', t, '#ffd23f');
       return true;
     }
     case 'cfountain': {
