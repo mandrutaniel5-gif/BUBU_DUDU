@@ -111,19 +111,19 @@ export function drawCharacter(
   // asa ca nu se mai vad "incheieturi" intre ele.
   const legPath = (side: -1 | 1) => {
     const lift2 = side < 0 ? p.legL : p.legR, ox = side < 0 ? p.legLx : p.legRx;
-    ctx.beginPath(); ctx.ellipse(side * 10.5 + ox, -5.5 - lift2, 7.5, 7.5, side * 0.15, 0, 7);
+    ctx.beginPath(); ctx.ellipse(side * 13 + ox, -5 - lift2, 8.5, 7, side * 0.12, 0, 7);
   };
   const bodyPath = () => {
     ctx.beginPath();
-    ctx.moveTo(p.hip - 17, -36);
-    ctx.bezierCurveTo(p.hip - 21, -28, p.hip - 23, -14, p.hip - 18, -7);
-    ctx.quadraticCurveTo(p.hip, -9, p.hip + 18, -7);
-    ctx.bezierCurveTo(p.hip + 23, -14, p.hip + 21, -28, p.hip + 17, -36);
+    ctx.moveTo(p.hip - 22, -42);
+    ctx.bezierCurveTo(p.hip - 32, -32, p.hip - 33, -12, p.hip - 22, -6);
+    ctx.quadraticCurveTo(p.hip, -8, p.hip + 22, -6);
+    ctx.bezierCurveTo(p.hip + 33, -12, p.hip + 32, -32, p.hip + 22, -42);
     ctx.closePath();
   };
-  const ARM_OFS = 0.55; // manutele stau iesite in lateral, ca niste aripioare
-  const armTf = (side: -1 | 1, ang: number) => { ctx.translate(side * 16 + p.hip * 0.5, -27); ctx.rotate(side < 0 ? ang + ARM_OFS : -(ang + ARM_OFS)); };
-  const armPath = () => { ctx.beginPath(); ctx.ellipse(0, 9, 6, 10.5, 0, 0, 7); };
+  const ARM_OFS = -0.25; // in repaus manutele stau in jos, langa burtica
+  const armTf = (side: -1 | 1, ang: number) => { ctx.translate(side * 24 + p.hip * 0.5, -33); ctx.rotate(side < 0 ? ang + ARM_OFS : -(ang + ARM_OFS)); };
+  const armPath = () => { ctx.beginPath(); ctx.ellipse(0, 7, 6.5, 8.5, 0, 0, 7); };
   const silhouette = (mode: 'stroke' | 'fill') => {
     const doIt = () => { if (mode === 'stroke') ctx.stroke(); else ctx.fill(); };
     for (const side of [-1, 1] as const) { legPath(side); doIt(); }
@@ -134,14 +134,22 @@ export function drawCharacter(
   silhouette('stroke');
   ctx.fillStyle = bodyFill;
   silhouette('fill');
+  // linia scurta dintre manuta si burtica (doar pe marginea interioara, nu tot conturul)
+  ctx.strokeStyle = O; ctx.lineWidth = LW;
+  for (const [side, ang] of [[-1, p.armL], [1, p.armR]] as const) {
+    if (ang + ARM_OFS >= 1.75) continue;
+    ctx.save(); armTf(side, ang); ctx.beginPath();
+    if (side < 0) ctx.ellipse(0, 7, 6.5, 8.5, 0, -0.1 * Math.PI, 0.42 * Math.PI); else ctx.ellipse(0, 7, 6.5, 8.5, 0, 0.58 * Math.PI, 1.1 * Math.PI);
+    ctx.stroke(); ctx.restore();
+  }
   // umbra moale pe burtica + talpile
   ctx.save(); bodyPath(); ctx.clip();
-  ctx.fillStyle = spec.shade; ctx.globalAlpha = 0.35; ell(ctx, p.hip + 4, -8, 22, 6); ctx.fill();
+  ctx.fillStyle = spec.shade; ctx.globalAlpha = 0.35; ell(ctx, p.hip + 4, -9, 28, 7); ctx.fill();
   ctx.restore();
   if (!p.back) for (const side of [-1, 1] as const) {
     const lift2 = side < 0 ? p.legL : p.legR, ox = side < 0 ? p.legLx : p.legRx;
     ctx.fillStyle = spec.id === 'dudu' ? '#c8917a' : spec.id === 'bubu' ? '#4a2a22' : '#ffd3dd';
-    ell(ctx, side * 10.5 + ox, -1.5 - lift2, 4.6, 2.6); ctx.fill();
+    ell(ctx, side * 13 + ox, -1 - lift2, 5, 2.6); ctx.fill();
   }
   if (p.back) { ell(ctx, p.hip, -10, 6, 5.5); fillStroke(ctx, spec.tail, O, 2); }
 
@@ -149,22 +157,22 @@ export function drawCharacter(
   // recuzita din labute
   for (const [side, ang, prop, pr] of [[-1, p.armL, p.propL, p.propRotL], [1, p.armR, p.propR, p.propRotR]] as const) {
     if (prop === 'none' || ang + ARM_OFS >= 1.75) continue;
-    ctx.save(); armTf(side, ang); ctx.translate(0, 17); ctx.rotate(pr * (side < 0 ? 1 : -1) - (side < 0 ? ARM_OFS : -ARM_OFS)); drawProp(ctx, prop, O, time); ctx.restore();
+    ctx.save(); armTf(side, ang); ctx.translate(0, 13); ctx.rotate(pr * (side < 0 ? 1 : -1) - (side < 0 ? ARM_OFS : -ARM_OFS)); drawProp(ctx, prop, O, time); ctx.restore();
   }
 
-  drawHead(ctx, spec, p, time, -56);
+  drawHead(ctx, spec, p, time, -62);
   // manutele ridicate se vad in fata capului (ca la stickere cand saluta)
   for (const [side, ang, prop, pr] of [[-1, p.armL, p.propL, p.propRotL], [1, p.armR, p.propR, p.propRotR]] as const) {
     if (ang + ARM_OFS < 1.75) continue;
     ctx.save(); armTf(side, ang); armPath(); fillStroke(ctx, bodyFill, O);
-    if (prop !== 'none') { ctx.translate(0, 17); ctx.rotate(pr * (side < 0 ? 1 : -1) - (side < 0 ? ARM_OFS : -ARM_OFS)); drawProp(ctx, prop, O, time); }
+    if (prop !== 'none') { ctx.translate(0, 13); ctx.rotate(pr * (side < 0 ? 1 : -1) - (side < 0 ? ARM_OFS : -ARM_OFS)); drawProp(ctx, prop, O, time); }
     ctx.restore();
   }
   ctx.restore();
 }
 
 let curOutfit: Outfit | undefined;
-const HW = 40, HH = 35; // marimea capului (mare, ca la stickere)
+const HW = 38, HH = 33; // marimea capului (mare, ca la stickere)
 
 function drawHead(ctx: CanvasRenderingContext2D, spec: CharSpec, p: Pose, time: number, baseY: number) {
   const O = spec.outline;
