@@ -3,6 +3,7 @@ import { drawCharacter, SPECS, type CharId, type CharSpec } from './draw';
 import { ANIMS, IDLE, WALK, type Anim, type LocalFx } from './anims';
 import type { Fx } from './fx';
 import { Sfx } from '../engine/sfx';
+import type { Outfit } from './outfit';
 
 /** Starea emotionala de baza (influenteaza fata cand nu ruleaza un emote). */
 export type Mood = 'happy' | 'calm' | 'sad' | 'angry' | 'sleepy' | 'sick' | 'hungry' | 'love' | 'sulky';
@@ -30,6 +31,7 @@ export class Actor {
   private blinkT = 2 + Math.random() * 2;
   private onDone?: () => void;
   shakeReq = 0;
+  outfit?: Outfit;
 
   constructor(id: CharId, public fx: Fx) { this.spec = SPECS[id]; }
 
@@ -98,6 +100,6 @@ export class Actor {
   setFace(eyes: EyeType, mouth: MouthType) { this.pose.eyes = eyes; this.pose.mouth = mouth; }
 
   draw(ctx: CanvasRenderingContext2D) {
-    drawCharacter(ctx, this.spec, this.pose, this.x, this.y, this.scale, this.flip, this.baseT);
+    drawCharacter(ctx, this.spec, this.pose, this.x, this.y, this.scale, this.flip, this.baseT, this.outfit);
   }
 }

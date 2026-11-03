@@ -1,4 +1,5 @@
 import type { Pose, EyeType, MouthType, PropType } from './pose';
+import { drawHeadItem, drawFaceItem, drawNeckItem, type Outfit } from './outfit';
 
 export type CharId = 'bubu' | 'dudu';
 
@@ -65,8 +66,9 @@ export function heartPath(ctx: CanvasRenderingContext2D, x: number, y: number, s
  */
 export function drawCharacter(
   ctx: CanvasRenderingContext2D, spec: CharSpec, p: Pose,
-  x: number, y: number, scale: number, flip: 1 | -1, time: number,
+  x: number, y: number, scale: number, flip: 1 | -1, time: number, outfit?: Outfit,
 ) {
+  curOutfit = outfit;
   const O = spec.outline;
   ctx.save();
   ctx.translate(x, y);
@@ -127,6 +129,7 @@ export function drawCharacter(
   }
   ctx.restore();
 
+  if (outfit && outfit.neck !== 'none' && !p.back) drawNeckItem(ctx, outfit.neck, time);
   // --- manute scurte ---
   const arm = (side: -1 | 1, ang: number, prop: PropType, propRot: number) => {
     ctx.save();
@@ -148,6 +151,7 @@ export function drawCharacter(
   ctx.restore();
 }
 
+let curOutfit: Outfit | undefined;
 const HW = 35, HH = 28; // marimea capului (mare, ca la stickere)
 
 function drawHead(ctx: CanvasRenderingContext2D, spec: CharSpec, p: Pose, time: number, baseY: number) {
@@ -184,7 +188,8 @@ function drawHead(ctx: CanvasRenderingContext2D, spec: CharSpec, p: Pose, time: 
   }
   if (spec.accessory === 'bow') drawBow(ctx, 17, -23, O);
 
-  if (!p.back) drawFace(ctx, spec, p, time);
+  if (!p.back) { drawFace(ctx, spec, p, time); if (curOutfit && curOutfit.face !== 'none') drawFaceItem(ctx, curOutfit.face); }
+  if (curOutfit && curOutfit.head !== 'none') drawHeadItem(ctx, curOutfit.head, time);
   else { // ceafa
     ctx.strokeStyle = O; ctx.lineWidth = 1.8;
     ctx.beginPath(); ctx.moveTo(-5, 22); ctx.quadraticCurveTo(0, 18, 5, 22); ctx.stroke();

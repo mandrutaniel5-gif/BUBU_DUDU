@@ -4,6 +4,7 @@ import { PAIRS } from '../scenes/world';
 import { ANIM_LIST } from '../char/anims';
 import { NEEDS, NEED_INFO, SICK_INFO, REQUESTS, clockText, nightAmount } from '../game/state';
 import { Sfx } from '../engine/sfx';
+import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import type { NetStatus } from '../net/types';
 
 const MOOD_TXT: Record<string, string> = {
@@ -146,6 +147,29 @@ export class Hud {
       s.me.actor.play('love'); Sfx.play('good');
       this.openJar();
     });
+  }
+
+  openWardrobe() {
+    const s = this.s; const c = s.w.chars[s.myId];
+    c.owned ??= []; c.outfit ??= { ...NO_OUTFIT };
+    const slots: Record<string, string> = { head: 'Pe cap', face: 'Pe față', neck: 'La gât' };
+    const m = this.modal(`<h3>👗 Garderoba lui ${s.me.actor.spec.name}</h3><p class="sub">Ai 💗 ${s.w.hearts} inimioare (le câștigați împreună)</p>
+      ${Object.entries(slots).map(([slot, name]) => `<h4>${name}</h4><div class="shop">${ITEMS.filter(i => i.slot === slot).map(i => {
+        const own = c.owned!.includes(i.id), on = (c.outfit as any)[slot] === i.id;
+        return `<button data-item="${i.id}" class="${on ? 'on' : ''}"><span>${i.icon}</span><b>${i.label}</b><small>${on ? '✔ purtat' : own ? 'Poartă' : '💗 ' + i.price}</small></button>`;
+      }).join('')}</div>`).join('')}`);
+    m.querySelectorAll('[data-item]').forEach(b => b.addEventListener('click', () => {
+      const it = ITEMS.find(i => i.id === (b as HTMLElement).dataset.item)!;
+      const own = c.owned!.includes(it.id);
+      if (!own) {
+        if (s.w.hearts < it.price) { this.toast('Nu ai destule inimioare 💗 — faceți treburi împreună!'); Sfx.play('bad'); return; }
+        s.op({ k: 'hearts', delta: -it.price }); c.owned!.push(it.id); Sfx.play('coin');
+      }
+      const cur = (c.outfit as any)[it.slot];
+      (c.outfit as any)[it.slot] = cur === it.id ? 'none' : it.id;
+      s.sendCharSync(); s.me.actor.play('shy');
+      this.openWardrobe();
+    }));
   }
 
   setMinigame(on: boolean) { this.root.classList.toggle('in-mini', on); }

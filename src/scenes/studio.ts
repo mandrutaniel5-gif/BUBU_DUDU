@@ -4,6 +4,7 @@ import { ANIM_LIST } from '../char/anims';
 import { Fx } from '../char/fx';
 import { Sfx } from '../engine/sfx';
 import type { Scene, Game } from '../engine/game';
+import { ITEMS, NO_OUTFIT } from '../char/outfit';
 
 interface PairAct { id: string; label: string; icon: string; a: 'bubu' | 'dudu'; aAnim: string; bAnim: string; bDelay: number; gap: number; }
 const PAIRS: PairAct[] = [
@@ -55,6 +56,7 @@ export class StudioScene implements Scene {
         ${sec('Speciale Bubu 🐼', bs.map(a => btn(`data-anim="${a.id}" data-force="bubu"`, a.icon, a.label, 'bubu')).join(''))}
         ${sec('Speciale Dudu 🐻', ds.map(a => btn(`data-anim="${a.id}" data-force="dudu"`, a.icon, a.label, 'dudu')).join(''))}
         ${sec('Împreună 💞', PAIRS.map(p => btn(`data-pair="${p.id}"`, p.icon, p.label, 'pair')).join(''))}
+        ${sec('Garderobă 👗', ITEMS.map(i => btn(`data-item="${i.id}"`, i.icon, i.label, 'mood')).join(''))}
         ${sec('Stare (emoție de bază)', moods.map(([m, i, l]) => btn(`data-mood="${m}"`, i, l, 'mood')).join(''))}
       </div>`;
     document.getElementById('ui')!.appendChild(this.ui);
@@ -74,6 +76,7 @@ export class StudioScene implements Scene {
         for (const a of targets(b.dataset.force)) b.dataset.anim === 'stop' ? a.stop() : a.play(b.dataset.anim);
       }
       if (b.dataset.mood) for (const a of targets()) a.mood = b.dataset.mood as Mood;
+      if (b.dataset.item) { const it = ITEMS.find(i => i.id === b.dataset.item)!; for (const a of targets()) { a.outfit ??= { ...NO_OUTFIT }; (a.outfit as any)[it.slot] = (a.outfit as any)[it.slot] === it.id ? 'none' : it.id; a.play('shy'); } }
       if (b.dataset.pair) this.startPair(PAIRS.find(p => p.id === b.dataset.pair)!);
     });
     this.resetPos();

@@ -31,7 +31,9 @@ export interface CharState {
   needs: Record<NeedKey, number>;   // 0..100 (100 = perfect)
   sick: Sickness | null;
   fart: number;                     // 0..100 bara de pârț
-  request?: string | null;          // ce cere bolnavul: soup / medicine / compress / kiss / water
+  request?: string | null;
+  outfit?: { head: string; face: string; neck: string };
+  owned?: string[];          // ce cere bolnavul: soup / medicine / compress / kiss / water
   gx: number; gy: number;
 }
 

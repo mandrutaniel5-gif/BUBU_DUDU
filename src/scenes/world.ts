@@ -265,7 +265,7 @@ export class WorldScene implements Scene {
     pawn.path = []; pawn.pendingInteract = null;
     if (act.id === 'lamp') { this.op({ k: 'furn', key: 'lampOn', value: !this.w.furn.lampOn }); Sfx.play('click'); return; }
     if (act.id === 'mail') { if (pawn === this.me) this.hud.openJar(); return; }
-    if (act.id === 'dress') { if (pawn === this.me) this.hud.toast('👗 Garderoba vine curând!'); return; }
+    if (act.id === 'dress') { if (pawn === this.me) this.hud.openWardrobe(); return; }
     if (act.id === 'toilet' && this.w.furn.clogged) return;
     const a = ACTIVITIES[act.id]; if (!a) return;
     // minijoc pentru jucator (daca exista)
@@ -509,7 +509,7 @@ export class WorldScene implements Scene {
         this.sendCharSync();
       }
     }
-    for (const p of [this.me, this.partner]) p.actor.mood = moodFrom(this.w.chars[p.id]);
+    for (const p of [this.me, this.partner]) { p.actor.mood = moodFrom(this.w.chars[p.id]); p.actor.outfit = this.w.chars[p.id].outfit; }
     this.sickT -= dt;
     if (this.sickT <= 0) {
       this.sickT = 7 + Math.random() * 6;
