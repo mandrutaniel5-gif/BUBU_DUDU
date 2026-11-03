@@ -1,8 +1,9 @@
 :root { --pink:#ff7aa2; --ink:#3a2a22; --cream:#fff8f0; --brown:#b9875c; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin:0; height:100%; overflow:hidden; background:#ffe9f0; font-family:'Baloo 2', 'Comic Sans MS', system-ui, sans-serif; color:var(--ink); user-select:none; touch-action:none; }
-#game { position:fixed; inset:0; display:block; }
-#ui { position:fixed; inset:0; pointer-events:none; }
+#stage { position:fixed; left:0; top:0; width:100vw; height:100vh; overflow:hidden; }
+#game { position:absolute; left:0; top:0; display:block; }
+#ui { position:absolute; inset:0; pointer-events:none; }
 #ui > * { pointer-events:auto; }
 button { font-family:inherit; color:inherit; cursor:pointer; }
 
@@ -16,7 +17,8 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 .tg.on { background:var(--pink); color:#fff; }
 .tg:active { transform:translateY(2px); box-shadow:0 1px 0 var(--ink); }
 .panel { position:absolute; right:0; top:58px; bottom:0; width:min(420px, 40vw); overflow:auto; padding:6px 12px 20px; background:rgba(255,255,255,.55); border-left:3px solid #f3c4d4; backdrop-filter: blur(6px); }
-@media (max-width: 759px) { .panel { left:0; right:0; top:auto; height:50vh; width:auto; border-left:none; border-top:3px solid #f3c4d4; } }
+/* (max-width: 759px) */
+html.w759 .panel { left:0; right:0; top:auto; height:50vh; width:auto; border-left:none; border-top:3px solid #f3c4d4; }
 .sec h3 { margin:10px 2px 6px; font-size:15px; }
 .btns { display:grid; grid-template-columns:repeat(auto-fill, minmax(84px, 1fr)); gap:6px; }
 .eb { border:2.5px solid var(--ink); background:#fff; border-radius:14px; padding:4px 2px 2px; display:flex; flex-direction:column; align-items:center; box-shadow:0 3px 0 var(--ink); transition:transform .08s; }
@@ -29,9 +31,11 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 
 /* ---- meniu ---- */
 .menu { position:absolute; inset:0; display:flex; align-items:center; justify-content:flex-end; padding:16px; overflow:auto; }
-@media (max-width: 759px) { .menu { justify-content:center; align-items:flex-end; padding-top:200px; } }
+/* (max-width: 759px) */
+html.w759 .menu { justify-content:center; align-items:flex-end; padding-top:200px; }
 .menu-card { width:min(420px, 100%); background:#fffaf5ee; border:4px solid var(--ink); border-radius:28px; padding:18px 20px; box-shadow:0 8px 0 var(--ink); margin-right:6vw; }
-@media (max-width: 759px) { .menu-card { margin-right:0; } }
+/* (max-width: 759px) */
+html.w759 .menu-card { margin-right:0; }
 .menu-card h1 { margin:0; font-size:40px; line-height:1; text-align:center; color:#ff5c8a; text-shadow:0 3px 0 #ffd6e4; }
 .menu-card h1 span { color:var(--brown); }
 .menu-card .tag { text-align:center; margin:4px 0 8px; font-weight:700; }
@@ -67,7 +71,8 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 .hud .dot.online { background:#2ec4b6; } .hud .dot.connecting { background:#ffd23f; } .hud .dot.error { background:#e63946; }
 .mini-btn { margin-left:auto; border:2px solid var(--ink); background:#fff; border-radius:8px; font-size:14px; padding:0 6px; }
 .hud .clock { position:absolute; top:10px; left:50%; transform:translateX(-50%); display:flex; gap:8px; background:#fffaf5e6; border:3px solid var(--ink); border-radius:16px; padding:3px 12px; font-weight:800; box-shadow:0 4px 0 var(--ink); white-space:nowrap; }
-@media (max-width: 700px) { .hud .clock { top:auto; bottom:10px; left:10px; transform:none; font-size:13px; } }
+/* (max-width: 700px) */
+html.w700 .hud .clock { top:auto; bottom:10px; left:10px; transform:none; font-size:13px; }
 .hud .actions { position:absolute; right:14px; bottom:14px; display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
 .hud .actions .row { display:flex; gap:10px; }
 .act { width:60px; height:60px; border-radius:50%; border:3px solid var(--ink); background:#fff; box-shadow:0 4px 0 var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden; }
@@ -108,29 +113,29 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 .bed-input .ok { background:var(--pink); color:#fff; }
 
 /* meniu compact pe telefon */
-@media (max-width: 759px) {
-  .menu { padding-top:170px; padding-bottom:12px; align-items:flex-start; }
-  .menu-card { padding:12px 14px; border-radius:22px; }
-  .menu-card h1 { font-size:30px; }
-  .menu-card .tag { margin:2px 0 4px; font-size:14px; }
-  .menu-card h4 { margin:6px 0 4px; font-size:14px; }
-  .who2 button { font-size:26px; padding:4px; flex-direction:row; justify-content:center; gap:8px; }
-  .who2 button small { display:none; }
-  .menu-card .play { font-size:19px; padding:6px; }
-  .menu-card select, .menu-card input { font-size:14px; padding:5px 8px; }
-}
-@media (max-height: 520px) and (min-width: 760px) {
-  .menu { align-items:flex-start; padding:8px; }
-  .menu-card { padding:10px 14px; margin-right:3vw; }
-  .menu-card h1 { font-size:26px; } .menu-card .tag { display:none; }
-  .menu-card h4 { margin:4px 0 3px; font-size:13px; }
-  .who2 button { font-size:22px; flex-direction:row; justify-content:center; gap:8px; padding:2px; } .who2 button small { display:none; }
-  .menu-card .play { font-size:17px; padding:4px; margin-top:8px; }
-  .menu-card label { margin-top:4px; }
-  .ver { display:none; }
-  .hud .card.me { transform:scale(.85); transform-origin:top left; }
-  .hud .card.partner { transform:scale(.85); transform-origin:top right; }
-}
+/* (max-width: 759px) */
+html.w759 .menu { padding-top:170px; padding-bottom:12px; align-items:flex-start; }
+html.w759 .menu-card { padding:12px 14px; border-radius:22px; }
+html.w759 .menu-card h1 { font-size:30px; }
+html.w759 .menu-card .tag { margin:2px 0 4px; font-size:14px; }
+html.w759 .menu-card h4 { margin:6px 0 4px; font-size:14px; }
+html.w759 .who2 button { font-size:26px; padding:4px; flex-direction:row; justify-content:center; gap:8px; }
+html.w759 .who2 button small { display:none; }
+html.w759 .menu-card .play { font-size:19px; padding:6px; }
+html.w759 .menu-card select,html.w759 .menu-card input { font-size:14px; padding:5px 8px; }
+/* (max-height: 520px) and (min-width: 760px) */
+html.h520w760 .menu { align-items:flex-start; padding:8px; }
+html.h520w760 .menu-card { padding:10px 14px; margin-right:3vw; }
+html.h520w760 .menu-card h1 { font-size:26px; }
+html.h520w760 .menu-card .tag { display:none; }
+html.h520w760 .menu-card h4 { margin:4px 0 3px; font-size:13px; }
+html.h520w760 .who2 button { font-size:22px; flex-direction:row; justify-content:center; gap:8px; padding:2px; }
+html.h520w760 .who2 button small { display:none; }
+html.h520w760 .menu-card .play { font-size:17px; padding:4px; margin-top:8px; }
+html.h520w760 .menu-card label { margin-top:4px; }
+html.h520w760 .ver { display:none; }
+html.h520w760 .hud .card.me { transform:scale(.85); transform-origin:top left; }
+html.h520w760 .hud .card.partner { transform:scale(.85); transform-origin:top right; }
 .shop { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:6px; }
 .shop button { border:2.5px solid var(--ink); background:#fff; border-radius:14px; padding:4px; display:flex; flex-direction:column; align-items:center; box-shadow:0 2px 0 var(--ink); }
 .shop button span { font-size:24px; } .shop button b { font-size:12px; line-height:1.1; text-align:center; } .shop button small { font-size:11px; opacity:.75; }
@@ -157,30 +162,31 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 .fogmsg { position:absolute; left:50%; bottom:90px; transform:translateX(-50%); }
 
 /* ---- dispozitive: telefon (portret / peisaj), tableta, laptop ---- */
-@media (max-width: 700px) {
-  .hud .card.me { width:min(200px, 50vw); transform:scale(.8); transform-origin:top left; }
-  .hud .card.partner { width:min(170px, 44vw); transform:scale(.8); transform-origin:top right; }
-  .hud .clock { top:128px; bottom:auto; left:50%; transform:translateX(-50%) scale(.92); font-size:12.5px; padding:2px 8px; gap:5px; }
-  .hud .goal { top:196px; transform:scale(.9); transform-origin:top left; }
-  .act { width:52px; height:52px; } .act .ic { font-size:22px; }
-  .act.big { min-width:104px; height:54px; }
-  .hud .actions { right:10px; bottom:10px; gap:8px; } .hud .actions .row { gap:7px; }
-  .modal .box { max-height:84vh; }
-  .shop { grid-template-columns:repeat(auto-fill, minmax(84px,1fr)); }
-}
-@media (max-height: 500px) {
-  .hud .card.me { transform:scale(.7); transform-origin:top left; }
-  .hud .card.partner { transform:scale(.7); transform-origin:top right; }
-  .hud .clock { top:auto; bottom:8px; left:8px; transform:scale(.85); transform-origin:bottom left; }
-  .hud .goal { top:auto; bottom:62px; left:8px; transform:scale(.8); transform-origin:bottom left; }
-  .act { width:48px; height:48px; } .act .ic { font-size:20px; }
-  .act.big { min-width:96px; height:50px; }
-  .hud .actions { right:8px; bottom:8px; gap:6px; } .hud .actions .row { gap:6px; }
-  .pop { bottom:120px; max-height:70vh; }
-}
-@media (min-width: 701px) and (max-width: 1100px) and (min-height: 501px) {
-  .hud .clock { top:auto; bottom:12px; left:12px; transform:none; }
-}
+/* (max-width: 700px) */
+html.w700 .hud .card.me { width:min(200px, 50vw); transform:scale(.8); transform-origin:top left; }
+html.w700 .hud .card.partner { width:min(170px, 44vw); transform:scale(.8); transform-origin:top right; }
+html.w700 .hud .clock { top:128px; bottom:auto; left:50%; transform:translateX(-50%) scale(.92); font-size:12.5px; padding:2px 8px; gap:5px; }
+html.w700 .hud .goal { top:196px; transform:scale(.9); transform-origin:top left; }
+html.w700 .act { width:52px; height:52px; }
+html.w700 .act .ic { font-size:22px; }
+html.w700 .act.big { min-width:104px; height:54px; }
+html.w700 .hud .actions { right:10px; bottom:10px; gap:8px; }
+html.w700 .hud .actions .row { gap:7px; }
+html.w700 .modal .box { max-height:84vh; }
+html.w700 .shop { grid-template-columns:repeat(auto-fill, minmax(84px,1fr)); }
+/* (max-height: 500px) */
+html.h500 .hud .card.me { transform:scale(.7); transform-origin:top left; }
+html.h500 .hud .card.partner { transform:scale(.7); transform-origin:top right; }
+html.h500 .hud .clock { top:auto; bottom:8px; left:8px; transform:scale(.85); transform-origin:bottom left; }
+html.h500 .hud .goal { top:auto; bottom:62px; left:8px; transform:scale(.8); transform-origin:bottom left; }
+html.h500 .act { width:48px; height:48px; }
+html.h500 .act .ic { font-size:20px; }
+html.h500 .act.big { min-width:96px; height:50px; }
+html.h500 .hud .actions { right:8px; bottom:8px; gap:6px; }
+html.h500 .hud .actions .row { gap:6px; }
+html.h500 .pop { bottom:120px; max-height:70vh; }
+/* (min-width: 701px) and (max-width: 1100px) and (min-height: 501px) */
+html.tabmid .hud .clock { top:auto; bottom:12px; left:12px; transform:none; }
 
 /* butonul de inchidere: mereu vizibil sus, nu mai trebuie scroll */
 .modal .box { position:relative; }
@@ -192,22 +198,39 @@ button { font-family:inherit; color:inherit; cursor:pointer; }
 .rotate-hint b { display:block; font-size:22px; margin-top:12px; } .rotate-hint small { font-size:14px; opacity:.7; }
 .rotate-hint .ph { font-size:64px; display:inline-block; animation:rot 1.8s ease-in-out infinite; }
 @keyframes rot { 0%,30% { transform:rotate(0) } 60%,100% { transform:rotate(-90deg) } }
-@media (orientation: portrait) and (pointer: coarse) and (max-width: 900px) { .rotate-hint { display:flex; } }
+
 
 /* pe lat (telefon): stanga-jos ramane libera pentru joystick */
-@media (max-height: 500px) {
-  .hud .card.me { transform:scale(.62); }
-  .hud .card.partner { transform:scale(.62); }
-  .hud .clock { top:8px; bottom:auto; left:50%; transform:translateX(-50%) scale(.78); transform-origin:top center; }
-  .hud .goal { top:calc(8px + 150px * .62 + 30px); bottom:auto; left:8px; transform:scale(.75); transform-origin:top left; }
-}
+/* (max-height: 500px) */
+html.h500 .hud .card.me { transform:scale(.62); }
+html.h500 .hud .card.partner { transform:scale(.62); }
+html.h500 .hud .clock { top:8px; bottom:auto; left:50%; transform:translateX(-50%) scale(.78); transform-origin:top center; }
+html.h500 .hud .goal { top:calc(8px + 150px * .62 + 30px); bottom:auto; left:8px; transform:scale(.75); transform-origin:top left; }
 
 .srvrow { display:flex; gap:6px; } .srvrow input { flex:1; min-width:0; }
 .srvrow .paste { flex:0 0 auto; border:3px solid var(--ink); border-radius:12px; background:#fff6d6; font-weight:800; padding:0 10px; box-shadow:0 3px 0 var(--ink); white-space:nowrap; }
 /* meniul pe telefon tinut pe lat: cardul in dreapta, cu scroll, personajele in stanga */
-@media (max-height: 520px) and (orientation: landscape) {
-  .menu { justify-content:flex-end; align-items:flex-start; padding:8px !important; }
-  .menu-card { width:min(400px, 60vw); max-height:calc(100vh - 16px); overflow:auto; margin-right:2vw; padding:10px 14px; }
-  .menu-card h1 { font-size:24px; } .menu-card .tag { display:none; }
-  .who2 button { font-size:20px; flex-direction:row; justify-content:center; gap:8px; padding:2px; } .who2 button small { display:none; }
-}
+/* (max-height: 520px) and (orientation: landscape) */
+html.h520l .menu { justify-content:flex-end; align-items:flex-start; padding:8px !important; }
+html.h520l .menu-card { width:min(400px, 60vw); max-height:calc(100vh - 16px); overflow:auto; margin-right:2vw; padding:10px 14px; }
+html.h520l .menu-card h1 { font-size:24px; }
+html.h520l .menu-card .tag { display:none; }
+html.h520l .who2 button { font-size:20px; flex-direction:row; justify-content:center; gap:8px; padding:2px; }
+html.h520l .who2 button small { display:none; }
+
+/* telefon tinut vertical: jocul se roteste singur pe lat (fara avertisment) */
+html.rot #stage { transform-origin:top left; transform:rotate(90deg) translateY(-100%); }
+html.rot .modal .box { max-height:calc(var(--gh) * .86); }
+html.rot .pop { max-height:calc(var(--gh) * .6); }
+html.rot .menu-card { max-height:calc(var(--gh) - 16px) !important; }
+html.rot .menu-card { width:min(400px, calc(var(--gw) * .6)) !important; }
+html.rot .pop { width:min(360px, calc(var(--gw) - 28px)); }
+/* ecranul de incarcare (logo ACM / Code) */
+.loading { position:absolute; inset:0; z-index:10000; background:#ffffff; display:flex; align-items:center; justify-content:center; transition:opacity .5s ease; }
+.loading.out { opacity:0; pointer-events:none; }
+.loading .ld-in { width:min(560px, 80%); display:flex; flex-direction:column; align-items:center; gap:22px; }
+.loading .ld-logo { width:100%; height:auto; animation:ldin .9s ease both; }
+@keyframes ldin { from { opacity:0; transform:translateY(10px) scale(.97); } to { opacity:1; transform:none; } }
+.loading .ld-bar { width:72%; height:6px; border-radius:6px; background:#ece7df; overflow:hidden; }
+.loading .ld-bar i { display:block; height:100%; width:0; background:#c09a62; border-radius:6px; transition:width .25s ease; }
+.loading .ld-txt { font:600 13px "Inter", "Segoe UI", system-ui, sans-serif; letter-spacing:.18em; text-transform:uppercase; color:#6b6b6b; }

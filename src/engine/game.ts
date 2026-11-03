@@ -20,17 +20,34 @@ export class Game {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     addEventListener('resize', () => this.resize());
+    addEventListener('orientationchange', () => setTimeout(() => this.resize(), 120));
     this.resize();
   }
 
+  /** telefon tinut vertical: rotim tot jocul pe lat (jocul merge doar orizontal) */
+  rotated = false;
   resize() {
     this.dpr = Math.min(2, devicePixelRatio || 1);
-    this.w = innerWidth; this.h = innerHeight;
+    const touch = matchMedia('(pointer: coarse)').matches;
+    this.rotated = touch && innerHeight > innerWidth;
+    this.w = this.rotated ? innerHeight : innerWidth; this.h = this.rotated ? innerWidth : innerHeight;
+    const st = document.getElementById('stage'), html = document.documentElement;
+    if (st) { st.style.width = this.w + 'px'; st.style.height = this.h + 'px'; }
+    html.classList.toggle('rot', this.rotated);
+    // in locul media query-urilor (care nu stiu de rotire), clase dupa marimea reala a jocului
+    html.classList.toggle('w759', this.w <= 759); html.classList.toggle('w700', this.w <= 700);
+    html.classList.toggle('h500', this.h <= 500); html.classList.toggle('h520w760', this.h <= 520 && this.w >= 760);
+    html.classList.toggle('h520l', this.h <= 520 && this.w > this.h);
+    html.classList.toggle('tabmid', this.w >= 701 && this.w <= 1100 && this.h >= 501);
+    html.style.setProperty('--gw', this.w + 'px'); html.style.setProperty('--gh', this.h + 'px');
     this.canvas.width = Math.round(this.w * this.dpr);
     this.canvas.height = Math.round(this.h * this.dpr);
     this.canvas.style.width = this.w + 'px';
     this.canvas.style.height = this.h + 'px';
   }
+
+  /** coordonatele unui eveniment (ecran) -> coordonatele jocului (tinand cont de rotire) */
+  pt(e: { clientX: number; clientY: number }) { return this.rotated ? { x: e.clientY, y: innerWidth - e.clientX } : { x: e.clientX, y: e.clientY }; }
 
   go(name: string) {
     this.scene?.exit();

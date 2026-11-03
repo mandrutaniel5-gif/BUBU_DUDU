@@ -324,7 +324,8 @@ export class WorldScene implements Scene {
     });
     this.on(window, 'keyup', (e: KeyboardEvent) => { this.keys.delete(e.key.toLowerCase()); this.minigame?.obj.key?.(e.key.toLowerCase(), false); });
     const cv = this.game.canvas;
-    this.on(cv, 'pointerdown', (e: PointerEvent) => {
+    this.on(cv, 'pointerdown', (ev: PointerEvent) => {
+      const q = this.game.pt(ev); const e = { clientX: q.x, clientY: q.y, pointerId: ev.pointerId, pointerType: ev.pointerType };
       Sfx.unlock();
       if (this.minigame) {
         const b = this.minigame.obj.box;
@@ -337,12 +338,14 @@ export class WorldScene implements Scene {
       }
       this.tapAt(e.clientX, e.clientY);
     });
-    this.on(cv, 'pointermove', (e: PointerEvent) => {
+    this.on(cv, 'pointermove', (ev: PointerEvent) => {
+      const q = this.game.pt(ev); const e = { clientX: q.x, clientY: q.y, pointerId: ev.pointerId, pointerType: ev.pointerType };
       if (this.minigame) { this.minigame.obj.pointer?.('move', e.clientX, e.clientY); return; }
       if (this.joy.active && e.pointerId === this.joy.id) { this.joy.x = e.clientX; this.joy.y = e.clientY; }
       else if (this.build?.item && e.pointerType === 'mouse') { const g = this.screenToGrid(e.clientX, e.clientY); this.build.gx = Math.floor(g.x); this.build.gy = Math.floor(g.y); }
     });
-    const up = (e: PointerEvent) => {
+    const up = (ev: PointerEvent) => {
+      const q = this.game.pt(ev); const e = { clientX: q.x, clientY: q.y, pointerId: ev.pointerId, pointerType: ev.pointerType };
       if (this.minigame) { this.minigame.obj.pointer?.('up', e.clientX, e.clientY); return; }
       if (e.pointerId === this.joy.id) this.joy.active = false;
     };

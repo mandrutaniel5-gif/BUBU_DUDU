@@ -9,13 +9,10 @@ import { Settings } from './game/settings';
 import { makeAdapter } from './net/adapters';
 import { Sfx } from './engine/sfx';
 import { iconizeDom } from './ui/icons';
+import { showLoading } from './ui/loading';
 iconizeDom();
 
 // ---- jocul se joaca pe orizontala (ca un joc normal) ----
-const rot = document.createElement('div');
-rot.className = 'rotate-hint';
-rot.innerHTML = '<div><div class="ph">📱</div><b>Întoarce telefonul pe orizontală</b><small>Bubu & Dudu se joacă pe lat</small></div>';
-document.body.appendChild(rot);
 const lockLandscape = () => { try { (screen.orientation as any)?.lock?.('landscape').catch(() => {}); } catch { /* */ } };
 lockLandscape();
 // pe telefon: la prima atingere intram pe tot ecranul si blocam orizontala (browserul permite doar dupa o atingere)
@@ -50,8 +47,11 @@ if (location.protocol.startsWith('http') && (location.port === '8787' || locatio
 }
 Sfx.setMuted(Settings.get().muted);
 const start = location.hash.slice(1);
-game.go(start in game.scenes ? start : 'menu');
-game.start();
+// intai ecranul de incarcare cu logo-ul ACM / Code, apoi jocul (?skipload sare peste, pentru teste)
+(q.has('skipload') ? Promise.resolve() : showLoading()).then(() => {
+  game.go(start in game.scenes ? start : 'menu');
+  game.start();
+});
 addEventListener('hashchange', () => { const n = location.hash.slice(1); if (n in game.scenes && n !== game.sceneName) game.go(n); });
 
 // aplicatie instalabila (PWA): functioneaza si offline

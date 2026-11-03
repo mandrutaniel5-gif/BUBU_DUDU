@@ -11,6 +11,26 @@ pkg install -y git nodejs && curl -fsSL https://raw.githubusercontent.com/mandru
 Scriptul clonează repository-ul și ia jocul gata compilat de GitHub Actions (ramura `gh-pages`). Apoi pornește serverul pe portul 8787 și îl repornește singur dacă se oprește. Data viitoare rulezi doar `~/bubu_dudu/server/s10-termux.sh`: își face singur update la ultima versiune de pe GitHub.
 > Dacă repository-ul e privat, `git clone` îți cere utilizatorul și un token GitHub (Settings → Developer settings → Personal access tokens, cu drept de citire). Tokenul îl introduci doar pe telefon.
 
+## 🤖 Totul automat (recomandat)
+O singură dată, pe S10, în Termux:
+1. Instalează din F-Droid **Termux:Boot** și **Termux:API**, apoi rulează `pkg install termux-api`.
+2. Fă-ți un token GitHub: github.com → Settings → Developer settings → **Fine-grained tokens** → Generate. La „Repository access” alegi doar **BUBU_DUDU**, iar la „Permissions → Contents” alegi **Read and write**.
+3. Salvează tokenul pe telefon (rămâne doar acolo):
+   ```bash
+   ~/bubu_dudu/server/s10-termux.sh token
+   ```
+4. Pornire automată la fiecare pornire a telefonului:
+   ```bash
+   ~/bubu_dudu/server/s10-termux.sh boot
+   ```
+   Apoi deschide o dată aplicația Termux:Boot.
+
+De acum, la pornire S10:
+- pornește singur serverul și tunelul;
+- publică adresa nouă pe GitHub, în fișierul `server-url.txt`.
+
+În joc alegi **Serverul nostru**, iar la adresă lași **auto**. Jocul ia adresa de pe GitHub și se conectează singur, chiar dacă tunelul și-a schimbat adresa.
+
 ## 🌍 De la distanță (rețele diferite, date mobile)
 Pornește serverul cu tunel:
 ```bash

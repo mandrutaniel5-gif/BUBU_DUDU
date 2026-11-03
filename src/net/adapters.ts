@@ -63,14 +63,29 @@ export class WsAdapter extends Base {
   private ws: WebSocket | null = null;
   private retry = 0; private closing = false;
   private pendingLoad: ((v: { json: string; ts: number } | null) => void) | null = null;
+  private auto = false;
   constructor(private url: string) {
     super();
-    // accepta si adrese scrise ca https://xxx.trycloudflare.com sau doar 192.168.1.50:8787
+    this.auto = !url || /^auto/i.test(url.trim());
+    this.url = WsAdapter.norm(url);
+  }
+  /** accepta si adrese scrise ca https://xxx.trycloudflare.com sau doar 192.168.1.50:8787 */
+  static norm(url: string) {
     let u = (url || '').trim();
     if (/^https:\/\//i.test(u)) u = 'wss://' + u.slice(8);
     else if (/^http:\/\//i.test(u)) u = 'ws://' + u.slice(7);
     else if (!/^wss?:\/\//i.test(u)) u = (/^(\d|localhost)/.test(u) ? 'ws://' : 'wss://') + u;
-    this.url = u.replace(/\/+$/, '');
+    return u.replace(/\/+$/, '');
+  }
+  /** "automat": adresa serverului de pe S10 e publicata de script in repository (server-url.txt) */
+  static async resolveAuto(): Promise<string | null> {
+    try {
+      const r = await fetch('https://api.github.com/repos/mandrutaniel5-gif/BUBU_DUDU/contents/server-url.txt', { headers: { Accept: 'application/vnd.github.raw+json' }, cache: 'no-store' });
+      if (!r.ok) return null;
+      const t = (await r.text()).trim();
+      let u = ''; try { u = JSON.parse(t).url; } catch { u = t; }
+      return u ? WsAdapter.norm(u) : null;
+    } catch { return null; }
   }
   async connect(room: string, me: CharId) {
     this.room = room; this.me = me; this.closing = false;
@@ -78,8 +93,14 @@ export class WsAdapter extends Base {
     // asteptam deschiderea (max 3 s), ca incarcarea salvarii sa vina de pe server
     await new Promise<void>(res => { const t0 = Date.now(); const iv = setInterval(() => { if (this.ws?.readyState === 1 || Date.now() - t0 > 3000) { clearInterval(iv); res(); } }, 50); });
   }
-  private open() {
+  private async open() {
     this.setStatus('connecting');
+    if (this.auto) {
+      // la fiecare (re)conectare luam adresa curenta: tunelul isi schimba adresa la repornire
+      const u = await WsAdapter.resolveAuto();
+      if (u) this.url = u;
+      else if (!/^wss?:\/\/./.test(this.url) || /auto/.test(this.url)) { this.setStatus('error', 'Nu găsesc serverul S10 (pornește-l pe telefon)'); const d = Math.min(15000, 2000 * 2 ** this.retry++); setTimeout(() => !this.closing && this.open(), d); return; }
+    }
     let ws: WebSocket;
     try { ws = new WebSocket(this.url); } catch (e) { this.setStatus('error', String(e)); return; }
     this.ws = ws;

@@ -293,3 +293,8 @@ P2.strokeText = function (this: C, text: string, x: number, y: number, maxW?: nu
 export function fillTextIcons(c: C, text: string, x: number, y: number, _size?: number, stroke = false) {
   if (stroke) c.strokeText(text, x, y); c.fillText(text, x, y);
 }
+
+/** pregateste toate iconitele dinainte (ecranul de incarcare) */
+export function preloadIcons(step?: (k: number) => void) {
+  const keys = Object.keys(D); keys.forEach((k, i) => { iconURL(k); if (step && i % 20 === 0) step(i / keys.length); });
+}

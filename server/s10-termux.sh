@@ -10,6 +10,19 @@ command -v git >/dev/null || pkg install -y git
 command -v node >/dev/null || pkg install -y nodejs
 if [ -d "$DIR/.git" ]; then git -C "$DIR" pull --ff-only || true; else git clone --depth 1 "$REPO" "$DIR"; fi
 cd "$DIR"
+# pornire automata cand porneste telefonul (necesita aplicatia Termux:Boot din F-Droid)
+if [ "$1" = "boot" ]; then
+  mkdir -p "$HOME/.termux/boot"
+  printf '#!/data/data/com.termux/files/usr/bin/sh\ntermux-wake-lock\nTUNEL=1 %s/server/s10-termux.sh > %s/server-boot.log 2>&1\n' "$DIR" "$HOME" > "$HOME/.termux/boot/bubu-server"
+  chmod +x "$HOME/.termux/boot/bubu-server"
+  echo "✅ Gata: serverul (cu tunel) porneste singur la fiecare pornire a telefonului. Deschide o data aplicatia Termux:Boot."
+  exit 0
+fi
+# tokenul pentru publicarea adresei pe GitHub
+if [ "$1" = "token" ]; then
+  read -r -p "Lipeste tokenul GitHub (fine-grained, Contents: Read and write pe BUBU_DUDU): " T
+  echo "$T" > "$HOME/.bubu_token"; chmod 600 "$HOME/.bubu_token"; echo "✅ Token salvat in ~/.bubu_token (ramane doar pe telefon)."; exit 0
+fi
 # opreste serverul / tunelul pornite inainte (altfel portul 8787 e ocupat: EADDRINUSE)
 pkill -f "node server/server.mjs" 2>/dev/null || true
 pkill -f "cloudflared tunnel" 2>/dev/null || true
@@ -25,7 +38,7 @@ IP=$(ip -4 addr show wlan0 2>/dev/null | grep -oE 'inet [0-9.]+' | cut -d' ' -f2
 echo "Server pe ws://${IP:-IP-ul-telefonului}:8787  — pune adresa asta in joc la Setari -> Server (S10)"
 # --- acces de la distanta (alte retele / date mobile): tunel Cloudflare gratuit, cu HTTPS ---
 # porneste cu:  TUNEL=1 ~/bubu_dudu/server/s10-termux.sh
-if [ "${TUNEL:-0}" = "1" ]; then
+if [ "${TUNEL:-1}" = "1" ]; then
   command -v cloudflared >/dev/null || pkg install -y cloudflared
   command -v curl >/dev/null || pkg install -y curl
   rm -f "$HOME/tunel.log" "$HOME/tunel-adresa.txt"
@@ -35,6 +48,8 @@ if [ "${TUNEL:-0}" = "1" ]; then
       U=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$HOME/tunel.log" 2>/dev/null | head -1)
       if [ -n "$U" ]; then
         echo "$U" > "$HOME/tunel-adresa.txt"
+        # publica adresa pe GitHub -> aplicatia (setata pe "automat") o gaseste si se conecteaza singura
+        node "$DIR/server/publish-url.mjs" "$U"
         # linkul se copiaza singur (cu aplicatia Termux:API) - il lipesti in joc sau il trimiti pe WhatsApp
         command -v termux-clipboard-set >/dev/null && echo -n "$U" | termux-clipboard-set && echo " 📋 Linkul a fost COPIAT. In joc apasa 📋 Lipeste."
         # deschide jocul direct pe S10 (optional): JOACA=1

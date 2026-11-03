@@ -36,7 +36,7 @@ export class MenuScene implements Scene {
           <option value="local">🧪 Test: 2 tab-uri pe același dispozitiv</option>
         </select>
         <label>Codul casei (același pentru amândoi)<input name="room" value="${s.net.room}" maxlength="40" /></label>
-        <label class="m-server">Adresa serverului (linkul de pe S10)<span class="srvrow"><input name="serverUrl" value="${s.net.serverUrl}" placeholder="https://….trycloudflare.com" /><button type="button" class="paste" title="Lipește linkul copiat">📋 Lipește</button></span></label>
+        <label class="m-server">Adresa serverului: lasă <b>auto</b> ca să se conecteze singur la S10<span class="srvrow"><input name="serverUrl" value="${s.net.serverUrl}" placeholder="auto (se conectează singur la S10)" /><button type="button" class="paste" title="Lipește linkul copiat">📋 Lipește</button></span></label>
         <label class="m-firebase">Config Firebase (JSON din consola Firebase)<textarea name="fb" rows="4" placeholder='{"apiKey":"...","databaseURL":"https://...firebaseio.com", ...}'>${s.net.firebase.apiKey ? JSON.stringify(s.net.firebase) : ''}</textarea></label>
         <button class="play">▶ Intră în casă</button>
         <div class="row2"><button class="studio">🎬 Studio animații</button><button class="reset">🔄 Joc nou</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button></div>
