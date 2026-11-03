@@ -1,7 +1,7 @@
 import type { CharId } from '../char/draw';
 
 /** Starea transmisa des (pozitie). */
-export interface PlayerState { who: CharId; gx: number; gy: number; flip: 1 | -1; back: boolean; moving: boolean; mood: string; ts: number; riding?: boolean; passenger?: boolean }
+export interface PlayerState { who: CharId; gx: number; gy: number; flip: 1 | -1; back: boolean; moving: boolean; mood: string; ts: number; riding?: boolean; passenger?: boolean; board?: boolean }
 
 /** Evenimente discrete. */
 export type NetEvent =
@@ -11,7 +11,8 @@ export type NetEvent =
   | { t: 'chat'; who: CharId; text: string }
   | { t: 'mini'; who: CharId; data: unknown }
   | { t: 'act'; who: CharId; act: string | null; furn?: string }
-  | { t: 'cotravel'; who: CharId; to: string; vehicle: string };
+  | { t: 'cotravel'; who: CharId; to: string; vehicle: string }
+  | { t: 'ridecall'; who: CharId; vehicle: string };
 
 export type WorldOp =
   | { k: 'furn'; key: string; value: unknown }

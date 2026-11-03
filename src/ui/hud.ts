@@ -50,6 +50,7 @@ export class Hud {
       </div>
       <div class="pop emotes hidden"><h4>Emote-uri & dansuri</h4><div class="grid">${emotes.map(a => `<button data-emote="${a.id}"><span>${a.icon}</span>${a.label}</button>`).join('')}</div></div>
       <div class="pop pairs hidden"><h4>Împreună 💞</h4><div class="grid">${PAIRS.filter(p => !p.only || p.only === s.myId).map(p => `<button data-pair="${p.id}"><span>${p.icon}</span>${p.label}</button>`).join('')}</div></div>
+      <div class="ridebar hidden"><span class="rt"></span><div class="rbtns"><button data-a="rgo" class="go">▶ Pornește</button><button data-a="rcall">📣 Cheamă</button><button data-a="roff">⬇ Coboară</button></div></div>
       <div class="buildbar hidden"><span class="bt"></span><button data-a="bok">✔ Pune</button><button data-a="bend">✖ Gata</button></div>
       <div class="toasts"></div>
       <div class="modal hidden"></div>
@@ -68,6 +69,9 @@ export class Hud {
       if (a === 'fart') s.fartJump();
       if (a === 'bell') s.ringBell();
       if (a === 'build') s.build ? s.endBuild() : this.openBuild();
+      if (a === 'rgo') s.rideStart();
+      if (a === 'rcall') s.rideCall();
+      if (a === 'roff') s.rideOff();
       if (a === 'bok') s.confirmBuild();
       if (a === 'scooter') s.toggleScooter();
       if (a === 'goals') this.openGoals();
@@ -85,6 +89,7 @@ export class Hud {
   destroy() { this.root.remove(); }
 
   update() {
+    this.updateRide();
     const s = this.s, w = s.w, c = w.chars[s.myId];
     for (const n of NEEDS) {
       const el = this.root.querySelector(`.me [data-n="${n}"] b`) as HTMLElement;
@@ -383,6 +388,37 @@ export class Hud {
       s.log('Ați cumpărat un apartament la oraș! 🔑🏙️💕'); this.els['.modal'].classList.add('hidden'); this.toast('🔑 E al vostru! Intrați să-l vedeți');
       s.goArea('apartment');
     });
+  }
+
+  /** bara de plecare cu bicicleta / scuterul */
+  private rideMode: 'driver' | 'passenger' | null = null;
+  setRide(mode: 'driver' | 'passenger' | null) {
+    this.rideMode = mode;
+    const bar = this.root.querySelector('.ridebar') as HTMLElement;
+    bar.classList.toggle('hidden', !mode); this.root.classList.toggle('riding', !!mode);
+    this.lastRide = ''; this.updateRide();
+  }
+  private lastRide = '';
+  updateRide() {
+    const s = this.s; if (!this.rideMode) return;
+    if (this.rideMode === 'driver' && !s.me.board) { this.setRide(null); return; }
+    if (this.rideMode === 'passenger' && !s.me.passenger) { this.setRide(null); return; }
+    const bar = this.root.querySelector('.ridebar') as HTMLElement;
+    const pa = s.partner, nm = pa.actor.spec.name, veh = s.me.rideKind === 'bike' || pa.rideKind === 'bike' ? 'bike' : 'scooter';
+    const vname = veh === 'bike' ? 'bicicletă' : 'scuter', vic = veh === 'bike' ? '🚲' : '🛵';
+    const dest = s.area === 'home' ? 'în sat' : 'acasă';
+    let txt: string, go: string, call = '', show = true;
+    if (this.rideMode === 'passenger') { txt = `${vic} Stai în spate. Așteaptă să pornească ${nm}`; go = ''; }
+    else if (pa.passenger) { txt = `${vic} ${nm} a urcat în spate 💕`; go = `▶ Pornim ${dest}!`; }
+    else if (pa.callBoard) { txt = `${vic} ${nm} vine să urce…`; go = `▶ Pornește singur${s.myId === 'bubu' ? 'ă' : ''}`; show = false; }
+    else { txt = `${vic} Ești pe ${vname}. Mergi singur${s.myId === 'bubu' ? 'ă' : ''} ${dest} sau ${pa.id === 'bubu' ? 'o aștepți pe' : 'îl aștepți pe'} ${nm}?`; go = `▶ Pornește singur${s.myId === 'bubu' ? 'ă' : ''}`; call = `📣 ${pa.id === 'bubu' ? 'Cheam-o pe' : 'Cheamă-l pe'} ${nm}`; }
+    if (!s.sameArea()) call = '';
+    const key = txt + go + call + show;
+    if (key === this.lastRide) return; this.lastRide = key;
+    (bar.querySelector('.rt') as HTMLElement).textContent = txt;
+    const bg = bar.querySelector('[data-a="rgo"]') as HTMLElement, bc = bar.querySelector('[data-a="rcall"]') as HTMLElement;
+    bg.textContent = go; bg.style.display = go ? '' : 'none';
+    bc.textContent = call; bc.style.display = call && show ? '' : 'none';
   }
 
   setMinigame(on: boolean) { this.root.classList.toggle('in-mini', on); if (on) this.els['.modal'].classList.add('hidden'); }

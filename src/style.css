@@ -252,3 +252,14 @@ html.h500 .toast { font-size:12px; padding:3px 10px; border-width:2.5px; border-
 /* in timpul minijocurilor mesajele stau jos, mici, ca sa nu acopere jocul */
 .hud.in-mini .toasts { top:auto; bottom:6px; opacity:.92; }
 .hud.in-mini .toast { font-size:11.5px; padding:2px 9px; }
+
+/* bara de plecare cu bicicleta / scuterul */
+.ridebar { position:absolute; left:50%; bottom:92px; transform:translateX(-50%); width:min(560px, calc(var(--gw, 100vw) - 24px)); background:#fffaf5f2; border:3px solid var(--ink); border-radius:18px; padding:8px 10px; box-shadow:0 4px 0 var(--ink); display:flex; flex-direction:column; gap:8px; align-items:center; text-align:center; }
+.ridebar .rt { font-weight:800; font-size:14px; line-height:1.2; }
+.ridebar .rbtns { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+.ridebar button { border:3px solid var(--ink); border-radius:14px; font-weight:800; padding:6px 12px; background:#fff; box-shadow:0 3px 0 var(--ink); font-size:14px; }
+.ridebar button.go { background:#9be38f; }
+.hud.riding .actions .big { display:none; }
+html.h500 .ridebar { bottom:10px; left:auto; right:10px; transform:none; width:min(400px, calc(var(--gw, 100vw) * .58)); padding:5px 8px; gap:5px; }
+html.h500 .ridebar .rt { font-size:12px; } html.h500 .ridebar button { font-size:12.5px; padding:4px 9px; }
+html.h500 .hud.riding .actions { display:none; }

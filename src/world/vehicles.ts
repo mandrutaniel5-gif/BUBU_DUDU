@@ -347,7 +347,7 @@ export function drawTandemSide(c: CanvasRenderingContext2D, x: number, y: number
 /** vehiculele parcate (in lume) */
 export function drawParked(c: CanvasRenderingContext2D, kind: 'bike' | 'scooter', x: number, y: number, t: number) {
   c.save(); c.translate(x, y);
-  if (kind === 'bike') drawTandemSide(c, 0, 0, 0.36, t, { rot: 0, bump: 0 }); else drawScooterSide(c, 0, 0, 0.42, t, { rot: 0, bump: 0 });
+  if (kind === 'bike') drawTandemSide(c, 0, 0, 0.5, t, { rot: 0, bump: 0 }); else drawScooterSide(c, 0, 0, 0.58, t, { rot: 0, bump: 0 });
   c.restore();
 }
 
