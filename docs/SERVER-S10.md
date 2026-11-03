@@ -11,6 +11,19 @@ pkg install -y git nodejs && curl -fsSL https://raw.githubusercontent.com/mandru
 Scriptul clonează repository-ul și ia jocul gata compilat de GitHub Actions (ramura `gh-pages`). Apoi pornește serverul pe portul 8787 și îl repornește singur dacă se oprește. Data viitoare rulezi doar `~/bubu_dudu/server/s10-termux.sh`: își face singur update la ultima versiune de pe GitHub.
 > Dacă repository-ul e privat, `git clone` îți cere utilizatorul și un token GitHub (Settings → Developer settings → Personal access tokens, cu drept de citire). Tokenul îl introduci doar pe telefon.
 
+## 🌍 De la distanță (rețele diferite, date mobile)
+Pornește serverul cu tunel:
+```bash
+TUNEL=1 ~/bubu_dudu/server/s10-termux.sh
+```
+După câteva secunde apare o adresă de forma `https://ceva-ceva.trycloudflare.com`:
+- o deschizi în browser, de pe orice telefon din lume, și joci direct;
+- sau, în aplicație (APK / EXE), o pui la **Setări → Server** (merge și cu `https://`, se transformă singură în `wss://`).
+
+Legătura e criptată (HTTPS) și nu trebuie să umbli la router. Ai doar două limite:
+- **Adresa se schimbă la fiecare repornire.** Ultima adresă e salvată în `~/tunel-adresa.txt`. Pentru o adresă fixă îți faci un cont gratuit Cloudflare și un „named tunnel”, sau folosești Tailscale.
+- **S10 trebuie să rămână pornit și conectat la internet.** Dacă nu e, folosiți Firebase (vezi `docs/FIREBASE.md`): merge oricând, fără telefon-server.
+
 ## 1. Instalare pe S10
 1. Instalează **Termux** din **F-Droid** (versiunea din Play Store e veche): https://f-droid.org/packages/com.termux/
 2. Deschide Termux și rulează:

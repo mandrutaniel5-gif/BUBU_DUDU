@@ -63,7 +63,15 @@ export class WsAdapter extends Base {
   private ws: WebSocket | null = null;
   private retry = 0; private closing = false;
   private pendingLoad: ((v: { json: string; ts: number } | null) => void) | null = null;
-  constructor(private url: string) { super(); }
+  constructor(private url: string) {
+    super();
+    // accepta si adrese scrise ca https://xxx.trycloudflare.com sau doar 192.168.1.50:8787
+    let u = (url || '').trim();
+    if (/^https:\/\//i.test(u)) u = 'wss://' + u.slice(8);
+    else if (/^http:\/\//i.test(u)) u = 'ws://' + u.slice(7);
+    else if (!/^wss?:\/\//i.test(u)) u = (/^(\d|localhost)/.test(u) ? 'ws://' : 'wss://') + u;
+    this.url = u.replace(/\/+$/, '');
+  }
   async connect(room: string, me: CharId) {
     this.room = room; this.me = me; this.closing = false;
     this.open();

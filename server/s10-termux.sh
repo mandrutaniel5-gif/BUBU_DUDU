@@ -16,5 +16,15 @@ rm -rf dist && git clone --depth 1 -b gh-pages "$REPO" dist && rm -rf dist/.git
 command -v termux-wake-lock >/dev/null && termux-wake-lock || true
 IP=$(ip -4 addr show wlan0 2>/dev/null | grep -oE 'inet [0-9.]+' | cut -d' ' -f2)
 echo "Server pe ws://${IP:-IP-ul-telefonului}:8787  — pune adresa asta in joc la Setari -> Server (S10)"
+# --- acces de la distanta (alte retele / date mobile): tunel Cloudflare gratuit, cu HTTPS ---
+# porneste cu:  TUNEL=1 ~/bubu_dudu/server/s10-termux.sh
+if [ "${TUNEL:-0}" = "1" ]; then
+  command -v cloudflared >/dev/null || pkg install -y cloudflared
+  ( sleep 4; cloudflared tunnel --no-autoupdate --url http://localhost:8787 2>&1 | tee "$HOME/tunel.log" | grep -m1 -oE 'https://[a-z0-9-]+\.trycloudflare\.com' | while read U; do
+      echo ""; echo "=============================================================="
+      echo " DE LA DISTANTA: deschide $U pe orice telefon"
+      echo " sau in joc: Setari -> Server: ${U/https:/wss:}"
+      echo "=============================================================="; echo "$U" > "$HOME/tunel-adresa.txt"; done ) &
+fi
 # reporneste automat daca se opreste
 while true; do PORT=8787 node server/server.mjs || true; echo "Repornesc in 3s..."; sleep 3; done
