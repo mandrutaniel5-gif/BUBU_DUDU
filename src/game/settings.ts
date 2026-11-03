@@ -6,6 +6,7 @@ export interface SettingsData {
   net: NetConfig;
   dayMinutes: number;   // cate minute reale dureaza o zi in joc
   muted: boolean;
+  resetAt?: number;   // cand s-a pornit un joc nou
 }
 
 const KEY = 'bd-settings';

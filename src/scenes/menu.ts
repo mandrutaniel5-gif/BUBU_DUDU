@@ -39,7 +39,7 @@ export class MenuScene implements Scene {
         <label class="m-server">Adresa serverului<input name="serverUrl" value="${s.net.serverUrl}" placeholder="ws://192.168.1.50:8787" /></label>
         <label class="m-firebase">Config Firebase (JSON din consola Firebase)<textarea name="fb" rows="4" placeholder='{"apiKey":"...","databaseURL":"https://...firebaseio.com", ...}'>${s.net.firebase.apiKey ? JSON.stringify(s.net.firebase) : ''}</textarea></label>
         <button class="play">▶ Intră în casă</button>
-        <div class="row2"><button class="studio">🎬 Studio animații</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button></div>
+        <div class="row2"><button class="studio">🎬 Studio animații</button><button class="reset">🔄 Joc nou</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button></div>
         <p class="ver">v0.2 · făcut cu 💕 pentru noi doi</p>
       </div>`;
     document.getElementById('ui')!.appendChild(this.ui);
@@ -60,6 +60,13 @@ export class MenuScene implements Scene {
       }
       if (b.classList.contains('mute')) { const m = !Settings.get().muted; Settings.set({ muted: m }); Sfx.setMuted(m); b.textContent = m ? '🔇' : '🔊'; }
       if (b.classList.contains('studio')) this.game.go('studio');
+      if (b.classList.contains('reset')) {
+        if (!confirm('Începeți un joc nou?\n\nSe șterge tot progresul (casa, banii, grădina, Borcanul cu iubire) și o luați de la Capitolul 0.')) return;
+        try { for (const k of Object.keys(localStorage)) if (k.startsWith('bd-save-') || k.startsWith('bd-last-seen')) localStorage.removeItem(k); } catch { /* */ }
+        Settings.set({ resetAt: Date.now() });
+        Sfx.play('good'); b.textContent = '✔ Șters!';
+        setTimeout(() => (b.textContent = '🔄 Joc nou'), 1500);
+      }
       if (b.classList.contains('play')) {
         const net: NetConfig = { ...Settings.get().net, mode: mode.value as NetConfig['mode'] };
         net.room = ((this.ui.querySelector('[name=room]') as HTMLInputElement).value.trim() || 'casuta-noastra').toLowerCase().replace(/[^a-z0-9_-]/g, '-');

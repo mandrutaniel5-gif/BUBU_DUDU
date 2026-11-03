@@ -100,7 +100,10 @@ export class WorldScene implements Scene {
     this.net.onStatus = (s, msg) => this.hud.setNet(s, msg);
     await this.net.connect(Settings.get().net.room, this.myId);
     // incarca salvarea
-    const saved = await this.net.loadWorld();
+    let saved = await this.net.loadWorld();
+    // joc nou: ignoram salvarile mai vechi decat resetarea (si pe cele de pe server)
+    const resetAt = Settings.get().resetAt ?? 0;
+    if (saved && saved.ts < resetAt) saved = null;
     if (saved) { try { const w = JSON.parse(saved.json) as WorldState; if (w.v === 1) this.w = { ...newWorld(), ...w }; } catch { /* corupt */ } }
     for (const p of [this.me, this.partner]) { const c = this.w.chars[p.id]; p.gx = c.gx; p.gy = c.gy; if (this.nav.hits(p.gx, p.gy)) { p.gx = 6.5 + (p.id === 'dudu' ? 0.8 : 0); p.gy = 8.4; } }
     // Capitolul 0: casa veche, totul e de facut
@@ -1107,7 +1110,8 @@ export class WorldScene implements Scene {
   draw(ctx: CanvasRenderingContext2D) {
     const { w, h } = this.game;
     const night = nightAmount(this.w.minutes);
-    ctx.fillStyle = this.chapter === 0 ? (night > 0.5 ? '#4a4566' : '#f6eef6') : night > 0.5 ? '#1f2540' : '#bfe8c9';
+    if (this.chapter === 0) { const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, night > 0.5 ? '#2b3a67' : '#ffd6e4'); bg.addColorStop(1, night > 0.5 ? '#4a3f75' : '#ffeacc'); ctx.fillStyle = bg; }
+    else ctx.fillStyle = night > 0.5 ? '#1f2540' : '#bfe8c9';
     ctx.fillRect(0, 0, w, h);
     ctx.save();
     ctx.translate(w / 2, h / 2);
@@ -1115,24 +1119,25 @@ export class WorldScene implements Scene {
     ctx.scale(this.cam.zoom, this.cam.zoom);
     ctx.translate(-this.cam.x, -this.cam.y);
 
-    // Capitolul 0: se vede doar casa; afara e ceata
-    if (this.chapter === 0) {
-      ctx.save(); ctx.globalAlpha = 0.9;
-      for (let i = 0; i < 14; i++) { const p = iso(-2 + (i * 7) % 24, -2 + (i * 11) % 28); ctx.fillStyle = i % 2 ? '#fdf6fb' : '#efe4f0'; ctx.beginPath(); ctx.arc(p.x + Math.sin(this.time * 0.2 + i) * 30, p.y, 120 + (i % 3) * 40, 0, 7); ctx.fill(); }
-      ctx.restore();
-      const A = iso(2, 2), B = iso(14, 2), C = iso(14, 12.3), D = iso(2, 12.3);
-      ctx.save(); ctx.beginPath(); ctx.moveTo(A.x, A.y - 150); ctx.lineTo(B.x + 10, B.y - 150); ctx.lineTo(C.x + 10, C.y + 20); ctx.lineTo(D.x - 10, D.y + 20); ctx.lineTo(D.x - 10, D.y - 150); ctx.closePath(); ctx.clip();
-    }
     // podea pre-randata
     const F = this.floor;
-    ctx.drawImage(F.canvas, F.ox, F.oy, F.canvas.width / 2, F.canvas.height / 2);
+    const ch0 = this.chapter === 0;
+    if (ch0) {
+      // Capitolul 0: doar casa, ca o casuta de papusi pe un soclu cu iarba (curtea nu se vede)
+      const c = iso(8, 7.2); ctx.fillStyle = 'rgba(120,80,100,0.14)'; ctx.beginPath(); ctx.ellipse(c.x, c.y + 70, 470, 150, 0, 0, 7); ctx.fill();
+      isoBox(ctx, 1.75, 1.75, 12.5, 10.75, 16, { top: '#a6dc93', left: '#b98a5e', right: '#a07450' }, -16);
+      ctx.save(); const A = iso(2, 2), B = iso(14, 2), C = iso(14, 12), D = iso(2, 12);
+      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.lineTo(D.x, D.y); ctx.closePath(); ctx.clip();
+      ctx.drawImage(F.canvas, F.ox, F.oy, F.canvas.width / 2, F.canvas.height / 2); ctx.restore();
+    } else ctx.drawImage(F.canvas, F.ox, F.oy, F.canvas.width / 2, F.canvas.height / 2);
+    const inHouse = (x0: number, y0: number, x1: number, y1: number) => !ch0 || (x0 >= 2 && y0 >= 2 && x1 <= 14.2 && y1 <= 12.3);
 
     const dep: Record<string, boolean> = {}; for (const id in this.w.nodes ?? {}) if (this.depleted(id)) dep[id] = true;
     const st: FurnState = { ...(this.w.furn as FurnState), night, depleted: dep };
     // decoruri pe sol
-    for (const f of FURNITURE) if (this.isDecor(f)) drawFurn(ctx, f, this.time, st);
-    for (const [k, p] of Object.entries(this.w.plots ?? {})) { const [x, y] = k.split(',').map(Number); drawPlotSoil(ctx, x, y, p as Plot, this.w.gameMin ?? 0, this.time); }
-    for (const k in this.w.grass ?? {}) { const [x, y] = k.split(',').map(Number); drawTallGrass(ctx, x, y, this.w.grass![k], this.time); }
+    for (const f of FURNITURE) if (this.isDecor(f) && inHouse(f.gx, f.gy, f.gx + f.w, f.gy + f.d)) drawFurn(ctx, f, this.time, st);
+    if (!ch0) for (const [k, p] of Object.entries(this.w.plots ?? {})) { const [x, y] = k.split(',').map(Number); drawPlotSoil(ctx, x, y, p as Plot, this.w.gameMin ?? 0, this.time); }
+    if (!ch0) for (const k in this.w.grass ?? {}) { const [x, y] = k.split(',').map(Number); drawTallGrass(ctx, x, y, this.w.grass![k], this.time); }
     if (this.build?.item) drawGhost(ctx, this.build.item, this.build.gx, this.build.gy, this.canPlace(this.build.item, this.build.gx, this.build.gy) && this.canAfford(this.build.item), this.time);
     // indicator obiect apropiat
     const near = this.nearestFurn(this.me);
@@ -1150,8 +1155,7 @@ export class WorldScene implements Scene {
     }
 
     // gardul curtii: laturile din spate
-    for (let x = 0; x < MAP_W; x++) drawYardFence(ctx, x, 0, 'x');
-    for (let y = 0; y < YARD_H; y++) drawYardFence(ctx, 0, y, 'y');
+    if (!ch0) { for (let x = 0; x < MAP_W; x++) drawYardFence(ctx, x, 0, 'x'); for (let y = 0; y < YARD_H; y++) drawYardFence(ctx, 0, y, 'y'); }
     // pereti din spate
     if (this.chapter === 0) for (const [dx, dy] of [[5.5, 12.05], [14.05, 9.5]]) { const p = iso(dx, dy, 22); this.drawLock(ctx, p.x, p.y); }
     for (const wl of WALLS) if (wl.kind === 'back') drawWall(ctx, wl, this.time, night);
@@ -1188,13 +1192,12 @@ export class WorldScene implements Scene {
       if (b.y1 <= a.y0 + 1e-6) return 1;
       return (a.x0 + a.x1 + a.y0 + a.y1) - (b.x0 + b.x1 + b.y0 + b.y1);
     });
-    for (const it of items) it.draw();
+    for (const it of items) if (inHouse(it.x0, it.y0, it.x1, it.y1)) it.draw();
 
     // gardul curtii: laturile din fata (cu portita la alee)
-    for (let y = 0; y < YARD_H; y++) drawYardFence(ctx, MAP_W, y, 'y');
+    if (!ch0) for (let y = 0; y < YARD_H; y++) drawYardFence(ctx, MAP_W, y, 'y');
 
     this.fx.draw(ctx);
-    if (this.chapter === 0) ctx.restore();
 
     // noaptea
     ctx.restore();
