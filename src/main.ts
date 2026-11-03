@@ -27,6 +27,13 @@ if (q.get('who') || q.get('mode') || q.get('room')) {
   const cur = Settings.get();
   Settings.set({ who: (q.get('who') as any) ?? cur.who, net: { ...cur.net, mode: (q.get('mode') as any) ?? cur.net.mode, room: q.get('room') ?? cur.net.room, serverUrl: q.get('server') ?? cur.net.serverUrl } });
 }
+// jocul deschis direct de pe serverul nostru (S10 / tunel): se conecteaza automat la acelasi server
+if (location.protocol.startsWith('http') && (location.port === '8787' || location.hostname.endsWith('.trycloudflare.com'))) {
+  const cur = Settings.get(); const url = location.origin.replace(/^http/, 'ws');
+  const key = 'bd-auto-server-' + location.host;
+  let first = false; try { first = !localStorage.getItem(key); localStorage.setItem(key, '1'); } catch { /* */ }
+  Settings.set({ net: { ...cur.net, serverUrl: url, mode: first ? 'server' : cur.net.mode } });
+}
 Sfx.setMuted(Settings.get().muted);
 const start = location.hash.slice(1);
 game.go(start in game.scenes ? start : 'menu');
