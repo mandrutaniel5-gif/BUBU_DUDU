@@ -102,11 +102,15 @@ function decode(f: string): Promise<AudioBuffer | null> {
   const raw = RAW[f]; const a = ac; if (!raw || !a) return Promise.resolve(null);
   return (pending[f] = a.decodeAudioData(raw.slice(0)).then(b => { DEC.set(f, b); decSecs += b.duration; evict(); delete pending[f]; return b; }, () => { delete pending[f]; return null; }));
 }
+let outNode: GainNode | null = null;
 let master: GainNode | null = null, sfxBus: GainNode | null = null, ambBus: GainNode | null = null;
 function buses() {
   const a = ctx(); if (!a) return null;
   if (!master) {
-    master = a.createGain(); master.gain.value = muted ? 0 : 1; master.connect(a.destination);
+    // compresor pe iesire: totul se aude mai tare si mai plin, fara sa "crape" cand se suprapun multe sunete
+    const comp = a.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 10; comp.ratio.value = 3.5; comp.attack.value = 0.004; comp.release.value = 0.22;
+    const out = (outNode = a.createGain()); out.gain.value = 1.35;
+    master = a.createGain(); master.gain.value = muted ? 0 : 1; master.connect(comp).connect(out).connect(a.destination);
     sfxBus = a.createGain(); sfxBus.gain.value = 0.9; sfxBus.connect(master);
     ambBus = a.createGain(); ambBus.gain.value = 0.55; ambBus.connect(master);
   }
@@ -228,6 +232,6 @@ export const Sfx = {
 };
 // pentru teste / depanare (din consola: __sfx.loops())
 const played: string[] = [];
-(globalThis as any).__sfx = { loops: () => Object.fromEntries(Object.entries(loops).map(([k, l]) => [k, l.id + ':' + l.target.toFixed(2)])), decoded: () => Object.keys(MAN).filter(id => MAN[id].files.some(f => RAW[f])).length, pcm: () => Math.round(decSecs), played };
+(globalThis as any).__sfx = { tap: () => { const a = buses(); if (!a || !outNode) return null; const d = a.createMediaStreamDestination(); outNode.connect(d); return d.stream; }, loops: () => Object.fromEntries(Object.entries(loops).map(([k, l]) => [k, l.id + ':' + l.target.toFixed(2)])), decoded: () => Object.keys(MAN).filter(id => MAN[id].files.some(f => RAW[f])).length, pcm: () => Math.round(decSecs), played };
 // in fundal (aplicatia minimizata / alt tab): oprim sunetul de tot, revine cand te intorci
 if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
