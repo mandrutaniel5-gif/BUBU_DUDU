@@ -5,7 +5,7 @@ name: Build
 on:
   push:
     branches: [main]
-    paths-ignore: ['server-url.txt']
+    paths-ignore: ['server-url.txt', 'docs/**', 'tools/teste/**', 'README.md']
     tags: ['v*']
   workflow_dispatch:
 

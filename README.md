@@ -3,6 +3,8 @@
 Joc de familie pentru doi (Bubu, panda, și Dudu, ursuleț), în stil izometric 2.5D. Se joacă împreună online sau singur, cu partenerul controlat de AI.
 Povestea: căsuța → curtea → pădurea (tractoraș) → satul (bicicletă/scuter) → orașul (autobuz, joburi, apartament).
 
+> **Continui proiectul (om sau AI)?** Începe cu [`docs/PREDARE.md`](docs/PREDARE.md): ce e jocul, cum e făcut, ce merge, ce s-a testat, ce îi place și ce nu îi place proprietarului și direcția stabilită. Testele automate sunt în [`tools/teste/`](tools/teste/).
+
 ## Descărcări
 Fiecare push pe `main` construiește automat jocul (tab-ul **Actions** → ultimul build → *Artifacts*):
 
