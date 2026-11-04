@@ -186,12 +186,25 @@ export class WorldScene implements Scene {
   }
 
   // ------------------------------------------------------------------ retea
+  private offlineTimer: ReturnType<typeof setTimeout> | null = null;
+  private joinedToastAt = 0;
   setPartnerOnline(on: boolean) {
-    this.partnerOnline = on;
-    this.partner.control = on ? 'remote' : 'ai';
-    this.hud.setPartner(on);
-    this.hud.toast(on ? `${this.partner.actor.spec.name} a intrat în joc! 💞` : `${this.partner.actor.spec.name} a ieșit. ${g(this.partner.id, 'Îl', 'O')} joacă AI-ul 🤖`);
-    if (on) this.sendCharSync();
+    if (on) {
+      // a revenit repede (o mica pierdere de semnal): nu mai anuntam nimic
+      if (this.offlineTimer) { clearTimeout(this.offlineTimer); this.offlineTimer = null; }
+      if (this.partnerOnline) return;
+      this.partnerOnline = true; this.partner.control = 'remote'; this.hud.setPartner(true);
+      if (Date.now() - this.joinedToastAt > 60000) { this.joinedToastAt = Date.now(); this.hud.toast(`${this.partner.actor.spec.name} a intrat în joc! 💞`); }
+      this.sendCharSync();
+      return;
+    }
+    if (!this.partnerOnline || this.offlineTimer) return;
+    // iesirea o anuntam doar daca nu revine in cateva secunde
+    this.offlineTimer = setTimeout(() => {
+      this.offlineTimer = null; if (!this.partnerOnline) return;
+      this.partnerOnline = false; this.partner.control = 'ai'; this.hud.setPartner(false);
+      this.hud.toast(`${this.partner.actor.spec.name} a ieșit. ${g(this.partner.id, 'Îl', 'O')} joacă AI-ul 🤖`);
+    }, 6000);
   }
   onRemoteState(s: PlayerState) {
     if (s.who !== this.partner.id) return;

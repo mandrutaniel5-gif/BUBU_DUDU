@@ -151,8 +151,11 @@ export class FirebaseAdapter extends Base {
       const meRef = fb.ref(this.db, `rooms/${room}/players/${me}`);
       await fb.set(meRef, { online: true, ts: Date.now() });
       fb.onDisconnect(meRef).set({ online: false, ts: Date.now() });
+      // nodul partenerului se schimba de ~10 ori pe secunda (pozitia lui); anuntam prezenta doar cand chiar se schimba
+      let wasOnline: boolean | null = null;
       this.unsub.push(fb.onValue(fb.ref(this.db, `rooms/${room}/players/${other}`), (snap: any) => {
-        const v = snap.val(); this.onPresence?.(other, !!v?.online);
+        const v = snap.val(); const on = !!v?.online;
+        if (on !== wasOnline) { wasOnline = on; this.onPresence?.(other, on); }
         if (v?.state) this.onState?.(v.state);
       }));
       // evenimentele partenerului: le citim si le stergem (baza de date ramane mica); 30 s toleranta la ceasuri diferite
