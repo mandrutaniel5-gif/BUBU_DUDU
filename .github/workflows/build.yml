@@ -12,6 +12,11 @@ on:
 permissions:
   contents: write
 
+# un singur build odata pe aceeasi ramura (altfel se calca pe gh-pages)
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   web:
     runs-on: ubuntu-latest
@@ -28,7 +33,21 @@ jobs:
         with: { name: BubuDudu-joc-html, path: BubuDudu-joc.html }
       # jocul compilat merge si pe ramura gh-pages: GitHub Pages (joc online) + serverul de pe S10 il descarca de aici
       - name: Publica pe gh-pages
+        id: pages
         if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
+      # a doua incercare (uneori push-ul pe gh-pages pica o data din cauza retelei sau a altui build)
+      - name: Publica pe gh-pages (a doua incercare)
+        if: github.ref == 'refs/heads/main' && steps.pages.outcome == 'failure'
+        run: sleep 20
+      - name: Publica pe gh-pages (reincercare)
+        if: github.ref == 'refs/heads/main' && steps.pages.outcome == 'failure'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -2,7 +2,7 @@ import { RESOURCE_NODES } from './build';
 // Harta casei si a curtii.
 export type Floor = 'forest' | 'road' | 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand' | 'asphalt' | 'sidewalk' | 'void';
 
-export interface Wall { x: number; y: number; dir: 'x' | 'y'; h: number; kind: 'back' | 'inner' | 'low'; window?: boolean; color: string }
+export interface Wall { x: number; y: number; dir: 'x' | 'y'; h: number; kind: 'back' | 'inner' | 'low'; window?: boolean; door?: boolean; color: string }
 
 export type FurnType =
   | 'bed' | 'nightstand' | 'wardrobe' | 'toilet' | 'bathtub' | 'sink' | 'washer' | 'fridge' | 'stove'

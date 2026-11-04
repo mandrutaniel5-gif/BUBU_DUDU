@@ -3,7 +3,7 @@ import * as Town from './townctl';
 import * as TownUI from '../ui/townui';
 import { VILLAGERS, DECOR, HOURS, isOpen } from '../game/town';
 import type { ShopConfig } from '../minigames/towngames';
-import { makeCars, updateCars, drawCar, carPos, CITY_PATHS, type Car } from '../world/city';
+import { makeCars, updateCars, drawCar, carPos, CITY_PATHS, type Car , drawAptBuilding } from '../world/city';
 import { fillTextIcons } from '../ui/icons';
 // Scena principala: casa izometrica, cei doi ursuleti, nevoi, activitati, multiplayer.
 import { Actor } from '../char/actor';
@@ -26,7 +26,7 @@ import { drawItem, MAX_LVL } from '../world/items';
 import { CROPS, WET_MIN, plotStage, catCount, catPick, seedKey, drawPlotSoil, drawCropPlant, type Plot } from '../world/garden';
 import { ROAD_Y } from '../world/map';
 import { HOUSE, floorAt, AREAS, setArea } from '../world/map';
-import { drawTravelScene, irisWipe, drawScooterSide, drawTandemSide } from '../world/vehicles';
+import { drawTravelScene, irisWipe, drawScooterSide, drawTandemSide, drawStairsScene } from '../world/vehicles';
 import { VILLAGE_PATHS } from '../world/village';
 import { drawCritter, CRITTER_NAMES, type Critter, type CritterKind } from '../world/forest';
 import { ACTIVITIES, type Activity } from '../game/activities';
@@ -772,7 +772,7 @@ export class WorldScene implements Scene {
     if (name === 'home') this.syncPlaced(); else this.nav = new Nav([]);
     this.floor = renderFloor();
     const from = this.travel?.from;
-    const sp = name === 'village' && from === 'city' ? { x: 19.4, y: 12.6 } : name === 'city' && from === 'apartment' ? { x: 5.5, y: 22.4 } : AREAS[name].spawn;
+    const sp = name === 'village' && from === 'city' ? { x: 19.4, y: 12.6 } : name === 'city' && from === 'apartment' ? { x: 4.1, y: 25.1 } : AREAS[name].spawn;
     this.me.gx = sp.x; this.me.gy = sp.y; this.me.z = 0;
     (this.w.chars[this.myId] as any).area = name; this.sendCharSync();
     if (this.travel?.withPartner) { this.aiArea = name; this.stopActivity(this.partner); this.partner.path = []; this.partner.gx = sp.x + 0.8; this.partner.gy = sp.y + 0.3; this.partner.z = 0; }
@@ -845,7 +845,17 @@ export class WorldScene implements Scene {
   }
   drawTravel(ctx: CanvasRenderingContext2D, w: number, h: number) {
     const t = this.travel!.t;
-    if (this.travel!.vehicle === 'door') { irisWipe(ctx, w, h, t < 0.5 ? 1 - t / 0.5 : (t - 0.5) / 0.5); return; }
+    if (this.travel!.vehicle === 'door') {
+      // scara blocului: inchidem peste lume, urci / cobori pe scari, apoi se deschide zona noua
+      if (t < 0.35) { irisWipe(ctx, w, h, 1 - t / 0.35); return; }
+      if (t > 2.75) { irisWipe(ctx, w, h, (t - 2.75) / 0.35); return; }
+      const tr = this.travel!, down = tr.from === 'apartment';
+      const k = Math.max(0, Math.min(1, (t - 0.45) / 2.2));
+      drawStairsScene(ctx, w, h, k, this.time, nightAmount(this.w.minutes), down, this.me.actor.spec, this.w.chars[this.myId].outfit, tr.withPartner ? this.partner.actor.spec : undefined, this.w.chars[this.partner.id].outfit);
+      if (t < 0.6) irisWipe(ctx, w, h, (t - 0.35) / 0.25);
+      if (t > 2.5) irisWipe(ctx, w, h, 1 - (t - 2.5) / 0.25);
+      return;
+    }
     if (t < 0.6) { irisWipe(ctx, w, h, 1 - t / 0.6); return; }            // se inchide peste lume
     if (t > 3.4) { irisWipe(ctx, w, h, (t - 3.4) / 0.6); return; }        // se deschide peste zona noua
     const k = (t - 0.6) / 2.8;
@@ -1455,7 +1465,7 @@ export class WorldScene implements Scene {
         if (sl !== this.me) this.shake = Math.max(this.shake, 3);
       }
     }
-    if (this.travel) { const door = this.travel.vehicle === 'door'; this.travel.t += dt; if (!this.travel.switched && this.travel.t >= (door ? 0.5 : 2.0)) { this.travel.switched = true; this.switchArea(this.travel.to); } if (this.travel.t >= (door ? 1.0 : 4.0)) { this.travel = null; this.hud.setMinigame(false); } }
+    if (this.travel) { const door = this.travel.vehicle === 'door'; this.travel.t += dt; if (!this.travel.switched && this.travel.t >= (door ? 1.5 : 2.0)) { this.travel.switched = true; this.switchArea(this.travel.to); } if (this.travel.t >= (door ? 3.1 : 4.0)) { this.travel = null; this.hud.setMinigame(false); } }
     if (this.area === 'city') updateCars(this.cars, dt, this.time, [{ x: this.me.gx, y: this.me.gy }, ...(this.sameArea() ? [{ x: this.partner.gx, y: this.partner.gy }] : []), ...this.walkers.map(v => ({ x: v.x, y: v.y }))]);
     this.updateCritters(dt);
     this.updateWalkers(dt);
@@ -1709,7 +1719,7 @@ export class WorldScene implements Scene {
       ctx.save(); const A = iso(2, 2), B = iso(14, 2), C = iso(14, 12), D = iso(2, 12);
       ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.lineTo(D.x, D.y); ctx.closePath(); ctx.clip();
       ctx.drawImage(F.canvas, F.ox, F.oy, F.canvas.width / 2, F.canvas.height / 2); ctx.restore();
-    } else ctx.drawImage(F.canvas, F.ox, F.oy, F.canvas.width / 2, F.canvas.height / 2);
+    } else { if (this.area === 'apartment') drawAptBuilding(ctx, night); ctx.drawImage(F.canvas, F.ox, F.oy, F.canvas.width / 2, F.canvas.height / 2); }
     const inHouse = (x0: number, y0: number, x1: number, y1: number) => !ch0 || (x0 >= 2 && y0 >= 2 && x1 <= 14.2 && y1 <= 12.3);
 
     const dep: Record<string, boolean> = {}; for (const id in this.w.nodes ?? {}) if (this.depleted(id)) dep[id] = true;

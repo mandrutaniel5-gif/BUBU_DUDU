@@ -79,3 +79,10 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - Minijocul `cook` (`src/minigames/kitchen.ts`): tai ingredientele, le pui în vas, apoi amesteci (ciorbe, mămăligă), întorci la momentul potrivit (omletă, papanași, pește) sau scoți tava din cuptor (pizza, plăcintă). Clătitele au minijocul lor. Gătit perfect = o porție în plus.
 - La masă alegi ce mănânci; fiecare mâncare are efectele ei (foame, energie, căldură, sănătate, distracție, iubire). După sarmale... se bășește mai des.
 - Partenerul AI mănâncă ce e gătit, iar dacă nu e nimic, gătește singur.
+
+## Blocul și apartamentul (v1.2.3)
+
+- Blocul Lalelelor are intrarea (Scara A: ușă cu geam, copertină, interfon, trepte) pe fața dinspre parc, la vedere. Intri doar pe ușă: stai pe preșul din fața ei.
+- Apartamentul (etajul 4) se vede ca un etaj al blocului: dedesubt continuă fațada cu etajele de jos, nu mai plutește în cer.
+- Ieșirea se face pe ușa apartamentului (nr. 14, pe peretele din stânga, lângă televizor): stai pe preș și apeși „Ieși pe ușă”. Indicatorul „Ieșire” a fost scos.
+- Când urci sau cobori: animație pe casa scării (rampe în zig-zag, paliere cu ușile vecinilor, „Etajul 3… Parter”), cu pașii pe trepte și ușile care se deschid și se închid. Partenerul vine după tine.

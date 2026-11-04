@@ -25,7 +25,7 @@ export const CITY_BUILDINGS: CityBuilding[] = [
   { id: 'c-cinema', gx: 14, gy: 6, w: 6, d: 5, h: 104, floors: 3, front: 'y', wall: '#e9e2ff', trim: '#7a5ad6', sign: 'CINEMA', signCol: '#e63946', marquee: true, action: act('c-cinema', 'Cinema (20 lei / doi)', '🎬') },
   { id: 'c-resto', gx: 1, gy: 15, w: 4, d: 4, h: 84, floors: 3, front: 'x', wall: '#fff1d6', trim: '#c0573e', sign: 'Restaurant La Doi', signCol: '#c0573e', awning: '#e07a5f', action: act('c-resto', 'Restaurant (cină romantică)', '🍽️') },
   { id: 'c-cafe', gx: 5, gy: 15, w: 3, d: 4, h: 70, floors: 2, front: 'x', wall: '#f5e1c8', trim: '#8a5d32', sign: 'Cafeneaua', signCol: '#8a5d32', awning: '#c98e5f', action: act('c-cafe', 'Cafeneaua (lucrează ca barista)', '🧋') },
-  { id: 'c-tower', gx: 1, gy: 20, w: 4, d: 4, h: 176, floors: 7, front: 'x', wall: '#e8f1ff', trim: '#5b7fbf', sign: 'Blocul Lalelelor', signCol: '#5b7fbf', action: act('c-tower', 'Blocul cu apartamente', '🏙️') },
+  { id: 'c-tower', gx: 1, gy: 20, w: 4, d: 4, h: 176, floors: 7, front: 'y', wall: '#e8f1ff', trim: '#5b7fbf', sign: 'Blocul Lalelelor', signCol: '#5b7fbf', action: act('c-tower', 'Blocul cu apartamente', '🏙️') },
   { id: 'c-office', gx: 14, gy: 0, w: 5, d: 5, h: 196, floors: 8, front: 'y', wall: '#d8e6f5', trim: '#3f5f8f', sign: 'Turnul de birouri', signCol: '#3f5f8f', action: act('c-office', 'Birourile (lucrează la birou)', '💻') },
   { id: 'c-bank', gx: 1, gy: 1, w: 4, d: 4, h: 132, floors: 5, front: 'y', wall: '#f5ead6', trim: '#c9a24a', sign: 'Banca', signCol: '#a07a2a', action: act('c-bank', 'Banca (economii, credit, apartament)', '🏦') },
   { id: 'c-uni', gx: 5, gy: 1, w: 4, d: 4, h: 122, floors: 4, front: 'y', wall: '#e8e0ff', trim: '#6a5acd', sign: 'Universitatea', signCol: '#5a4abd', action: act('c-uni', 'Universitatea (cursuri, diplome)', '🎓') },
@@ -34,7 +34,9 @@ export const CITY_BUILDINGS: CityBuilding[] = [
 ];
 
 const F: Furn[] = [];
-for (const b of CITY_BUILDINGS) F.push({ id: b.id, type: 'cbuilding' as any, gx: b.gx, gy: b.gy, w: b.w, d: b.d, solid: true, action: b.action.id === 'c-flat' ? undefined : b.action });
+for (const b of CITY_BUILDINGS) F.push({ id: b.id, type: 'cbuilding' as any, gx: b.gx, gy: b.gy, w: b.w, d: b.d, solid: true, action: b.id === 'c-tower' ? undefined : b.action });
+// blocul: intri doar pe usa scarii (pe fata dinspre parc), nu de oriunde din jurul lui
+F.push({ id: 'c-towerdoor', type: 'towerdoor' as any, gx: 2.5, gy: 24, w: 1, d: 1, solid: false, action: act('c-tower', 'Intră în bloc (Scara A)', '🔑') });
 F.push({ id: 'c-bus', type: 'busstop' as any, gx: 20, gy: 14, w: 1, d: 1, solid: true, action: act('c-bus', 'Autobuzul spre sat', '🚌') });
 F.push({ id: 'c-taxi', type: 'taxistand' as any, gx: 12, gy: 15, w: 1, d: 1, solid: true, action: act('c-taxi', 'Taxi direct acasă (40 lei)', '🚕') });
 F.push({ id: 'c-ice', type: 'icecart' as any, gx: 15, gy: 21, w: 1, d: 1, solid: true, action: act('c-ice', 'Înghețată (6 lei)', '🍦') });
@@ -144,9 +146,25 @@ function drawCityBuilding(c: CanvasRenderingContext2D, b: CityBuilding, t: numbe
   // parterul: vitrina + usa pe fata principala
   const P = b.front === 'y' ? faceY : faceX;
   quad(c, [P(0, 0), P(1, 0), P(1, 36), P(0, 36)], shade(b.trim, 1.25), 1.5);
+  if (b.id === 'c-tower') {
+    // intrarea in bloc: usa scarii cu geam, copertina, interfon, placuta "Scara A", ferestre de apartament la parter
+    for (const [u0, u1] of [[0.06, 0.22], [0.78, 0.94]]) quad(c, [P(u0, 10), P(u1, 10), P(u1, 30), P(u0, 30)], lit ? '#ffe680' : '#bfe8ff', 1.2);
+    quad(c, [P(0.38, 0), P(0.62, 0), P(0.62, 34), P(0.38, 34)], '#f4efe8', 1.5);
+    quad(c, [P(0.41, 0), P(0.59, 0), P(0.59, 31), P(0.41, 31)], '#5b7fbf', 1.5);
+    quad(c, [P(0.44, 12), P(0.56, 12), P(0.56, 28), P(0.44, 28)], lit ? '#fff4c0' : '#d4eefc', 1.2);
+    const kn = P(0.555, 14); e(c, kn.x, kn.y, 1.8, 1.8, '#ffd23f', true, 1);
+    const ic = P(0.68, 16); c.fillStyle = '#c9ccd6'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(ic.x - 3, ic.y - 7, 6, 10, 1.5); c.fill(); c.stroke();
+    for (let i = 0; i < 3; i++) { c.fillStyle = '#3a3a44'; c.beginPath(); c.arc(ic.x, ic.y - 4 + i * 3, 0.9, 0, 7); c.fill(); }
+    quad(c, [P(0.34, 36), P(0.66, 36), { x: P(0.66, 36).x - 12, y: P(0.66, 36).y + 8 }, { x: P(0.34, 36).x - 12, y: P(0.34, 36).y + 8 }], b.trim, 1.5);
+    const pl = P(0.5, 44); c.fillStyle = '#fff'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(pl.x - 15, pl.y - 6, 30, 12, 3); c.fill(); c.stroke();
+    c.fillStyle = b.trim; c.font = '800 8px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('Scara A', pl.x, pl.y + 0.5); c.textBaseline = 'alphabetic';
+    // treptele din fata usii
+    for (let i = 0; i < 2; i++) isoBox(c, gx + w * 0.38, gy + d + i * 0.18, w * 0.24, 0.36 - i * 0.18, 6 - i * 3, { top: '#e6e6ee', left: '#c9ccd6', right: '#b0b4c0' });
+  } else {
   quad(c, [P(0.08, 4), P(0.38, 4), P(0.38, 30), P(0.08, 30)], lit ? '#ffe9a8' : '#d4eefc', 1.5);
   quad(c, [P(0.62, 4), P(0.92, 4), P(0.92, 30), P(0.62, 30)], lit ? '#ffe9a8' : '#d4eefc', 1.5);
   quad(c, [P(0.43, 0), P(0.57, 0), P(0.57, 30), P(0.43, 30)], shade(b.trim, 0.8), 1.5);
+  }
   // ce se vede in vitrine
   if (b.id === 'c-boutique') for (const u of [0.2, 0.78]) { const p = P(u, 6); c.fillStyle = u < 0.5 ? '#ff7aa2' : '#3a3a44'; c.beginPath(); c.moveTo(p.x, p.y - 20); c.lineTo(p.x - 6, p.y); c.lineTo(p.x + 6, p.y); c.closePath(); c.fill(); e(c, p.x, p.y - 22, 3, 3, '#f5ead6', false); }
   if (b.id === 'c-super') for (const u of [0.15, 0.25, 0.7, 0.82]) { const p = P(u, 8); e(c, p.x, p.y - 4, 3.5, 3.5, ['#e63946', '#ffd23f', '#7cc576', '#ff8c42'][Math.round(u * 10) % 4], true, 1); }
@@ -178,7 +196,7 @@ function drawCityBuilding(c: CanvasRenderingContext2D, b: CityBuilding, t: numbe
   // afisul filmului la cinema
   if (b.marquee) { const p = P(0.18, 64); c.fillStyle = '#ffb3c7'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(p.x - 10, p.y - 18, 20, 28, 3); c.fill(); c.stroke(); heartPath(c, p.x, p.y - 6, 5); c.fillStyle = '#e63946'; c.fill(); }
   // apartamentul vostru: inimioara la fereastra
-  if (b.id === 'c-tower' && owned.apartment) { const p = faceX(0.3, 40 + fh * 2 + fh * 0.45); heartPath(c, p.x, p.y, 6 + Math.sin(t * 3)); c.fillStyle = '#ff4d6d'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.5; c.stroke(); }
+  if (b.id === 'c-tower' && owned.apartment) { const p = faceY(0.3, 40 + fh * 3 + fh * 0.45); heartPath(c, p.x, p.y, 6 + Math.sin(t * 3)); c.fillStyle = '#ff4d6d'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.5; c.stroke(); }
   if (b.id === 'c-tower' && !owned.apartment) { const p = P(0.5, 52); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = '#fff'; c.beginPath(); c.roundRect(p.x - 40, p.y - 8, 80, 16, 5); c.fill(); c.strokeStyle = '#e63946'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#e63946'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🔒 DE VÂNZARE', p.x, p.y + 0.5); c.textBaseline = 'alphabetic'; }
 }
 
@@ -186,6 +204,7 @@ export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, ni
   const { gx, gy } = f;
   switch (f.type as string) {
     case 'cbuilding': { const b = CITY_BUILDINGS.find(x => x.id === f.id); if (!b) return false; drawCityBuilding(c, b, t, night, owned); return true; }
+    case 'towerdoor': { const p = iso(gx + 0.5, gy + 0.55, 0); c.fillStyle = '#c98e5f'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.ellipse(p.x, p.y, 13, 6, 0, 0, 7); c.fill(); c.stroke(); return true; }
     case 'icecart': {
       isoBox(c, gx + 0.1, gy + 0.25, 0.8, 0.5, 26, { top: '#fff', left: '#ffd6e4', right: '#ffb6c9' }, 6);
       for (const [u, v] of [[0.2, 0.3], [0.8, 0.7]]) { const p = iso(gx + u, gy + v, 4); e(c, p.x, p.y, 5, 5, '#3a3a44', true, 1.5); }
@@ -284,10 +303,10 @@ const AW = '#f3e6ff', AW2 = '#e8f4ff';
 function aptWalls(): Wall[] {
   const W: Wall[] = [];
   for (let x = 3; x <= 16; x++) W.push({ x, y: 3, dir: 'x', h: 92, kind: 'back', window: x === 5 || x === 9 || x === 14, color: x >= 12 ? AW2 : AW });
-  for (let y = 3; y <= 13; y++) W.push({ x: 3, y, dir: 'y', h: 92, kind: 'back', window: y === 5 || y === 10, color: y <= 7 ? AW : '#fff4dc' });
+  for (let y = 3; y <= 13; y++) W.push({ x: 3, y, dir: 'y', h: 92, kind: 'back', window: y === 5, door: y === 12, color: y <= 7 ? AW : '#fff4dc' });
   for (let y = 3; y <= 7; y++) if (y !== 6) W.push({ x: 12, y, dir: 'y', h: 26, kind: 'inner', color: '#eadcf5' });
   for (let x = 3; x <= 11; x++) if (x !== 9) W.push({ x, y: 8, dir: 'x', h: 26, kind: 'inner', color: '#eadcf5' });
-  for (let x = 3; x <= 16; x++) if (x !== 7) W.push({ x, y: 14, dir: 'x', h: 10, kind: 'low', color: '#e0d0ea' });
+  for (let x = 3; x <= 16; x++) W.push({ x, y: 14, dir: 'x', h: 10, kind: 'low', color: '#e0d0ea' });
   for (let y = 3; y <= 13; y++) W.push({ x: 17, y, dir: 'y', h: 10, kind: 'low', color: '#e0d0ea' });
   return W;
 }
@@ -310,8 +329,34 @@ const AF: Furn[] = [
   { id: 'tv', type: 'tv', gx: 3, gy: 10, w: 1, d: 2, solid: true, action: act('tv', 'Televizor mare', '📺') },
   { id: 'shelf', type: 'bookshelf', gx: 3, gy: 8, w: 1, d: 1, solid: true, action: act('read', 'Citește', '📚') },
   { id: 'laptop', type: 'laptop', gx: 10, gy: 9, w: 1, d: 1, solid: true, action: act('online', 'Laptopul (magazin online)', '💻') },
-  { id: 'a-plantL', type: 'plant', gx: 3, gy: 13, w: 1, d: 1, solid: true, action: act('water_plant', 'Udă floarea', '🪴') },
-  { id: 'a-door', type: 'doormat', gx: 7, gy: 14, w: 1, d: 1, solid: false },
-  { id: 'a-exit', type: 'signpost', gx: 9, gy: 14, w: 1, d: 1, solid: true, action: act('a-exit', 'Ieși în oraș', '🏙️') },
+  { id: 'a-plantL', type: 'plant', gx: 5, gy: 13, w: 1, d: 1, solid: true, action: act('water_plant', 'Udă floarea', '🪴') },
+  // usa de la intrare e pe peretele din stanga (y = 12): stai pe pres si iesi pe usa, pe scara blocului
+  { id: 'a-door', type: 'doormat', gx: 3, gy: 12, w: 1, d: 1, solid: false, action: act('a-exit', 'Ieși pe ușă (scara blocului)', '🔑') },
 ];
-AREAS.apartment = { floor: aptFloor, furniture: AF, walls: aptWalls(), spawn: { x: 7.5, y: 13.2 } };
+AREAS.apartment = { floor: aptFloor, furniture: AF, walls: aptWalls(), spawn: { x: 3.7, y: 12.5 } };
+
+/** apartamentul e un etaj din Blocul Lalelelor: sub podea se vede blocul (etajele de jos), nu cer gol */
+export function drawAptBuilding(c: CanvasRenderingContext2D, night: number) {
+  const x0 = 3, y0 = 3, w = 14, d = 11, H = 720;
+  const wall = '#e8f1ff', trim = '#5b7fbf', lit = night > 0.4;
+  // placa etajului (grosimea podelei) + fatadele care coboara
+  isoBox(c, x0, y0, w, d, H, { top: '#d9d0c4', left: wall, right: shade(wall, 0.86) }, -H - 12);
+  isoBox(c, x0, y0, w, d, 12, { top: '#d9d0c4', left: shade(trim, 1.5), right: shade(trim, 1.35) }, -12);
+  const faceY = (u: number, z: number) => iso(x0 + u * w, y0 + d, z);
+  const faceX = (u: number, z: number) => iso(x0 + w, y0 + u * d, z);
+  const fh = 78;
+  for (const [face, n] of [[faceY, 12], [faceX, 9]] as const) {
+    for (let f = 0; f < 8; f++) {
+      const z = -12 - (f + 1) * fh + 18;
+      for (let i = 0; i < n; i++) {
+        const u0 = (i + 0.22) / n, u1 = (i + 0.78) / n;
+        const on = lit && ((i * 5 + f * 3) % 4 !== 0);
+        quad(c, [face(u0, z), face(u1, z), face(u1, z + 40), face(u0, z + 40)], on ? '#ffe680' : (f + i) % 3 === 0 ? '#d4eefc' : '#bfe8ff', 1.2);
+      }
+      // balustrada balcoanelor si braul dintre etaje
+      const a = face(0, z + fh - 18), b = face(1, z + fh - 18); c.strokeStyle = shade(trim, 1.1); c.lineWidth = 2.5; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
+    }
+  }
+  // firma blocului pe colt
+  const p = faceY(0.08, -40); drawSign(c, p.x + 30, p.y, 'Blocul Lalelelor · et. 4', '🏙️', '#fff8ef', trim, 10);
+}

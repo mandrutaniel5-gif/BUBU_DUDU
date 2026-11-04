@@ -295,6 +295,19 @@ export function drawWall(ctx: CanvasRenderingContext2D, wl: Wall, t: number, nig
       ctx.fillStyle = '#ffb6c9';
       for (const u of [u0, u1]) { const q = P(u, z1 + 4), r = P(u, z0 - 4); ctx.beginPath(); ctx.ellipse((q.x + r.x) / 2, (q.y + r.y) / 2, 4, (r.y - q.y) / 2 + 2, 0, 0, 7); ctx.fill(); }
     }
+    if (wl.door) {
+      // usa de la intrare (apartament): toc, usa de lemn, vizor, clanta, numarul
+      const P = (u: number, z: number) => ({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u - z });
+      poly(ctx, [P(0.12, 0), P(0.88, 0), P(0.88, 80), P(0.12, 80)]); ctx.fillStyle = '#f4efe8'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.stroke();
+      poly(ctx, [P(0.2, 0), P(0.8, 0), P(0.8, 74), P(0.2, 74)]); ctx.fillStyle = '#a0703f'; ctx.fill(); ctx.stroke();
+      for (const [z0, z1] of [[8, 34], [40, 66]]) { poly(ctx, [P(0.28, z0), P(0.72, z0), P(0.72, z1), P(0.28, z1)]); ctx.strokeStyle = shade('#a0703f', 0.75); ctx.lineWidth = 2; ctx.stroke(); }
+      const k = P(0.7, 36); ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(k.x, k.y, 3.2, 0, 7); ctx.fill(); ctx.stroke();
+      const v = P(0.5, 60); ctx.fillStyle = '#3a3a44'; ctx.beginPath(); ctx.arc(v.x, v.y, 2, 0, 7); ctx.fill();
+      const n = P(0.5, 70); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(n.x, n.y, 7, 4.5, 0, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = O; ctx.font = '800 7px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('14', n.x, n.y + 0.5); ctx.textBaseline = 'alphabetic';
+      // lumina de pe scara se vede pe sub usa
+      const l0 = P(0.22, 1), l1 = P(0.78, 1); ctx.strokeStyle = night > 0.4 ? '#ffe680' : '#fff4c0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(l0.x, l0.y); ctx.lineTo(l1.x, l1.y); ctx.stroke();
+    }
   }
   poly(ctx, pts); ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.stroke();
   // capacul peretelui (grosime)

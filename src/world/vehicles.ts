@@ -2,6 +2,8 @@ import { fillTextIcons } from '../ui/icons';
 // Tractorasul lui Dudu: desen lateral detaliat (pentru drum) si desen izometric (in lume).
 import { drawCharacter, type CharSpec } from '../char/draw';
 import { basePose } from '../char/pose';
+import { IDLE, WALK } from '../char/anims';
+import type { Outfit } from '../char/outfit';
 import { iso, isoBox, boxOf, shade } from './iso';
 
 const O = '#4a2a22';
@@ -413,4 +415,82 @@ export function drawTaxiSide(c: CanvasRenderingContext2D, x: number, y: number, 
   simpleWheel(c, -72, -14, 17, opt.rot, '#2b2b33', '#d9d9d9');
   simpleWheel(c, 72, -14, 17, opt.rot, '#2b2b33', '#d9d9d9');
   c.restore();
+}
+
+// ------------------------------------------------------------------ scara blocului (urci / cobori la apartament)
+/**
+ * Casa scarii vazuta din lateral: rampe in zig-zag intre etaje, palier cu usile vecinilor, numarul etajului.
+ * k = 0..1 cat ai mers; down = cobori (de la etajul 4 la parter) sau urci.
+ */
+export function drawStairsScene(c: CanvasRenderingContext2D, w: number, h: number, k: number, t: number, night: number, down: boolean, me: CharSpec, meOutfit?: Outfit, partner?: CharSpec, partnerOutfit?: Outfit) {
+  const FLOORS = 4, FH = Math.max(150, h * 0.42), xL = w / 2 - Math.min(260, w * 0.3), xR = w / 2 + Math.min(260, w * 0.3);
+  const side = (f: number) => (f % 2 === 0 ? xL : xR);            // palierul etajului f e in stanga (par) sau dreapta
+  const Y = (f: number) => (FLOORS - f) * FH;                       // etajul 4 sus, parterul jos
+  // unde e personajul (q = 0 la etajul 4, 1 la parter)
+  const at = (q: number) => {
+    q = Math.max(0, Math.min(1, q)); const seg = Math.min(FLOORS - 1, Math.floor(q * FLOORS)), s = q * FLOORS - seg;
+    const f0 = FLOORS - seg, f1 = f0 - 1;
+    const land = 0.16; // pe palier merge drept, apoi coboara treptele
+    const sx = side(f0), ex = side(f1);
+    if (s < land) return { x: sx + (ex > sx ? 1 : -1) * 40 * (s / land), y: Y(f0), dir: ex > sx ? 1 : -1, stepping: false, floor: f0 };
+    const u = (s - land) / (1 - land);
+    return { x: sx + (ex > sx ? 1 : -1) * 40 + (ex - sx - (ex > sx ? 1 : -1) * 40) * u, y: Y(f0) + (Y(f1) - Y(f0)) * u, dir: ex > sx ? 1 : -1, stepping: true, floor: u > 0.5 ? f1 : f0 };
+  };
+  const q = down ? k : 1 - k;
+  const P0 = at(q);
+  const camY = P0.y - h * 0.58;
+  // peretele casei scarii
+  c.fillStyle = night > 0.5 ? '#c9c0d8' : '#efe6dc'; c.fillRect(0, 0, w, h);
+  c.save(); c.translate(0, -camY);
+  for (let f = FLOORS; f >= 0; f--) {
+    const y = Y(f);
+    if (y - camY > h + 200 || y - camY < -FH - 100) continue;
+    // brau de faianta + numarul etajului pe perete
+    c.fillStyle = night > 0.5 ? '#b3a9c6' : '#dccfc0'; c.fillRect(0, y - 46, w, 46);
+    c.font = '900 22px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.fillStyle = '#8a7a6a';
+    c.fillText(f === 0 ? 'PARTER' : `ETAJUL ${f}`, side(f) === xL ? xL + 150 : xR - 150, y - FH * 0.62);
+    // fereastra casei scarii
+    const wx = w / 2 - 40, wy = y - FH * 0.78; c.fillStyle = night > 0.5 ? '#2b3a67' : '#bfe8ff'; c.strokeStyle = O; c.lineWidth = 3; c.beginPath(); c.roundRect(wx, wy, 80, 54, 6); c.fill(); c.stroke(); c.beginPath(); c.moveTo(wx + 40, wy); c.lineTo(wx + 40, wy + 54); c.stroke();
+    // palierul + usa vecinilor (sau usa voastra la etajul 4, usa blocului la parter)
+    const sx = side(f), dirOut = sx === xL ? -1 : 1;
+    c.fillStyle = '#b9a58f'; c.strokeStyle = O; c.lineWidth = 3; c.beginPath(); c.rect(Math.min(sx, sx + dirOut * 400), y, 400 + 60, 16); c.fill(); c.stroke();
+    const dx = sx + dirOut * 110;
+    const ours = f === FLOORS, entrance = f === 0;
+    c.fillStyle = entrance ? '#5b7fbf' : ours ? '#a0703f' : ['#8fa9c9', '#9fbf8f', '#c99a8f'][f % 3]; c.beginPath(); c.roundRect(dx - 30, y - 104, 60, 104, [6, 6, 0, 0]); c.fill(); c.stroke();
+    if (entrance) { c.fillStyle = night > 0.5 ? '#fff4c0' : '#d4eefc'; c.beginPath(); c.roundRect(dx - 20, y - 92, 40, 54, 4); c.fill(); c.stroke(); }
+    c.fillStyle = '#ffd23f'; c.beginPath(); c.arc(dx + (dirOut > 0 ? -20 : 20), y - 52, 4, 0, 7); c.fill(); c.stroke();
+    c.fillStyle = '#fff'; c.beginPath(); c.roundRect(dx - 14, y - 124, 28, 16, 4); c.fill(); c.stroke();
+    c.fillStyle = O; c.font = '800 11px "Baloo 2", sans-serif'; c.fillText(entrance ? 'IEȘIRE' : ours ? '14' : String(f * 3 + 2), dx, y - 112);
+    if (ours) { c.fillStyle = '#ff4d6d'; c.beginPath(); c.arc(dx, y - 70, 6, 0, 7); c.fill(); }
+    // rampa de scari spre etajul de jos
+    if (f > 0) {
+      const ex = side(f - 1), y1 = Y(f - 1), s0 = sx + (ex > sx ? 40 : -40);
+      const n = 12, sw = (ex - s0) / n, sh = (y1 - y) / n;
+      c.fillStyle = '#cdb9a3'; c.strokeStyle = O; c.lineWidth = 2.5;
+      c.beginPath(); c.moveTo(s0, y);
+      for (let i = 0; i < n; i++) { c.lineTo(s0 + sw * i, y + sh * (i + 1)); c.lineTo(s0 + sw * (i + 1), y + sh * (i + 1)); }
+      c.lineTo(ex, y1 + 18); c.lineTo(s0, y + 18); c.closePath(); c.fill(); c.stroke();
+      // balustrada
+      c.strokeStyle = '#8b5e34'; c.lineWidth = 5; c.beginPath(); c.moveTo(s0, y - 46); c.lineTo(ex, y1 - 46); c.stroke();
+      c.lineWidth = 2; c.strokeStyle = O; for (let i = 0; i <= n; i += 2) { c.beginPath(); c.moveTo(s0 + sw * i, y + sh * i); c.lineTo(s0 + sw * i, y + sh * i - 46); c.stroke(); }
+    }
+    // becul de pe palier
+    c.fillStyle = night > 0.5 ? '#ffe680' : '#fff8d0'; c.beginPath(); c.arc(sx + dirOut * 190, y - FH * 0.86, 9, 0, 7); c.fill(); c.strokeStyle = O; c.lineWidth = 2; c.stroke();
+  }
+  // personajele: mers + pasi pe trepte
+  const drawWalker = (spec: CharSpec, outfit: Outfit | undefined, qq: number, sc: number) => {
+    const p = at(qq); const dir = down ? p.dir : -p.dir;
+    const P = basePose(); IDLE.pose(P, t, 0); WALK.pose(P, t * 1.3, ((t * 1.3) % WALK.dur) / WALK.dur);
+    const bob = p.stepping ? Math.abs(Math.sin(t * 9)) * 4 : 0;
+    drawCharacter(c, spec, P, p.x, p.y - 2 - bob, sc, dir as 1 | -1, t, outfit);
+  };
+  const sc = Math.min(1, h / 520) * 0.9;
+  if (partner) drawWalker(partner, partnerOutfit, down ? q - 0.05 : q + 0.05, sc);
+  drawWalker(me, meOutfit, q, sc);
+  c.restore();
+  // ce etaj e acum
+  const fl = Math.max(0, Math.min(FLOORS, Math.round(FLOORS - q * FLOORS)));
+  c.save(); c.font = '900 26px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.lineWidth = 6; c.strokeStyle = '#fff'; c.fillStyle = '#3a2a22';
+  const txt = (down ? 'Coborâm pe scări… ' : 'Urcăm acasă… ') + (fl === 0 ? 'parter' : `etajul ${fl}`);
+  c.strokeText(txt, w / 2, h * 0.1); c.fillText(txt, w / 2, h * 0.1); c.restore();
 }

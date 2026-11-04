@@ -76,7 +76,7 @@ export class Soundscape {
   private oneT = 6;
   private pawn: Record<string, PawnSnd> = {};
   private travelRef: unknown = null;
-  private travelDoor = false;
+  private travelDoor = 0; private stairT = 0;
   private lastHour = -1;
   private tv = FURNITURE.find(f => f.id === 'tv' || f.type === 'tv');
 
@@ -166,7 +166,7 @@ export class Soundscape {
     // ---------- calatorii (vehicule)
     const tr = s.travel;
     if (tr !== this.travelRef) {
-      this.travelRef = tr; this.travelDoor = false;
+      this.travelRef = tr; this.travelDoor = 0; this.stairT = 0.6;
       if (tr) {
         const v = tr.vehicle;
         if (v === 'bus') Sfx.play('bus_doors', { vol: 0.6 });
@@ -178,7 +178,13 @@ export class Soundscape {
     }
     if (tr) {
       const v = tr.vehicle, end = clamp01((4 - tr.t) / 0.8), beg = clamp01(tr.t / 0.6), k = Math.min(end, beg);
-      if (v === 'door') { if (!this.travelDoor && tr.t > 0.55) { this.travelDoor = true; Sfx.play('door_close', { vol: 0.6 }); } }
+      if (v === 'door') {
+        // scara blocului: usa (deschis / inchis), pasii pe trepte, usa de la capat
+        if (this.travelDoor === 0 && tr.t > 0.4) { this.travelDoor = 1; Sfx.play('door_close', { vol: 0.55 }); }
+        if (tr.t > 0.55 && tr.t < 2.6) { this.stairT -= dt; if (this.stairT <= 0) { this.stairT = 0.27; Sfx.play('step_stone', { vol: 0.4, rate: 0.95 + Math.random() * 0.1 }); if (tr.withPartner) Sfx.play('step_stone', { vol: 0.22, delay: 0.12 }); } }
+        if (this.travelDoor === 1 && tr.t > 2.6) { this.travelDoor = 2; Sfx.play('door_open', { vol: 0.55 }); }
+        if (this.travelDoor === 2 && tr.t > 3.0) { this.travelDoor = 3; Sfx.play('door_close', { vol: 0.4 }); }
+      }
       else if (v === 'tractor') L('travel', 'engine_slow', 0.55 * k, { bus: 'sfx' });
       else if (v === 'bus') L('travel', 'engine_slow', 0.5 * k, { bus: 'sfx', rate: 0.78 });
       else if (v === 'bike') L('travel', 'pedal_loop', 0.45 * k, { bus: 'sfx' });
