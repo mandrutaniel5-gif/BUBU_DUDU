@@ -165,62 +165,105 @@ export class OfficeGame extends Panel {
 
 // ====================================================================== CINEMA
 export class CinemaGame extends Panel {
-  k = 0; pops: { x: number; y: number; vx: number; vy: number }[] = []; caught = 0; holdT = 0; held = false; holding = false; romance = false; popT = 0;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🎬 La film', 'Prinde floricelele 🍿 · Când apare inima, ține apăsat (mână în mână)'); }
+  k = 0; pops: { x: number; y: number; vx: number; vy: number }[] = []; caught = 0; holdT = 0; held = false; holding = false; romance = false; popT = 0; duo: boolean;
+  dust = Array.from({ length: 24 }, () => ({ u: Math.random(), v: Math.random(), s: 0.3 + Math.random() * 0.7 }));
+  constructor(s: WorldScene, d: (n: number) => void) {
+    super(s, d, '🎬 La film', s.duo ? 'Prinde floricelele 🍿 · Când apare inima, ține apăsat (mână în mână)' : 'Prinde floricelele 🍿 și bucură-te de film');
+    this.duo = s.duo;
+  }
   tick(dt: number) {
-    this.k = Math.min(1, this.k + dt / 32);
+    this.k = Math.min(1, this.k + dt / 36);
     this.romance = this.k > 0.55 && this.k < 0.78;
     this.popT -= dt;
     const B = this.box;
-    if (this.popT <= 0 && !this.romance) { this.popT = 0.7 + Math.random() * 0.6; this.pops.push({ x: B.x + B.w * 0.68, y: B.y + B.h - 140, vx: -(60 + Math.random() * 120), vy: -(260 + Math.random() * 120) }); }
+    const playing = this.k > 0.06 && this.k < 0.94 && !(this.romance && this.duo);
+    if (this.popT <= 0 && playing) { this.popT = 0.7 + Math.random() * 0.6; this.pops.push({ x: B.x + B.w * 0.68, y: B.y + B.h - 140, vx: -(60 + Math.random() * 120), vy: -(260 + Math.random() * 120) }); }
     for (const p of this.pops) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; }
     this.pops = this.pops.filter(p => p.y < B.y + B.h);
-    if (this.romance && this.holding && !this.held) { this.holdT += dt; if (this.holdT > 1.4) { this.held = true; Sfx.play('kiss'); this.fx.hearts(B.x + B.w / 2, B.y + B.h - 120, 12); } }
+    for (const d of this.dust) { d.v -= dt * 0.03 * d.s; if (d.v < 0) { d.v = 1; d.u = Math.random(); } }
+    if (this.duo && this.romance && this.holding && !this.held) { this.holdT += dt; if (this.holdT > 1.4) { this.held = true; Sfx.play('kiss'); this.fx.hearts(B.x + B.w / 2, B.y + B.h - 120, 12); } }
     if (this.k >= 1) {
-      const s = this.scene; const love = 15 + (this.held ? 20 : 0), fun = 20 + this.caught * 2;
+      const s = this.scene; const love = this.duo ? 15 + (this.held ? 20 : 0) : 4, fun = 20 + this.caught * 2;
       s.op({ k: 'need', who: s.myId, need: 'love', delta: love }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: fun }); s.op({ k: 'need', who: s.myId, need: 'hunger', delta: this.caught });
-      if (s.sameArea()) { s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love }); s.op({ k: 'need', who: s.partner.id, need: 'fun', delta: fun }); }
+      if (this.duo && s.partner.control !== 'remote') { s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love }); s.op({ k: 'need', who: s.partner.id, need: 'fun', delta: fun }); }
       s.op({ k: 'stat', key: 'cinema', delta: 1 });
-      s.log(this.held ? 'Un film romantic, mână în mână 🎬💕' : 'O seară la cinema 🎬');
+      s.log(this.duo ? (this.held ? 'Un film romantic, mână în mână 🎬💕' : 'O seară la cinema 🎬') : `${s.me.actor.spec.name} a fost la un film 🎬`);
       this.finish(this.held ? 2 : 1, this.held ? 'Mână în mână 💕 · cel mai frumos film' : `Ce film! 🍿 ${this.caught} floricele`);
     }
   }
   pointer(t: string, x: number, y: number) {
     if (t === 'down') this.holding = true; if (t === 'up') this.holding = false;
-    if (t !== 'down' || this.romance) return;
+    if (t !== 'down' || (this.romance && this.duo)) return;
     const i = this.pops.findIndex(p => Math.hypot(p.x - x, p.y - y) < 36);
     if (i >= 0) { const p = this.pops[i]; this.pops.splice(i, 1); this.caught++; Sfx.play('crunch', { vol: 0.6 }); this.fx.text(p.x, p.y, 'Hap! 🍿', '#ff8c42', 0.7); this.hero.play('dance_hop'); }
   }
-  key(k: string, d: boolean) { if (k === ' ' || k === 'e') { this.holding = d; if (d && !this.romance && this.pops.length) { const p = this.pops[0]; this.pops.shift(); this.caught++; Sfx.play('pop'); this.fx.text(p.x, p.y, 'Hap! 🍿', '#ff8c42', 0.7); } } }
-  /** filmul de pe ecran: povestea unui soare si a unei lune care se intalnesc */
+  key(k: string, d: boolean) { if (k === ' ' || k === 'e') { this.holding = d; if (d && !(this.romance && this.duo) && this.pops.length) { const p = this.pops[0]; this.pops.shift(); this.caught++; Sfx.play('crunch', { vol: 0.6 }); this.fx.text(p.x, p.y, 'Hap! 🍿', '#ff8c42', 0.7); } } }
+  /** filmul: doi prieteni (iepurasul si pisicuta) — se cunosc in parc, ploaia si umbrela, noaptea cu stele, artificii */
   movie(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
-    const k = this.k;
-    const sky = ctx.createLinearGradient(0, y, 0, y + h); sky.addColorStop(0, k < 0.5 ? '#7cc8f5' : '#ff9a8b'); sky.addColorStop(1, k < 0.5 ? '#fff1d6' : '#5a4a8a'); ctx.fillStyle = sky; ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = '#9fd68c'; ctx.beginPath(); ctx.moveTo(x, y + h); for (let i = 0; i <= 10; i++) ctx.lineTo(x + i * w / 10, y + h * 0.78 - Math.sin(i * 1.3) * 10); ctx.lineTo(x + w, y + h); ctx.fill();
-    const meet = Math.min(1, k / 0.6);
-    const sx = x + w * (0.15 + meet * 0.27), mx = x + w * (0.85 - meet * 0.27), cy = y + h * 0.42 + Math.sin(this.t * 2) * 4;
-    ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(sx, cy, 22, 0, 7); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#fff6b0'; ctx.beginPath(); ctx.arc(mx, cy, 20, 0, 7); ctx.fill(); ctx.stroke();
-    for (const [px, f] of [[sx, 1], [mx, -1]] as const) { ctx.fillStyle = O; ctx.beginPath(); ctx.arc(px - 6 + f * 2, cy - 3, 2.5, 0, 7); ctx.arc(px + 6 + f * 2, cy - 3, 2.5, 0, 7); ctx.fill(); ctx.fillStyle = '#ff9ab8'; ctx.beginPath(); ctx.arc(px - 11, cy + 5, 4, 0, 7); ctx.arc(px + 11, cy + 5, 4, 0, 7); ctx.fill(); }
-    if (this.romance || k > 0.78) { const hy = cy - 40 - (k - 0.55) * 60; heartPath(ctx, x + w / 2, hy, 16 + Math.sin(this.t * 6) * 2); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.stroke(); }
-    if (k > 0.85) { ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x, y + h - 26, w, 26); ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('SFÂRȘIT 💕', x + w / 2, y + h - 8); }
+    const k = this.k, t = this.t;
+    const sc = k < 0.3 ? 0 : k < 0.55 ? 1 : k < 0.8 ? 2 : 3;
+    const SKY = [['#8fd3ff', '#fff1d6'], ['#8a9bb0', '#c9d3dd'], ['#1d2550', '#4a3f75'], ['#2b1d40', '#6a3f75']][sc];
+    const sky = ctx.createLinearGradient(0, y, 0, y + h); sky.addColorStop(0, SKY[0]); sky.addColorStop(1, SKY[1]); ctx.fillStyle = sky; ctx.fillRect(x, y, w, h);
+    if (sc >= 2) for (let i = 0; i < 26; i++) { ctx.fillStyle = `rgba(255,255,220,${0.4 + 0.6 * Math.abs(Math.sin(t * 2 + i))})`; ctx.beginPath(); ctx.arc(x + ((i * 83) % w), y + ((i * 41) % (h * 0.6)), 1.5, 0, 7); ctx.fill(); }
+    if (sc === 0) { ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(x + w * 0.85, y + h * 0.2, 16, 0, 7); ctx.fill(); }
+    if (sc === 2) { ctx.fillStyle = '#fff6b0'; ctx.beginPath(); ctx.arc(x + w * 0.82, y + h * 0.2, 14, 0, 7); ctx.fill(); }
+    ctx.fillStyle = sc === 1 ? '#7a9a72' : sc >= 2 ? '#2f4a3a' : '#9fd68c'; ctx.beginPath(); ctx.moveTo(x, y + h); for (let i = 0; i <= 10; i++) ctx.lineTo(x + i * w / 10, y + h * 0.8 - Math.sin(i * 1.3) * 8); ctx.lineTo(x + w, y + h); ctx.fill();
+    // copacii din parc
+    for (const u of [0.12, 0.9]) { ctx.fillStyle = '#8b5e34'; ctx.fillRect(x + w * u - 3, y + h * 0.6, 6, h * 0.2); ctx.fillStyle = sc >= 2 ? '#2e5a3a' : '#6cbf6c'; ctx.beginPath(); ctx.arc(x + w * u, y + h * 0.56, 16, 0, 7); ctx.fill(); }
+    // actorii: se apropie in prima scena, apoi stau impreuna
+    const sk = Math.min(1, Math.max(0, (k - 0.06) / 0.22));
+    const ax = x + w * (0.2 + sk * 0.24), bx = x + w * (0.8 - sk * 0.24), fy = y + h * 0.86;
+    const ps = Math.min(0.42, h / 260);
+    for (const [spec, px, flip] of [[NPC_SPECS.bunny, ax, 1], [NPC_SPECS.cat, bx, -1]] as const) {
+      const P = basePose(); const walking = sk < 1; P.dy = walking ? -Math.abs(Math.sin(t * 8)) * 3 : 0; P.armL = walking ? Math.sin(t * 8) * 0.5 : 0.3; P.armR = walking ? -Math.sin(t * 8) * 0.5 : sc === 1 && spec === NPC_SPECS.bunny ? 2.2 : 0.3;
+      P.eyes = sc >= 2 ? 'happy' : 'dot'; P.mouth = 'open'; P.blush = sc >= 2 ? 1.3 : 0.8;
+      drawCharacter(ctx, spec as any, P, px, fy, ps, flip as 1 | -1, t);
+    }
+    if (sc === 0) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ax + 10, fy - 40); ctx.lineTo(ax + 16, fy - 70 + Math.sin(t * 2) * 3); ctx.stroke(); ctx.fillStyle = '#ff7aa2'; ctx.beginPath(); ctx.ellipse(ax + 16, fy - 78 + Math.sin(t * 2) * 3, 8, 10, 0, 0, 7); ctx.fill(); }
+    if (sc === 1) {
+      for (let i = 0; i < 40; i++) { const rx = x + ((i * 47 + t * 60) % w), ry = y + ((i * 31 + t * 240) % h); ctx.strokeStyle = 'rgba(220,235,255,.7)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 3, ry + 9); ctx.stroke(); }
+      const ux = (ax + bx) / 2; ctx.fillStyle = '#ff4d6d'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(ux, fy - 62, 30, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(ux, fy - 62); ctx.lineTo(ux, fy - 30); ctx.stroke();
+    }
+    if (sc >= 2 && this.romance) { const hy = fy - 70 - (k - 0.55) * 80; heartPath(ctx, (ax + bx) / 2, hy, 12 + Math.sin(t * 6) * 2); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.stroke(); }
+    if (sc === 3) for (let i = 0; i < 3; i++) { const fx0 = x + w * (0.25 + i * 0.25), fy0 = y + h * (0.25 + (i % 2) * 0.1), fr = ((t * 50 + i * 25) % 45); ctx.strokeStyle = ['#ffd23f', '#ff7aa2', '#7ab8ff'][i]; ctx.lineWidth = 2; for (let r = 0; r < 10; r++) { const a = r * Math.PI / 5; ctx.beginPath(); ctx.moveTo(fx0 + Math.cos(a) * fr * 0.5, fy0 + Math.sin(a) * fr * 0.5); ctx.lineTo(fx0 + Math.cos(a) * fr, fy0 + Math.sin(a) * fr); ctx.stroke(); } }
+    // titlul scenei, ca in filme
+    const title = ['Capitolul 1 · Cum s-au cunoscut', 'Capitolul 2 · Ploaia', 'Capitolul 3 · Noaptea cu stele', 'SFÂRȘIT 💕'][sc];
+    const tk = sc === 0 ? (k - 0.06) / 0.08 : sc === 1 ? (k - 0.3) / 0.08 : sc === 2 ? (k - 0.55) / 0.08 : 1;
+    if (tk > 0 && tk < 1.6 || sc === 3) { ctx.globalAlpha = sc === 3 ? 1 : Math.max(0, Math.min(1, tk < 1 ? tk * 2 : (1.6 - tk) * 2)); ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(x, y + h - 26, w, 26); ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(title, x + w / 2, y + h - 8); ctx.globalAlpha = 1; }
+    // banda de film: putin "praf" pe imagine
+    if (Math.random() < 0.3) { ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(x + Math.random() * w, y, 1, h); }
   }
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+    const t = this.t;
     ctx.fillStyle = '#1d1530'; ctx.fillRect(x, y, w, h);
-    // ecranul
-    const sw = w - 70, sh = h * 0.42;
-    ctx.save(); ctx.beginPath(); ctx.rect(x + 35, y + 40, sw, sh); ctx.clip(); this.movie(ctx, x + 35, y + 40, sw, sh); ctx.restore();
-    ctx.strokeStyle = '#8a7ad6'; ctx.lineWidth = 5; ctx.strokeRect(x + 35, y + 40, sw, sh);
-    // lumina proiectorului
-    const gr = ctx.createLinearGradient(0, y + 40 + sh, 0, y + h); gr.addColorStop(0, 'rgba(255,255,220,.08)'); gr.addColorStop(1, 'rgba(255,255,220,0)'); ctx.fillStyle = gr; ctx.fillRect(x, y + 40 + sh, w, h);
-    // scaunele + cei doi din spate (fata spre ecran)
+    const sw = w - 70, sh = h * 0.42, sx = x + 35, sy = y + 40;
+    ctx.save(); ctx.beginPath(); ctx.rect(sx, sy, sw, sh); ctx.clip(); this.movie(ctx, sx, sy, sw, sh); ctx.restore();
+    ctx.strokeStyle = '#8a7ad6'; ctx.lineWidth = 5; ctx.strokeRect(sx, sy, sw, sh);
+    // cortina: se deschide la inceput, se inchide la sfarsit
+    const open = Math.min(1, this.k / 0.06, (1 - this.k) / 0.06);
+    for (const side of [-1, 1]) {
+      const cw = (sw / 2 + 20) * (1 - open * 0.92), cx0 = side < 0 ? sx - 20 : sx + sw + 20 - cw;
+      ctx.fillStyle = '#b02a4a'; ctx.fillRect(cx0, y + 30, cw, sh + 20);
+      ctx.strokeStyle = '#7a1a34'; ctx.lineWidth = 3; for (let i = 1; i < 6; i++) { const fx0 = cx0 + cw * i / 6; ctx.beginPath(); ctx.moveTo(fx0, y + 30); ctx.lineTo(fx0 + Math.sin(t + i) * 2, y + 50 + sh); ctx.stroke(); }
+    }
+    ctx.fillStyle = '#b02a4a'; ctx.fillRect(x + 10, y + 22, w - 20, 16); ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 2; ctx.strokeRect(x + 10, y + 22, w - 20, 16);
+    // fasciculul proiectorului (din spatele vostru spre ecran), cu praf in lumina
+    const px = x + w / 2, py = y + h + 10;
+    ctx.save(); ctx.globalAlpha = 0.1 + 0.03 * Math.sin(t * 9); ctx.fillStyle = '#fffbe0'; ctx.beginPath(); ctx.moveTo(px - 10, py); ctx.lineTo(sx + 10, sy + sh); ctx.lineTo(sx + sw - 10, sy + sh); ctx.lineTo(px + 10, py); ctx.closePath(); ctx.fill(); ctx.restore();
+    for (const d of this.dust) { const dx0 = px + (sx + d.u * sw - px) * (1 - d.v), dy0 = py + (sy + sh - py) * (1 - d.v); ctx.fillStyle = `rgba(255,255,230,${0.25 * d.s})`; ctx.beginPath(); ctx.arc(dx0, dy0, 1.4, 0, 7); ctx.fill(); }
+    // spectatorii din fata (siluete) si randul vostru
+    for (let i = 0; i < 7; i++) { const hx = x + 30 + i * (w - 60) / 6, hy = y + 50 + sh + 42 + Math.sin(t * 1.5 + i) * 1.5; ctx.fillStyle = '#120c22'; ctx.beginPath(); ctx.arc(hx, hy, 15, 0, 7); ctx.fill(); if (i % 3 === 0) { ctx.beginPath(); ctx.arc(hx - 10, hy - 12, 6, 0, 7); ctx.arc(hx + 10, hy - 12, 6, 0, 7); ctx.fill(); } }
+    ctx.fillStyle = '#2a1d40'; ctx.fillRect(x, y + 50 + sh + 52, w, 14);
     const me = this.scene.me.actor.spec, pa = this.scene.partner.actor.spec;
     const lean = this.held ? 1 : this.romance && this.holding ? Math.min(1, this.holdT / 1.4) : 0;
     const by = y + h - 70;
-    for (const [spec, dx] of [[me, -60], [pa, 60]] as const) {
-      const P = pose({ back: true, rot: lean * 0.12 * (dx < 0 ? 1 : -1), armR: dx < 0 ? 0.55 + lean * 0.8 : 0.55, armL: dx > 0 ? 0.55 + lean * 0.8 : 0.55 });
-      drawCharacter(ctx, spec, P, x + w / 2 + dx - lean * 8 * Math.sign(dx), by, 1.25, 1, this.t);
+    const seats: [typeof me, number][] = this.duo ? [[me, -60], [pa, 60]] : [[me, 0]];
+    for (const [spec, dx] of seats) {
+      const P = pose({ back: true, rot: this.duo ? lean * 0.12 * (dx < 0 ? 1 : -1) : 0, armR: this.duo && dx < 0 ? 0.55 + lean * 0.8 : 0.55, armL: this.duo && dx > 0 ? 0.55 + lean * 0.8 : 0.55 });
+      drawCharacter(ctx, spec, P, x + w / 2 + dx - (this.duo ? lean * 8 * Math.sign(dx) : 0), by, 1.25, 1, t, (this.scene.w.chars[spec === me ? this.scene.myId : this.scene.partner.id] as any)?.outfit);
     }
+    // lumina filmului pe voi
+    ctx.fillStyle = this.k > 0.55 && this.k < 0.8 ? 'rgba(90,80,180,.12)' : 'rgba(255,240,200,.07)'; ctx.fillRect(x, y + 40 + sh, w, h);
     ctx.fillStyle = '#c0304a'; ctx.strokeStyle = O; ctx.lineWidth = 3;
     for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.roundRect(x + 16 + i * (w - 32) / 4, y + h - 64, (w - 32) / 4 - 8, 70, 12); ctx.fill(); ctx.stroke(); }
     if (this.held) { heartPath(ctx, x + w / 2, y + h - 110, 10); ctx.fillStyle = '#ff4d6d'; ctx.fill(); }
@@ -231,7 +274,7 @@ export class CinemaGame extends Panel {
     for (let i = 0; i < 6; i++) { ctx.fillStyle = '#fff3b0'; ctx.beginPath(); ctx.arc(bx - 14 + i * 6, byy - 32 - (i % 2) * 4, 5, 0, 7); ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1; ctx.stroke(); }
     for (const p of this.pops) { ctx.fillStyle = '#fff3b0'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; for (const [dx, dy] of [[0, 0], [5, -3], [-4, -4]]) { ctx.beginPath(); ctx.arc(p.x + dx, p.y + dy, 6, 0, 7); ctx.fill(); ctx.stroke(); } }
     ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-    ctx.fillText(this.romance ? (this.held ? 'Mână în mână 💕' : 'Acum! Ține apăsat ❤️') : `🍿 ${this.caught}`, x + w / 2, y + 30 + sh + 34);
+    ctx.fillText(this.romance && this.duo ? (this.held ? 'Mână în mână 💕' : 'Acum! Ține apăsat ❤️') : this.romance ? 'Ce scenă frumoasă 💕' : `🍿 ${this.caught}`, x + w / 2, y + 30 + sh + 34);
   }
 }
 
@@ -243,11 +286,14 @@ const COURSES: { name: string; opts: string[] }[] = [
 ];
 const DISH_NAMES: Record<string, string> = { '🍲': 'Supă cremă', '🥗': 'Salată cu ierburi', '🍄': 'Ciuperci la grătar', '🍕': 'Pizza cu inimioare', '🐟': 'Pește la cuptor', '🍔': 'Burger gurmand', '🍰': 'Tort cu frișcă', '🍓': 'Căpșuni cu ciocolată', '🍫': 'Fondant de ciocolată' };
 export class RestoGame extends Panel {
-  i = 0; wants: number[] = COURSES.map(() => Math.floor(Math.random() * 3)); picked: number[] = []; wait = 0; toast = false; toastK = 0; toastHit = false; candle = 0;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🕯️ Cină romantică', `Ghicește ce-și dorește ${s.partner.actor.spec.name} (uită-te la gândul ${g(s.partner.id, 'lui', 'ei')})`); }
+  i = 0; wants: number[] = COURSES.map(() => Math.floor(Math.random() * 3)); picked: number[] = []; wait = 0; toast = false; toastK = 0; toastHit = false; candle = 0; duo: boolean;
+  constructor(s: WorldScene, d: (n: number) => void) {
+    super(s, d, s.duo ? '🕯️ Cină romantică' : '🍽️ Cina la restaurant', s.duo ? `Ghicește ce-și dorește ${s.partner.actor.spec.name} (uită-te la gândul ${g(s.partner.id, 'lui', 'ei')})` : 'Alege ce-ți place din fiecare fel');
+    this.duo = s.duo; if (!this.duo) this.wants = [];
+  }
   get pa() { return this.scene.partner; }
   tick(dt: number) {
-    if (this.wait > 0) { this.wait -= dt; if (this.wait <= 0) { this.i++; if (this.i >= COURSES.length) this.toast = true; } }
+    if (this.wait > 0) { this.wait -= dt; if (this.wait <= 0) { this.i++; if (this.i >= COURSES.length) { if (this.duo) this.toast = true; else this.end(); } } }
     if (this.toast && !this.toastHit) { this.toastK += dt; if (this.toastK > 4) this.end(); }
   }
   opt(k: number) { const B = this.box; const bw = (B.w - 80) / 3; return { x: B.x + 20 + k * (bw + 20), y: B.y + B.h - 150, w: bw, h: 100 }; }
@@ -255,6 +301,7 @@ export class RestoGame extends Panel {
   pick(k: number) {
     if (this.wait > 0 || this.i >= COURSES.length) return;
     this.picked.push(k); this.wait = 1.4;
+    if (!this.duo) { this.wants[this.i] = k; Sfx.play('clink'); this.fx.text(this.box.x + this.box.w / 2, this.box.y + 150, ['Mmm, delicios! 😋', 'Ce bun! 🤤', 'Perfect! ✨'][this.i % 3], '#ff4d6d', 0.9); return; }
     const ok = k === this.wants[this.i];
     const B = this.box;
     if (ok) { Sfx.play('clink'); Sfx.play('kiss', { delay: 0.3 }); this.fx.hearts(B.x + B.w * 0.7, B.y + 170, 6); this.fx.text(B.x + B.w * 0.7, B.y + 140, 'Exact ce voiam! 💕', '#ff4d6d', 0.9); }
@@ -276,11 +323,12 @@ export class RestoGame extends Panel {
   end(clinked = false) {
     const s = this.scene; const right = this.picked.filter((p, i) => p === this.wants[i]).length;
     const elegant = ['rochie', 'costum'].includes((s.w.chars[s.myId].outfit as any)?.body ?? '');
-    const love = 18 + right * 8 + (clinked ? 10 : 0) + (elegant ? 10 : 0);
+    const love = this.duo ? 18 + right * 8 + (clinked ? 10 : 0) + (elegant ? 10 : 0) : 4;
     s.op({ k: 'need', who: s.myId, need: 'hunger', delta: 60 }); s.op({ k: 'need', who: s.myId, need: 'love', delta: love }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: 12 });
-    if (s.sameArea()) { s.op({ k: 'need', who: s.partner.id, need: 'hunger', delta: 60 }); s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love }); }
-    s.op({ k: 'stat', key: 'restoDates', delta: 1 });
-    s.log(`Cină romantică la „La Doi” 🕯️ ${right}/3 feluri ghicite${elegant ? ', în haine elegante' : ''}`);
+    if (this.duo && s.partner.control !== 'remote') { s.op({ k: 'need', who: s.partner.id, need: 'hunger', delta: 60 }); s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love }); }
+    if (this.duo) s.op({ k: 'stat', key: 'restoDates', delta: 1 });
+    s.log(this.duo ? `Cină romantică la „La Doi” 🕯️ ${right}/3 feluri ghicite${elegant ? ', în haine elegante' : ''}` : `${s.me.actor.spec.name} a luat cina la restaurant 🍽️`);
+    if (!this.duo) { this.finish(1.4, 'Ce cină bună! 😋'); return; }
     this.finish(1 + right * 0.4, right === 3 ? `Vă cunoașteți perfect! 💕 3/3` : `${right}/3 ghicite · o seară dulce 🕯️`);
   }
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
@@ -290,7 +338,7 @@ export class RestoGame extends Panel {
     const me = this.scene.me, pa = this.pa;
     const ty = y + h * 0.5;
     // personajele la masa
-    for (const [p, dx, flip] of [[me, -110, 1], [pa, 110, -1]] as const) {
+    for (const [p, dx, flip] of (this.duo ? [[me, -110, 1], [pa, 110, -1]] : [[me, -110, 1]]) as [typeof me, number, number][]) {
       const happy = this.picked.length && this.picked[this.picked.length - 1] === this.wants[this.picked.length - 1] && this.wait > 0;
       const P = pose({ eyes: p === pa && happy ? 'heart' : 'happy', mouth: 'open', blush: 1.2, armR: this.toast ? 1.6 : 0.6 });
       drawCharacter(ctx, p.actor.spec, P, x + w / 2 + dx, ty + 30, 1.3, flip as 1 | -1, this.t, (this.scene.w.chars[p.id] as any).outfit);
@@ -310,6 +358,9 @@ export class RestoGame extends Panel {
       const ph = (this.toastK * 0.9) % 1, dx = Math.abs(ph - 0.5) * 220;
       for (const s of [-1, 1]) { const gx = cx + s * (10 + dx), gy = y + h * 0.3; ctx.fillStyle = 'rgba(255,240,200,.7)'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(gx - 12, gy - 24); ctx.lineTo(gx + 12, gy - 24); ctx.lineTo(gx + 4, gy + 4); ctx.lineTo(gx - 4, gy + 4); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(gx, gy + 4); ctx.lineTo(gx, gy + 22); ctx.moveTo(gx - 9, gy + 22); ctx.lineTo(gx + 9, gy + 22); ctx.stroke(); }
       btn(ctx, this.toastBtn(), '#ffd23f', 'Noroc! 🥂', 22);
+    } else if (this.i < COURSES.length && !this.duo) {
+      ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(`${COURSES[this.i].name} · ce-ți comanzi?`, x + w / 2, y + h - 172);
+      COURSES[this.i].opts.forEach((o, k) => { const b = this.opt(k); btn(ctx, b, '#fff8ef'); const ic = iconCanvas(o, 64); if (ic) ctx.drawImage(ic, b.x + b.w / 2 - 24, b.y + 8, 48, 48); ctx.font = '700 12px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.fillText(DISH_NAMES[o] ?? '', b.x + b.w / 2, b.y + b.h - 16); });
     } else if (this.i < COURSES.length) {
       // gandul partenerului: un indiciu despre ce vrea
       const want = COURSES[this.i].opts[this.wants[this.i]];

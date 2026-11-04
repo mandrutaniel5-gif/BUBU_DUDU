@@ -6,7 +6,7 @@ export interface Activity {
   anim: string;
   dur: number;                                  // secunde reale
   needs: Partial<Record<NeedKey, number>>;      // la final
-  place?: 'bed' | 'tub' | 'toilet' | 'sofa' | 'stand';
+  place?: 'bed' | 'tub' | 'toilet' | 'sofa' | 'stand' | 'ride';
   furnFlag?: [string, unknown, unknown];        // [cheie, la start, la final]
   text: string;                                 // mesaj la final
   minigame?: string;                            // id minijoc (daca exista)
@@ -55,5 +55,6 @@ export const ACTIVITIES: Record<string, Activity> = {
   sellwood: { id: 'sellwood', anim: 'flex', dur: 1.5, needs: { fun: 4 }, text: 'Lemne vândute! 💰' },
   repairstand: { id: 'repairstand', anim: 'act_scrub', dur: 3, needs: { fun: 6, energy: -1.5 }, text: 'Bang-bang 🔨' },
   openstand: { id: 'openstand', anim: 'wave', dur: 0.8, needs: { fun: 2 }, text: 'Deschis! 🧺' },
+  carousel: { id: 'carousel', anim: 'act_sit', dur: 8, needs: { fun: 25, love: 3 }, place: 'ride', text: 'Uiiii! 🎠' },
   read_mail: { id: 'read_mail', anim: 'love', dur: 2.6, needs: { love: 8 }, text: 'Un bilețel de dragoste 💌' },
 };

@@ -43,6 +43,7 @@ export const ACT_SOUNDS: Record<string, ActSound> = {
   fixtv: { every: [['metal_hit', 'hammer'], 1.2, 0.5] },
   unclog: { every: ['squelch', 0.9, 0.6], end: 'flush' },
   fish: { start: 'whoosh' },
+  carousel: { start: 'chimes', every: [['chimes', 'whoosh'], 2.2, 0.3] },
 };
 
 /** bucle in timpul minijocurilor (ambianta zonei se aude mai incet) */

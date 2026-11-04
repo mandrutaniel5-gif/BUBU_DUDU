@@ -1,7 +1,7 @@
 import type { CharId } from '../char/draw';
 
 /** Starea transmisa des (pozitie). */
-export interface PlayerState { who: CharId; gx: number; gy: number; flip: 1 | -1; back: boolean; moving: boolean; mood: string; ts: number; riding?: boolean; passenger?: boolean; board?: boolean }
+export interface PlayerState { who: CharId; gx: number; gy: number; flip: 1 | -1; back: boolean; moving: boolean; mood: string; ts: number; riding?: boolean; rideKind?: 'bike' | 'scooter'; passenger?: boolean; board?: boolean }
 
 /** Evenimente discrete. */
 export type NetEvent =
@@ -12,7 +12,10 @@ export type NetEvent =
   | { t: 'mini'; who: CharId; data: unknown }
   | { t: 'act'; who: CharId; act: string | null; furn?: string }
   | { t: 'cotravel'; who: CharId; to: string; vehicle: string }
-  | { t: 'ridecall'; who: CharId; vehicle: string };
+  | { t: 'ridecall'; who: CharId; vehicle: string }
+  // invitatie: mergem impreuna (autobuz, cinema, restaurant, roata mare...)? celalalt alege
+  | { t: 'invite'; who: CharId; id: string; what: string; label: string; icon: string }
+  | { t: 'inviteReply'; who: CharId; id: string; ok: boolean };
 
 export type WorldOp =
   | { k: 'furn'; key: string; value: unknown }

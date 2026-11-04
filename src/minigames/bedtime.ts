@@ -3,10 +3,11 @@ import { Panel } from './base';
 import { Actor } from '../char/actor';
 import { Sfx } from '../engine/sfx';
 import { heartPath } from '../char/draw';
+import { iconCanvas } from '../ui/icons';
 import type { WorldScene } from '../scenes/world';
 import { g as gen } from '../game/gender';
 
-type Step = 'intro' | 'msg' | 'msgShow' | 'pos' | 'posShow' | 'tug' | 'dutch' | 'kiss' | 'night';
+type Step = 'intro' | 'msg' | 'msgShow' | 'pos' | 'posShow' | 'tug' | 'dutch' | 'kiss' | 'night' | 'story' | 'stars' | 'dream' | 'dreamShow' | 'sheep';
 
 const POSES = [
   { id: 'spoon', icon: '🥄', label: 'Lingurițe' },
@@ -14,6 +15,18 @@ const POSES = [
   { id: 'leg', icon: '🦵', label: 'Picior peste' },
   { id: 'back', icon: '🙃', label: 'Spate în spate' },
 ];
+
+/** povesti de seara (3 pagini fiecare) */
+const STORIES: { title: string; pages: [string, string][] }[] = [
+  { title: 'Ursulețul care nu putea dormi', pages: [['🌙', 'A fost odată un ursuleț care număra stelele ca să adoarmă.'], ['⭐', 'Într-o noapte, o stea a coborât și i-a spus: „Te ajut eu”.'], ['🛏️', 'L-a învelit cu o rază caldă… și ursulețul a adormit zâmbind.']] },
+  { title: 'Panda și norișorul', pages: [['☁️', 'Un norișor rătăcit plângea deasupra pădurii de bambus.'], ['🌳', 'O panda mică i-a făcut loc lângă ea, pe o creangă.'], ['☀️', 'Dimineața, norișorul i-a dăruit un curcubeu doar al ei.']] },
+  { title: 'Căsuța din poiană', pages: [['🏡', 'Într-o poiană era o căsuță cu ferestre roz.'], ['🔥', 'Seara, cei doi locatari făceau focul și beau ceai.'], ['💕', 'Și oricât de rece era afară, înăuntru era mereu cald.']] },
+  { title: 'Licuriciul curajos', pages: [['🌲', 'Un licurici mic se temea de întunericul din pădure.'], ['✨', 'Până a aflat că el e lumina pe care o așteaptă ceilalți.'], ['🌙', 'De atunci zboară în fiecare noapte, să nu se teamă nimeni.']] },
+  { title: 'Scrisoarea pierdută', pages: [['💌', 'Vântul a luat o scrisoare de dragoste și a dus-o departe.'], ['🐦', 'O vrabie a găsit-o și a zburat trei zile cu ea în cioc.'], ['💗', 'A lăsat-o la fereastra potrivită, exact înainte de culcare.']] },
+];
+const DREAMS = [{ icon: '🌊', label: 'La mare' }, { icon: '🌲', label: 'La munte' }, { icon: '🧺', label: 'Un picnic' }, { icon: '⭐', label: 'Printre stele' }];
+/** numere la intamplare dar la fel pe ambele telefoane (pornesc din ziua serii) */
+function seeded(seed: number) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 const AI_MSG: Record<string, string[]> = {
   bubu: ['Ești cel mai pufos urs din lume 🐻💕', 'Mulțumesc că m-ai făcut să râd azi', 'Te iubesc mai mult decât bubble tea 🧋', 'Cu tine e acasă 🏡', 'Chiar și când sforăi, te iubesc 😴💗'],
@@ -32,12 +45,34 @@ export class BedtimeGame extends Panel {
   kissHold = false; theirKiss = false; kiss = 0;
   input: HTMLElement | null = null;
   score = 0;
+  /** ce facem in seara asta (alt amestec in fiecare seara, la fel pentru amandoi) */
+  plan: Step[] = []; planI = 0;
+  story = STORIES[0]; page = 0;
+  stars: { x: number; y: number; vx: number; vy: number; hit: boolean }[] = []; starT = 0; caughtStars = 0;
+  myDream = -1; theirDream = -1;
+  sheep: { t: number; counted: boolean }[] = []; sheepT = 0; sheepCount = 0;
 
   constructor(scene: WorldScene, done: (s: number) => void) {
     super(scene, done, '🌙 Rutina de seară', '');
     this.partnerAI = scene.partner.control !== 'remote';
     this.me = new Actor(scene.myId, this.fx); this.pa = new Actor(scene.partner.id, this.fx);
     for (const d of scene.miniInbox.splice(0)) this.net(d);
+    const rnd = seeded(scene.nightKey() * 7919 + 13);
+    const pool: Step[] = ['pos', 'tug', 'story', 'stars', 'dream', 'sheep'];
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const withMsg = rnd() < 0.6;
+    this.plan = [...(withMsg ? ['msg' as Step] : []), ...pool.slice(0, withMsg ? 2 : 3)];
+    this.story = STORIES[Math.floor(rnd() * STORIES.length)];
+  }
+  /** urmatorul moment din seara asta (la sfarsit: pupicul de noapte buna) */
+  next() {
+    const s = this.plan[this.planI++];
+    if (!s) { const myFart = this.scene.w.chars[this.scene.myId].fart; if (myFart >= 50 && !this.dutchOffered) { this.dutchOffered = true; this.dutchBy = null; this.go('dutch'); return; } this.go('kiss'); return; }
+    if (s === 'tug') { this.myTaps = 0; this.theirTaps = 0; this.tugWinner = null; this.tugDoneT = 0; }
+    if (s === 'sheep') { this.sheep = []; this.sheepT = 0; this.sheepCount = 0; }
+    if (s === 'stars') { this.stars = []; this.starT = 0; this.caughtStars = 0; }
+    if (s === 'story') this.page = 0;
+    this.go(s);
   }
 
   send(d: object) { this.scene.net.sendEvent({ t: 'mini', who: this.scene.myId, data: { k: 'bed', ...d } }); }
@@ -50,6 +85,7 @@ export class BedtimeGame extends Panel {
     if (d.taps !== undefined) this.theirTaps = d.taps;
     if (d.dutch) { this.dutchBy = 'them'; this.go('dutch'); }
     if (d.kiss !== undefined) this.theirKiss = d.kiss;
+    if (d.dream !== undefined) this.theirDream = d.dream;
   }
 
   go(s: Step) { this.step = s; this.stepT = 0; this.removeInput(); if (s === 'msg') this.showInput(); }
@@ -59,12 +95,12 @@ export class BedtimeGame extends Panel {
     this.me.update(dt); this.pa.update(dt);
     const ai = this.partnerAI;
     switch (this.step) {
-      case 'intro': if (this.stepT > 2) this.go('msg'); break;
+      case 'intro': if (this.stepT > 2) this.next(); break;
       case 'msg':
         if (ai && this.theirMsg === null && this.stepT > 3) { const l = AI_MSG[this.scene.partner.id]; this.theirMsg = l[Math.floor(Math.random() * l.length)]; }
         if (this.myMsg && (this.theirMsg !== null || this.stepT > 40)) this.go('msgShow');
         break;
-      case 'msgShow': if (this.stepT > 5) this.go('pos'); break;
+      case 'msgShow': if (this.stepT > 5) this.next(); break;
       case 'pos':
         if (ai && this.theirPos < 0 && this.stepT > 2.5) this.theirPos = Math.floor(Math.random() * 3);
         if (this.myPos >= 0 && (this.theirPos >= 0 || this.stepT > 25)) {
@@ -73,7 +109,29 @@ export class BedtimeGame extends Panel {
           if (this.myPos === this.theirPos) { this.score += 1; Sfx.play('good'); this.fx.hearts(this.box.x + this.box.w / 2, this.box.y + this.box.h / 2, 10); }
         }
         break;
-      case 'posShow': if (this.stepT > 3.5) { this.go('tug'); this.myTaps = 0; this.theirTaps = 0; this.tugWinner = null; } break;
+      case 'posShow': if (this.stepT > 3.5) this.next(); break;
+      case 'story': if (this.stepT > 9 && this.page < this.story.pages.length - 1) { this.page++; this.stepT = 0; Sfx.play('page'); } else if (this.page >= this.story.pages.length - 1 && this.stepT > 6) { this.score += 0.5; this.next(); } break;
+      case 'stars': {
+        this.starT -= dt; const b = this.box;
+        if (this.stepT < 11 && this.starT <= 0) { this.starT = 0.55 + Math.random() * 0.5; this.stars.push({ x: b.x + b.w * (0.1 + Math.random() * 0.5), y: b.y + 60 + Math.random() * b.h * 0.25, vx: 220 + Math.random() * 120, vy: 70 + Math.random() * 40, hit: false }); }
+        for (const st of this.stars) { st.x += st.vx * dt; st.y += st.vy * dt; }
+        this.stars = this.stars.filter(st => st.x < b.x + b.w + 40 && !st.hit);
+        if (this.stepT > 13) { this.score += Math.min(1, this.caughtStars * 0.15); this.next(); }
+        break;
+      }
+      case 'dream':
+        if (ai && this.theirDream < 0 && this.stepT > 2.5) this.theirDream = Math.floor(Math.random() * DREAMS.length);
+        if (this.myDream >= 0 && (this.theirDream >= 0 || this.stepT > 25)) { if (this.theirDream < 0) this.theirDream = this.myDream; this.go('dreamShow'); if (this.myDream === this.theirDream) { this.score += 1; Sfx.play('chimes'); this.fx.hearts(this.box.x + this.box.w / 2, this.box.y + this.box.h / 2, 10); } }
+        break;
+      case 'dreamShow': if (this.stepT > 3.8) this.next(); break;
+      case 'sheep': {
+        this.sheepT -= dt;
+        if (this.stepT < 12 && this.sheepT <= 0) { this.sheepT = 1.15; this.sheep.push({ t: 0, counted: false }); }
+        for (const sh of this.sheep) sh.t += dt;
+        this.sheep = this.sheep.filter(sh => sh.t < 2.4);
+        if (this.stepT > 14) { this.score += Math.min(1, this.sheepCount * 0.1); this.next(); }
+        break;
+      }
       case 'tug': {
         if (this.stepT < 1.5) break; // numaratoare
         if (ai) this.theirTaps += dt * (5.2 + Math.sin(this.t * 2) * 2);
@@ -91,7 +149,7 @@ export class BedtimeGame extends Panel {
       }
       case 'dutch':
         if (this.dutchBy === 'them') { if (this.stepT > 6 || this.fan >= 1) { this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, this.fan >= 1 ? 'Ai supraviețuit! 😮‍💨' : 'Ai leșinat… 😵', '#7cb342', 1.2); this.score += this.fan >= 1 ? 0.5 : 0; this.go('kiss'); } }
-        else if (this.stepT > 4.5) this.go('kiss');
+        else if (this.stepT > 4.5) this.next();
         break;
       case 'kiss':
         if (ai) this.theirKiss = this.stepT > 1.2;
@@ -109,7 +167,7 @@ export class BedtimeGame extends Panel {
     const myFart = this.scene.w.chars[this.scene.myId].fart, theirFart = this.scene.w.chars[this.scene.partner.id].fart;
     if (myFart >= 50 && !this.dutchOffered) { this.dutchOffered = true; this.go('dutch'); this.dutchBy = null; return; }
     if (this.partnerAI && theirFart >= 50 && Math.random() < 0.6) { this.dutchBy = 'them'; this.go('dutch'); this.fx.fart(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.6, 2.5); Sfx.play('bigfart'); return; }
-    this.go('kiss');
+    this.next();
   }
 
   // ---- input
@@ -147,7 +205,14 @@ export class BedtimeGame extends Panel {
         if (x > cx && x < cx + cw - 8 && y > cy && y < cy + ch) { this.myPos = i; this.send({ pos: i }); Sfx.play('pop'); }
       });
     }
-    if (this.step === 'tug' && type === 'down' && !this.tugWinner && this.stepT > 1.5) { this.myTaps++; this.shake = 2; Sfx.play('step'); }
+    if (this.step === 'tug' && type === 'down' && !this.tugWinner && this.stepT > 1.5) { this.myTaps++; this.shake = 2; Sfx.play('cloth', { vol: 0.5 }); }
+    if (this.step === 'story' && type === 'down') { if (this.page < this.story.pages.length - 1) { this.page++; this.stepT = 0; Sfx.play('page'); } else if (this.stepT > 1) { this.score += 0.5; this.next(); } }
+    if (this.step === 'stars' && type === 'down') { const st = this.stars.find(q => Math.hypot(q.x - x, q.y - y) < 46); if (st) { st.hit = true; this.caughtStars++; Sfx.play('chimes', { vol: 0.6, rate: 1 + this.caughtStars * 0.04 }); this.fx.burst('sparkle', st.x, st.y, 8, 6.28, 90, { max: 0.6, color: '#fff6b0' }); this.fx.text(st.x, st.y - 20, 'O dorință! ✨', '#fff6b0', 0.8); } }
+    if (this.step === 'dream' && type === 'down' && this.myDream < 0) {
+      const cw = (b.w - 60) / 2, ch = 100;
+      DREAMS.forEach((_, i) => { const cx = b.x + 30 + (i % 2) * cw, cy = b.y + 140 + Math.floor(i / 2) * (ch + 14); if (x > cx && x < cx + cw - 8 && y > cy && y < cy + ch) { this.myDream = i; this.send({ dream: i }); Sfx.play('pop'); } });
+    }
+    if (this.step === 'sheep' && type === 'down') { const sh = this.sheep.find(q => !q.counted && q.t > 0.85 && q.t < 1.45); if (sh) { sh.counted = true; this.sheepCount++; Sfx.play('sheep', { vol: 0.35, rate: 1.2 }); } else Sfx.play('boing', { vol: 0.3 }); }
     if (this.step === 'dutch' && type === 'down') this.dutchTap(x, y);
     if (this.step === 'kiss') { if (type === 'down') { this.kissHold = true; this.send({ kiss: true }); } if (type === 'up') { this.kissHold = false; this.send({ kiss: false }); } }
   }
@@ -161,7 +226,7 @@ export class BedtimeGame extends Panel {
           this.dutchBy = 'me'; this.stepT = 0; this.send({ dutch: true }); this.fx.fart(b.x + b.w / 2, b.y + b.h * 0.55, 2.5); Sfx.play('bigfart'); this.shake = 8;
           this.scene.op({ k: 'need', who: this.scene.myId, need: 'fart', delta: -50 }); this.scene.op({ k: 'need', who: this.scene.myId, need: 'fun', delta: 15 });
           this.fx.text(b.x + b.w / 2, b.y + b.h * 0.3, 'CUPTORUL OLANDEZ! 😈💨', '#7cb342', 1.2);
-        } else { this.fx.text(b.x + b.w / 2, b.y + b.h * 0.3, 'Ce cuminte ești 😇', '#4ea8de', 1.1); this.go('kiss'); }
+        } else { this.fx.text(b.x + b.w / 2, b.y + b.h * 0.3, 'Ce cuminte ești 😇', '#4ea8de', 1.1); this.next(); }
       }
       return;
     }
@@ -170,7 +235,7 @@ export class BedtimeGame extends Panel {
   key(k: string, down: boolean) {
     const b = this.box;
     if (k === ' ' || k === 'e' || k === 'enter') {
-      if (this.step === 'tug' && down) this.pointer('down', 0, 0);
+      if ((this.step === 'tug' || this.step === 'sheep' || this.step === 'story') && down) this.pointer('down', 0, 0);
       if (this.step === 'kiss') this.pointer(down ? 'down' : 'up', 0, 0);
       if (this.step === 'dutch' && down && this.dutchBy === 'them') this.dutchTap(b.x + b.w / 2, b.y + b.h / 2);
     }
@@ -300,6 +365,55 @@ export class BedtimeGame extends Panel {
         heartPath(ctx, x + w / 2, y + 200, r); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
         ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff';
         ctx.fillText(`${this.kissHold ? '💗 tu' : '🤍 tu'}   ${this.theirKiss ? '💗' : '🤍'} ${this.scene.partner.actor.spec.name}`, x + w / 2, y + 290);
+        break;
+      }
+      case 'story': {
+        drawBed('none');
+        const pg = this.story.pages[this.page], bx0 = x + 40, bw0 = w - 80, by0 = y + 40, bh0 = h * 0.5;
+        ctx.fillStyle = '#fff8e8'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx0, by0, bw0, bh0, 14); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = '#e8d8c0'; ctx.beginPath(); ctx.moveTo(x + w / 2, by0 + 6); ctx.lineTo(x + w / 2, by0 + bh0 - 6); ctx.stroke();
+        ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#c0573e'; ctx.fillText('📖 ' + this.story.title, x + w / 2, by0 + 20);
+        const ic = iconCanvas(pg[0], 128); if (ic) { const sz = Math.min(90, bh0 * 0.45); ctx.drawImage(ic, x + w * 0.28 - sz / 2, by0 + bh0 / 2 - sz / 2 + 6, sz, sz); }
+        ctx.font = '700 14px "Baloo 2", sans-serif'; ctx.fillStyle = O; wrap(ctx, pg[1], bw0 * 0.42).forEach((l, i) => ctx.fillText(l, x + w * 0.72, by0 + bh0 * 0.32 + i * 20));
+        ctx.font = '700 12px "Baloo 2", sans-serif'; ctx.fillStyle = '#9a8a7a'; ctx.fillText(`${this.page + 1} / ${this.story.pages.length} · atinge ca să dai pagina`, x + w / 2, by0 + bh0 - 14);
+        break;
+      }
+      case 'stars': {
+        drawBed('none');
+        T('⭐ Prindeți stelele căzătoare!', y + 50, 20); T(`Dorințe: ${this.caughtStars}`, y + 80, 15, '#ffd6e4');
+        for (const st of this.stars) { const gr = ctx.createLinearGradient(st.x - 50, st.y - 16, st.x, st.y); gr.addColorStop(0, 'rgba(255,255,220,0)'); gr.addColorStop(1, 'rgba(255,255,220,.95)'); ctx.strokeStyle = gr; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(st.x - 50, st.y - 16); ctx.lineTo(st.x, st.y); ctx.stroke(); ctx.fillStyle = '#fff6b0'; ctx.beginPath(); ctx.arc(st.x, st.y, 4, 0, 7); ctx.fill(); }
+        break;
+      }
+      case 'dream': case 'dreamShow': {
+        if (this.step === 'dreamShow') {
+          drawBed('spoon'); const d = DREAMS[this.myDream === this.theirDream ? this.myDream : this.theirDream];
+          const ic = iconCanvas(d.icon, 128); if (ic) { ctx.globalAlpha = 0.85; ctx.drawImage(ic, x + w / 2 - 40, y + 90, 80, 80); ctx.globalAlpha = 1; }
+          T(this.myDream === this.theirDream ? `Visați același vis: ${d.label}! 💞` : `Tu: ${DREAMS[this.myDream].label} · ${this.scene.partner.actor.spec.name}: ${DREAMS[this.theirDream].label}`, y + 60, 17);
+          break;
+        }
+        T('🌙 Ce visăm la noapte?', y + 60, 20); T('Dacă alegeți la fel → același vis!', y + 88, 14, '#ffd6e4');
+        const cw = (w - 60) / 2, ch = 100;
+        DREAMS.forEach((d, i) => {
+          const cx = x + 30 + (i % 2) * cw, cy = y + 140 + Math.floor(i / 2) * (ch + 14);
+          ctx.fillStyle = this.myDream === i ? '#ff7aa2' : '#fffaf5'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(cx, cy, cw - 8, ch, 16); ctx.fill(); ctx.stroke();
+          const ic = iconCanvas(d.icon, 96); if (ic) ctx.drawImage(ic, cx + (cw - 8) / 2 - 26, cy + 10, 52, 52);
+          ctx.fillStyle = this.myDream === i ? '#fff' : O; ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillText(d.label, cx + (cw - 8) / 2, cy + ch - 16);
+        });
+        if (this.myDream >= 0) T(this.theirDream >= 0 ? '…' : `Aștept alegerea lui ${this.scene.partner.actor.spec.name}…`, y + h - 50, 14, '#ffd6e4');
+        break;
+      }
+      case 'sheep': {
+        // oitele sar gardul: atinge cand e fiecare in aer ca s-o numeri
+        const gy0 = y + h * 0.52, fx0 = x + w / 2;
+        ctx.fillStyle = '#3f6a4a'; ctx.fillRect(x, gy0, w, h * 0.2);
+        ctx.fillStyle = '#c98e5f'; ctx.strokeStyle = O; ctx.lineWidth = 3; for (const dx of [-24, 24]) { ctx.beginPath(); ctx.roundRect(fx0 + dx - 4, gy0 - 50, 8, 52, 3); ctx.fill(); ctx.stroke(); } for (const dy of [-40, -20]) { ctx.beginPath(); ctx.roundRect(fx0 - 34, gy0 + dy, 68, 8, 3); ctx.fill(); ctx.stroke(); }
+        for (const sh of this.sheep) {
+          const k = sh.t / 2.4, sx = x - 40 + k * (w + 80), air = Math.max(0, Math.sin(Math.min(1, Math.max(0, (sh.t - 0.7) / 0.9)) * Math.PI)), sy = gy0 - 8 - air * 80;
+          ctx.fillStyle = sh.counted ? '#fff6d0' : '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 2; for (const [ox, oy] of [[-10, 0], [0, -6], [10, 0], [0, 4]]) { ctx.beginPath(); ctx.arc(sx + ox, sy + oy, 11, 0, 7); ctx.fill(); ctx.stroke(); }
+          ctx.fillStyle = '#4a3a3a'; ctx.beginPath(); ctx.ellipse(sx + 18, sy - 4, 7, 6, 0, 0, 7); ctx.fill(); ctx.fillRect(sx - 8, sy + 10, 3, 10); ctx.fillRect(sx + 6, sy + 10, 3, 10);
+          if (sh.counted) { ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffd23f'; ctx.fillText('+1', sx, sy - 28); }
+        }
+        T('⭐ Numărăm oițe… atinge când sar gardul', y + 50, 17); T(`${this.sheepCount} oițe`, y + 80, 16, '#ffd6e4');
         break;
       }
       case 'night': {

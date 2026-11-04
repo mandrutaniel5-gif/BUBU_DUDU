@@ -61,46 +61,102 @@ export class QuizGame extends Panel {
   }
 }
 
-/** Roata mare: plimbare romantica la apus, pupic in varf */
+/** Roata mare: o tura intreaga la apus; sus, un pupic (in doi) sau o dorinta (singur) */
 export class FerrisGame extends Panel {
-  k = 0; kissed = false; holding = false; kissT = 0;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🎡 Roata mare', 'Când ajungeți sus, ține apăsat pentru un pupic 💋'); }
+  k = 0; kissed = false; holding = false; kissT = 0; duo: boolean;
+  birds = Array.from({ length: 5 }, (_, i) => ({ x: Math.random(), y: 0.12 + Math.random() * 0.25, s: 0.6 + Math.random() * 0.5, ph: i }));
+  constructor(s: WorldScene, d: (n: number) => void) {
+    super(s, d, '🎡 Roata mare', s.duo ? 'Sus de tot, ține apăsat pentru un pupic 💕' : 'Sus de tot, ține apăsat și pune-ți o dorință ✨');
+    this.duo = s.duo;
+  }
+  get top() { return this.k > 0.4 && this.k < 0.6; }
   tick(dt: number) {
-    this.k = Math.min(1, this.k + dt / 12);
-    const top = this.k > 0.38 && this.k < 0.62;
-    if (top && this.holding && !this.kissed) { this.kissT += dt; if (this.kissT > 1.2) { this.kissed = true; Sfx.play('kiss'); this.fx.hearts(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.35, 14); } }
+    // urca repede, sta putin sus (incetineste), apoi coboara
+    this.k = Math.min(1, this.k + dt / (this.top ? 16 : 11));
+    if (this.top && this.holding && !this.kissed) { this.kissT += dt; if (this.kissT > 1.2) { this.kissed = true; Sfx.play(this.duo ? 'kiss' : 'chimes'); this.fx.hearts(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, 14); } }
+    for (const b of this.birds) { b.x += dt * 0.03 * b.s; if (b.x > 1.1) { b.x = -0.1; b.y = 0.1 + Math.random() * 0.25; } }
     if (this.k >= 1) {
-      const s = this.scene; const love = this.kissed ? 35 : 20;
-      s.op({ k: 'need', who: s.myId, need: 'love', delta: love }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: 15 });
-      if (s.sameArea()) s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love });
+      const s = this.scene; const love = this.duo ? (this.kissed ? 35 : 20) : 8;
+      s.op({ k: 'need', who: s.myId, need: 'love', delta: love }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: this.duo ? 15 : 20 });
+      if (this.duo && s.partner.control !== 'remote') s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love });
       s.op({ k: 'stat', key: 'ferris', delta: 1 });
-      s.log(this.kissed ? 'Un pupic în vârful roții mari 🎡💋' : 'O tură cu roata mare 🎡');
-      this.finish(this.kissed ? 2 : 1, this.kissed ? 'Cel mai frumos pupic 💋🌅' : 'Ce priveliște! 🌅');
+      s.log(this.duo ? (this.kissed ? 'Un pupic în vârful roții mari 🎡💕' : 'O tură cu roata mare 🎡') : `${s.me.actor.spec.name} s-a dat în roata mare 🎡${this.kissed ? ' și și-a pus o dorință ✨' : ''}`);
+      this.finish(this.kissed ? 2 : 1, this.kissed ? (this.duo ? 'Cel mai frumos pupic 💕' : 'Dorința s-a auzit ✨') : 'Ce priveliște! ☀️');
     }
   }
   pointer(t: string) { this.holding = t === 'down' ? true : t === 'up' ? false : this.holding; }
   key(k: string, d: boolean) { if (k === ' ' || k === 'e') this.holding = d; }
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
-    const sky = ctx.createLinearGradient(0, y, 0, y + h); sky.addColorStop(0, '#ffb3a7'); sky.addColorStop(0.5, '#ffd6a5'); sky.addColorStop(1, '#fff1d6'); ctx.fillStyle = sky; ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(x + w * 0.75, y + h * 0.62, 40, 0, 7); ctx.fill();
-    // satul de jos, se vede tot mai mic cand urcati
-    const alt = Math.sin(this.k * Math.PI); // 0 jos, 1 sus
-    const hy = y + h * (0.7 + alt * 0.18);
-    ctx.fillStyle = '#9fd68c'; ctx.fillRect(x, hy, w, h);
-    for (let i = 0; i < 8; i++) { const hx = x + 20 + i * (w - 40) / 7, s = 1 - alt * 0.5; ctx.fillStyle = ['#fff1d6', '#ffe1ea', '#e8f1ff', '#fff6b8'][i % 4]; ctx.fillRect(hx - 12 * s, hy - 16 * s, 24 * s, 16 * s); ctx.fillStyle = ['#c0573e', '#e5809a', '#5b7fbf', '#7cb870'][i % 4]; ctx.beginPath(); ctx.moveTo(hx - 15 * s, hy - 16 * s); ctx.lineTo(hx, hy - 28 * s); ctx.lineTo(hx + 15 * s, hy - 16 * s); ctx.fill(); }
-    // cabina cu cei doi
-    const cx = x + w / 2, cy = y + h * 0.42 + Math.sin(this.t * 1.2) * 3;
-    ctx.strokeStyle = '#ff9ab8'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, cy - 70); ctx.stroke();
-    ctx.fillStyle = '#ff7aa2'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(cx - 120, cy - 70, 240, 24, 12); ctx.fill(); ctx.stroke();
-    const me = this.scene.me.actor.spec, pa = this.scene.partner.actor.spec;
-    const lean = this.holding && this.k > 0.38 && this.k < 0.62 ? Math.min(1, this.kissT / 1.2) : 0;
-    for (const [spec, dx, flip] of [[me, -36, 1], [pa, 36, -1]] as const) {
-      const P = basePose(); P.headOnly = false; P.eyes = lean > 0.6 ? 'closed' : 'happy'; P.mouth = lean > 0.4 ? 'kiss' : 'open'; P.blush = 1.2 + lean; P.rot = lean * 0.25 * (flip as number);
-      drawCharacter(ctx, spec, P, cx + dx - lean * 14 * (flip as number), cy + 40, 1.3, flip as 1 | -1, this.t);
+    const k = this.k, t = this.t;
+    // cerul: dupa-amiaza -> apus -> amurg (cu cat te dai mai mult)
+    const dusk = Math.min(1, k * 1.3);
+    const sky = ctx.createLinearGradient(0, y, 0, y + h);
+    sky.addColorStop(0, mix('#8fcdf5', '#4a4a8a', dusk)); sky.addColorStop(0.55, mix('#ffe1c9', '#ff9a8b', dusk)); sky.addColorStop(1, mix('#fff3dc', '#ffc49a', dusk));
+    ctx.fillStyle = sky; ctx.fillRect(x, y, w, h);
+    if (dusk > 0.5) for (let i = 0; i < 18; i++) { ctx.fillStyle = `rgba(255,255,230,${(dusk - 0.5) * 1.6 * (0.5 + 0.5 * Math.sin(t * 2 + i))})`; ctx.beginPath(); ctx.arc(x + ((i * 97) % w), y + 20 + ((i * 53) % (h * 0.35)), 1.6, 0, 7); ctx.fill(); }
+    // soarele coboara
+    const sunY = y + h * (0.3 + dusk * 0.42);
+    const sg = ctx.createRadialGradient(x + w * 0.78, sunY, 10, x + w * 0.78, sunY, 90); sg.addColorStop(0, 'rgba(255,220,120,.9)'); sg.addColorStop(1, 'rgba(255,220,120,0)'); ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(x + w * 0.78, sunY, 90, 0, 7); ctx.fill();
+    ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(x + w * 0.78, sunY, 30, 0, 7); ctx.fill();
+    // nori + pasari
+    for (let i = 0; i < 4; i++) { const cx0 = x + (((i * 230 + t * 8) % (w + 200)) - 100), cy0 = y + h * (0.12 + i * 0.07); ctx.fillStyle = `rgba(255,255,255,${0.75 - dusk * 0.35})`; for (const [dx, dy, r] of [[0, 0, 16], [18, -6, 20], [38, 0, 14]]) { ctx.beginPath(); ctx.arc(cx0 + dx, cy0 + dy, r, 0, 7); ctx.fill(); } }
+    ctx.strokeStyle = '#3a2a3a'; ctx.lineWidth = 2;
+    for (const b of this.birds) { const bx = x + b.x * w, by = y + b.y * h, f = Math.sin(t * 8 + b.ph) * 4 * b.s; ctx.beginPath(); ctx.moveTo(bx - 7 * b.s, by - f); ctx.quadraticCurveTo(bx - 3 * b.s, by - 4 * b.s, bx, by); ctx.quadraticCurveTo(bx + 3 * b.s, by - 4 * b.s, bx + 7 * b.s, by - f); ctx.stroke(); }
+    // satul de dedesubt: dealuri, case cu ferestre care se aprind, biserica
+    const R = Math.min(w * 0.36, h * 0.38), cx = x + w / 2, cy = y + h * 0.5;
+    ctx.fillStyle = mix('#b9e3a6', '#6f8f72', dusk); ctx.beginPath(); ctx.moveTo(x, y + h); for (let i = 0; i <= 12; i++) ctx.lineTo(x + i * w / 12, y + h * 0.8 - Math.sin(i * 0.9) * 14); ctx.lineTo(x + w, y + h); ctx.fill();
+    for (let i = 0; i < 9; i++) {
+      const hx = x + 14 + i * (w - 28) / 8, hb = y + h * 0.86 + (i % 2) * 8, hw = 26, hh = 20;
+      ctx.fillStyle = ['#fff1d6', '#ffe1ea', '#e8f1ff', '#fff6b8'][i % 4]; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.fillRect(hx - hw / 2, hb - hh, hw, hh); ctx.strokeRect(hx - hw / 2, hb - hh, hw, hh);
+      ctx.fillStyle = ['#c0573e', '#e5809a', '#5b7fbf', '#8a5d32'][i % 4]; ctx.beginPath(); ctx.moveTo(hx - hw / 2 - 3, hb - hh); ctx.lineTo(hx, hb - hh - 13); ctx.lineTo(hx + hw / 2 + 3, hb - hh); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = dusk > 0.45 && (i + Math.floor(t)) % 5 ? '#ffe680' : '#bfe8ff'; ctx.fillRect(hx - 5, hb - 13, 10, 8);
+      if (i === 4) { ctx.fillStyle = '#fff'; ctx.fillRect(hx - 6, hb - hh - 34, 12, 22); ctx.strokeRect(hx - 6, hb - hh - 34, 12, 22); ctx.fillStyle = '#c0573e'; ctx.beginPath(); ctx.moveTo(hx - 8, hb - hh - 34); ctx.lineTo(hx, hb - hh - 48); ctx.lineTo(hx + 8, hb - hh - 34); ctx.fill(); ctx.stroke(); }
     }
-    ctx.fillStyle = '#ffb6c9'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(cx - 120, cy + 10, 240, 70, 16); ctx.fill(); ctx.stroke();
-    heartPath(ctx, cx, cy + 46, 12); ctx.fillStyle = '#ff4d6d'; ctx.fill();
-    ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center';
-    ctx.fillText(this.k > 0.38 && this.k < 0.62 ? (this.kissed ? '💋 Pupic în vârf!' : '⬆️ Sunteți sus! Ține apăsat 💋') : this.k < 0.38 ? 'Urcăm…' : 'Coborâm…', cx, y + 56);
+    // picioarele rotii
+    ctx.strokeStyle = '#d8d0e8'; ctx.lineWidth = 9; ctx.lineCap = 'round';
+    for (const s2 of [-1, 1]) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + s2 * R * 0.55, y + h * 0.94); ctx.stroke(); }
+    ctx.strokeStyle = O; ctx.lineWidth = 2; for (const s2 of [-1, 1]) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + s2 * R * 0.55, y + h * 0.94); ctx.stroke(); }
+    // roata: se invarte (o tura completa pe toata plimbarea), spite cu beculete
+    const rot = k * Math.PI * 2, N = 10;
+    ctx.strokeStyle = '#ff9ab8'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke(); ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R + 3, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.arc(cx, cy, R - 3, 0, 7); ctx.stroke();
+    for (let i = 0; i < N; i++) {
+      const a = rot + i * Math.PI * 2 / N + Math.PI / 2;
+      ctx.strokeStyle = '#ffd6e4'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.stroke();
+      for (let j = 1; j <= 3; j++) { const on = (Math.floor(t * 4) + i + j) % 3 !== 0; ctx.fillStyle = on ? '#ffe680' : '#c9a0b0'; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * R * j / 3.4, cy + Math.sin(a) * R * j / 3.4, 2.6, 0, 7); ctx.fill(); }
+    }
+    ctx.fillStyle = '#ff7aa2'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(cx, cy, 12, 0, 7); ctx.fill(); ctx.stroke();
+    // cabinele (stau mereu drept); a noastra e cea mare, roz
+    const ours = Math.PI / 2 + rot; // porneste de jos
+    for (let i = 0; i < N; i++) {
+      const a = rot + i * Math.PI * 2 / N + Math.PI / 2; if (i === 0) continue;
+      const gx0 = cx + Math.cos(a) * R, gy0 = cy + Math.sin(a) * R;
+      ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(gx0, gy0); ctx.lineTo(gx0, gy0 + 6); ctx.stroke();
+      ctx.fillStyle = ['#bfe8ff', '#fff3b0', '#c9f2c7', '#e3c8ff'][i % 4]; ctx.beginPath(); ctx.roundRect(gx0 - 11, gy0 + 6, 22, 16, 5); ctx.fill(); ctx.stroke();
+    }
+    const sway = Math.sin(t * 1.6) * 0.06 + (this.holding && this.top ? 0 : Math.cos(ours) * 0.05);
+    const gx = cx + Math.cos(ours) * R, gy = cy + Math.sin(ours) * R;
+    ctx.save(); ctx.translate(gx, gy); ctx.rotate(sway);
+    ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 14); ctx.stroke();
+    // cabina noastra, mai mare, cu cei care se dau in ea
+    const sc = Math.min(0.8, R / 210), CW = 150 * sc / 0.8;
+    ctx.fillStyle = '#ff7aa2'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(-CW / 2, 14, CW, 14, 7); ctx.fill(); ctx.stroke();
+    const me = this.scene.me.actor.spec, pa = this.scene.partner.actor.spec;
+    const lean = this.holding && this.top ? Math.min(1, this.kissT / 1.2) : 0;
+    const who: [typeof me, number, 1 | -1][] = this.duo ? [[me, -CW * 0.22, 1], [pa, CW * 0.22, -1]] : [[me, 0, 1]];
+    for (const [spec, dx, flip] of who) {
+      const P = basePose(); P.eyes = lean > 0.6 ? 'closed' : this.top ? 'happy' : 'dot'; P.mouth = lean > 0.4 && this.duo ? 'kiss' : 'open'; P.blush = 1.1 + lean; P.rot = (this.duo ? lean * 0.25 * flip : 0); P.armR = !this.duo && this.top ? 2.4 : 0.4;
+      drawCharacter(ctx, spec, P, dx - (this.duo ? lean * 10 * flip : 0), 92 * sc / 0.8, sc, flip, t, (this.scene.w.chars[spec === me ? this.scene.myId : this.scene.partner.id] as any)?.outfit);
+    }
+    ctx.fillStyle = '#ffb6c9'; ctx.beginPath(); ctx.roundRect(-CW / 2, 52 * sc / 0.8, CW, 46 * sc / 0.8, 12); ctx.fill(); ctx.stroke();
+    heartPath(ctx, 0, 76 * sc / 0.8, 9); ctx.fillStyle = '#ff4d6d'; ctx.fill();
+    ctx.restore();
+    // sus de tot: stea cazatoare cand iti pui dorinta
+    if (!this.duo && this.top) { const st = (t * 0.6) % 1; ctx.strokeStyle = `rgba(255,255,220,${1 - st})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + w * (0.15 + st * 0.3), y + h * (0.08 + st * 0.12)); ctx.lineTo(x + w * (0.1 + st * 0.3), y + h * (0.06 + st * 0.12)); ctx.stroke(); }
+    if (this.kissed && this.top) for (let i = 0; i < 3; i++) { const fa = t * 2 + i * 2.1, fr = 30 + ((t * 40 + i * 30) % 60); ctx.strokeStyle = ['#ff4d6d', '#ffd23f', '#7ab8ff'][i]; ctx.lineWidth = 2.5; for (let r = 0; r < 8; r++) { const aa = r * Math.PI / 4 + fa; ctx.beginPath(); ctx.moveTo(x + w * (0.22 + i * 0.28) + Math.cos(aa) * fr * 0.6, y + h * 0.18 + Math.sin(aa) * fr * 0.6); ctx.lineTo(x + w * (0.22 + i * 0.28) + Math.cos(aa) * fr, y + h * 0.18 + Math.sin(aa) * fr); ctx.stroke(); } }
+    ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.textAlign = 'center';
+    const msg = this.top ? (this.kissed ? (this.duo ? '💕 Pupic în vârful roții!' : '✨ Dorința e pusă!') : (this.duo ? 'Sunteți sus! Ține apăsat 💕' : 'Ești sus! Ține apăsat ✨')) : k < 0.4 ? 'Urcăm…' : 'Coborâm…';
+    ctx.strokeText(msg, cx, y + 58); ctx.fillText(msg, cx, y + 58);
   }
 }
+/** amesteca doua culori #rrggbb (k = 0..1) */
+function mix(a: string, b: string, k: number) { const p = (c: string, i: number) => parseInt(c.slice(1 + i * 2, 3 + i * 2), 16); const r = [0, 1, 2].map(i => Math.round(p(a, i) + (p(b, i) - p(a, i)) * k)); return `rgb(${r[0]},${r[1]},${r[2]})`; }

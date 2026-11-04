@@ -136,6 +136,9 @@ export class WsAdapter extends Base {
   }
 }
 
+/** Firebase nu accepta campuri `undefined` (arunca eroare si evenimentul se pierde): le scoatem */
+const clean = <T,>(o: T): T => JSON.parse(JSON.stringify(o));
+
 /** Firebase Realtime Database (fara server propriu). */
 export class FirebaseAdapter extends Base {
   kind = 'firebase';
@@ -172,9 +175,9 @@ export class FirebaseAdapter extends Base {
   sendState(s: PlayerState) {
     if (!this.db || Date.now() - this.lastState < 100) return; // max 10/s
     this.lastState = Date.now();
-    this.fb.update(this.fb.ref(this.db, `rooms/${this.room}/players/${this.me}`), { online: true, state: s, ts: Date.now() });
+    this.fb.update(this.fb.ref(this.db, `rooms/${this.room}/players/${this.me}`), { online: true, state: clean(s), ts: Date.now() }).catch(() => { /* offline: urmatoarea */ });
   }
-  sendEvent(e: NetEvent) { if (this.db) this.fb.push(this.fb.ref(this.db, `rooms/${this.room}/events`), { from: this.me, e, ts: Date.now() }); }
+  sendEvent(e: NetEvent) { if (!this.db) return; try { this.fb.push(this.fb.ref(this.db, `rooms/${this.room}/events`), { from: this.me, e: clean(e), ts: Date.now() }).catch(() => { /* offline */ }); } catch (err) { console.warn('eveniment netrimis', err); } }
   // lumea intreaga se urca in Firebase cel mult o data la 45 s (si imediat la inchidere / minimizare) -> mai putina baterie si date mobile
   private lastUp = 0; private upTimer: ReturnType<typeof setTimeout> | null = null; private pendingUp: { json: string; ts: number } | null = null;
   async saveWorld(json: string, ts: number, force = false) {

@@ -108,3 +108,12 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 ## Hărțile zonelor (v1.2.9)
 
 - `resetAreas()` (`src/world/map.ts`) repornește hărțile curate la intrarea în joc și la ieșirea în meniu; obiectele casei (răzoare, construcții, vehicule) se adaugă doar pe harta casei. Înainte, dacă ieșeai în meniu din oraș și reveneai, se lipeau de oraș.
+
+## Multiplayer fără ciudățenii (v1.3.0)
+
+- Vehiculul partenerului se trimite pe rețea (`rideKind`): îl vezi pe bicicleta pe care e, nu pe un scuter inventat.
+- Firebase: câmpurile goale sunt curățate înainte de trimitere (Firebase arunca eroare și se pierdea evenimentul).
+- **Singur sau împreună** (`askCompany`): la autobuz (dus-întors), taxi, cinema, restaurant și roata mare alegi „Singur(ă)” sau „Cu partenerul”. Partenerul AI vine direct; partenerul real primește o invitație („Vin!” / „Nu acum”, 25 s). Singur: plătești doar pentru tine, ceilalți nu sunt trași după tine și nu apar în minijoc.
+- Pădurea: butonul face mereu ce scrie pe el (copacul înaintea animalului); animalele prietene te urmează de la câțiva pași, cel mult două, și nu te încurcă la lucru.
+- Animații noi: roata mare (roată întreagă cu cabine, apus, păsări, satul care se luminează; sus pupic sau dorință), cinema (cortină, film în 4 scene cu titluri, proiector, spectatori), masa (stați pe scaune, farfuria cu mâncarea aleasă, aburi), călușeii (te învârți pe un căluț, cu muzică), fântâna (moneda zboară, stropi și cercuri pe apă).
+- Rutina de seară: în fiecare seară alt amestec de momente (bilețel, poziția de somn, pătura, poveste, stele căzătoare, ce visăm, numărat oițe), la fel pentru amândoi, apoi pupicul de noapte bună.
