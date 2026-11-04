@@ -6,6 +6,8 @@ import { Fx } from '../char/fx';
 export function sweep(t: number, perSec: number) { const x = (t * perSec) % 2; return x < 1 ? x * 2 - 1 : 1 - (x - 1) * 2; }
 /** toleranta in plus fata de zona desenata (degetul/tasta au mereu putina intarziere) */
 export const HIT_SLACK = 0.07;
+/** cat sta pe ecran rezultatul minijocului (o atingere il sare) */
+export const END_HOLD = 1.25;
 
 export interface Minigame {
   update(dt: number): void;
@@ -26,13 +28,15 @@ export abstract class Panel implements Minigame {
   constructor(protected scene: WorldScene, private done: (score: number) => void, public title: string, public help: string) {
     this.hero = new Actor(scene.myId, this.fx);
   }
-  abort() { if (!this.ended) { this.ended = { score: 0, text: 'Altă dată 🙂', t: 1.8 }; } }
+  abort() { if (!this.ended) { this.ended = { score: 0, text: 'Altă dată 🙂', t: END_HOLD - 0.5 }; } }
+  /** sari peste ecranul de final (o atingere) */
+  skipEnd() { if (this.ended && this.ended.t > 0.25) this.ended.t = END_HOLD; }
   finish(score: number, text: string) { if (!this.ended) this.ended = { score, text, t: 0 }; }
   update(dt: number) {
     this.t += dt; this.fx.update(dt); this.hero.update(dt);
     if (this.hero.shakeReq) { this.shake = Math.max(this.shake, this.hero.shakeReq); this.hero.shakeReq = 0; }
     this.shake *= Math.pow(0.02, dt);
-    if (this.ended) { this.ended.t += dt; if (this.ended.t > 2.6) this.done(this.ended.score); }
+    if (this.ended) { this.ended.t += dt; if (this.ended.t >= END_HOLD) this.done(this.ended.score); }
     else this.tick(dt);
   }
   abstract tick(dt: number): void;

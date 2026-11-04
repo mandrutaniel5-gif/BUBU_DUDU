@@ -372,8 +372,10 @@ export class WorldScene implements Scene {
         const mk = this.miniScale(); e.clientX /= mk; e.clientY /= mk;
         const b = this.minigame.obj.box;
         if (b && e.clientX > b.x + b.w - 44 && e.clientX < b.x + b.w + 6 && e.clientY > b.y - 6 && e.clientY < b.y + 40) { this.minigame.obj.abort?.(); return; }
+        if (this.minigame.obj.ended) { this.minigame.obj.skipEnd?.(); return; }
         this.minigame.obj.pointer?.('down', e.clientX, e.clientY); return;
       }
+      this.hud.closeMenus(); // atingi jocul: se inchid meniurile deschise (emote-uri / impreuna)
       if (e.clientX < this.game.w * 0.45 && e.clientY > this.game.h * 0.45 && e.pointerType !== 'mouse') {
         this.joy = { active: true, id: e.pointerId, sx: e.clientX, sy: e.clientY, x: e.clientX, y: e.clientY };
         return;

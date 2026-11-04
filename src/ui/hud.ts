@@ -49,8 +49,8 @@ export class Hud {
           <button class="act scooter" data-a="scooter" title="Scuterul"><span class="ic">🛵</span></button>
         </div>
       </div>
-      <div class="pop emotes hidden"><h4>Emote-uri & dansuri</h4><div class="grid">${emotes.map(a => `<button data-emote="${a.id}"><span>${a.icon}</span>${a.label}</button>`).join('')}</div></div>
-      <div class="pop pairs hidden"><h4>Împreună 💞</h4><div class="grid">${PAIRS.filter(p => !p.only || p.only === s.myId).map(p => `<button data-pair="${p.id}"><span>${p.icon}</span>${p.label}</button>`).join('')}</div></div>
+      <div class="pop emotes hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>Emote-uri & dansuri</h4><div class="grid">${emotes.map(a => `<button data-emote="${a.id}"><span>${a.icon}</span>${a.label}</button>`).join('')}</div></div>
+      <div class="pop pairs hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>Împreună 💞</h4><div class="grid">${PAIRS.filter(p => !p.only || p.only === s.myId).map(p => `<button data-pair="${p.id}"><span>${p.icon}</span>${p.label}</button>`).join('')}</div></div>
       <div class="ridebar hidden"><span class="rt"></span><div class="rbtns"><button data-a="rgo" class="go">▶ Pornește</button><button data-a="rcall">📣 Cheamă</button><button data-a="roff">⬇ Coboară</button></div></div>
       <div class="buildbar hidden"><span class="bt"></span><button data-a="bok">✔ Pune</button><button data-a="bend">✖ Gata</button></div>
       <div class="toasts"></div>
@@ -65,6 +65,7 @@ export class Hud {
       Sfx.unlock(); Sfx.play('click');
       const a = b.dataset.a;
       if (a === 'action') s.doAction();
+      if (a === 'closepop') { this.closeMenus(); return; }
       if (a === 'emotes') this.toggleEmotes();
       if (a === 'pairs') this.togglePairs();
       if (a === 'fart') s.fartJump();

@@ -279,3 +279,8 @@ html.h500 .hud.riding .actions { display:none; }
 .cred-in { background:#fff8f0; border:3px solid var(--ink); border-radius:20px; padding:14px 18px; max-width:560px; max-height:calc(var(--gh, 100vh) - 30px); overflow:auto; font-size:13px; line-height:1.35; }
 .cred-in h3 { margin:0 0 6px; } .cred-in h4 { margin:10px 0 4px; } .cred-in ul { margin:0; padding-left:18px; } .cred-in li { margin:3px 0; }
 .cred-in .xcred { display:block; margin:10px auto 0; }
+
+/* X de inchidere la meniurile Emote-uri si Impreuna (sta mereu sus, si cand derulezi) */
+.pop .popx { position:sticky; top:0; float:right; z-index:5; width:34px; height:34px; margin:-2px -4px 0 6px; border-radius:50%; border:3px solid var(--ink); background:#fff; font-size:16px; font-weight:900; color:var(--ink); box-shadow:0 3px 0 var(--ink); display:flex; align-items:center; justify-content:center; padding:0; line-height:1; }
+.pop .popx:active { transform:translateY(2px); box-shadow:0 1px 0 var(--ink); }
+.pop h4 { line-height:34px; }
