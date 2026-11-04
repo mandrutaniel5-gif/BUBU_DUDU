@@ -13,3 +13,4 @@ release/
 android/
 ios/
 __pycache__/
+!ci/debug.keystore

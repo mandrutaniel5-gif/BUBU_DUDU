@@ -118,6 +118,8 @@ jobs:
               -Pandroid.injected.signing.key.password="$KS_PASS"
             cp app/build/outputs/apk/release/app-release.apk ../BubuDudu.apk
           else
+            # aceeasi cheie de test la fiecare build: versiunile noi se instaleaza PESTE cea veche, fara dezinstalare (lumile raman)
+            mkdir -p ~/.android && cp ../ci/debug.keystore ~/.android/debug.keystore
             ./gradlew assembleDebug
             cp app/build/outputs/apk/debug/app-debug.apk ../BubuDudu.apk
           fi
