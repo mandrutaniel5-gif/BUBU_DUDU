@@ -1,3 +1,4 @@
+import { Settings } from '../game/settings';
 export interface Scene {
   enter(): void;
   exit(): void;
@@ -6,6 +7,7 @@ export interface Scene {
 }
 
 /** Bucla principala + canvas care se adapteaza la ecran (DPR). */
+export const isEco = () => { const e = Settings.get().eco; return e ?? matchMedia('(pointer: coarse)').matches; };
 export class Game {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
@@ -27,7 +29,8 @@ export class Game {
   /** telefon tinut vertical: rotim tot jocul pe lat (jocul merge doar orizontal) */
   rotated = false;
   resize() {
-    this.dpr = Math.min(2, devicePixelRatio || 1);
+    // pe telefon in modul eco desenam la 1,5x (aproape la fel de clar, ~45% mai putini pixeli de colorat)
+    this.dpr = Math.min(isEco() && matchMedia('(pointer: coarse)').matches ? 1.5 : 2, devicePixelRatio || 1);
     const touch = matchMedia('(pointer: coarse)').matches;
     this.rotated = touch && innerHeight > innerWidth;
     this.w = this.rotated ? innerHeight : innerWidth; this.h = this.rotated ? innerWidth : innerHeight;
@@ -58,7 +61,12 @@ export class Game {
   }
 
   start() {
+    // cel mult 60 de cadre pe secunda (si pe ecranele de 120 Hz); in modul eco 30 cand nu se misca nimic
     const loop = (t: number) => {
+      requestAnimationFrame(loop);
+      const want = (this.scene as { wantFps?: () => number } | null)?.wantFps?.() ?? 60;
+      const fps = Math.min(60, isEco() ? want : 60);
+      if (this.last && t - this.last < 1000 / fps - 3) return;
       const dt = Math.min(0.05, (t - (this.last || t)) / 1000) * this.timeScale;
       this.last = t;
       if (this.scene) {
@@ -66,7 +74,6 @@ export class Game {
         this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
         this.scene.draw(this.ctx);
       }
-      requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
   }

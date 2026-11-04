@@ -226,7 +226,7 @@ export const Sfx = {
   /** volumul ambiantei (ex. mai incet in minijocuri) */
   ambLevel(v: number) { const a = ac; if (a && ambBus) ambBus.gain.setTargetAtTime(v, a.currentTime, 0.4); },
   load: loadAll,
-  setMuted(m: boolean) { muted = m; if (master && ac) master.gain.setTargetAtTime(m ? 0 : 1, ac.currentTime, 0.05); },
+  setMuted(m: boolean) { muted = m; if (master && ac) master.gain.setTargetAtTime(m ? 0 : 1, ac.currentTime, 0.05); if (ac) { if (m) setTimeout(() => muted && ac?.suspend(), 120); else ac.resume(); } }, // fara sunet: oprim de tot procesarea audio (baterie)
   get muted() { return muted; },
   unlock() { const a = ctx(); if (a) { buses(); loadAll(); } },
 };

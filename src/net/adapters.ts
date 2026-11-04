@@ -125,7 +125,8 @@ export class WsAdapter extends Base {
   disconnect() { this.closing = true; this.ws?.close(); this.setStatus('offline'); }
   sendState(s: PlayerState) { this.send({ t: 'state', s }); }
   sendEvent(e: NetEvent) { this.send({ t: 'ev', e }); }
-  async saveWorld(json: string, ts: number) { await super.saveWorld(json, ts); this.send({ t: 'save', data: { json, ts } }); }
+  private lastUp = 0;
+  async saveWorld(json: string, ts: number, force = false) { await super.saveWorld(json, ts); if (force || Date.now() - this.lastUp > 30000) { this.lastUp = Date.now(); this.send({ t: 'save', data: { json, ts } }); } }
   async loadWorld() {
     const local = await super.loadWorld();
     if (this.ws?.readyState !== 1) return local;
@@ -174,7 +175,17 @@ export class FirebaseAdapter extends Base {
     this.fb.update(this.fb.ref(this.db, `rooms/${this.room}/players/${this.me}`), { online: true, state: s, ts: Date.now() });
   }
   sendEvent(e: NetEvent) { if (this.db) this.fb.push(this.fb.ref(this.db, `rooms/${this.room}/events`), { from: this.me, e, ts: Date.now() }); }
-  async saveWorld(json: string, ts: number) { await super.saveWorld(json, ts); if (this.db) await this.fb.set(this.fb.ref(this.db, `rooms/${this.room}/save`), { json, ts }); }
+  // lumea intreaga se urca in Firebase cel mult o data la 45 s (si imediat la inchidere / minimizare) -> mai putina baterie si date mobile
+  private lastUp = 0; private upTimer: ReturnType<typeof setTimeout> | null = null; private pendingUp: { json: string; ts: number } | null = null;
+  async saveWorld(json: string, ts: number, force = false) {
+    await super.saveWorld(json, ts);
+    if (!this.db) return;
+    this.pendingUp = { json, ts };
+    const flush = async () => { this.upTimer = null; const p = this.pendingUp; if (!p || !this.db) return; this.pendingUp = null; this.lastUp = Date.now(); try { await this.fb.set(this.fb.ref(this.db, `rooms/${this.room}/save`), p); } catch { /* offline: data viitoare */ } };
+    const wait = 45000 - (Date.now() - this.lastUp);
+    if (force || wait <= 0) { if (this.upTimer) { clearTimeout(this.upTimer); this.upTimer = null; } await flush(); }
+    else if (!this.upTimer) this.upTimer = setTimeout(flush, wait);
+  }
   async loadWorld() {
     const local = await super.loadWorld();
     if (!this.db) return local;

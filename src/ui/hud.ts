@@ -8,7 +8,7 @@ import { moodText, g } from '../game/gender';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
 import { GOALS, CHAPTERS, chapterOf, currentGoal, INV_INFO, SHOP_BUY, SHOP_ONLINE, SHOP_SELL, SHOP_CITY, PRICE } from '../game/economy';
-import { RECIPES, RECIPE, canCook, missingFor, ingIcon, ingLabel, effectText, dishesOwned, type Recipe } from '../game/food';
+import { RECIPES, RECIPE, canCook, missingFor, ingIcon, ingLabel, effectText, dishesOwned, dishCount, type Recipe } from '../game/food';
 import { drawCharacter, SPECS } from '../char/draw';
 import { basePose } from '../char/pose';
 import { CROPS, seedKey, catCount, drawCropPlant, WET_MIN } from '../world/garden';
@@ -89,28 +89,33 @@ export class Hud {
 
   destroy() { this.root.remove(); }
 
+  /** scrie in pagina doar daca s-a schimbat (altfel telefonul redeseneaza meniul degeaba -> baterie) */
+  private txt(el: Element | null, t: string) { const e = el as HTMLElement | null; if (e && e.dataset.t !== t) { e.dataset.t = t; e.textContent = t; } }
+  private lastUpd = 0;
   update() {
+    // meniul se actualizeaza de ~8 ori pe secunda (nu la fiecare cadru)
+    const now = performance.now(); if (now - this.lastUpd < 125) return; this.lastUpd = now;
     this.updateRide();
     const s = this.s, w = s.w, c = w.chars[s.myId];
     for (const n of NEEDS) {
       const el = this.root.querySelector(`.me [data-n="${n}"] b`) as HTMLElement;
-      el.style.width = c.needs[n] + '%';
+      const v = Math.round(c.needs[n]) + '%'; if (el.dataset.v !== v) { el.dataset.v = v; el.style.width = v; }
       el.parentElement!.parentElement!.classList.toggle('low', c.needs[n] < 25);
     }
-    this.els['.me .mood'].textContent = moodText(s.myId, s.me.actor.mood);
+    this.txt(this.els['.me .mood'], moodText(s.myId, s.me.actor.mood));
     const sk = this.els['.me .sick'];
     sk.classList.toggle('hidden', !c.sick);
     if (c.sick) { const t = `${SICK_INFO[c.sick].icon} ${SICK_INFO[c.sick].label}${c.request ? ' · vrei ' + (REQUESTS[c.request]?.icon ?? '') : ''}`; if (sk.dataset.t !== t) { sk.dataset.t = t; sk.innerHTML = `${t} <button class="mini-btn" data-a="bell">🔔 Cheamă</button>`; } }
-    this.els['.clock .time'].textContent = (nightAmount(w.minutes) > 0.5 ? '🌙 ' : '☀️ ') + clockText(w.minutes);
-    this.els['.clock .day'].textContent = `Ziua ${w.day}`;
-    this.els['.clock .hearts'].textContent = `💗 ${w.hearts}`;
-    (this.root.querySelector('.clock .money') as HTMLElement).textContent = `💰 ${w.money ?? 0} lei`;
-    const rs = (this.root.querySelector('.clock .res') as HTMLElement); const R = w.res ?? {}; const seeds = Object.keys(CROPS).reduce((a, c) => a + (R[seedKey(c)] ?? 0), 0); const rt = `🪵${R.wood ?? 0} 🪨${R.stone ?? 0} 🥕${catCount(R, 'veg')} 🌸${catCount(R, 'flower')} 🍲${R.meals ?? 0} 💧${R.water ?? 0} 🌰${seeds} · 🔥${Math.round((w.furn.fire as number) ?? 0)}% 🎒`; if (rs.textContent !== rt) rs.textContent = rt;
+    this.txt(this.els['.clock .time'], (nightAmount(w.minutes) > 0.5 ? '🌙 ' : '☀️ ') + clockText(w.minutes));
+    this.txt(this.els['.clock .day'], `Ziua ${w.day}`);
+    this.txt(this.els['.clock .hearts'], `💗 ${w.hearts}`);
+    this.txt(this.root.querySelector('.clock .money'), `💰 ${w.money ?? 0} lei`);
+    const rs = (this.root.querySelector('.clock .res') as HTMLElement); const R = w.res ?? {}; const seeds = Object.keys(CROPS).reduce((a, c) => a + (R[seedKey(c)] ?? 0), 0); const rt = `🪵${R.wood ?? 0} 🪨${R.stone ?? 0} 🥕${catCount(R, 'veg')} 🌸${catCount(R, 'flower')} 🍲${dishCount(R)} 💧${R.water ?? 0} 🌰${seeds} · 🔥${Math.round((w.furn.fire as number) ?? 0)}% 🎒`; this.txt(rs, rt);
     const pc = w.chars[s.partner.id];
-    this.els['.pmood'].textContent = (s.sameArea() ? '' : ({ home: '🏡 acasă · ', forest: '🌲 la pădure · ', village: '🏘️ în sat · ', city: '🏙️ la oraș · ', apartment: '🔑 în apartament · ' } as Record<string, string>)[s.partnerArea()] ?? '') + moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : '');
-    (this.els['.fart .fill'] as HTMLElement).style.height = c.fart + '%';
+    this.txt(this.els['.pmood'], (s.sameArea() ? '' : ({ home: '🏡 acasă · ', forest: '🌲 la pădure · ', village: '🏘️ în sat · ', city: '🏙️ la oraș · ', apartment: '🔑 în apartament · ' } as Record<string, string>)[s.partnerArea()] ?? '') + moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : ''));
+    { const f = this.els['.fart .fill'] as HTMLElement, v = Math.round(c.fart) + '%'; if (f.dataset.v !== v) { f.dataset.v = v; f.style.height = v; } }
     this.els['[data-a="pairs"]'].classList.toggle('glow', s.nearPartner());
-    (this.root.querySelector('.act.scooter') as HTMLElement).style.display = 'none'; // vehiculele se folosesc de la poarta
+    { const sc = this.root.querySelector('.act.scooter') as HTMLElement; if (sc.style.display !== 'none') sc.style.display = 'none'; } // vehiculele se folosesc de la poarta
     (this.root.querySelector('.act.scooter') as HTMLElement).classList.toggle('glow', !!s.me.riding);
     // butonul de actiune
     let label = '…', icon = '✋';

@@ -47,7 +47,8 @@ export interface NetAdapter {
   sendState(s: PlayerState): void;
   sendEvent(e: NetEvent): void;
   /** salvare in cloud (snapshot complet al lumii) */
-  saveWorld(json: string, ts: number): Promise<void>;
+  /** salveaza lumea; force = trimite imediat si in cloud (la inchidere / minimizare) */
+  saveWorld(json: string, ts: number, force?: boolean): Promise<void>;
   loadWorld(): Promise<{ json: string; ts: number } | null>;
   onState?: (s: PlayerState) => void;
   onEvent?: (e: NetEvent) => void;

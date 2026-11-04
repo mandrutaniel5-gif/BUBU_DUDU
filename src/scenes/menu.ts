@@ -2,12 +2,15 @@
 import { Actor } from '../char/actor';
 import { Fx } from '../char/fx';
 import { Sfx } from '../engine/sfx';
+import { isEco } from '../engine/game';
 import pkg from '../../package.json';
 import { Settings } from '../game/settings';
 import type { Scene, Game } from '../engine/game';
 import type { NetConfig } from '../net/types';
 
 export class MenuScene implements Scene {
+  /** meniul nu are nevoie de mai mult de 30 de cadre pe secunda */
+  wantFps() { return 30; }
   fx = new Fx();
   bubu = new Actor('bubu', this.fx);
   dudu = new Actor('dudu', this.fx);
@@ -42,6 +45,7 @@ export class MenuScene implements Scene {
         <button class="play">▶ Intră în casă</button>
         <div class="row2"><button class="export" title="Salvează progresul într-un fișier">💾 Salvează în fișier</button><button class="import" title="Încarcă progresul dintr-un fișier">📂 Încarcă</button></div>
         <div class="row2"><button class="studio">🎬 Studio animații</button><button class="reset">🔄 Joc nou</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button><button class="credits" title="Credite">📜</button></div>
+        <div class="row2"><button class="eco" title="Economisire baterie: mai puține cadre pe secundă când stați, rezoluție puțin mai mică pe telefon">${isEco() ? '🔋 Economisire baterie: pornită' : '⚡ Economisire baterie: oprită'}</button></div>
         <p class="ver">v${pkg.version} · făcut cu 💕 pentru noi doi</p>
       </div>`;
     document.getElementById('ui')!.appendChild(this.ui);
@@ -61,6 +65,7 @@ export class MenuScene implements Scene {
         (b.dataset.who === 'bubu' ? this.bubu : this.dudu).play('wave');
       }
       if (b.classList.contains('credits')) { this.showCredits(); return; }
+      if (b.classList.contains('eco')) { const on = !isEco(); Settings.set({ eco: on }); b.textContent = on ? '🔋 Economisire baterie: pornită' : '⚡ Economisire baterie: oprită'; dispatchEvent(new Event('resize')); return; }
       if (b.classList.contains('xcred')) { this.ui.querySelector('.cred')?.remove(); return; }
       if (b.classList.contains('mute')) { const m = !Settings.get().muted; Settings.set({ muted: m }); Sfx.setMuted(m); b.textContent = m ? '🔇' : '🔊'; }
       if (b.classList.contains('paste')) {

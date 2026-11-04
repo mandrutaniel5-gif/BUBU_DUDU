@@ -105,6 +105,7 @@ export class WorldScene implements Scene {
   build: { item: BuildItem | null; gx: number; gy: number; remove: boolean } | null = null;
   snoring = false; snoreT = 3;
   snd = new Soundscape(this);
+  private netTick = 0; private lastNpcKey = '';
   /** reteta aleasa la aragaz (o citeste minijocul bucatariei) */
   cookRecipe: string | null = null;
   miniInbox: unknown[] = [];
@@ -262,8 +263,15 @@ export class WorldScene implements Scene {
     if (o.k === 'place' || o.k === 'unplace') this.syncPlaced();
     if (o.k === 'jar' && o.from !== this.myId) this.hud.toast('💌 Ai primit un bilețel în Borcanul cu iubire!');
   }
-  sendCharSync() {
+  private lastStateKey = ''; private lastStateAt = 0; private lastCharSync = ''; private lastCharAt = 0;
+  /** trimite starea personajului (nevoi, haine...); periodic doar daca s-a schimbat ceva */
+  sendCharSync(always = true) {
     const c = this.w.chars[this.myId]; c.gx = this.me.gx; c.gy = this.me.gy;
+    if (!always) {
+      const n = c.needs, key = JSON.stringify({ ...c, gx: 0, gy: 0, needs: Object.fromEntries(Object.entries(n).map(([k, v]) => [k, Math.round(v as number / 3)])) });
+      if (key === this.lastCharSync && Date.now() - this.lastCharAt < 30000) return;
+      this.lastCharSync = key; this.lastCharAt = Date.now();
+    }
     this.net.sendEvent({ t: 'op', op: { k: 'char', who: this.myId, state: c } });
   }
   /** reconstruieste obiectele construite + navigarea */
@@ -349,7 +357,7 @@ export class WorldScene implements Scene {
     if (this.partner.control !== 'remote') (this.w.chars[this.partner.id] as any).area = this.aiArea;
     this.w.ts = Date.now();
     const json = JSON.stringify(this.w);
-    this.net.saveWorld(json, this.w.ts);
+    this.net.saveWorld(json, this.w.ts, force);
     this.dirty = false;
     try { localStorage.setItem('bd-last-seen-' + this.myId, String(Date.now())); } catch { /* */ }
     if (this.net.kind !== 'firebase' && (force || Date.now() - this.lastCloud > 30000)) { this.lastCloud = Date.now(); saveCloud(this.cloudKey(), json, this.w.ts); }
@@ -1028,6 +1036,12 @@ export class WorldScene implements Scene {
   }
   /** scara la care desenam minijocurile (1 pe ecrane normale, <1 pe ecrane scunde) */
   miniScale() { return Math.min(1, this.game.h / 470); }
+  /** cate cadre pe secunda ne trebuie: 60 cand se misca ceva, 30 cand stati (modul eco economiseste bateria) */
+  wantFps() {
+    // 60 doar cand te misti tu, in minijocuri, pe drum si la construit; altfel 30 (partenerul care se plimba arata bine si la 30)
+    const busy = !!this.minigame || !!this.travel || !!this.build || this.joy.active || this.me.actor.moving || this.me.path.length > 0 || this.shake > 0.5;
+    return busy ? 60 : 30;
+  }
   storeMode: '' | 'florarie' = '';
   /** porneste un minijoc fara activitate legata de un obiect */
   startCustom(mini: string) {
@@ -1422,7 +1436,12 @@ export class WorldScene implements Scene {
       this.checkGoals();
       Town.dailyTick(this);
       this.growPlots();
-      if (this.isHost && this.partnerOnline) { this.net.sendEvent({ t: 'op', op: { k: 'npcs', list: this.npcPublic() } }); this.net.sendEvent({ t: 'op', op: { k: 'clock', gameMin: this.w.gameMin ?? 0 } }); }
+      if (this.isHost && this.partnerOnline) {
+        this.netTick = (this.netTick + 1) % 6;
+        // clientii tarabei: la 2 s si doar daca s-au schimbat; ceasul: la 6 s
+        if (this.netTick % 2 === 0) { const L = this.npcPublic(), k = JSON.stringify(L.map(n => [n.id, n.state, Math.round(n.x * 2), n.wants])); if (k !== this.lastNpcKey) { this.lastNpcKey = k; this.net.sendEvent({ t: 'op', op: { k: 'npcs', list: L } }); } }
+        if (this.netTick === 0) this.net.sendEvent({ t: 'op', op: { k: 'clock', gameMin: this.w.gameMin ?? 0 } });
+      }
     }
     const inside = (p: Pawn) => (p === this.me ? this.area : this.partnerArea()) === 'home' && p.gx >= HOUSE.x0 && p.gx <= HOUSE.x1 + 1 && p.gy >= HOUSE.y0 && p.gy <= HOUSE.y1 + 1;
     // nevoi (doar pentru personajele controlate local)
@@ -1516,8 +1535,14 @@ export class WorldScene implements Scene {
 
     // retea + salvare
     this.stateT -= dt; this.syncT -= dt; this.saveT -= dt;
-    if (this.stateT <= 0) { this.stateT = 0.066; this.net.sendState({ who: this.myId, gx: this.me.gx, gy: this.me.gy, flip: this.me.actor.flip, back: this.me.facingBack, moving: this.me.actor.moving, mood: this.me.actor.mood, ts: Date.now(), riding: !!this.me.riding, passenger: !!this.me.passenger, board: !!this.me.board }); }
-    if (this.syncT <= 0) { this.syncT = 2; this.sendCharSync(); }
+    if (this.stateT <= 0) {
+      const st = { who: this.myId, gx: this.me.gx, gy: this.me.gy, flip: this.me.actor.flip, back: this.me.facingBack, moving: this.me.actor.moving, mood: this.me.actor.mood, ts: Date.now(), riding: !!this.me.riding, passenger: !!this.me.passenger, board: !!this.me.board };
+      const key = `${st.gx.toFixed(2)},${st.gy.toFixed(2)},${st.flip},${st.back},${st.moving},${st.mood},${st.riding},${st.passenger},${st.board}`;
+      // cand te misti: de ~10 ori pe secunda; cand stai: doar un semn de viata la 2 s (bateria si datele mobile)
+      if (key !== this.lastStateKey || Date.now() - this.lastStateAt > 2000) { this.lastStateKey = key; this.lastStateAt = Date.now(); this.net.sendState(st); }
+      this.stateT = this.partnerOnline ? 0.1 : 0.5;
+    }
+    if (this.syncT <= 0) { this.syncT = 5; this.sendCharSync(false); }
     if (this.dirty && this.saveT > 2) this.saveT = 2; // o schimbare importanta -> salvam in 2 s
     if (this.saveT <= 0) { this.saveT = 10; this.save(); }
     this.hud.update();

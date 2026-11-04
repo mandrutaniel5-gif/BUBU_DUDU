@@ -95,3 +95,11 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - Piața se „saturează”: după 10 bucăți din același lucru într-o zi prețul scade la jumătate, după 20 nu mai cumpără până a doua zi.
 - Tâmplăria: plăți mai mici și cel mult 3 comenzi pe zi.
 - Vehiculele parcate acasă stau lângă indicatorul „Spre sat” (bicicleta în dreapta, scuterul în stânga); când vii din sat sau din oraș (taxi), ajungi pe drum lângă indicator. De la pădure ajungi la tractoraș.
+
+## Baterie (v1.2.8)
+
+- Ecranul se desenează de cel mult 60 de ori pe secundă (și pe telefoanele cu 120 Hz); în modul eco, 30 când nu te miști (60 când mergi, în minijocuri, pe drum, la construit).
+- Modul eco (Meniu → 🔋, pornit implicit pe telefoane) desenează și la rezoluție 1,5× în loc de 2× (~45% mai puțini pixeli).
+- Meniul de sus (ceas, bani, nevoi) se actualizează de ~8 ori pe secundă și doar când se schimbă ceva (înainte: ~177 de modificări pe secundă).
+- Rețea: poziția se trimite doar când te miști (când stai, un semn de viață la 2 s); starea personajului la 5 s doar dacă s-a schimbat; clienții tarabei la 2 s, ceasul la 6 s; lumea întreagă se urcă în Firebase cel mult o dată la 45 s (și imediat la închidere / minimizare).
+- Fără sunet: procesarea audio se oprește de tot.
