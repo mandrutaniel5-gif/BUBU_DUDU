@@ -43,7 +43,7 @@ export const jobPay = (w: WorldState, job: JobDef, who: CharId, perf: number) =>
 export interface CourseDef { id: string; name: string; price: number; icon: string; desc: string; questions: { q: string; a: string[]; ok: number }[] }
 export const COURSES: Record<string, CourseDef> = {
   birou: {
-    id: 'birou', name: 'Cursul de birou', price: 120, icon: '💻', desc: 'Calculator, documente, e-mail. Deschide jobul de la birou.',
+    id: 'birou', name: 'Cursul de birou', price: 220, icon: '💻', desc: 'Calculator, documente, e-mail. Deschide jobul de la birou.',
     questions: [
       { q: 'Unde salvezi un document ca să nu-l pierzi?', a: ['Pe hârtie de ziar', 'Într-un dosar pe calculator 💾', 'În frigider'], ok: 1 },
       { q: 'Ce faci cu o factură plătită?', a: ['O arunci', 'O pui la dosarul „Facturi” 📁', 'O mănânci'], ok: 1 },
@@ -55,7 +55,7 @@ export const COURSES: Record<string, CourseDef> = {
     ],
   },
   'prim-ajutor': {
-    id: 'prim-ajutor', name: 'Cursul de prim ajutor', price: 150, icon: '🩹', desc: 'Îngrijirea bolnavilor. Deschide jobul de la spital.',
+    id: 'prim-ajutor', name: 'Cursul de prim ajutor', price: 270, icon: '🩹', desc: 'Îngrijirea bolnavilor. Deschide jobul de la spital.',
     questions: [
       { q: 'Cineva are febră mare. Ce îi dai?', a: ['Înghețată', 'Medicament pentru febră și apă 💊', 'Cafea'], ok: 1 },
       { q: 'Ce pui pe o zgârietură curată?', a: ['Un plasture 🩹', 'Sare', 'Lipici'], ok: 0 },
@@ -67,7 +67,7 @@ export const COURSES: Record<string, CourseDef> = {
     ],
   },
   florist: {
-    id: 'florist', name: 'Cursul de florist', price: 140, icon: '💐', desc: 'Buchete mai frumoase: la Florăria lui Bubu clienții plătesc mai mult.',
+    id: 'florist', name: 'Cursul de florist', price: 250, icon: '💐', desc: 'Buchete mai frumoase: la Florăria lui Bubu clienții plătesc mai mult.',
     questions: [
       { q: 'Ce flori se dăruiesc din dragoste?', a: ['Trandafiri roșii 🌹', 'Urzici', 'Cactuși'], ok: 0 },
       { q: 'Cum ții florile proaspete mai mult?', a: ['Apă curată și tăieturi oblice ✂️', 'Fără apă', 'La soare puternic'], ok: 0 },
@@ -77,7 +77,7 @@ export const COURSES: Record<string, CourseDef> = {
     ],
   },
   tamplar: {
-    id: 'tamplar', name: 'Cursul de tâmplar', price: 140, icon: '🪚', desc: 'Mobilă mai fină: la Tâmplăria lui Dudu câștigi cu 30% mai mult.',
+    id: 'tamplar', name: 'Cursul de tâmplar', price: 250, icon: '🪚', desc: 'Mobilă mai fină: la Tâmplăria lui Dudu câștigi cu 30% mai mult.',
     questions: [
       { q: 'Cu ce tai o scândură drept?', a: ['Cu fierăstrăul 🪚', 'Cu lingura', 'Cu foarfeca de unghii'], ok: 0 },
       { q: 'Ce faci înainte să tai?', a: ['Măsori de două ori 📏', 'Închizi ochii', 'Nimic'], ok: 0 },
@@ -130,18 +130,18 @@ export const HOURS: Record<string, [number, number]> = {
 export const isOpen = (id: string, hour: number) => { const h = HOURS[id]; return !h || (hour >= h[0] && hour < h[1]); };
 
 // ------------------------------------------------------------------ banca + apartament
-export const APT_PRICE = 2400, APT_DOWN = 400, LOAN_RATE = 110, LOAN_DAYS = 20, APT_BILLS = 18;
+export const APT_PRICE = 5000, APT_DOWN = 1000, LOAN_RATE = 220, LOAN_DAYS = 20, APT_BILLS = 30;
 export interface Bank { savings: number; loanLeft: number; late: number }
 export const bankOf = (w: WorldState): Bank => ({ savings: 0, loanLeft: 0, late: 0, ...((w as any).town?.bank ?? {}) });
 
 // ------------------------------------------------------------------ mall: mobila pentru apartament
 export interface DecorDef { id: string; label: string; icon: string; price: number; type: string; gx: number; gy: number; w: number; d: number; action?: { id: string; label: string; icon: string }; desc: string }
 export const DECOR: DecorDef[] = [
-  { id: 'aquarium', label: 'Acvariu cu peștișori', icon: '🐟', price: 180, type: 'aquarium', gx: 6, gy: 13, w: 1, d: 1, action: { id: 'a-aquarium', label: 'Privește peștișorii', icon: '🐟' }, desc: 'Relaxare: +distracție' },
-  { id: 'piano', label: 'Pian', icon: '🎹', price: 650, type: 'piano', gx: 11, gy: 4, w: 1, d: 1, action: { id: 'a-piano', label: 'Cântă la pian', icon: '🎹' }, desc: 'Cântați împreună: +iubire, +distracție' },
-  { id: 'console', label: 'Consolă de jocuri', icon: '🎮', price: 280, type: 'console', gx: 4, gy: 10, w: 1, d: 1, action: { id: 'a-console', label: 'Joacă pe consolă', icon: '🎮' }, desc: 'Jocuri video în doi: +distracție mare' },
-  { id: 'coffee', label: 'Espressor', icon: '☕', price: 150, type: 'coffeemachine', gx: 16, gy: 12, w: 1, d: 1, action: { id: 'a-coffee', label: 'Fă o cafea', icon: '☕' }, desc: 'O cafea pe zi: +energie' },
-  { id: 'painting', label: 'Tablou cu inimioare', icon: '🖼️', price: 90, type: 'painting', gx: 7, gy: 8, w: 1, d: 1, desc: 'Decor: casa e mai frumoasă' },
-  { id: 'bigplant', label: 'Plantă mare', icon: '🪴', price: 60, type: 'bigplant', gx: 11, gy: 13, w: 1, d: 1, action: { id: 'water_plant', label: 'Udă planta', icon: '🪴' }, desc: 'Decor viu' },
-  { id: 'lamp', label: 'Lampă de podea', icon: '💡', price: 80, type: 'floorlamp', gx: 9, gy: 13, w: 1, d: 1, desc: 'Lumină caldă seara' },
+  { id: 'aquarium', label: 'Acvariu cu peștișori', icon: '🐟', price: 300, type: 'aquarium', gx: 6, gy: 13, w: 1, d: 1, action: { id: 'a-aquarium', label: 'Privește peștișorii', icon: '🐟' }, desc: 'Relaxare: +distracție' },
+  { id: 'piano', label: 'Pian', icon: '🎹', price: 1100, type: 'piano', gx: 11, gy: 4, w: 1, d: 1, action: { id: 'a-piano', label: 'Cântă la pian', icon: '🎹' }, desc: 'Cântați împreună: +iubire, +distracție' },
+  { id: 'console', label: 'Consolă de jocuri', icon: '🎮', price: 480, type: 'console', gx: 4, gy: 10, w: 1, d: 1, action: { id: 'a-console', label: 'Joacă pe consolă', icon: '🎮' }, desc: 'Jocuri video în doi: +distracție mare' },
+  { id: 'coffee', label: 'Espressor', icon: '☕', price: 260, type: 'coffeemachine', gx: 16, gy: 12, w: 1, d: 1, action: { id: 'a-coffee', label: 'Fă o cafea', icon: '☕' }, desc: 'O cafea pe zi: +energie' },
+  { id: 'painting', label: 'Tablou cu inimioare', icon: '🖼️', price: 150, type: 'painting', gx: 7, gy: 8, w: 1, d: 1, desc: 'Decor: casa e mai frumoasă' },
+  { id: 'bigplant', label: 'Plantă mare', icon: '🪴', price: 100, type: 'bigplant', gx: 11, gy: 13, w: 1, d: 1, action: { id: 'water_plant', label: 'Udă planta', icon: '🪴' }, desc: 'Decor viu' },
+  { id: 'lamp', label: 'Lampă de podea', icon: '💡', price: 140, type: 'floorlamp', gx: 9, gy: 13, w: 1, d: 1, desc: 'Lumină caldă seara' },
 ];

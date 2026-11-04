@@ -86,3 +86,12 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - Apartamentul (etajul 4) se vede ca un etaj al blocului: dedesubt continuă fațada cu etajele de jos, nu mai plutește în cer.
 - Ieșirea se face pe ușa apartamentului (nr. 14, pe peretele din stânga, lângă televizor): stai pe preș și apeși „Ieși pe ușă”. Indicatorul „Ieșire” a fost scos.
 - Când urci sau cobori: animație pe casa scării (rampe în zig-zag, paliere cu ușile vecinilor, „Etajul 3… Parter”), cu pașii pe trepte și ușile care se deschid și se închid. Partenerul vine după tine.
+
+## Prețuri și limite (v1.2.5)
+
+- Toate prețurile importante sunt în `PRICE` (`src/game/economy.ts`): bicicletă 350, scuter 800, autobuz 8/persoană, taxi 70, cinema 35, restaurant 70, înghețată 10, călușei 8, roata mare 15, consult 35 (sat) / 50 (oraș), florăria și tâmplăria câte 450 lei (+20 lemne la tâmplărie).
+- Mâncarea, semințele, ingredientele, hainele, mobila de la mall, cursurile și farmacia sunt de ~1,7 ori mai scumpe. Apartamentul: 5000 lei sau 1000 avans + 20 rate × 220; întreținere 30 lei/zi.
+- Lemnele nu mai fac averi: un copac dă 2 lemne (Dudu 3) și crește la loc în 4 minute; cheresteaua plătește 2 lei lemnul, cel mult 15 lemne pe zi; la piață lemnul, piatra și fânul se vând cu 1 leu.
+- Piața se „saturează”: după 10 bucăți din același lucru într-o zi prețul scade la jumătate, după 20 nu mai cumpără până a doua zi.
+- Tâmplăria: plăți mai mici și cel mult 3 comenzi pe zi.
+- Vehiculele parcate acasă stau lângă indicatorul „Spre sat” (bicicleta în dreapta, scuterul în stânga); când vii din sat sau din oraș (taxi), ajungi pe drum lângă indicator. De la pădure ajungi la tractoraș.

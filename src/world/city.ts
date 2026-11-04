@@ -22,7 +22,7 @@ export interface CityBuilding { id: string; gx: number; gy: number; w: number; d
 export const CITY_BUILDINGS: CityBuilding[] = [
   { id: 'c-boutique', gx: 1, gy: 7, w: 4, d: 4, h: 118, floors: 4, front: 'y', wall: '#ffe1ea', trim: '#e5809a', sign: 'Buticul Elegant', signCol: '#ff4d8d', awning: '#ff9ab8', action: act('c-boutique', 'Buticul (haine elegante)', '🛍️') },
   { id: 'c-super', gx: 5, gy: 7, w: 4, d: 4, h: 92, floors: 3, front: 'y', wall: '#e7f6e2', trim: '#5aa35a', sign: 'Supermarket', signCol: '#3f8f5a', awning: '#7cc576', action: act('c-super', 'Supermarketul', '🛒') },
-  { id: 'c-cinema', gx: 14, gy: 6, w: 6, d: 5, h: 104, floors: 3, front: 'y', wall: '#e9e2ff', trim: '#7a5ad6', sign: 'CINEMA', signCol: '#e63946', marquee: true, action: act('c-cinema', 'Cinema (20 lei / doi)', '🎬') },
+  { id: 'c-cinema', gx: 14, gy: 6, w: 6, d: 5, h: 104, floors: 3, front: 'y', wall: '#e9e2ff', trim: '#7a5ad6', sign: 'CINEMA', signCol: '#e63946', marquee: true, action: act('c-cinema', 'Cinema (35 lei / doi)', '🎬') },
   { id: 'c-resto', gx: 1, gy: 15, w: 4, d: 4, h: 84, floors: 3, front: 'x', wall: '#fff1d6', trim: '#c0573e', sign: 'Restaurant La Doi', signCol: '#c0573e', awning: '#e07a5f', action: act('c-resto', 'Restaurant (cină romantică)', '🍽️') },
   { id: 'c-cafe', gx: 5, gy: 15, w: 3, d: 4, h: 70, floors: 2, front: 'x', wall: '#f5e1c8', trim: '#8a5d32', sign: 'Cafeneaua', signCol: '#8a5d32', awning: '#c98e5f', action: act('c-cafe', 'Cafeneaua (lucrează ca barista)', '🧋') },
   { id: 'c-tower', gx: 1, gy: 20, w: 4, d: 4, h: 176, floors: 7, front: 'y', wall: '#e8f1ff', trim: '#5b7fbf', sign: 'Blocul Lalelelor', signCol: '#5b7fbf', action: act('c-tower', 'Blocul cu apartamente', '🏙️') },
@@ -38,8 +38,8 @@ for (const b of CITY_BUILDINGS) F.push({ id: b.id, type: 'cbuilding' as any, gx:
 // blocul: intri doar pe usa scarii (pe fata dinspre parc), nu de oriunde din jurul lui
 F.push({ id: 'c-towerdoor', type: 'towerdoor' as any, gx: 2.5, gy: 24, w: 1, d: 1, solid: false, action: act('c-tower', 'Intră în bloc (Scara A)', '🔑') });
 F.push({ id: 'c-bus', type: 'busstop' as any, gx: 20, gy: 14, w: 1, d: 1, solid: true, action: act('c-bus', 'Autobuzul spre sat', '🚌') });
-F.push({ id: 'c-taxi', type: 'taxistand' as any, gx: 12, gy: 15, w: 1, d: 1, solid: true, action: act('c-taxi', 'Taxi direct acasă (40 lei)', '🚕') });
-F.push({ id: 'c-ice', type: 'icecart' as any, gx: 15, gy: 21, w: 1, d: 1, solid: true, action: act('c-ice', 'Înghețată (6 lei)', '🍦') });
+F.push({ id: 'c-taxi', type: 'taxistand' as any, gx: 12, gy: 15, w: 1, d: 1, solid: true, action: act('c-taxi', 'Taxi direct acasă (70 lei)', '🚕') });
+F.push({ id: 'c-ice', type: 'icecart' as any, gx: 15, gy: 21, w: 1, d: 1, solid: true, action: act('c-ice', 'Înghețată (10 lei)', '🍦') });
 F.push({ id: 'c-fountain', type: 'cfountain' as any, gx: 18, gy: 17, w: 2, d: 2, solid: true, action: act('v-fountain', 'Aruncă o monedă', '🪙') });
 F.push({ id: 'c-lights', type: 'trafficlight' as any, gx: 9, gy: 11, w: 1, d: 1, solid: true });
 F.push({ id: 'c-lights2', type: 'trafficlight' as any, gx: 12, gy: 14, w: 1, d: 1, solid: true });

@@ -5,7 +5,7 @@ import { Sfx } from '../engine/sfx';
 import { g } from '../game/gender';
 import { JOBS, LEVEL_NAMES, LEVEL_NEED, COURSES, VILLAGERS, DECOR, APT_PRICE, APT_DOWN, LOAN_RATE, LOAN_DAYS, APT_BILLS,
   jobBlock, jobPay, jobLevel, jobXp, jobKey, hasDiploma, makeQuests, reputation, repLevel, villageBonus, isMarketDay, bankOf, type Quest, type Bank } from '../game/town';
-import { SHOP_SELL, SHOP_BUY, SHOP_CITY, INV_INFO } from '../game/economy';
+import { SHOP_SELL, SHOP_BUY, SHOP_CITY, INV_INFO, PRICE } from '../game/economy';
 import { RES_INFO } from '../world/build';
 import type { ShopEntry, ShopConfig } from '../minigames/towngames';
 
@@ -93,32 +93,36 @@ export function citySuper(s: WorldScene) {
 export function villageMarket(s: WorldScene) {
   const bonus = villageBonus(s.w) + (isMarketDay(s.w) ? 0.4 : 0);
   const r = s.w.res ?? {};
+  // piata se "satura": dupa cateva bucati din acelasi lucru intr-o zi, vanzatorul plateste mai putin, apoi deloc
+  const soldKey = (id: string) => `sold-${s.w.day}-${id}`;
+  const unit = (i: (typeof SHOP_SELL)[number]) => { const n = s.w.stats[soldKey(i.id)] ?? 0; if (n >= PRICE.marketFull * 2) return 0; return Math.max(1, Math.round(i.price * (1 + bonus) * (n >= PRICE.marketFull ? 0.5 : 1))); };
   const items: ShopEntry[] = SHOP_SELL.filter(i => (r[i.id] ?? 0) > 0).map(i => {
-    const price = Math.round(i.price * (1 + bonus));
-    return { icon: i.icon, name: `${i.label} (ai ${r[i.id] ?? 0})`, price, buy: () => {
+    const price = unit(i);
+    return { icon: i.icon, name: `${i.label} (ai ${r[i.id] ?? 0})${price === 0 ? ' · gata pe azi' : (s.w.stats[soldKey(i.id)] ?? 0) >= PRICE.marketFull ? ' · preț redus' : ''}`, price, buy: () => {
       if ((s.w.res?.[i.id] ?? 0) < 1) return 'Nu mai ai 🙂';
-      s.op({ k: 'res', res: i.id, delta: -1 }); s.op({ k: 'money', delta: price }); s.op({ k: 'stat', key: 'marketSold', delta: 1 }); return null;
+      const p = unit(i); if (p === 0) return 'Azi nu mai cumpăr de-astea, am destule! Mâine 🙂';
+      s.op({ k: 'res', res: i.id, delta: -1 }); s.op({ k: 'money', delta: p }); s.op({ k: 'stat', key: 'marketSold', delta: 1 }); s.op({ k: 'stat', key: soldKey(i.id), delta: 1 }); return null;
     } };
   });
   openShop(s, { title: isMarketDay(s.w) ? '🎪 Târgul de duminică!' : '💱 Piața satului', wall: '#ffe9c9', floor: '#c9a678', keeper: 'pig', sell: true,
     hello: isMarketDay(s.w) ? 'E zi de târg: plătesc cu 40% mai mult! 🎉' : items.length ? 'Ce-mi vindeți azi?' : 'N-aveți nimic de vândut… adunați din grădină și pădure!', items,
-    footer: 'Duminica (ziua 7, 14, 21…) e târg: prețuri mai mari' });
+    footer: `Duminica e târg: prețuri mai mari · după ${PRICE.marketFull} bucăți din același lucru pe zi, prețul scade` });
 }
 export function villageBakeryShop(s: WorldScene) {
   const d = villageBonus(s.w);
   const items: { label: string; icon: string; price: number; give: Record<string, number> }[] = [
-    { label: 'Pâine caldă (x2 porții)', icon: '🍞', price: 9, give: { meals: 2 } },
-    { label: 'Covrigi (x1 porție)', icon: '🥨', price: 4, give: { meals: 1 } },
-    { label: 'Cozonac (x3 porții)', icon: '🍰', price: 15, give: { meals: 3 } },
-    { label: 'Sac de făină (x3)', icon: '🥡', price: 8, give: { flour: 3 } },
+    { label: 'Pâine caldă (x2 porții)', icon: '🍞', price: 16, give: { meals: 2 } },
+    { label: 'Covrigi (x1 porție)', icon: '🥨', price: 7, give: { meals: 1 } },
+    { label: 'Cozonac (x3 porții)', icon: '🍰', price: 26, give: { meals: 3 } },
+    { label: 'Sac de făină (x3)', icon: '🥡', price: 14, give: { flour: 3 } },
   ];
   openShop(s, { title: '🥖 Brutăria', wall: '#fff3e0', floor: '#d9a05a', keeper: 'dog', hello: 'Pâine caldă, abia scoasă! 🍞', items: items.map(i => buyEntry(s, i, d)) });
 }
 export function pharmacy(s: WorldScene, city: boolean) {
   const items: ShopEntry[] = [
-    { icon: '🍵', name: 'Ceai de tei (căldură +, sănătate +)', price: city ? 8 : 6, buy: () => { if ((s.w.money ?? 0) < (city ? 8 : 6)) return 'Nu ajung banii 💰'; s.op({ k: 'money', delta: -(city ? 8 : 6) }); s.op({ k: 'need', who: s.myId, need: 'warmth', delta: 20 }); s.op({ k: 'need', who: s.myId, need: 'health', delta: 10 }); return null; } },
-    { icon: '💊', name: 'Vitamine (sănătate ++)', price: city ? 18 : 14, buy: () => { const p = city ? 18 : 14; if ((s.w.money ?? 0) < p) return 'Nu ajung banii 💰'; s.op({ k: 'money', delta: -p }); s.op({ k: 'need', who: s.myId, need: 'health', delta: 30 }); return null; } },
-    { icon: '🩹', name: 'Trusă de prim ajutor (vindecă o boală)', price: city ? 30 : 24, buy: () => cure(s, city ? 30 : 24) },
+    { icon: '🍵', name: 'Ceai de tei (căldură +, sănătate +)', price: city ? 14 : 10, buy: () => { if ((s.w.money ?? 0) < (city ? 14 : 10)) return 'Nu ajung banii 💰'; s.op({ k: 'money', delta: -(city ? 14 : 10) }); s.op({ k: 'need', who: s.myId, need: 'warmth', delta: 20 }); s.op({ k: 'need', who: s.myId, need: 'health', delta: 10 }); return null; } },
+    { icon: '💊', name: 'Vitamine (sănătate ++)', price: city ? 30 : 24, buy: () => { const p = city ? 30 : 24; if ((s.w.money ?? 0) < p) return 'Nu ajung banii 💰'; s.op({ k: 'money', delta: -p }); s.op({ k: 'need', who: s.myId, need: 'health', delta: 30 }); return null; } },
+    { icon: '🩹', name: 'Trusă de prim ajutor (vindecă o boală)', price: city ? 50 : 40, buy: () => cure(s, city ? 50 : 40) },
   ];
   openShop(s, { title: city ? '🏥 Farmacia spitalului' : '💊 Farmacia satului', wall: '#e8f7f0', floor: '#cfe8dc', keeper: city ? 'fox' : 'bunny', hello: 'Sănătate multă! Cu ce vă ajut?', items });
 }
@@ -189,6 +193,8 @@ export function dailyTick(s: WorldScene) {
   const day = s.w.day; if (st(s, 'lastDay') === day) return;
   const first = !st(s, 'lastDay');
   setStat(s, 'lastDay', day);
+  // stergem contoarele zilnice vechi (vanzari la piata, cherestea, tamplarie) ca salvarea sa nu creasca
+  for (const k of Object.keys(s.w.stats)) { const m = /^(sold|woodSold|crafted)-(\d+)/.exec(k); if (m && +m[2] < day - 1) delete s.w.stats[k]; }
   if (first) return;
   const msgs: string[] = [];
   const b = bankOf(s.w); let money = s.w.money ?? 0;
