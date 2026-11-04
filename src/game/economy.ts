@@ -26,7 +26,6 @@ export const PRICE = {
   consultVillage: 35, consultCity: 50, florarie: 450, workshop: 450, workshopWood: 20,
   sawmill: 2, sawmillDay: 15,      // cheresteaua: 2 lei lemnul, cel mult 15 lemne pe zi
   marketFull: 10,                  // la piata: dupa 10 bucati din acelasi lucru intr-o zi, pretul scade la jumatate; dupa 20, nu mai cumpara
-  workshopDay: 3,                  // tamplaria: cel mult 3 comenzi pe zi
 };
 type ShopItem = { id: string; label: string; icon: string; price: number; give: Record<string, number> };
 const seedItem = (c: (typeof CROPS)[string]): ShopItem => ({ id: seedKey(c.id), label: `Semințe de ${c.name.toLowerCase()} (x3)`, icon: '🌰', price: c.seed * 5, give: { [seedKey(c.id)]: 3 } });

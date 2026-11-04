@@ -93,7 +93,8 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - Mâncarea, semințele, ingredientele, hainele, mobila de la mall, cursurile și farmacia sunt de ~1,7 ori mai scumpe. Apartamentul: 5000 lei sau 1000 avans + 20 rate × 220; întreținere 30 lei/zi.
 - Lemnele nu mai fac averi: un copac dă 2 lemne (Dudu 3) și crește la loc în 4 minute; cheresteaua plătește 2 lei lemnul, cel mult 15 lemne pe zi; la piață lemnul, piatra și fânul se vând cu 1 leu.
 - Piața se „saturează”: după 10 bucăți din același lucru într-o zi prețul scade la jumătate, după 20 nu mai cumpără până a doua zi.
-- Tâmplăria: plăți mai mici și cel mult 3 comenzi pe zi.
+- Tâmplăria: fără limită pe zi (ca taraba și florăria); lemnul e limitat de copaci (2–3 pe copac, cresc la loc în 4 minute).
+- Taraba: prețul depinde din ce e făcut produsul și de nivel (x2,3 la fiecare unire): lămâie 9, limonadă 19, bubble tea 43, cocktail 98; făină 9 … tort 225; flori 4 … coroniță 194; morcov 5 … oala cu ciorbă 113.
 - Vehiculele parcate acasă stau lângă indicatorul „Spre sat” (bicicleta în dreapta, scuterul în stânga); când vii din sat sau din oraș (taxi), ajungi pe drum lângă indicator. De la pădure ajungi la tractoraș.
 
 ## Baterie (v1.2.8)
@@ -103,3 +104,7 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - Meniul de sus (ceas, bani, nevoi) se actualizează de ~8 ori pe secundă și doar când se schimbă ceva (înainte: ~177 de modificări pe secundă).
 - Rețea: poziția se trimite doar când te miști (când stai, un semn de viață la 2 s); starea personajului la 5 s doar dacă s-a schimbat; clienții tarabei la 2 s, ceasul la 6 s; lumea întreagă se urcă în Firebase cel mult o dată la 45 s (și imediat la închidere / minimizare).
 - Fără sunet: procesarea audio se oprește de tot.
+
+## Hărțile zonelor (v1.2.9)
+
+- `resetAreas()` (`src/world/map.ts`) repornește hărțile curate la intrarea în joc și la ieșirea în meniu; obiectele casei (răzoare, construcții, vehicule) se adaugă doar pe harta casei. Înainte, dacă ieșeai în meniu din oraș și reveneai, se lipeau de oraș.

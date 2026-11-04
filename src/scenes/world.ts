@@ -16,7 +16,7 @@ import { RECIPE, RECIPES, canCook, consumeList, bestRecipe, bestDish, dishCount,
 import { g } from '../game/gender';
 import type { Scene, Game } from '../engine/game';
 import { iso, unIso, screenDirToGrid, isoBox, boxOf, TW, TH } from '../world/iso';
-import { FURNITURE, WALLS, MAP_W, MAP_H, YARD_H, YARD_GATE, type Furn, type Wall } from '../world/map';
+import { FURNITURE, WALLS, MAP_W, MAP_H, YARD_H, YARD_GATE, type Furn, type Wall, resetAreas, currentArea } from '../world/map';
 import { drawFurn, drawWall, renderFloor, drawYardFence, drawYardGate, type FurnState } from '../world/furniture';
 import { Nav } from '../world/nav';
 import { CATALOG, drawGhost, drawTallGrass, type BuildItem } from '../world/build';
@@ -129,6 +129,7 @@ export class WorldScene implements Scene {
   pawnOf(id: CharId) { return this.me.id === id ? this.me : this.partner; }
 
   async enter() {
+    resetAreas(); // hartile pornesc curate (altfel obiectele casei se puteau lipi de oras dupa o iesire in meniu)
     this.hud = new Hud(this);
     this.net.onStatus = (s, msg) => this.hud.setNet(s, msg);
     await this.net.connect(Settings.get().net.room, this.myId);
@@ -181,6 +182,7 @@ export class WorldScene implements Scene {
   exit() {
     this.snd.stop();
     this.save(true);
+    resetAreas();
     this.net.disconnect();
     for (const [t, ev, fn] of this.listeners) t.removeEventListener(ev, fn);
     this.hud.destroy();
@@ -276,7 +278,7 @@ export class WorldScene implements Scene {
   }
   /** reconstruieste obiectele construite + navigarea */
   syncPlaced() {
-    if (this.area !== 'home') return;
+    if (this.area !== 'home' || currentArea() !== 'home') return; // obiectele casei doar pe harta casei
     for (let i = FURNITURE.length - 1; i >= 0; i--) if (FURNITURE[i].id === 'h-tractor' || FURNITURE[i].id === 'h-wood') FURNITURE.splice(i, 1);
     for (let i = FURNITURE.length - 1; i >= 0; i--) if (FURNITURE[i].id === 'h-bike' || FURNITURE[i].id === 'h-scooter') FURNITURE.splice(i, 1);
     // vehiculele stau parcate la poarta, pe drum: le folosesti doar ca sa mergi in sat
@@ -827,6 +829,7 @@ export class WorldScene implements Scene {
     const c = iso(this.me.gx, this.me.gy, 30); this.cam.x = c.x; this.cam.y = c.y;
   }
   placeVillageVehicles() {
+    if (currentArea() !== 'village') return;
     for (let i = FURNITURE.length - 1; i >= 0; i--) if (FURNITURE[i].id === 'v-bike' || FURNITURE[i].id === 'v-scooter') FURNITURE.splice(i, 1);
     if ((this.w.stats.bike ?? 0) > 0) FURNITURE.push({ id: 'v-bike', type: 'parkedbike' as any, gx: 1, gy: 15, w: 1, d: 1, solid: false, action: { id: 'tripbike', label: 'Acasă cu bicicleta', icon: '🚲' } });
     if ((this.w.stats.scooter ?? 0) > 0) FURNITURE.push({ id: 'v-scooter', type: 'parkedscooter' as any, gx: 2, gy: 15, w: 1, d: 1, solid: false, action: { id: 'tripscooter', label: 'Acasă cu scuterul', icon: '🛵' } });
@@ -1028,7 +1031,7 @@ export class WorldScene implements Scene {
   }
   /** pune mobila cumparata in apartament */
   syncDecor() {
-    if (this.area !== 'apartment') return;
+    if (this.area !== 'apartment' || currentArea() !== 'apartment') return;
     for (let i = FURNITURE.length - 1; i >= 0; i--) if (FURNITURE[i].id.startsWith('d-')) FURNITURE.splice(i, 1);
     const owned = (this.w.town?.decor as string[] | undefined) ?? [];
     for (const d of DECOR) if (owned.includes(d.id)) FURNITURE.push({ id: 'd-' + d.id, type: d.type as any, gx: d.gx, gy: d.gy, w: d.w, d: d.d, solid: true, action: d.action });

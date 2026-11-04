@@ -25,7 +25,13 @@ export function orderableChains(res: Record<string, number>, stats: Record<strin
   const list = CHAIN_INFO.filter(c => have(res, c.src) > 0 || (stats['had-' + c.src] ?? 0) > 0).map(c => c.id);
   return list.length ? list : ['flower'];
 }
-export const itemValue = (code: string) => { const l = +code.split(':')[1]; return Math.round(3 * 2.2 ** l); };
+/**
+ * cat plateste un client pe un produs: depinde din ce e facut (lamaile si faina se cumpara, florile si legumele
+ * le cresti) si de nivel: fiecare unire valoreaza mai mult decat cele doua bucati folosite (x2,3), ca sa merite.
+ * Ex. lamaie 8, limonada 18, bubble tea 42, cocktail 97 lei (o lamaie costa 5 lei la magazin).
+ */
+const CHAIN_BASE: Record<string, number> = { flower: 3, veg: 4, sweet: 8, drink: 8 };
+export const itemValue = (code: string) => { const [ch, ls] = code.split(':'); const l = +ls; return Math.round((CHAIN_BASE[ch] ?? 3) * 2.3 ** l); };
 
 export interface MergeBoard { v: 3; cells: (string | null)[] }
 const COLS = 7, ROWS = 4;

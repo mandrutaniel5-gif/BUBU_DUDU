@@ -237,8 +237,6 @@ export class Hud {
     m.querySelectorAll('[data-rc]').forEach(b => b.addEventListener('click', () => {
       const rc = recipes.find(x => x.id === (b as HTMLElement).dataset.rc)!;
       if (!Object.entries(rc.need).every(([k, v]) => (r[k] ?? 0) >= v)) { this.toast('Nu ai destule materiale 🪵'); Sfx.play('bad'); return; }
-      const dk = 'crafted-' + w.day; if ((w.stats[dk] ?? 0) >= PRICE.workshopDay) { this.toast(`🪚 Azi ați terminat toate comenzile (${PRICE.workshopDay}). Mâine vin altele!`); Sfx.play('bad'); return; }
-      s.op({ k: 'stat', key: dk, delta: 1 });
       for (const [k, v] of Object.entries(rc.need)) s.op({ k: 'res', res: k, delta: -v });
       const pay = Math.round(rc.pay * bonus); s.op({ k: 'money', delta: pay }); s.op({ k: 'stat', key: 'crafted', delta: 1 });
       Sfx.play('saw', { vol: 0.6 }); Sfx.play('hammer', { delay: 0.6 }); Sfx.play('hammer', { delay: 0.85 }); setTimeout(() => Sfx.play('coin'), 1100); s.me.actor.play('flex');

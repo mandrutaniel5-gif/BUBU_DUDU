@@ -141,6 +141,21 @@ export const AREAS: Record<string, AreaDef> = {
   home: { floor: homeFloor, furniture: HOME_FURN, walls: HOME_WALLS, spawn: { x: 17.5, y: 16.5 } },
 };
 /** inlocuieste continutul listelor globale cu cel al zonei (pastreaza obiectele dinamice ale casei) */
+/** obiectele "curate" ale fiecarei zone (fara cele adaugate in joc: razoare, constructii, vehicule, mobila) */
+const BASE_FURN: Record<string, Furn[]> = {};
+/** zona incarcata acum pe harta */
+export const currentArea = () => AREA;
+/**
+ * Reporneste hartile de la zero (la intrarea in joc / iesirea in meniu). Fara asta, daca iesi in meniu
+ * cand esti in oras si revii, obiectele casei (razoare etc.) se lipeau de oras.
+ */
+export function resetAreas() {
+  if (!BASE_FURN.home) BASE_FURN.home = AREA === 'home' ? [...FURNITURE] : [...HOME_FURN]; // prima data: totul e inca neatins
+  for (const [k, a] of Object.entries(AREAS)) { BASE_FURN[k] ??= [...a.furniture]; a.furniture = [...BASE_FURN[k]]; }
+  AREA = 'home'; areaFloor = null;
+  FURNITURE.splice(0, FURNITURE.length, ...AREAS.home.furniture);
+  WALLS.splice(0, WALLS.length, ...AREAS.home.walls);
+}
 export function setArea(name: string) {
   const cur = AREAS[AREA];
   if (cur) cur.furniture = [...FURNITURE];
