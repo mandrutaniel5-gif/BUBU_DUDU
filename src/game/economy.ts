@@ -1,6 +1,7 @@
 // Economia: bani, inventar, preturi, obiective pe capitole.
 import type { WorldState } from './state';
 import { CROPS, seedKey } from '../world/garden';
+import { INGREDIENTS, RECIPES, dishKey } from './food';
 
 export const INV_INFO: Record<string, { icon: string; label: string }> = {
   water: { icon: '💧', label: 'Apă (găleți)' },
@@ -15,6 +16,8 @@ export const INV_INFO: Record<string, { icon: string; label: string }> = {
   cabbage: { icon: '🥬', label: 'Varză' }, strawberry: { icon: '🍓', label: 'Căpșuni' },
   tulip: { icon: '🌷', label: 'Lalele' }, rose: { icon: '🌹', label: 'Trandafiri' }, sunflower: { icon: '🌻', label: 'Floarea-soarelui' },
   ...Object.fromEntries(Object.values(CROPS).map(c => [seedKey(c.id), { icon: '🌰', label: 'Semințe: ' + c.name }])),
+  ...INGREDIENTS,
+  ...Object.fromEntries(RECIPES.map(r => [dishKey(r.id), { icon: r.icon, label: r.name }])),
 };
 
 type ShopItem = { id: string; label: string; icon: string; price: number; give: Record<string, number> };
@@ -22,10 +25,16 @@ const seedItem = (c: (typeof CROPS)[string]): ShopItem => ({ id: seedKey(c.id), 
 /** magazinul online (din casa, cu laptopul): de baza */
 export const SHOP_ONLINE: ShopItem[] = [
   ...Object.values(CROPS).filter(c => c.where === 'online').map(seedItem),
-  { id: 'meals', label: 'Mâncare gata (x2 porții)', icon: '🍱', price: 14, give: { meals: 2 } },
+  { id: 'meals', label: 'Mâncare gata (x2 porții)', icon: '🍱', price: 18, give: { meals: 2 } },
   { id: 'wood', label: 'Lemne de foc (x4)', icon: '🪵', price: 10, give: { wood: 4 } },
   { id: 'flour', label: 'Sac de făină (x3)', icon: '🥡', price: 8, give: { flour: 3 } },
   { id: 'lemon', label: 'Lămâi (x3)', icon: '🍋', price: 9, give: { lemon: 3 } },
+  { id: 'egg', label: 'Ouă de țară (x6)', icon: '🥚', price: 9, give: { egg: 6 } },
+  { id: 'milk', label: 'Lapte (x2)', icon: '🥛', price: 6, give: { milk: 2 } },
+  { id: 'cheese', label: 'Brânză de vaci (x2)', icon: '🧀', price: 10, give: { cheese: 2 } },
+  { id: 'cornmeal', label: 'Mălai (x3)', icon: '🌽', price: 6, give: { cornmeal: 3 } },
+  { id: 'rice', label: 'Orez (x3)', icon: '🍚', price: 7, give: { rice: 3 } },
+  { id: 'meat', label: 'Carne tocată (x2)', icon: '🥩', price: 16, give: { meat: 2 } },
 ];
 /** magazinul din sat: tot ce e online + seminte variate, ingrasamant, pamant */
 export const SHOP_BUY: ShopItem[] = [
@@ -36,8 +45,8 @@ export const SHOP_BUY: ShopItem[] = [
 ];
 /** supermarketul din oras: mancare gata, dulciuri, plus tot ce e in sat */
 export const SHOP_CITY: ShopItem[] = [
-  { id: 'pizza', label: 'Pizza familială (x3 porții)', icon: '🍕', price: 20, give: { meals: 3 } },
-  { id: 'bigcart', label: 'Coș mare de cumpărături (x6 porții)', icon: '🛒', price: 36, give: { meals: 6 } },
+  { id: 'pizza', label: 'Pizza familială (x3 porții)', icon: '🍕', price: 26, give: { meals: 3 } },
+  { id: 'bigcart', label: 'Coș mare de cumpărături (x6 porții)', icon: '🛒', price: 48, give: { meals: 6 } },
   { id: 'cake', label: 'Tort de ciocolată (x2 porții)', icon: '🍰', price: 16, give: { meals: 2 } },
   { id: 'coal', label: 'Brichete pentru sobă (x8 lemne)', icon: '📦', price: 18, give: { wood: 8 } },
   ...SHOP_BUY,

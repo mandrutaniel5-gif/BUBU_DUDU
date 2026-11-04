@@ -41,11 +41,11 @@ export class PlungerGame extends Panel {
       this.shake = 5;
       this.speed = Math.min(2.4, this.speed + 0.08);
       this.zone = Math.max(0.24, this.zone - 0.01);
-      if (this.progress >= 1) { this.flush = 0.01; Sfx.play('splash'); }
+      if (this.progress >= 1) { this.flush = 0.01; Sfx.play('flush'); }
     } else {
       this.combo = 0; this.misses++;
       this.water = Math.min(1, this.water + 0.22);
-      Sfx.play('bad');
+      Sfx.play('splash'); Sfx.play('bad', { vol: 0.5 });
       this.fx.text(cx, cy - 140, 'SPLASH! 💦', '#4ea8de', 1.3);
       this.fx.burst('drop', cx, cy - 40, 24, 3, 260, { grav: 500, max: 1, color: '#8b6b3e' });
       this.shake = 10;

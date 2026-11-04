@@ -68,7 +68,7 @@ export class CafeGame extends Panel {
   trashBtn() { const B = this.box, a = this.ingBtn(3); return { x: B.x + 20 + (B.w - 40) * 0.72, y: a.y, w: (B.w - 40) * 0.28, h: a.h }; }
   pointer(t: string, x: number, y: number) {
     if (t !== 'down' || this.ended) return;
-    (Object.keys(ING) as Ing[]).forEach((k, i) => { if (inside(x, y, this.ingBtn(i)) && this.cup.length < 4) { this.cup.push(k); Sfx.play('pop'); } });
+    (Object.keys(ING) as Ing[]).forEach((k, i) => { if (inside(x, y, this.ingBtn(i)) && this.cup.length < 4) { this.cup.push(k); Sfx.play(k === 'ice' ? 'clink' : 'pour', { vol: 0.5, rate: 1.3 }); } });
     if (inside(x, y, this.trashBtn())) { this.cup = []; Sfx.play('click'); }
     if (inside(x, y, this.serveBtn()) && this.cup.length) this.serve();
   }
@@ -77,7 +77,7 @@ export class CafeGame extends Panel {
     const ok = this.cup.length === this.order.rec.length && this.cup.every((c, i) => c === this.order.rec[i]);
     this.served++; this.reactOk = ok; this.react = 1.2;
     const B = this.box;
-    if (ok) { this.good++; const tip = this.custT < 6 ? 3 : this.custT < 10 ? 1 : 0; this.tips += tip; Sfx.play('coin'); this.fx.hearts(B.x + B.w * 0.3, B.y + 150, 4); this.fx.text(B.x + B.w * 0.3, B.y + 120, tip ? `+9 lei +${tip} bacșiș 💰` : '+9 lei 💰', '#2a9a4a', 0.9); this.hero.play('dance_hop'); }
+    if (ok) { this.good++; const tip = this.custT < 6 ? 3 : this.custT < 10 ? 1 : 0; this.tips += tip; Sfx.play('register'); this.fx.hearts(B.x + B.w * 0.3, B.y + 150, 4); this.fx.text(B.x + B.w * 0.3, B.y + 120, tip ? `+9 lei +${tip} bacșiș 💰` : '+9 lei 💰', '#2a9a4a', 0.9); this.hero.play('dance_hop'); }
     else { Sfx.play('bad'); this.fx.text(B.x + B.w * 0.3, B.y + 120, 'Nu asta am cerut… 😕', '#e63946', 0.9); this.hero.play('shy'); }
     this.next();
   }
@@ -137,7 +137,7 @@ export class OfficeGame extends Panel {
     const d = this.docs[0]; if (!d) return;
     this.docs.shift();
     const dr = this.drawer(i);
-    if (d.c === i) { this.good++; Sfx.play('good'); this.fx.text(dr.x + dr.w / 2, dr.y - 10, '+6 lei', '#2a9a4a', 0.8); this.hero.play('dance_hop'); }
+    if (d.c === i) { this.good++; Sfx.play('paper'); Sfx.play('drawer', { vol: 0.5, delay: 0.15 }); this.fx.text(dr.x + dr.w / 2, dr.y - 10, '+6 lei', '#2a9a4a', 0.8); this.hero.play('dance_hop'); }
     else { this.bad++; Sfx.play('bad'); this.fx.text(dr.x + dr.w / 2, dr.y - 10, 'Greșit! 📄', '#e63946', 0.8); this.hero.play('shy'); }
   }
   pointer(t: string, x: number, y: number) { if (t !== 'down' || this.ended) return; for (let i = 0; i < 3; i++) if (inside(x, y, this.drawer(i))) this.put(i); }
@@ -189,7 +189,7 @@ export class CinemaGame extends Panel {
     if (t === 'down') this.holding = true; if (t === 'up') this.holding = false;
     if (t !== 'down' || this.romance) return;
     const i = this.pops.findIndex(p => Math.hypot(p.x - x, p.y - y) < 36);
-    if (i >= 0) { const p = this.pops[i]; this.pops.splice(i, 1); this.caught++; Sfx.play('pop'); this.fx.text(p.x, p.y, 'Hap! 🍿', '#ff8c42', 0.7); this.hero.play('dance_hop'); }
+    if (i >= 0) { const p = this.pops[i]; this.pops.splice(i, 1); this.caught++; Sfx.play('crunch', { vol: 0.6 }); this.fx.text(p.x, p.y, 'Hap! 🍿', '#ff8c42', 0.7); this.hero.play('dance_hop'); }
   }
   key(k: string, d: boolean) { if (k === ' ' || k === 'e') { this.holding = d; if (d && !this.romance && this.pops.length) { const p = this.pops[0]; this.pops.shift(); this.caught++; Sfx.play('pop'); this.fx.text(p.x, p.y, 'Hap! 🍿', '#ff8c42', 0.7); } } }
   /** filmul de pe ecran: povestea unui soare si a unei lune care se intalnesc */
@@ -257,8 +257,8 @@ export class RestoGame extends Panel {
     this.picked.push(k); this.wait = 1.4;
     const ok = k === this.wants[this.i];
     const B = this.box;
-    if (ok) { Sfx.play('kiss'); this.fx.hearts(B.x + B.w * 0.7, B.y + 170, 6); this.fx.text(B.x + B.w * 0.7, B.y + 140, 'Exact ce voiam! 💕', '#ff4d6d', 0.9); }
-    else { Sfx.play('pop'); this.fx.text(B.x + B.w * 0.7, B.y + 140, 'Mmm… e bun și ăsta 🙂', '#7a5a4a', 0.85); }
+    if (ok) { Sfx.play('clink'); Sfx.play('kiss', { delay: 0.3 }); this.fx.hearts(B.x + B.w * 0.7, B.y + 170, 6); this.fx.text(B.x + B.w * 0.7, B.y + 140, 'Exact ce voiam! 💕', '#ff4d6d', 0.9); }
+    else { Sfx.play('clink'); this.fx.text(B.x + B.w * 0.7, B.y + 140, 'Mmm… e bun și ăsta 🙂', '#7a5a4a', 0.85); }
   }
   pointer(t: string, x: number, y: number) {
     if (t !== 'down' || this.ended) return;
@@ -269,7 +269,7 @@ export class RestoGame extends Panel {
   clink() {
     if (this.toastHit) return;
     const ph = (this.toastK * 0.9) % 1; const ok = ph > 0.42 && ph < 0.58;
-    this.toastHit = true; Sfx.play(ok ? 'good' : 'pop');
+    this.toastHit = true; Sfx.play('clink'); if (ok) Sfx.play('good', { vol: 0.5 });
     if (ok) this.fx.hearts(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.42, 14);
     this.end(ok);
   }

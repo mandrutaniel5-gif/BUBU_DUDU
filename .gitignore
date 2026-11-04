@@ -12,3 +12,4 @@ keystore.base64.txt
 release/
 android/
 ios/
+__pycache__/

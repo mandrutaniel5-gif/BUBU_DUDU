@@ -18,7 +18,7 @@ export class SnoreGame extends Panel {
     this.breath = (Math.sin(this.t * speed * Math.PI) + 1) / 2; // 0 = inspira (bula mica), 1 = sforait
     this.hand = Math.max(0, this.hand - dt * 3);
     this.wake = Math.max(0, this.wake - dt * 0.15);
-    if (this.breath > 0.96 && Math.random() < dt * 8) { this.shake = 6; Sfx.play('burp'); this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.3, 'HRRRR-PSHHH', '#6a4c93', 1.1); }
+    if (this.breath > 0.96 && Math.random() < dt * 8) { this.shake = 6; Sfx.play('snore', { rate: this.scene.myId === 'bubu' ? 0.9 : 1.2 }); this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.3, 'HRRRR-PSHHH', '#6a4c93', 1.1); }
     if (!this.sleeper.busy) this.sleeper.play('act_sleepbed');
   }
   pinch() {

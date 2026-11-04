@@ -268,3 +268,14 @@ html.h500 .hud.riding .actions { display:none; }
 .villager { display:flex; gap:12px; align-items:center; }
 .villager img { width:96px; height:96px; flex:0 0 auto; border:3px solid var(--ink); border-radius:50%; background:#fff6d6; object-fit:cover; }
 .villager .say { font-weight:700; font-style:italic; margin:4px 0 0; }
+
+/* bucataria: retete cu ingrediente */
+.shop.recipes button small.ing { opacity:1; font-weight:700; }
+.shop.recipes button small.ing i { font-style:normal; white-space:nowrap; }
+.shop.recipes button small.ing i.miss { color:#d62839; text-decoration:line-through; }
+
+/* creditele din meniu */
+.cred { position:absolute; inset:0; background:rgba(40,20,30,.55); display:flex; align-items:center; justify-content:center; z-index:30; padding:12px; }
+.cred-in { background:#fff8f0; border:3px solid var(--ink); border-radius:20px; padding:14px 18px; max-width:560px; max-height:calc(var(--gh, 100vh) - 30px); overflow:auto; font-size:13px; line-height:1.35; }
+.cred-in h3 { margin:0 0 6px; } .cred-in h4 { margin:10px 0 4px; } .cred-in ul { margin:0; padding-left:18px; } .cred-in li { margin:3px 0; }
+.cred-in .xcred { display:block; margin:10px auto 0; }

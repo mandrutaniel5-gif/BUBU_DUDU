@@ -1,0 +1,714 @@
+{
+"click": {
+"files": []
+},
+"coin": {
+"files": [
+"coin_0.mp3",
+"coin_1.mp3",
+"coin_2.mp3"
+]
+},
+"register": {
+"files": [
+"register_0.mp3"
+]
+},
+"good": {
+"files": [
+"good_0.mp3",
+"good_1.mp3"
+]
+},
+"bad": {
+"files": [
+"bad_0.mp3",
+"bad_1.mp3"
+]
+},
+"pop": {
+"files": [
+"pop_0.mp3",
+"pop_1.mp3",
+"pop_2.mp3"
+]
+},
+"levelup": {
+"files": [
+"levelup_0.mp3"
+]
+},
+"victory": {
+"files": [
+"victory_0.mp3",
+"victory_1.mp3"
+]
+},
+"applause": {
+"files": [
+"applause_0.mp3"
+]
+},
+"whoosh": {
+"files": [
+"whoosh_0.mp3",
+"whoosh_1.mp3",
+"whoosh_2.mp3"
+]
+},
+"boing": {
+"files": [
+"boing_0.mp3",
+"boing_1.mp3",
+"boing_2.mp3"
+]
+},
+"page": {
+"files": [
+"page_0.mp3",
+"page_1.mp3",
+"page_2.mp3"
+]
+},
+"shopbell": {
+"files": [
+"shopbell_0.mp3"
+]
+},
+"door_open": {
+"files": [
+"door_open_0.mp3",
+"door_open_1.mp3"
+]
+},
+"door_close": {
+"files": [
+"door_close_0.mp3",
+"door_close_1.mp3"
+]
+},
+"drawer": {
+"files": [
+"drawer_0.mp3",
+"drawer_1.mp3"
+]
+},
+"switch": {
+"files": [
+"switch_0.mp3",
+"switch_1.mp3"
+]
+},
+"typing": {
+"files": [
+"typing_0.mp3",
+"typing_1.mp3"
+]
+},
+"cloth": {
+"files": [
+"cloth_0.mp3",
+"cloth_1.mp3",
+"cloth_2.mp3"
+]
+},
+"zip": {
+"files": [
+"zip_0.mp3"
+]
+},
+"paper": {
+"files": [
+"paper_0.mp3"
+]
+},
+"step_grass": {
+"files": [
+"step_grass_0.mp3",
+"step_grass_1.mp3",
+"step_grass_2.mp3",
+"step_grass_3.mp3",
+"step_grass_4.mp3"
+]
+},
+"step_wood": {
+"files": [
+"step_wood_0.mp3",
+"step_wood_1.mp3",
+"step_wood_2.mp3",
+"step_wood_3.mp3",
+"step_wood_4.mp3"
+]
+},
+"step_stone": {
+"files": [
+"step_stone_0.mp3",
+"step_stone_1.mp3",
+"step_stone_2.mp3",
+"step_stone_3.mp3",
+"step_stone_4.mp3"
+]
+},
+"step_dirt": {
+"files": [
+"step_dirt_0.mp3",
+"step_dirt_1.mp3",
+"step_dirt_2.mp3",
+"step_dirt_3.mp3",
+"step_dirt_4.mp3"
+]
+},
+"run_grass": {
+"files": [
+"run_grass_0.mp3",
+"run_grass_1.mp3",
+"run_grass_2.mp3",
+"run_grass_3.mp3",
+"run_grass_4.mp3"
+]
+},
+"run_wood": {
+"files": [
+"run_wood_0.mp3",
+"run_wood_1.mp3",
+"run_wood_2.mp3",
+"run_wood_3.mp3",
+"run_wood_4.mp3"
+]
+},
+"run_stone": {
+"files": [
+"run_stone_0.mp3",
+"run_stone_1.mp3",
+"run_stone_2.mp3",
+"run_stone_3.mp3",
+"run_stone_4.mp3"
+]
+},
+"run_dirt": {
+"files": [
+"run_dirt_0.mp3",
+"run_dirt_1.mp3",
+"run_dirt_2.mp3",
+"run_dirt_3.mp3",
+"run_dirt_4.mp3"
+]
+},
+"jump_land": {
+"files": [
+"jump_land_0.mp3",
+"jump_land_1.mp3"
+]
+},
+"fart": {
+"files": [
+"fart_0.mp3",
+"fart_1.mp3"
+]
+},
+"fart_wet": {
+"files": [
+"fart_wet_0.mp3"
+]
+},
+"bigfart": {
+"files": [
+"bigfart_0.mp3",
+"bigfart_1.mp3"
+]
+},
+"burp": {
+"files": [
+"burp_0.mp3",
+"burp_1.mp3",
+"burp_2.mp3"
+]
+},
+"laugh_f": {
+"files": [
+"laugh_f_0.mp3",
+"laugh_f_1.mp3",
+"laugh_f_2.mp3"
+]
+},
+"laugh_m": {
+"files": [
+"laugh_m_0.mp3",
+"laugh_m_1.mp3",
+"laugh_m_2.mp3"
+]
+},
+"yawn": {
+"files": [
+"yawn_0.mp3",
+"yawn_1.mp3"
+]
+},
+"cough": {
+"files": [
+"cough_0.mp3",
+"cough_1.mp3",
+"cough_2.mp3"
+]
+},
+"sniff": {
+"files": [
+"sniff_0.mp3"
+]
+},
+"gasp": {
+"files": [
+"gasp_0.mp3"
+]
+},
+"snore": {
+"files": [
+"snore_0.mp3",
+"snore_1.mp3",
+"snore_2.mp3"
+]
+},
+"gulp": {
+"files": [
+"gulp_0.mp3",
+"gulp_1.mp3"
+]
+},
+"drink": {
+"files": [
+"drink_0.mp3",
+"drink_1.mp3"
+]
+},
+"crunch": {
+"files": [
+"crunch_0.mp3",
+"crunch_1.mp3",
+"crunch_2.mp3",
+"crunch_3.mp3",
+"crunch_4.mp3",
+"crunch_5.mp3",
+"crunch_6.mp3",
+"crunch_7.mp3",
+"crunch_8.mp3",
+"crunch_9.mp3",
+"crunch_10.mp3",
+"crunch_11.mp3"
+]
+},
+"shh": {
+"files": [
+"shh_0.mp3"
+]
+},
+"faucet_on": {
+"files": [
+"faucet_on_0.mp3"
+]
+},
+"faucet_off": {
+"files": [
+"faucet_off_0.mp3"
+]
+},
+"flush": {
+"files": [
+"flush_0.mp3",
+"flush_1.mp3"
+]
+},
+"splash": {
+"files": [
+"splash_0.mp3",
+"splash_1.mp3",
+"splash_2.mp3",
+"splash_3.mp3"
+]
+},
+"bubble": {
+"files": [
+"bubble_0.mp3",
+"bubble_1.mp3",
+"bubble_2.mp3"
+]
+},
+"squelch": {
+"files": [
+"squelch_0.mp3",
+"squelch_1.mp3",
+"squelch_2.mp3",
+"squelch_3.mp3"
+]
+},
+"dishes": {
+"files": [
+"dishes_0.mp3",
+"dishes_1.mp3",
+"dishes_2.mp3",
+"dishes_3.mp3"
+]
+},
+"clink": {
+"files": [
+"clink_0.mp3",
+"clink_1.mp3",
+"clink_2.mp3"
+]
+},
+"fridge": {
+"files": [
+"fridge_0.mp3",
+"fridge_1.mp3"
+]
+},
+"knife": {
+"files": [
+"knife_0.mp3",
+"knife_1.mp3"
+]
+},
+"pan": {
+"files": [
+"pan_0.mp3",
+"pan_1.mp3",
+"pan_2.mp3"
+]
+},
+"spoon": {
+"files": [
+"spoon_0.mp3",
+"spoon_1.mp3"
+]
+},
+"kettle": {
+"files": [
+"kettle_0.mp3"
+]
+},
+"tea": {
+"files": [
+"tea_0.mp3"
+]
+},
+"clock_tick": {
+"files": [
+"clock_tick_0.mp3"
+]
+},
+"alarm": {
+"files": [
+"alarm_0.mp3"
+]
+},
+"doorbell": {
+"files": [
+"doorbell_0.mp3"
+]
+},
+"spray": {
+"files": [
+"spray_0.mp3"
+]
+},
+"pour": {
+"files": [
+"pour_0.mp3"
+]
+},
+"chop": {
+"files": [
+"chop_0.mp3",
+"chop_1.mp3",
+"chop_2.mp3"
+]
+},
+"tree_fall": {
+"files": [
+"tree_fall_0.mp3",
+"tree_fall_1.mp3"
+]
+},
+"mine": {
+"files": [
+"mine_0.mp3",
+"mine_1.mp3",
+"mine_2.mp3"
+]
+},
+"hammer": {
+"files": [
+"hammer_0.mp3",
+"hammer_1.mp3",
+"hammer_2.mp3"
+]
+},
+"saw": {
+"files": [
+"saw_0.mp3"
+]
+},
+"dig": {
+"files": [
+"dig_0.mp3",
+"dig_1.mp3",
+"dig_2.mp3"
+]
+},
+"leaves": {
+"files": [
+"leaves_0.mp3",
+"leaves_1.mp3",
+"leaves_2.mp3"
+]
+},
+"bucket": {
+"files": [
+"bucket_0.mp3"
+]
+},
+"reel": {
+"files": [
+"reel_0.mp3"
+]
+},
+"wood_drop": {
+"files": [
+"wood_drop_0.mp3",
+"wood_drop_1.mp3"
+]
+},
+"metal_hit": {
+"files": [
+"metal_hit_0.mp3",
+"metal_hit_1.mp3"
+]
+},
+"chicken": {
+"files": [
+"chicken_0.mp3"
+]
+},
+"duck": {
+"files": [
+"duck_0.mp3"
+]
+},
+"dog": {
+"files": [
+"dog_0.mp3",
+"dog_1.mp3",
+"dog_2.mp3"
+]
+},
+"sheep": {
+"files": [
+"sheep_0.mp3",
+"sheep_1.mp3"
+]
+},
+"horse": {
+"files": [
+"horse_0.mp3"
+]
+},
+"pig": {
+"files": [
+"pig_0.mp3"
+]
+},
+"cat": {
+"files": [
+"cat_0.mp3",
+"cat_1.mp3",
+"cat_2.mp3"
+]
+},
+"purr": {
+"files": [
+"purr_0.mp3"
+]
+},
+"owl": {
+"files": [
+"owl_0.mp3"
+]
+},
+"birds": {
+"files": [
+"birds_0.mp3",
+"birds_1.mp3",
+"birds_2.mp3"
+]
+},
+"bells": {
+"files": [
+"bells_0.mp3"
+]
+},
+"car_start": {
+"files": [
+"car_start_0.mp3"
+]
+},
+"car_door": {
+"files": [
+"car_door_0.mp3"
+]
+},
+"bus_doors": {
+"files": [
+"bus_doors_0.mp3",
+"bus_doors_1.mp3"
+]
+},
+"bike_bell": {
+"files": [
+"bike_bell_0.mp3",
+"bike_bell_1.mp3"
+]
+},
+"train": {
+"files": [
+"train_0.mp3"
+]
+},
+"chimes": {
+"files": [
+"chimes_0.mp3"
+]
+},
+"popcorn": {
+"files": [
+"popcorn_0.mp3",
+"popcorn_1.mp3",
+"popcorn_2.mp3",
+"popcorn_3.mp3"
+]
+},
+"amb_room": {
+"files": [
+"amb_room.mp3"
+],
+"loop": true
+},
+"amb_yard": {
+"files": [
+"amb_yard.mp3"
+],
+"loop": true
+},
+"amb_night": {
+"files": [
+"amb_night.mp3"
+],
+"loop": true
+},
+"amb_crickets": {
+"files": [
+"amb_crickets.mp3"
+],
+"loop": true
+},
+"amb_forest": {
+"files": [
+"amb_forest.mp3"
+],
+"loop": true
+},
+"amb_wind": {
+"files": [
+"amb_wind.mp3"
+],
+"loop": true
+},
+"amb_lake": {
+"files": [
+"amb_lake.mp3"
+],
+"loop": true
+},
+"amb_city": {
+"files": [
+"amb_city.mp3"
+],
+"loop": true
+},
+"amb_restaurant": {
+"files": [
+"amb_restaurant.mp3"
+],
+"loop": true
+},
+"amb_rain": {
+"files": [
+"amb_rain.mp3"
+],
+"loop": true
+},
+"fire_loop": {
+"files": [
+"fire_loop.mp3"
+],
+"loop": true
+},
+"water_loop": {
+"files": [
+"water_loop.mp3"
+],
+"loop": true
+},
+"bath_loop": {
+"files": [
+"bath_loop.mp3"
+],
+"loop": true
+},
+"fountain_loop": {
+"files": [
+"fountain_loop.mp3"
+],
+"loop": true
+},
+"stream_loop": {
+"files": [
+"stream_loop.mp3"
+],
+"loop": true
+},
+"boil_loop": {
+"files": [
+"boil_loop.mp3"
+],
+"loop": true
+},
+"sizzle_loop": {
+"files": [
+"sizzle_loop.mp3"
+],
+"loop": true
+},
+"engine_slow": {
+"files": [
+"engine_slow.mp3"
+],
+"loop": true
+},
+"engine_high": {
+"files": [
+"engine_high.mp3"
+],
+"loop": true
+},
+"machine_loop": {
+"files": [
+"machine_loop.mp3"
+],
+"loop": true
+},
+"pedal_loop": {
+"files": [
+"pedal_loop.mp3"
+],
+"loop": true
+}
+}

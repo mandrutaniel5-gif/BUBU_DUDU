@@ -11,6 +11,8 @@ import { ANIMS, ANIM_LIST } from '../char/anims';
 import { Fx } from '../char/fx';
 import { NPC_SPECS, drawCharacter, type CharId, type CharSpec } from '../char/draw';
 import { Sfx } from '../engine/sfx';
+import { Soundscape } from '../engine/soundscape';
+import { RECIPE, RECIPES, canCook, consumeList, bestRecipe, bestDish, dishCount, dishKey, dishesOwned, READY_MEAL } from '../game/food';
 import { g } from '../game/gender';
 import type { Scene, Game } from '../engine/game';
 import { iso, unIso, screenDirToGrid, isoBox, boxOf, TW, TH } from '../world/iso';
@@ -37,7 +39,7 @@ import { MINIGAMES } from '../minigames/registry';
 const ACTOR_SCALE = 0.62;
 const SPEED = 2.6; // dale / secunda
 
-interface Pawn {
+export interface Pawn {
   id: CharId;
   actor: Actor;
   gx: number; gy: number;
@@ -90,6 +92,7 @@ export class WorldScene implements Scene {
   partnerOnline = false;
   sickT = 4;
   econT = 1;
+  warned: Record<string, Record<string, boolean>> = {};
   cars: Car[] = [];
   joyRun = false;
   morningT = 0;
@@ -101,6 +104,9 @@ export class WorldScene implements Scene {
   npcs: Npc[] = []; npcSpawnT = 6;
   build: { item: BuildItem | null; gx: number; gy: number; remove: boolean } | null = null;
   snoring = false; snoreT = 3;
+  snd = new Soundscape(this);
+  /** reteta aleasa la aragaz (o citeste minijocul bucatariei) */
+  cookRecipe: string | null = null;
   miniInbox: unknown[] = [];
   minigame: { id: string; obj: any } | null = null;
   private listeners: [EventTarget, string, any][] = [];
@@ -115,7 +121,9 @@ export class WorldScene implements Scene {
   private makePawn(id: CharId, control: Pawn['control']): Pawn {
     const actor = new Actor(id, this.fx);
     actor.scale = ACTOR_SCALE;
-    return { id, actor, gx: 6, gy: 10, path: [], activity: null, pendingInteract: null, control, z: 0, aiT: 2, facingBack: false };
+    const pawn: Pawn = { id, actor, gx: 6, gy: 10, path: [], activity: null, pendingInteract: null, control, z: 0, aiT: 2, facingBack: false };
+    actor.audible = () => this.snd?.audible(pawn) ?? 1; // sunetele personajului: doar cand e langa tine
+    return pawn;
   }
   pawnOf(id: CharId) { return this.me.id === id ? this.me : this.partner; }
 
@@ -136,7 +144,7 @@ export class WorldScene implements Scene {
     if (this.w.stats.chapter === undefined) {
       this.w.stats.chapter = 0;
       Object.assign(this.w.furn, { standBroken: true, standOpen: false, clogged: true, fridgeDirty: true, tubDirty: true, dishesDirty: true, tvBroken: true, fire: 0 });
-      this.w.res = { wood: 4, stone: 0, flower: 0, seeds: 3, veg: 2, meals: 0, flour: 0, lemon: 0, hay: 0 };
+      this.w.res = { wood: 4, stone: 0, flower: 0, seeds: 3, veg: 2, meals: 0, flour: 2, lemon: 0, hay: 0, egg: 4, milk: 2, water: 2 };
       this.w.money = 10;
       for (const id of ['bubu', 'dudu'] as const) { const c = this.w.chars[id]; c.gx = 6.5 + (id === 'dudu' ? 0.8 : 0); c.gy = 9.5; }
       setTimeout(() => this.hud.showChapter(), 700);
@@ -170,6 +178,7 @@ export class WorldScene implements Scene {
   }
 
   exit() {
+    this.snd.stop();
     this.save(true);
     this.net.disconnect();
     for (const [t, ev, fn] of this.listeners) t.removeEventListener(ev, fn);
@@ -291,7 +300,7 @@ export class WorldScene implements Scene {
       if (!f) { this.hud.toast('Atinge un obiect construit de voi'); return; }
       const it = CATALOG.find(c => c.type === f.type);
       if (it) for (const [r, n] of Object.entries(it.cost)) this.op({ k: 'res', res: r, delta: Math.floor((n ?? 0) / 2) });
-      this.op({ k: 'unplace', uid: f.id.slice(2) }); Sfx.play('pop');
+      this.op({ k: 'unplace', uid: f.id.slice(2) }); Sfx.play('wood_drop');
       return;
     }
     if (!b.item) return;
@@ -304,12 +313,12 @@ export class WorldScene implements Scene {
     if (!this.canAfford(it)) { this.hud.toast('Nu ai destule materiale 🪵🪨🌸 — taie copaci, sparge pietre, culege flori!'); Sfx.play('bad'); return; }
     if (!this.canPlace(it, b.gx, b.gy)) { this.hud.toast('Nu încape aici ✖'); Sfx.play('bad'); return; }
     for (const [r, n] of Object.entries(it.cost)) this.op({ k: 'res', res: r, delta: -(n ?? 0) });
-    if (it.type === 'soilplot') { this.op({ k: 'plot', key: `${b.gx},${b.gy}`, plot: { crop: null, prog: 0, wetUntil: 0, fert: 0 } }); this.syncPlaced(); Sfx.play('good'); return; }
+    if (it.type === 'soilplot') { this.op({ k: 'plot', key: `${b.gx},${b.gy}`, plot: { crop: null, prog: 0, wetUntil: 0, fert: 0 } }); this.syncPlaced(); Sfx.play('dig'); Sfx.play('good', { delay: 0.4, vol: 0.6 }); return; }
     const uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     this.op({ k: 'place', uid, type: it.type, gx: b.gx, gy: b.gy });
     const p = iso(b.gx + it.w / 2, b.gy + it.d / 2, 40);
     this.fx.burst('star', p.x, p.y, 10, 6.28, 120, { max: 0.8 }); this.fx.text(p.x, p.y - 20, `${it.icon} Construit!`, '#ff9f1c', 0.9);
-    Sfx.play('good'); this.op({ k: 'hearts', delta: it.coop ? 5 : 1 });
+    Sfx.play('hammer'); Sfx.play('hammer', { delay: 0.25 }); Sfx.play('saw', { delay: 0.5, vol: 0.5 }); Sfx.play('good', { delay: 0.9, vol: 0.7 }); this.op({ k: 'hearts', delta: it.coop ? 5 : 1 });
     this.op({ k: 'need', who: this.myId, need: 'fun', delta: 5 });
     this.me.actor.play(this.myId === 'dudu' ? 'flex' : 'love'); this.net.sendEvent({ t: 'emote', who: this.myId, anim: this.myId === 'dudu' ? 'flex' : 'love' });
     if (it.coop) this.log(`${this.me.actor.spec.name} a construit ${it.label} ${it.icon} pentru voi!`);
@@ -494,6 +503,13 @@ export class WorldScene implements Scene {
       pawn.pendingCrop = seeds[Math.floor(Math.random() * seeds.length)];
     }
     if (act.id === 'online') { if (pawn === this.me) this.hud.openVillage('online'); return; }
+    if (act.id === 'cook' && pawn === this.me && !this.missing('cook')) { this.hud.openKitchen(rc => { this.cookRecipe = rc; this.startMinigame(RECIPE[rc].method === 'pancakes' ? 'pancakes' : 'cook', ACTIVITIES.cook, f); }); return; }
+    if (act.id === 'eat' && !this.missing('eat')) {
+      const eat = (key: string) => { const d = dishesOwned(this.w.res ?? {}).find(x => x.key === key); const rc = d?.rc ?? READY_MEAL; this.startActivity(pawn, { ...ACTIVITIES.eat, needs: { ...rc.needs, love: (rc.needs.love ?? 0) + 3 }, text: rc.text, dish: key, fart: rc.fart ?? 10 } as any, f); };
+      if (pawn === this.me) { const list = dishesOwned(this.w.res ?? {}); if (list.length === 1) eat(list[0].key); else this.hud.openTable(eat); }
+      else eat(bestDish(this.w.res ?? {})?.key ?? 'meals');
+      return;
+    }
     const a = ACTIVITIES[act.id]; if (!a) return;
     if (act.id === 'sleep') { const why = this.canSleep(pawn.id); if (why) { if (pawn === this.me) { this.hud.toast(why); Sfx.play('bad'); } return; } (this.w.chars[pawn.id] as any).napStart = (this.w.minutes / 60 >= 6 && this.w.minutes / 60 < 20) ? (this.w.gameMin ?? 0) : null; }
     const need = this.missing(act.id);
@@ -525,9 +541,9 @@ export class WorldScene implements Scene {
     switch (id) {
       case 'addwood': return (r.wood ?? 0) < 1 ? 'N-ai lemne! 🪵 Taie un copac din curte (sau cumpără din sat)' : fuel > 90 ? 'Soba e plină 🔥' : null;
       case 'lightfire': return (r.wood ?? 0) < 1 ? 'Ai nevoie de un lemn ca să aprinzi focul 🪵' : null;
-      case 'snack': return (r.meals ?? 0) + catCount(r, 'veg') < 1 ? 'Frigiderul e gol! 🧊 Gătește, culege din grădină sau cumpără din sat' : null;
-      case 'eat': return (r.meals ?? 0) < 1 ? 'Nu e nimic gătit 🍽️ Gătește la aragaz (cu legume) sau cumpără mâncare' : null;
-      case 'cook': return catCount(r, 'veg') + (r.fish ?? 0) < 1 ? 'Nu ai legume 🥕 Culege din grădină sau cumpără din sat' : null;
+      case 'snack': return dishCount(r) + catCount(r, 'veg') < 1 ? 'Frigiderul e gol! 🧊 Gătește, culege din grădină sau cumpără din sat' : null;
+      case 'eat': return dishCount(r) < 1 ? 'Nu e nimic gătit 🍽️ Gătește la aragaz (ai rețete noi!) sau cumpără mâncare' : null;
+      case 'cook': return RECIPES.some(rc => canCook(r, rc)) || catCount(r, 'veg') + (r.fish ?? 0) > 0 ? null : 'Nu ai ingrediente 🥕🥚 Culege din grădină, pescuiește sau cumpără din sat (ouă, lapte, brânză, carne…)';
       case 'repairstand': return (r.wood ?? 0) < 6 ? 'Ai nevoie de 6 lemne 🪵 ca să repari taraba (taie copacii din curte)' : null;
       case 'openstand': { const h = this.w.minutes / 60; return h >= 20 || h < 7 ? '🌙 E noapte — taraba se deschide dimineața (7:00 - 20:00)' : null; }
       case 'sellwood': return (r.wood ?? 0) <= 5 ? 'Păstrează măcar 5 lemne pentru sobă 🔥 — mai taie la pădure!' : null;
@@ -547,9 +563,19 @@ export class WorldScene implements Scene {
     switch (a.id) {
       case 'addwood': this.op({ k: 'res', res: 'wood', delta: -1 }); this.op({ k: 'furn', key: 'fire', value: Math.min(100, ((this.w.furn.fire as number) ?? 0) + 25) }); say('-1 🪵  +🔥'); break;
       case 'lightfire': this.op({ k: 'res', res: 'wood', delta: -1 }); this.op({ k: 'furn', key: 'fire', value: 30 }); this.op({ k: 'stat', key: 'fireLit', delta: 1 }); say('Focul arde! 🔥'); this.log(`${pawn.actor.spec.name} a aprins focul în sobă 🔥`); break;
-      case 'snack': if ((r.meals ?? 0) > 0) this.op({ k: 'res', res: 'meals', delta: -1 }); else { const k = catPick(r, 'veg'); if (k) this.op({ k: 'res', res: k, delta: -1 }); } break;
-      case 'eat': this.op({ k: 'res', res: 'meals', delta: -1 }); break;
-      case 'cook': { const k = (r.fish ?? 0) > 0 && Math.random() < 0.5 ? 'fish' : catPick(r, 'veg') ?? 'fish'; this.op({ k: 'res', res: k, delta: -1 }); } this.op({ k: 'res', res: 'meals', delta: 3 }); this.op({ k: 'stat', key: 'cooked', delta: 1 }); say('+3 🍲'); break;
+      case 'snack': { if ((r.meals ?? 0) > 0) { this.op({ k: 'res', res: 'meals', delta: -1 }); break; } const k = catPick(r, 'veg'); if (k) { this.op({ k: 'res', res: k, delta: -1 }); break; } const d = dishesOwned(r).sort((x, y) => (x.rc.needs.hunger ?? 0) - (y.rc.needs.hunger ?? 0))[0]; if (d) this.op({ k: 'res', res: d.key, delta: -1 }); break; }
+      case 'eat': { const key = (a as any).dish ?? bestDish(r)?.key ?? 'meals'; if ((r[key] ?? 0) > 0) this.op({ k: 'res', res: key, delta: -1 }); this.op({ k: 'stat', key: 'mealsEaten', delta: 1 }); break; }
+      case 'cook': {
+        const rid = pawn === this.me ? (mini?.recipe ?? this.cookRecipe) : null;
+        const rc = (rid && RECIPE[rid] && canCook(r, RECIPE[rid]) ? RECIPE[rid] : null) ?? bestRecipe(r);
+        if (!rc) { const k = (r.fish ?? 0) > 0 && Math.random() < 0.5 ? 'fish' : catPick(r, 'veg') ?? 'fish'; this.op({ k: 'res', res: k, delta: -1 }); this.op({ k: 'res', res: 'meals', delta: 3 }); this.op({ k: 'stat', key: 'cooked', delta: 1 }); say('+3 🍲'); break; }
+        for (const [k, n] of consumeList(r, rc)) this.op({ k: 'res', res: k, delta: -n });
+        const q = mini?.rc ? mini.quality : mini?.quality != null ? mini.quality / 3 : 0.6;
+        const n = rc.portions + (q > 0.8 ? 1 : 0);
+        this.op({ k: 'res', res: dishKey(rc.id), delta: n }); this.op({ k: 'stat', key: 'cooked', delta: 1 }); this.op({ k: 'stat', key: 'cooked_' + rc.id, delta: 1 });
+        say(`+${n} ${rc.icon}`); this.log(`${pawn.actor.spec.name} a gătit ${rc.name.toLowerCase()} ${rc.icon} (${n} porții)`);
+        this.cookRecipe = null; break;
+      }
       case 'repairstand': this.op({ k: 'res', res: 'wood', delta: -6 }); this.op({ k: 'furn', key: 'standBroken', value: false }); this.op({ k: 'stat', key: 'standRepaired', delta: 1 }); this.hud.toast('🔨 Taraba e ca nouă! Acum deschide-o ca să vină clienții'); this.log(`${pawn.actor.spec.name} a reparat taraba 🔨🧺`); break;
       case 'openstand': this.op({ k: 'furn', key: 'standOpen', value: true }); this.op({ k: 'stat', key: 'standOpened', delta: 1 }); this.hud.toast('🧺 Taraba e deschisă! Vin clienți pe drum'); this.npcSpawnT = Math.min(this.npcSpawnT, 4); break;
       case 'drawwater': this.op({ k: 'res', res: 'water', delta: Math.min(3, 9 - (r.water ?? 0)) }); this.op({ k: 'stat', key: 'waterDrawn', delta: 1 }); say('+3 💧'); break;
@@ -591,7 +617,7 @@ export class WorldScene implements Scene {
     this.op({ k: 'stat', key: 'chapter', delta: 1 });
     this.syncPlaced();
     this.log(old.done);
-    Sfx.play('good');
+    Sfx.play('victory'); Sfx.play('applause', { delay: 0.5, vol: 0.6 });
     for (const p of [this.me, this.partner]) p.actor.play('dance_hop');
     const c = iso(this.me.gx, this.me.gy, 90); for (let i = 0; i < 4; i++) setTimeout(() => this.fx.hearts(c.x + (Math.random() - 0.5) * 120, c.y, 8), i * 300);
     setTimeout(() => this.hud.showChapter(old.done), 900);
@@ -737,7 +763,6 @@ export class WorldScene implements Scene {
     this.coTraveling = false;
     this.travel = { t: 0, to: name, from: this.area, vehicle, withPartner };
     this.hud.setMinigame(true);
-    Sfx.play(vehicle === 'door' ? 'click' : 'burp');
   }
   switchArea(name: string) {
     setArea(name); this.area = name;
@@ -890,7 +915,7 @@ export class WorldScene implements Scene {
       }
       case 'v-fountain':
         if ((this.w.money ?? 0) < 1) { this.hud.toast('N-ai nicio monedă 🙂'); return; }
-        this.op({ k: 'money', delta: -1 }); this.op({ k: 'need', who: this.myId, need: 'love', delta: 6 }); Sfx.play('coin');
+        this.op({ k: 'money', delta: -1 }); this.op({ k: 'need', who: this.myId, need: 'love', delta: 6 }); Sfx.play('coin'); Sfx.play('splash', { delay: 0.45, vol: 0.4, rate: 1.6 });
         { const p = iso(f.gx + 0.5, f.gy + 0.5, 50); this.fx.text(p.x, p.y, '🪙 Ți-ai pus o dorință… 💕', '#ff4d6d', 0.9); this.fx.hearts(p.x, p.y, 5); }
         this.me.actor.play('love'); break;
       case 'v-carousel':
@@ -1005,7 +1030,7 @@ export class WorldScene implements Scene {
     this.me.gx = f.gx + 0.5; this.me.gy = f.gy + 0.55; this.me.z = 0;
     this.me.riding = true; this.me.rideKind = kind; this.me.board = true;
     this.me.actor.flip = this.area === 'home' ? -1 : 1;
-    Sfx.play(kind === 'scooter' ? 'burp' : 'pop');
+    Sfx.play(kind === 'scooter' ? 'car_start' : 'bike_bell', { vol: 0.6, rate: kind === 'scooter' ? 1.3 : 1 });
     this.hud.setRide('driver');
   }
   /** urca pe cel mai bun vehicul parcat aici (scuter, altfel bicicleta) */
@@ -1061,7 +1086,7 @@ export class WorldScene implements Scene {
     if (!k || !has(k)) { this.hud.toast('N-aveți încă vehicul — laptopul din casă → Vehicule (bicicletă 150, scuter 300 lei)'); return; }
     this.stopActivity(this.me);
     this.me.riding = true; this.me.rideKind = k;
-    Sfx.play(k === 'scooter' ? 'burp' : 'pop');
+    Sfx.play(k === 'scooter' ? 'car_start' : 'bike_bell', { vol: 0.6, rate: k === 'scooter' ? 1.3 : 1 });
     this.hud.toast(k === 'scooter' ? '🛵 Pe scuter! Partenerul urcă în spate din meniul 💞' : '🚲 Pe bicicletă! Partenerul urcă în spate din meniul 💞');
   }
 
@@ -1087,6 +1112,7 @@ export class WorldScene implements Scene {
     if (a.place === 'sofa') { pawn.actor.flip = -1; pawn.facingBack = true; }
     if (a.place === 'bed' || a.place === 'tub' || a.place === 'toilet') { pawn.facingBack = false; pawn.actor.flip = 1; }
     pawn.actor.play(a.anim);
+    this.snd.actStart(pawn, a.id);
     if (fromNet) return;
     if (a.furnFlag) this.op({ k: 'furn', key: a.furnFlag[0], value: a.furnFlag[1] });
     this.net.sendEvent({ t: 'act', who: pawn.id, act: a.id, furn: f.id });
@@ -1110,6 +1136,7 @@ export class WorldScene implements Scene {
   completeActivity(pawn: Pawn, a: Activity) {
     const ctrl = pawn.control !== 'remote';
     if (ctrl) for (const [k, v] of Object.entries(a.needs)) this.op({ k: 'need', who: pawn.id, need: k, delta: v! });
+    this.snd.actEnd(pawn, a.id);
     const pos = iso(pawn.gx, pawn.gy, 70);
     this.fx.text(pos.x, pos.y, a.text, '#ff4d6d', 0.6);
     if (pawn === this.me) { this.op({ k: 'hearts', delta: 2 }); Sfx.play('good'); }
@@ -1152,7 +1179,7 @@ export class WorldScene implements Scene {
       const f = pawn.lastFurn; if (f) this.op({ k: 'node', id: f, until: Date.now() + (a.id === 'pick' ? 60 : 120) * 1000 });
       const p = iso(pawn.gx, pawn.gy, 80); this.fx.text(p.x, p.y - 14, `+${n} ${res === 'wood' ? '🪵' : res === 'stone' ? '🪨' : '🌸'}`, '#2ec4b6', 1);
     }
-    if (a.id === 'snack' || a.id === 'eat') { if (ctrl) this.op({ k: 'need', who: pawn.id, need: 'fart', delta: 15 }); }
+    if (a.id === 'snack' || a.id === 'eat') { if (ctrl) this.op({ k: 'need', who: pawn.id, need: 'fart', delta: (a as any).fart ?? 15 }); }
   }
 
   emote(id: string) {
@@ -1377,6 +1404,17 @@ export class WorldScene implements Scene {
       const cold = (0.7 + night * 1.1) * (inside(p) ? 0.6 : 1.1);
       const gain = (fuel > 0 && inside(p) ? 11 : 0) + (asleep ? 3 : 0) + (p.activity?.a.id === 'bath' ? 6 : 0);
       const ev = tickNeeds(this.w.chars[p.id], hours, asleep, gain, cold);
+      // atentionari cand ti-e foame / somn (o data, pana iti revii)
+      { const nd = this.w.chars[p.id].needs, wk = (this.warned[p.id] ??= {}), nm = p.actor.spec.name;
+        const warn = (key: string, low: boolean, high: boolean, msg: string, bubble: string) => {
+          if (low && !wk[key]) { wk[key] = true; if (p === this.me) this.hud.toast(msg); else if (this.sameArea()) { const q = iso(p.gx, p.gy, 110); this.fx.text(q.x, q.y, bubble, '#c0573e', 0.8); } }
+          else if (high) wk[key] = false;
+        };
+        warn('hunger', nd.hunger < 30, nd.hunger > 50, `🍽️ ${nm}, ți-e foame! Mănâncă ceva (frigider, aragaz sau masa)`, 'Mi-e foame… 🍽️');
+        warn('hunger2', nd.hunger < 12, nd.hunger > 30, `⚠️ ${nm} e lihnit${p.id === 'bubu' ? 'ă' : ''} de foame: merge mai încet și se poate îmbolnăvi!`, 'Lihnit' + (p.id === 'bubu' ? 'ă' : '') + '! 😩');
+        warn('energy', nd.energy < 20 && !asleep, nd.energy > 40, `😴 ${nm}, ești ${p.id === 'bubu' ? 'obosită' : 'obosit'}. Seara te culci (după 20:00) sau tragi un pui de somn`, 'Mi-e somn… 😴');
+        warn('hygiene', nd.hygiene < 22, nd.hygiene > 45, `🛁 ${nm}, e timpul pentru o baie!`, 'Miros a… 🙈');
+      }
       if (ev.includes('sick')) {
         const s = this.w.chars[p.id].sick!;
         this.hud.toast(`${SICK_INFO[s].icon} ${p.actor.spec.name} s-a îmbolnăvit (${SICK_INFO[s].label})! Are nevoie de îngrijire 🩹`);
@@ -1407,9 +1445,10 @@ export class WorldScene implements Scene {
     // sforaitul (cand partenerul doarme si tu esti treaz/treaza)
     this.snoreT -= dt;
     if (this.snoreT <= 0) {
-      this.snoreT = 2.2;
+      this.snoreT = 2.6;
       const sl = [this.me, this.partner].find(p => p.activity?.a.id === 'sleep' && (p.id === 'dudu' || Math.random() < 0.4));
       this.snoring = !!sl && !(this.me.activity?.a.id === 'sleep' && this.partner.activity?.a.id === 'sleep');
+      if (sl) this.snd.snore(sl);
       if (sl && this.snoring) {
         const pp = iso(sl.gx, sl.gy, sl.z + 40);
         this.fx.text(pp.x + 20, pp.y - 20, Math.random() < 0.5 ? 'HRRRR…' : 'PSHHH…', '#6a4c93', 0.7);
@@ -1429,6 +1468,7 @@ export class WorldScene implements Scene {
     this.updateMe(dt);
     this.updatePartner(dt);
     for (const p of [this.me, this.partner]) this.updateActivity(p, dt);
+    this.snd.update(dt);
 
     for (const p of [this.me, this.partner]) {
       const s = iso(p.gx, p.gy, p.z);
@@ -1510,11 +1550,11 @@ export class WorldScene implements Scene {
       const g = screenDirToGrid(ix, iy * 2); // compensare izometrica: "sus" pe ecran
       const run = !p.riding && (k.has('shift') || this.joyRun) && this.w.chars[p.id].needs.energy > 8;
       p.actor.running = run;
-      if (run) this.w.chars[p.id].needs.energy = Math.max(0, this.w.chars[p.id].needs.energy - dt * 0.25);
-      const sp = SPEED * mag * (run ? 1.75 : 1) * (this.w.chars[p.id].sick ? 0.6 : 1) * (p.riding ? (p.rideKind === 'bike' ? 1.6 : 2.2) : 1);
+      if (run) this.w.chars[p.id].needs.energy = Math.max(0, this.w.chars[p.id].needs.energy - dt * 0.06); // fuga oboseste putin
+      const nd = this.w.chars[p.id].needs; const weak = (nd.hunger < 15 ? 0.82 : 1) * (nd.energy < 12 ? 0.8 : 1);
+      const sp = SPEED * mag * weak * (run ? 1.75 : 1) * (this.w.chars[p.id].sick ? 0.6 : 1) * (p.riding ? (p.rideKind === 'bike' ? 1.6 : 2.2) : 1);
       this.moveBy(p, g.x * sp, g.y * sp, dt);
       p.actor.moving = true;
-      if (Math.random() < dt * 3) Sfx.play('step');
     } else {
       p.actor.moving = this.followPath(p, dt);
     }
@@ -1571,7 +1611,9 @@ export class WorldScene implements Scene {
     const tree = () => FURNITURE.find(f => f.action?.id === 'chop' && !this.depleted(f.id));
     if (fuel < 30 && (R.wood ?? 0) >= 1) target = FURNITURE.find(f => f.id === 'fireplace');
     else if ((R.wood ?? 0) < 3 && Math.random() < 0.6) target = tree();
-    else if (c.needs.hunger < 50 && (R.meals ?? 0) + (R.veg ?? 0) > 0) target = pick(['snack']);
+    else if (c.needs.hunger < 50 && dishCount(R) > 0) target = pick(['eat']);
+    else if (c.needs.hunger < 55 && RECIPES.some(rc => canCook(R, rc)) && this.area === 'home') target = pick(['cook']);
+    else if (c.needs.hunger < 50 && catCount(R, 'veg') > 0) target = pick(['snack']);
     else if (Math.random() < 0.5) {
       const now = this.w.gameMin ?? 0;
       const plots = FURNITURE.filter(f => f.type === 'soilplot').filter(f => { const p = this.w.plots?.[f.id.slice(5)]; if (!p) return false; const st = plotStage(p); return st === 3 || (st >= 0 && p.wetUntil <= now && (R.water ?? 0) > 0) || (st < 0 && Object.keys(CROPS).some(cc => (R[seedKey(cc)] ?? 0) > 0)); });

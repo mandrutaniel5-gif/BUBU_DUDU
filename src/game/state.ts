@@ -94,8 +94,9 @@ export function moodFrom(c: CharState): Mood {
   return 'happy';
 }
 
-// ritmul de scadere pe ora de joc
-const DECAY: Record<NeedKey, number> = { hunger: 4.2, energy: 3.4, warmth: 4, hygiene: 2.8, fun: 3.2, love: 2.6, health: 0 };
+// ritmul de scadere pe ora de joc (o zi = 24 h de joc): foamea cere 2-3 mese pe zi,
+// energia tine toata ziua daca dormi noaptea, curatenia cere o baie pe zi
+const DECAY: Record<NeedKey, number> = { hunger: 7.5, energy: 2.5, warmth: 4, hygiene: 3.8, fun: 3.8, love: 3, health: 0 };
 
 /** trece timpul; intoarce evenimente (ex. s-a imbolnavit) */
 export function tickNeeds(c: CharState, hours: number, asleep: boolean, warmGain = 0, cold = 1): string[] {
@@ -104,7 +105,9 @@ export function tickNeeds(c: CharState, hours: number, asleep: boolean, warmGain
   for (const k of NEEDS) {
     let r = DECAY[k];
     if (asleep && k === 'energy') r = -14;     // somnul reface energia
-    if (asleep && k === 'hunger') r *= 0.5;
+    if (asleep && k === 'hunger') r *= 0.45;
+    // cand ti-e foame tare: obosesti mai repede si nu mai ai chef de nimic
+    if (!asleep && c.needs.hunger < 25 && (k === 'energy' || k === 'fun')) r *= 1.5;
     if (c.sick) r *= k === 'energy' ? 2 : 1.3;
     if (k === 'warmth') r = r * cold - warmGain;
     c.needs[k] = clamp100(c.needs[k] - r * hours);

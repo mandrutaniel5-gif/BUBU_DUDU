@@ -50,7 +50,7 @@ export class SoupGame extends CarePanel {
         if (v.done) continue;
         const vx = b.x + v.x * b.w, vy = b.y + v.y * b.h;
         if (Math.hypot(x - vx, y - vy) < 38) {
-          v.cuts++; this.knife = 1; Sfx.play('slap'); this.shake = 3;
+          v.cuts++; this.knife = 1; Sfx.play('knife'); this.shake = 3;
           this.fx.burst('drop', vx, vy, 5, 3, 120, { grav: 300, max: 0.5, color: ['#ff8c42', '#e9d8a6', '#c8e7a7'][v.kind] });
           if (v.cuts >= 3) { v.done = true; v.fly = 0.01; v.vx = (0.62 - v.x) * 1.4; v.vy = -0.9; this.fx.text(vx, vy - 40, 'ZDANG!', '#ff9f1c', 0.9); }
           return;
@@ -140,7 +140,7 @@ export class MedicineGame extends CarePanel {
         this.flying = 0;
         const hit = Math.abs(this.spoonX - this.headX) < 0.09 && this.mouthOpen > 0.25;
         const b = this.box;
-        if (hit) { this.fed++; Sfx.play('good'); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, ['Hamm!', 'Mmm!', 'Bleah... dar bun!'][this.fed % 3], '#2ec4b6', 1.1); this.patient.play('shy'); }
+        if (hit) { this.fed++; Sfx.play('gulp'); Sfx.play('good', { vol: 0.5 }); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, ['Hamm!', 'Mmm!', 'Bleah... dar bun!'][this.fed % 3], '#2ec4b6', 1.1); this.patient.play('shy'); }
         else { this.miss++; Sfx.play('bad'); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, 'Nu vreau! 🙅', '#e63946', 1.1); this.patient.play('angry'); this.fx.burst('drop', b.x + this.spoonX * b.w, b.y + b.h * 0.3, 10, 3, 150, { grav: 300, color: '#ff6f91', max: 0.7 }); }
         if (this.fed >= 3) { this.finish(1.4, 'A luat medicamentul! 💊✨'); this.patient.play('love'); }
         if (this.miss >= 5) this.finish(0, 'S-a ascuns sub pătură 🙈');
@@ -197,7 +197,7 @@ export class CompressGame extends CarePanel {
   }
   tap() {
     if (this.ended) return;
-    if (!this.onHead) { this.towel = 1; this.onHead = true; Sfx.play('splash'); this.fx.burst('drop', this.box.x + this.box.w * 0.2, this.box.y + this.box.h * 0.7, 12, 2, 120, { grav: 300, max: 0.6 }); this.patient.play('shy'); this.hero.play('love'); }
+    if (!this.onHead) { this.towel = 1; this.onHead = true; Sfx.play('squelch'); Sfx.play('pour', { vol: 0.3 }); this.fx.burst('drop', this.box.x + this.box.w * 0.2, this.box.y + this.box.h * 0.7, 12, 2, 120, { grav: 300, max: 0.6 }); this.patient.play('shy'); this.hero.play('love'); }
     else { this.fx.text(this.box.x + this.box.w * 0.5, this.box.y + this.box.h * 0.22, 'Mai stai puțin… 💕', '#ff4d6d', 0.8); }
   }
   pointer(type: string) { if (type === 'down') this.tap(); }

@@ -63,3 +63,19 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - **În cloud (Firebase)**: păstrează o copie după codul casei. După o reinstalare, pui același cod al casei și progresul revine.
 - **Unde erai**: la redeschidere te întorci în aceeași zonă și în același loc.
 - **În fișier**: din meniu, „💾 Salvează în fișier” și „📂 Încarcă”.
+
+## Sunete (v1.2)
+
+- Înregistrări reale (CC0 / CC BY / Apache), lista completă și licențele în `docs/SUNETE.md`; în joc: Meniu → 📜.
+- `src/engine/sfx.ts`: încarcă fișierele comprimate (~4 MB), le decodează la nevoie (cel mult ~170 s de sunet decodat în memorie), alege la întâmplare o variantă și variază puțin tonul; dacă un sunet lipsește, se aude varianta sintetizată.
+- `src/engine/soundscape.ts`: ambianța fiecărei zone, zi și noapte (casă, curte, pădure cu lacul, satul cu fântâna și animalele, orașul, apartamentul), plus focul din sobă, televizorul, pârâul, fântânile, clopotele de la 8, 12 și 18, cocoșul de dimineață, motoarele (tractor, autobuz, scuter, taxi), pedalatul bicicletei, pașii (iarbă, lemn, piatră, pământ; mers sau fugă) și sunetele fiecărei activități (baie, toaletă cu tras apa, sforăit diferit pentru Bubu și Dudu, mâncat, gătit, spălat vase, mașina de spălat, tăiat lemne etc.).
+- Personajele: râsul fetei (Bubu) diferit de al băiatului (Dudu), tuse când sunt bolnavi, căscat. Partenerul se aude doar în aceeași zonă, mai încet cu cât e mai departe, în stânga sau în dreapta.
+- Când aplicația e minimizată, sunetul se oprește.
+
+## Bucătăria (v1.2)
+
+- La aragaz alegi rețeta (`src/game/food.ts`): ciorbă de legume, clătite, omletă, mămăligă cu brânză, sarmale, papanași, pizza de casă, plăcintă cu fructe, pește la grătar, supă cremă de ciuperci, piure, salată de vară, limonadă, ceai de flori.
+- Ingrediente noi (sat, oraș, online): ouă, lapte, brânză, carne, mălai, orez; restul vin din grădină, pădure, lac și magazine.
+- Minijocul `cook` (`src/minigames/kitchen.ts`): tai ingredientele, le pui în vas, apoi amesteci (ciorbe, mămăligă), întorci la momentul potrivit (omletă, papanași, pește) sau scoți tava din cuptor (pizza, plăcintă). Clătitele au minijocul lor. Gătit perfect = o porție în plus.
+- La masă alegi ce mănânci; fiecare mâncare are efectele ei (foame, energie, căldură, sănătate, distracție, iubire). După sarmale... se bășește mai des.
+- Partenerul AI mănâncă ce e gătit, iar dacă nu e nimic, gătește singur.

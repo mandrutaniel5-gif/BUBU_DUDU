@@ -22,12 +22,12 @@ export class ChopGame extends Panel {
     if (this.fall || this.ended) return;
     this.swing = 1; const b = this.box;
     if (Math.abs(this.marker * 0.95) < this.zone + HIT_SLACK) {
-      this.hits++; this.tilt = this.hits / this.need * 0.15; Sfx.play('bonk'); this.shake = 6;
+      this.hits++; this.tilt = this.hits / this.need * 0.15; Sfx.play('chop'); this.shake = 6;
       this.fx.burst('drop', b.x + b.w * 0.55, b.y + b.h * 0.7, 8, 2, 160, { grav: 400, max: 0.7, color: '#c98e5f' });
       this.fx.text(b.x + b.w * 0.6, b.y + b.h * 0.45, ['TOC!', 'POC!', 'ZDANG!', 'TRANC!'][this.hits % 4], '#8b5e34', 1.1);
       this.hero.play(this.scene.myId === 'dudu' ? 'flex' : 'wave');
-      if (this.hits >= this.need) { this.fall = 0.01; Sfx.play('splash'); }
-    } else { this.miss++; Sfx.play('bad'); this.fx.text(b.x + b.w * 0.6, b.y + b.h * 0.45, 'Ups! Ratat 😅', '#e63946', 0.9); this.hero.play('dizzy'); }
+      if (this.hits >= this.need) { this.fall = 0.01; Sfx.play('tree_fall', { delay: 0.15 }); Sfx.play('wood_drop', { delay: 0.9 }); Sfx.play('leaves', { delay: 0.8, vol: 0.6 }); }
+    } else { this.miss++; Sfx.play('whoosh'); Sfx.play('bad', { vol: 0.6 }); this.fx.text(b.x + b.w * 0.6, b.y + b.h * 0.45, 'Ups! Ratat 😅', '#e63946', 0.9); this.hero.play('dizzy'); }
   }
   pointer(t: string) { if (t === 'down') this.hit(); }
   key(k: string, d: boolean) { if (d && (k === ' ' || k === 'e')) this.hit(); }
@@ -72,8 +72,8 @@ export class MineGame extends Panel {
   pointer(type: string, x: number, y: number) {
     if (type !== 'down') return; const b = this.box;
     const i = this.cracks.findIndex(c => Math.hypot(x - (b.x + c.x * b.w), y - (b.y + c.y * b.h)) < 40);
-    if (i < 0) { Sfx.play('step'); return; }
-    const c = this.cracks.splice(i, 1)[0]; this.broken++; this.shake = 5; Sfx.play('bonk');
+    if (i < 0) { Sfx.play('step_stone', { vol: 0.6 }); return; }
+    const c = this.cracks.splice(i, 1)[0]; this.broken++; this.shake = 5; Sfx.play('mine');
     this.fx.burst('drop', b.x + c.x * b.w, b.y + c.y * b.h, 10, 6.28, 150, { grav: 300, max: 0.6, color: '#a9a49b' });
     this.fx.text(b.x + c.x * b.w, b.y + c.y * b.h - 30, 'CLINC!', '#6c757d', 0.9);
   }

@@ -8,6 +8,12 @@ import type { Outfit } from './outfit';
 /** Starea emotionala de baza (influenteaza fata cand nu ruleaza un emote). */
 export type Mood = 'happy' | 'calm' | 'sad' | 'angry' | 'sleepy' | 'sick' | 'hungry' | 'love' | 'sulky' | 'cold';
 
+/** sunetele scoase de personaj la unele emotii (fata / baiat) */
+const VOICE: Record<string, string | [string, string]> = {
+  laugh: ['laugh_f', 'laugh_m'], sick: 'cough', sleep: 'yawn', cry: 'sniff', dizzy: 'boing', faint: 'jump_land',
+  shy: 'gasp', tantrum: 'jump_land', flex: 'cloth', puppy: 'sniff', boba: 'drink', hungry: 'gulp',
+};
+
 const MOOD_FACE: Record<Mood, Partial<Pose>> = {
   happy: { eyes: 'dot', mouth: 'open', blush: 1 },
   calm: { eyes: 'dot', mouth: 'w', blush: 0.9 },
@@ -40,9 +46,19 @@ export class Actor {
   get id() { return this.spec.id; }
   get busy() { return this.anim !== IDLE && this.anim !== WALK && this.anim !== RUN; }
 
+  /** cat de tare se aud sunetele lui (0 = e in alta zona); il seteaza lumea */
+  audible?: () => number;
   play(id: string, onDone?: () => void) {
     const a = ANIMS[id]; if (!a) return;
     this.anim = a; this.animT = 0; this.lastP = -1; this.onDone = onDone;
+    // vocea: Bubu (fata) si Dudu (baiat) au rasete diferite; ceilalti au tonul lor
+    const v = VOICE[id];
+    if (v) {
+      const k = this.audible?.() ?? 1;
+      const girl = this.spec.id === 'bubu' || (this.spec.id !== 'dudu' && (this.spec.accessory === 'bow' || /Leana|Ina|Rita|Bunica|Doamna/.test(this.spec.name)));
+      const snd = typeof v === 'string' ? v : girl ? v[0] : v[1];
+      if (k > 0.02) Sfx.play(snd, { vol: 0.6 * k, rate: this.spec.id === 'bubu' || this.spec.id === 'dudu' ? 1 : 1.1 });
+    }
   }
   stop() { this.anim = IDLE; this.animT = 0; this.onDone = undefined; }
 
@@ -61,7 +77,7 @@ export class Actor {
       fart: (lx, ly, big = 1) => this.fx.fart(tx(lx), ty(ly), big * s, lx * this.flip >= 0 ? 1 : -1),
       text: (lx, ly, str, c, size = 1) => this.fx.text(tx(lx), ty(ly), str, c, size * s),
       shake: a => { this.shakeReq = Math.max(this.shakeReq, a); },
-      sound: id => Sfx.play(id),
+      sound: id => { const v = this.audible?.() ?? 1; if (v > 0.02) Sfx.play(id, { vol: v }); },
     };
   }
 

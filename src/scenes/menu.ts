@@ -2,6 +2,7 @@
 import { Actor } from '../char/actor';
 import { Fx } from '../char/fx';
 import { Sfx } from '../engine/sfx';
+import pkg from '../../package.json';
 import { Settings } from '../game/settings';
 import type { Scene, Game } from '../engine/game';
 import type { NetConfig } from '../net/types';
@@ -40,8 +41,8 @@ export class MenuScene implements Scene {
         <label class="m-firebase hidden">Config Firebase (JSON din consola Firebase)<textarea name="fb" rows="4" placeholder='{"apiKey":"...","databaseURL":"https://...firebaseio.com", ...}'>${s.net.firebase.apiKey ? JSON.stringify(s.net.firebase) : ''}</textarea></label>
         <button class="play">▶ Intră în casă</button>
         <div class="row2"><button class="export" title="Salvează progresul într-un fișier">💾 Salvează în fișier</button><button class="import" title="Încarcă progresul dintr-un fișier">📂 Încarcă</button></div>
-        <div class="row2"><button class="studio">🎬 Studio animații</button><button class="reset">🔄 Joc nou</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button></div>
-        <p class="ver">v0.2 · făcut cu 💕 pentru noi doi</p>
+        <div class="row2"><button class="studio">🎬 Studio animații</button><button class="reset">🔄 Joc nou</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button><button class="credits" title="Credite">📜</button></div>
+        <p class="ver">v${pkg.version} · făcut cu 💕 pentru noi doi</p>
       </div>`;
     document.getElementById('ui')!.appendChild(this.ui);
     const mode = this.ui.querySelector('select') as HTMLSelectElement;
@@ -59,6 +60,8 @@ export class MenuScene implements Scene {
         this.ui.querySelectorAll('[data-who]').forEach(x => x.classList.toggle('on', x === b));
         (b.dataset.who === 'bubu' ? this.bubu : this.dudu).play('wave');
       }
+      if (b.classList.contains('credits')) { this.showCredits(); return; }
+      if (b.classList.contains('xcred')) { this.ui.querySelector('.cred')?.remove(); return; }
       if (b.classList.contains('mute')) { const m = !Settings.get().muted; Settings.set({ muted: m }); Sfx.setMuted(m); b.textContent = m ? '🔇' : '🔊'; }
       if (b.classList.contains('paste')) {
         const inp = this.ui.querySelector('[name=serverUrl]') as HTMLInputElement;
@@ -119,6 +122,24 @@ export class MenuScene implements Scene {
     });
     Sfx.setMuted(s.muted);
   }
+  showCredits() {
+    this.ui.querySelector('.cred')?.remove();
+    const d = document.createElement('div'); d.className = 'cred';
+    d.innerHTML = `<div class="cred-in"><h3>📜 Credite</h3>
+      <p><b>Bubu & Dudu</b> · joc făcut cu 💕 · logo ACM / Code</p>
+      <h4>🔊 Sunete (înregistrări reale)</h4>
+      <ul>
+        <li><b>Oculus Audio Pack</b> © Meta Platforms, Inc. — licență <b>CC BY 4.0</b> (tăiate, normalizate, convertite)</li>
+        <li><b>TerminalFart</b> © 2026 Electric Wolfe Marshmallow Hypertext — Apache License 2.0</li>
+        <li>Kenney (RPG Audio, Impact Sounds) — CC0</li>
+        <li>Free-SFX (EternityForest), SFX Kit (Wyzowl), CC0 Public Domain Sounds (lavenderdotpet) — CC0</li>
+        <li>Înregistrări Freesound CC0: felix.blume, lizelle, siteflight, yetcop, smand, guiller1220, legnalegna55, richwise, RutgerMuller, Sheyvan și alții</li>
+      </ul>
+      <p class="sub">Lista completă, sunet cu sunet: docs/SUNETE.md</p>
+      <button class="xcred">Închide</button></div>`;
+    this.ui.appendChild(d);
+  }
+
   exit() { this.ui.remove(); }
 
   update(dt: number) {

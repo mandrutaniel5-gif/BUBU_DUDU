@@ -1,6 +1,6 @@
 // Minijoc: "Clătite pentru iubire" — toarnă aluatul, întoarce-o la momentul potrivit, fă un teanc de 3.
 import { Panel } from './base';
-import { Sfx } from '../engine/sfx';
+import { Sfx, type SndHandle } from '../engine/sfx';
 import { heartPath } from '../char/draw';
 import type { WorldScene } from '../scenes/world';
 
@@ -8,7 +8,7 @@ type Phase = 'pour' | 'cook1' | 'flip' | 'cook2' | 'serve' | 'ceiling';
 
 export class PancakeGame extends Panel {
   phase: Phase = 'pour';
-  size = 0; target = 0.7; pouring = false;
+  size = 0; target = 0.7; pouring = false; pourT = 0; pourSnd: SndHandle | null = null;
   cook = 0;           // 0 = crud, 0.5..0.75 = auriu, >1 = ars
   flipT = 0; flipOk = true;
   stack: number[] = []; // calitatea fiecarei clatite
@@ -24,19 +24,19 @@ export class PancakeGame extends Panel {
     if (!this.hero.busy) this.hero.play('idle');
     switch (this.phase) {
       case 'pour':
-        if (this.pouring) { this.size = Math.min(1.15, this.size + dt * 0.55); if (Math.random() < dt * 6) Sfx.play('pop'); }
+        if (this.pouring) { this.size = Math.min(1.15, this.size + dt * 0.55); this.pourT -= dt; if (this.pourT <= 0) { this.pourT = 1.4; this.pourSnd?.stop(0.3); this.pourSnd = Sfx.play('pour', { vol: 0.55, rate: 1.1 }); } }
         break;
       case 'cook1': case 'cook2':
         this.cook += dt * (0.22 + this.stack.length * 0.05);
-        if (this.cook > 1.15) { this.fx.text(this.cx, this.cy - 80, 'ARSĂ! 🔥', '#6d4c41', 1.2); this.fx.burst('puff', this.cx, this.cy - 20, 12, 3, 60, { color: '#555' }); this.next(0); }
+        if (this.cook > 1.15) { this.fx.text(this.cx, this.cy - 80, 'ARSĂ! 🔥', '#6d4c41', 1.2); Sfx.play('cough', { vol: 0.6 }); this.fx.burst('puff', this.cx, this.cy - 20, 12, 3, 60, { color: '#555' }); this.next(0); }
         break;
       case 'flip':
         this.flipT += dt;
-        if (this.flipT > 0.9) { this.phase = 'cook2'; this.cook = 0; Sfx.play('pop'); }
+        if (this.flipT > 0.9) { this.phase = 'cook2'; this.cook = 0; Sfx.play('squelch', { vol: 0.6, rate: 0.8 }); Sfx.play('pan', { vol: 0.2 }); }
         break;
       case 'ceiling':
         this.ceilingT += dt;
-        if (this.ceilingT > 2.2) { this.fx.text(this.hero.x, this.hero.y - 130, 'PLEOSC! 🥞', '#ff9f1c', 1.3); this.hero.play('dizzy'); this.shake = 8; Sfx.play('bonk'); this.next(0.3); }
+        if (this.ceilingT > 2.2) { this.fx.text(this.hero.x, this.hero.y - 130, 'PLEOSC! 🥞', '#ff9f1c', 1.3); this.hero.play('dizzy'); this.shake = 8; Sfx.play('squelch', { rate: 0.7 }); Sfx.play('bonk'); this.next(0.3); }
         break;
     }
   }
@@ -58,9 +58,9 @@ export class PancakeGame extends Panel {
   press(down: boolean) {
     if (this.ended) return;
     if (this.phase === 'pour') {
-      if (down) this.pouring = true;
+      if (down) { this.pouring = true; this.pourT = 0; }
       else if (this.pouring) {
-        this.pouring = false;
+        this.pouring = false; this.pourSnd?.stop(0.15); this.pourSnd = null;
         if (this.size < 0.25) return;
         this.phase = 'cook1'; this.cook = 0;
         const err = Math.abs(this.size - this.target);
@@ -74,10 +74,10 @@ export class PancakeGame extends Panel {
       this.flipOk = q > 0.3;
       this.pq = q;
       if (Math.random() < 0.15) { // se lipeste de tavan :)
-        this.phase = 'ceiling'; this.ceilingT = 0; this.fx.text(this.cx, this.box.y + 70, 'S-a lipit de tavan!! 😱', '#e63946', 1); this.hero.play('cry'); Sfx.play('pop');
+        this.phase = 'ceiling'; this.ceilingT = 0; this.fx.text(this.cx, this.box.y + 70, 'S-a lipit de tavan!! 😱', '#e63946', 1); this.hero.play('cry'); Sfx.play('whoosh'); Sfx.play('squelch', { delay: 0.35, vol: 0.6 });
         return;
       }
-      this.phase = 'flip'; this.flipT = 0; Sfx.play('pop'); this.hero.play('wave');
+      this.phase = 'flip'; this.flipT = 0; Sfx.play('whoosh'); Sfx.play('pan', { vol: 0.25 }); this.hero.play('wave');
     } else if (this.phase === 'cook2') {
       const q = (this.cookQ() + this.pq) / 2 * (1 - Math.min(0.5, Math.abs(this.size - this.target)));
       this.next(q);

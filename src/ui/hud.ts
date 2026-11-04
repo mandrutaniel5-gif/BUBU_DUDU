@@ -8,6 +8,7 @@ import { moodText, g } from '../game/gender';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
 import { GOALS, CHAPTERS, chapterOf, currentGoal, INV_INFO, SHOP_BUY, SHOP_ONLINE, SHOP_SELL, SHOP_CITY } from '../game/economy';
+import { RECIPES, RECIPE, canCook, missingFor, ingIcon, ingLabel, effectText, dishesOwned, type Recipe } from '../game/food';
 import { drawCharacter, SPECS } from '../char/draw';
 import { basePose } from '../char/pose';
 import { CROPS, seedKey, catCount, drawCropPlant, WET_MIN } from '../world/garden';
@@ -233,7 +234,7 @@ export class Hud {
       if (!Object.entries(rc.need).every(([k, v]) => (r[k] ?? 0) >= v)) { this.toast('Nu ai destule materiale 🪵'); Sfx.play('bad'); return; }
       for (const [k, v] of Object.entries(rc.need)) s.op({ k: 'res', res: k, delta: -v });
       const pay = Math.round(rc.pay * bonus); s.op({ k: 'money', delta: pay }); s.op({ k: 'stat', key: 'crafted', delta: 1 });
-      Sfx.play('bonk'); setTimeout(() => Sfx.play('coin'), 300); s.me.actor.play('flex');
+      Sfx.play('saw', { vol: 0.6 }); Sfx.play('hammer', { delay: 0.6 }); Sfx.play('hammer', { delay: 0.85 }); setTimeout(() => Sfx.play('coin'), 1100); s.me.actor.play('flex');
       this.toast(`${rc.icon} ${rc.label} gata și vândut: +${pay} lei!`); this.openWorkshop();
     }));
   }
@@ -249,7 +250,7 @@ export class Hud {
       const it = ITEMS.find(i => i.id === (b as HTMLElement).dataset.cl)!;
       if (!c.owned!.includes(it.id)) {
         if ((s.w.money ?? 0) < it.price) { this.toast('Nu ajung banii 💰'); Sfx.play('bad'); return; }
-        s.op({ k: 'money', delta: -it.price }); c.owned!.push(it.id); s.op({ k: 'stat', key: 'clothesBought', delta: 1 }); Sfx.play('coin');
+        s.op({ k: 'money', delta: -it.price }); c.owned!.push(it.id); s.op({ k: 'stat', key: 'clothesBought', delta: 1 }); Sfx.play('cloth'); Sfx.play('register', { delay: 0.3 });
       }
       (c.outfit as any)[it.slot] = it.id; s.sendCharSync(); s.me.actor.play('shy');
       this.openClothes(tier);
@@ -315,6 +316,25 @@ export class Hud {
     this.modal(`${doneText ? `<h3>${doneText}</h3>` : ''}<h3>📖 ${ch.title}</h3><p>${ch.intro}</p><ul class="goals">${ch.goals.map(g => `<li><b>${g.icon} ${g.text}</b><small>${g.hint}</small></li>`).join('')}</ul>`);
     this.refreshGoal();
   }
+  /** aragazul: alegi reteta (cu ingredientele pe care le ai) */
+  openKitchen(cb: (recipe: string) => void) {
+    const r = this.s.w.res ?? {};
+    const ing = (rc: Recipe) => Object.entries(rc.need).map(([k, n]) => { const miss = missingFor(r, rc).some(m => m.k === k); return `<i class="${miss ? 'miss' : ''}">${ingIcon(k)}${n}</i>`; }).join(' ');
+    const sorted = [...RECIPES].sort((a, b) => +canCook(r, b) - +canCook(r, a));
+    const m = this.modal(`<h3>🍳 Ce gătim azi?</h3><p class="sub">Ingredientele vin din grădină, pădure, lac și din magazinele din sat și oraș</p><div class="shop recipes">${sorted.map(rc => `<button data-rc="${rc.id}" class="${canCook(r, rc) ? '' : 'poor'}"><span>${rc.icon}</span><b>${rc.name}</b><small class="ing">${ing(rc)}</small><small>${rc.portions} porții · ${effectText(rc)}</small></button>`).join('')}</div>`);
+    m.querySelectorAll('[data-rc]').forEach(b => b.addEventListener('click', () => {
+      const rc = RECIPE[(b as HTMLElement).dataset.rc!];
+      const miss = missingFor(r, rc);
+      if (miss.length) { this.toast(`Îți lipsește: ${miss.map(x => `${ingIcon(x.k)} ${x.n - x.has} ${ingLabel(x.k)}`).join(', ')}`); Sfx.play('bad'); return; }
+      m.classList.add('hidden'); Sfx.play('drawer', { vol: 0.5 }); cb(rc.id);
+    }));
+  }
+  /** masa: alegi ce mananci */
+  openTable(cb: (key: string) => void) {
+    const list = dishesOwned(this.s.w.res ?? {});
+    const m = this.modal(`<h3>🍽️ Ce mâncăm?</h3><p class="sub">Fiecare mâncare are efectele ei</p><div class="shop">${list.map(d => `<button data-dish="${d.key}"><span>${d.rc.icon}</span><b>${d.rc.name} (${d.n})</b><small>${effectText(d.rc)}</small></button>`).join('')}</div>`);
+    m.querySelectorAll('[data-dish]').forEach(b => b.addEventListener('click', () => { m.classList.add('hidden'); cb((b as HTMLElement).dataset.dish!); }));
+  }
   openVillage(tab = 'shop') {
     const s = this.s, w = s.w, r = w.res ?? {};
     const online = tab === 'online', city = tab === 'city';
@@ -333,18 +353,18 @@ export class Hud {
       const it = LIST.find(i => i.id === (b as HTMLElement).dataset.buy)!;
       if ((w.money ?? 0) < it.price) { this.toast('Nu ai destui bani 💰 — vinde la piață sau la tarabă'); Sfx.play('bad'); return; }
       s.op({ k: 'money', delta: -it.price }); for (const [k, n] of Object.entries(it.give)) s.op({ k: 'res', res: k, delta: n });
-      Sfx.play('coin'); if (online) this.toast('📦 Curierul a lăsat coletul la ușă!'); this.openVillage(online ? 'online' : city ? 'city' : 'shop');
+      if (online) { Sfx.play('typing', { vol: 0.6 }); Sfx.play('doorbell', { delay: 0.9, vol: 0.5 }); } else Sfx.play('register'); if (online) this.toast('📦 Curierul a lăsat coletul la ușă!'); this.openVillage(online ? 'online' : city ? 'city' : 'shop');
     }));
     m.querySelector('[data-bike]')?.addEventListener('click', () => {
       if ((w.stats.bike ?? 0) > 0) return;
       if ((w.money ?? 0) < 150) { this.toast('Nu ajung banii 💰 — taraba și lemnele!'); Sfx.play('bad'); return; }
-      s.op({ k: 'money', delta: -150 }); s.op({ k: 'stat', key: 'bike', delta: 1 }); Sfx.play('good'); s.syncPlaced();
+      s.op({ k: 'money', delta: -150 }); s.op({ k: 'stat', key: 'bike', delta: 1 }); Sfx.play('bike_bell'); Sfx.play('good', { delay: 0.5 }); s.syncPlaced();
       this.toast('🚲 Ați cumpărat bicicleta! E parcată lângă poartă. Atinge-o ca să mergeți amândoi în sat'); s.log('Ați cumpărat o bicicletă pentru doi 🚲'); this.openVillage('online');
     });
     m.querySelector('[data-scooter]')?.addEventListener('click', () => {
       if ((w.stats.scooter ?? 0) > 0) return;
       if ((w.money ?? 0) < 300) { this.toast('Scuterul costă 300 lei 💰'); Sfx.play('bad'); return; }
-      s.op({ k: 'money', delta: -300 }); s.op({ k: 'stat', key: 'scooter', delta: 1 }); Sfx.play('good'); s.syncPlaced();
+      s.op({ k: 'money', delta: -300 }); s.op({ k: 'stat', key: 'scooter', delta: 1 }); Sfx.play('car_start', { rate: 1.3 }); Sfx.play('good', { delay: 0.8 }); s.syncPlaced();
       this.toast('🛵 Aveți scuter! E parcat la poartă: atinge-l ca să mergeți în sat'); s.log('Ați cumpărat un scuter albastru 🛵💕'); this.openVillage('online');
     });
     m.querySelectorAll('[data-sell]').forEach(b => b.addEventListener('click', () => {
@@ -385,7 +405,7 @@ export class Hud {
       <p class="sub">Bani faceți la cafenea ☕, la birou 💼, la florărie 💐, la tâmplărie 🪚 și la tarabă 🧺.</p>`);
     m.querySelector('[data-buyapt]')?.addEventListener('click', () => {
       if ((w.money ?? 0) < price) { this.toast(`Mai strângeți ${price - (w.money ?? 0)} lei 💪`); Sfx.play('bad'); return; }
-      s.op({ k: 'money', delta: -price }); s.op({ k: 'stat', key: 'apartment', delta: 1 }); Sfx.play('good');
+      s.op({ k: 'money', delta: -price }); s.op({ k: 'stat', key: 'apartment', delta: 1 }); Sfx.play('applause'); Sfx.play('levelup', { vol: 0.7 });
       s.log('Ați cumpărat un apartament la oraș! 🔑🏙️💕'); this.els['.modal'].classList.add('hidden'); this.toast('🔑 E al vostru! Intrați să-l vedeți');
       s.goArea('apartment');
     });

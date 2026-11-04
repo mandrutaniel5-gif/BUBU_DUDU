@@ -13,11 +13,13 @@ import { PostGame, BakeryGame, NurseGame, CourseGame, ShopScene } from './townga
 import { FridgeCleanGame, TubScrubGame, TvFixGame } from './house';
 import { BathGame, TeethGame, DishesGame, SocksGame, GardenGame, FridgeGame } from './chores';
 import { SoupGame, MedicineGame, CompressGame } from './care';
+import { CookGame } from './kitchen';
 
 /** id minijoc -> clasa. Activitatile cu `minigame` deschid minijocul pentru jucator. */
 export const MINIGAMES: Record<string, MinigameCtor> = {
   plunger: PlungerGame,
   pancakes: PancakeGame,
+  cook: CookGame,
   soup: SoupGame,
   bedtime: BedtimeGame,
   snore: SnoreGame,

@@ -14,8 +14,8 @@ export interface Activity {
 
 export const ACTIVITIES: Record<string, Activity> = {
   sleep: { id: 'sleep', anim: 'act_sleepbed', dur: 99999, needs: { health: 6, love: 4 }, place: 'bed', text: 'Somn dulce! 💤' },
-  snack: { id: 'snack', anim: 'act_eat', dur: 3.5, needs: { hunger: 22, fun: 3 }, text: 'Gustărică! 🍪' , minigame: 'fridge' },
-  eat: { id: 'eat', anim: 'act_eat', dur: 5, needs: { hunger: 35, love: 3 }, text: 'Ce bun a fost tortul! 🍰' },
+  snack: { id: 'snack', anim: 'act_eat', dur: 3.5, needs: { hunger: 16, fun: 3 }, text: 'Gustărică! 🍪' , minigame: 'fridge' },
+  eat: { id: 'eat', anim: 'act_eat', dur: 5, needs: { hunger: 42, love: 3, energy: 4 }, text: 'Ce bun a fost tortul! 🍰' },
   cook: { id: 'cook', anim: 'act_cook', dur: 7, needs: { hunger: 10, fun: 8 }, furnFlag: ['cooking', true, false], text: 'Mâncare caldă gata! 🍲', minigame: 'pancakes' },
   toilet: { id: 'toilet', anim: 'act_toilet', dur: 4, needs: { hygiene: 4, fun: 4 }, place: 'toilet', text: 'Ușurare totală 😌' },
   unclog: { id: 'unclog', anim: 'act_plunge', dur: 6, needs: { hygiene: -6, fun: 6 }, text: 'Toaleta e desfundată! 🪠✨', minigame: 'plunger' },

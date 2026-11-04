@@ -16,7 +16,7 @@ export class FireGame extends Panel {
     if (this.t > 20) this.finish(0, 'S-a stins… mai încearcă 🥶');
     if (Math.random() < this.flame * dt * 10) this.fx.emit('sparkle', this.box.x + this.box.w / 2 + (Math.random() - 0.5) * 60, this.box.y + this.box.h * 0.6, { vy: -90, max: 0.8, color: '#ffb703' });
   }
-  blow() { if (this.ended) return; this.flame = Math.min(1, this.flame + 0.1); this.puffs++; Sfx.play('step'); this.fx.emit('puff', this.box.x + this.box.w * 0.3, this.box.y + this.box.h * 0.62, { vx: 120, vy: -10, max: 0.5, size: 0.6 }); if (this.puffs % 4 === 0) this.hero.play('kiss'); }
+  blow() { if (this.ended) return; this.flame = Math.min(1, this.flame + 0.1); this.puffs++; Sfx.play('whoosh', { vol: 0.8, rate: 0.7 }); this.fx.emit('puff', this.box.x + this.box.w * 0.3, this.box.y + this.box.h * 0.62, { vx: 120, vy: -10, max: 0.5, size: 0.6 }); if (this.puffs % 4 === 0) this.hero.play('kiss'); }
   pointer(t: string) { if (t === 'down') this.blow(); }
   key(k: string, d: boolean) { if (d && (k === ' ' || k === 'e')) this.blow(); }
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
@@ -71,7 +71,7 @@ export class MowGame extends Panel {
       for (const [dc, dr] of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1]]) {
         const cc = c + dc, rr = r + dr; if (cc < 0 || rr < 0 || cc >= this.cols || rr >= this.rows) continue;
         const i = rr * this.cols + cc; const near = Math.hypot(this.mx - (G.gx + (cc + 0.5) * G.cs), this.my - (G.gy + (rr + 0.5) * G.cs)) < G.cs * 0.7;
-        if (near && this.tall[i] > 0) { this.tall[i] = 0; this.cut++; Sfx.play('step'); this.fx.burst('drop', G.gx + (cc + 0.5) * G.cs, G.gy + (rr + 0.5) * G.cs, 6, 6.28, 90, { color: '#7cc576', grav: 200, max: 0.5 }); }
+        if (near && this.tall[i] > 0) { this.tall[i] = 0; this.cut++; Sfx.play('leaves', { vol: 0.35, rate: 1.5 }); this.fx.burst('drop', G.gx + (cc + 0.5) * G.cs, G.gy + (rr + 0.5) * G.cs, 6, 6.28, 90, { color: '#7cc576', grav: 200, max: 0.5 }); }
       }
     }
     if (this.cut >= this.total) this.finish(1 + (this.dur - this.t) / this.dur, 'Curte ca-n palmă! ✂️🌾');

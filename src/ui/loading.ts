@@ -3,6 +3,7 @@ import logoUrl from '../assets/acm-logo.png';
 import { preloadIcons } from './icons';
 import { drawCharacter, SPECS, NPC_SPECS } from '../char/draw';
 import { basePose } from '../char/pose';
+import { Sfx } from '../engine/sfx';
 
 export async function showLoading(): Promise<void> {
   const el = document.createElement('div');
@@ -26,6 +27,10 @@ export async function showLoading(): Promise<void> {
   const cv = document.createElement('canvas'); cv.width = cv.height = 256; const c = cv.getContext('2d')!;
   const specs = [SPECS.bubu, SPECS.dudu, ...Object.values(NPC_SPECS)];
   for (let i = 0; i < specs.length; i++) { c.clearRect(0, 0, 256, 256); drawCharacter(c, specs[i], basePose(), 128, 220, 1, 1, 0); set(0.62 + (i + 1) / specs.length * 0.28); if (i % 2) await tick(); }
+
+  set(0.9, 'Pregătim sunetele…'); await tick();
+  // sunetele se decodeaza in paralel; asteptam cel mult 4 s (pe telefoane lente continua in fundal)
+  try { await Promise.race([Sfx.load(k => set(0.9 + k * 0.05)), new Promise(r => setTimeout(r, 4000))]); } catch { /* fara sunet */ }
 
   set(0.95, 'Deschidem căsuța…');
   const min = 1800; const left = min - (performance.now() - t0); if (left > 0) { const steps = 10; for (let i = 0; i < steps; i++) { await new Promise(r => setTimeout(r, left / steps)); set(0.95 + (i + 1) / steps * 0.05); } }

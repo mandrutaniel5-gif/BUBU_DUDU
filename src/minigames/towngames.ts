@@ -127,7 +127,7 @@ export class BakeryGame extends Panel {
     if (this.step === 'show') { this.showT -= dt; if (this.showT <= 0) { this.i++; if (this.i >= this.orders.length) return this.end(); this.step = 'knead'; this.knead = 0; this.shape = ''; } }
     if (this.left <= 0) this.end();
   }
-  addKnead(v: number) { if (this.step !== 'knead') return; this.knead = Math.min(1, this.knead + v); if (Math.random() < 0.25) this.fx.emit('puff', this.box.x + this.box.w / 2 + (Math.random() - 0.5) * 80, this.box.y + this.box.h * 0.45, { vy: -30, max: 0.6, size: 0.6 }); if (this.knead >= 1) { this.step = 'shape'; Sfx.play('pop'); } }
+  addKnead(v: number) { if (this.step !== 'knead') return; this.knead = Math.min(1, this.knead + v); if (Math.random() < 0.1) Sfx.play('squelch', { vol: 0.3, rate: 0.7 }); if (Math.random() < 0.25) this.fx.emit('puff', this.box.x + this.box.w / 2 + (Math.random() - 0.5) * 80, this.box.y + this.box.h * 0.45, { vy: -30, max: 0.6, size: 0.6 }); if (this.knead >= 1) { this.step = 'shape'; Sfx.play('pop'); } }
   pointer(t: string, x: number, y: number) {
     if (this.ended) return;
     if (t === 'down') { this.down = true; this.lx = x; this.ly = y; }
@@ -147,7 +147,7 @@ export class BakeryGame extends Panel {
   takeOut() {
     const acc = 1 - Math.min(1, Math.abs(this.baked - 1) / 0.25); // 1 = perfect auriu
     const sc = (this.shape === this.order ? 0.4 : 0) + acc * 0.6; this.scores.push(sc);
-    this.step = 'show'; this.showT = 1.3; Sfx.play(sc > 0.7 ? 'coin' : 'pop');
+    this.step = 'show'; this.showT = 1.3; Sfx.play('register', { vol: sc > 0.7 ? 1 : 0.5 });
     this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, sc > 0.85 ? 'Perfectă! ⭐' : sc > 0.6 ? 'Bună! 🍞' : this.baked > 1.15 ? 'Arsă… 🔥' : this.shape !== this.order ? 'Altă formă…' : 'Necoaptă…', sc > 0.6 ? '#2a9a4a' : '#e63946', 1);
     if (sc > 0.7) this.hero.play('dance_hop');
   }
@@ -284,6 +284,7 @@ export interface ShopConfig { title: string; wall: string; floor: string; keeper
 export class ShopScene extends Panel {
   cfg: ShopConfig; page = 0; sel = -1; msg = ''; msgT = 0; bought = 0;
   constructor(s: WorldScene, d: (n: number) => void) {
+    Sfx.play('shopbell', { vol: 0.6 }); Sfx.play('door_open', { vol: 0.35 });
     const cfg = s.shopCfg!;
     super(s, d, cfg.title, cfg.footer ?? (cfg.sell ? 'Alege ce vinzi' : 'Alege un produs de pe raft, apoi Cumpără'));
     this.cfg = cfg;
@@ -312,7 +313,7 @@ export class ShopScene extends Panel {
     const it = this.cfg.items[this.sel]; if (!it) return;
     const err = it.buy();
     if (err) { this.msg = err; this.msgT = 2.2; Sfx.play('bad'); this.keeperMood = 'sad'; return; }
-    this.bought++; Sfx.play('coin'); this.keeperMood = 'love';
+    this.bought++; Sfx.play('register'); this.keeperMood = 'love';
     const s = this.slot(this.sel - this.page * this.perPage);
     this.fx.text(s.x + s.w / 2, s.y, this.cfg.sell ? `+${it.price} lei` : `-${it.price} lei`, this.cfg.sell ? '#2a9a4a' : '#c0573e', 0.9);
     this.fx.hearts(s.x + s.w / 2, s.y + 10, 2);

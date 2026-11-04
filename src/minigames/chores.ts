@@ -31,7 +31,7 @@ export class BathGame extends Panel {
     for (let i = this.bubbles.length - 1; i >= 0; i--) {
       const b = this.bubbles[i]; const bx = B.x + b.x * B.w, by = B.y + b.y * B.h;
       if (Math.hypot(x - bx, y - by) < b.r + 10) {
-        this.bubbles.splice(i, 1); this.popped += b.gold ? 4 : 1; Sfx.play('pop');
+        this.bubbles.splice(i, 1); this.popped += b.gold ? 4 : 1; Sfx.play('bubble', { rate: b.gold ? 0.8 : 1.15 });
         this.fx.burst('sparkle', bx, by, 6, 6.28, 80, { color: '#bde7ff', max: 0.5 });
         if (b.gold) { this.fx.text(bx, by - 30, 'MAC MAC! +4', '#ffb703', 1.1); this.hero.play('laugh'); }
         return;
@@ -125,7 +125,7 @@ export class DishesGame extends Panel {
   plate = 0; dirt = 1; total = 5; lx = 0; ly = 0; down = false; foam: { x: number; y: number; r: number }[] = []; dur = 25;
   constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🍽️ Spălat vase', 'Freacă farfuria înainte-înapoi până strălucește'); }
   tick(dt: number) {
-    if (this.dirt <= 0) { this.plate++; Sfx.play('good'); this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, ['Scârț-scârț!', 'Lună!', 'Ca nouă!', 'Strălucește!', 'Gata!'][this.plate % 5], '#2ec4b6', 1.1); this.dirt = 1; this.foam = []; }
+    if (this.dirt <= 0) { this.plate++; Sfx.play('clink'); Sfx.play('good', { vol: 0.6 }); this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, ['Scârț-scârț!', 'Lună!', 'Ca nouă!', 'Strălucește!', 'Gata!'][this.plate % 5], '#2ec4b6', 1.1); this.dirt = 1; this.foam = []; }
     if (this.plate >= this.total) this.finish(1 + (this.dur - this.t) / this.dur, 'Vase curate! 🍽️✨');
     else if (this.t > this.dur) this.finish(this.plate >= 3 ? 0.6 : 0, this.plate >= 3 ? 'Restul… mâine 😅' : 'Chiuveta a câștigat 😩');
   }
@@ -135,7 +135,7 @@ export class DishesGame extends Panel {
     if (!this.down) return;
     const d = Math.hypot(x - this.lx, y - this.ly); this.lx = x; this.ly = y;
     const B = this.box; const cx = B.x + B.w / 2, cy = B.y + B.h * 0.55;
-    if (Math.hypot(x - cx, y - cy) < 130) { this.dirt = Math.max(0, this.dirt - d / 2200); if (Math.random() < 0.35) this.foam.push({ x: x - cx, y: y - cy, r: rnd(8, 20) }); if (Math.random() < 0.06) Sfx.play('step'); }
+    if (Math.hypot(x - cx, y - cy) < 130) { this.dirt = Math.max(0, this.dirt - d / 2200); if (Math.random() < 0.35) this.foam.push({ x: x - cx, y: y - cy, r: rnd(8, 20) }); if (Math.random() < 0.06) Sfx.play(Math.random() < 0.5 ? 'squelch' : 'dishes', { vol: 0.45 }); }
   }
   key(k: string, d: boolean) { if (d && (k === ' ' || k === 'e')) { this.dirt = Math.max(0, this.dirt - 0.08); this.foam.push({ x: rnd(-80, 80), y: rnd(-60, 60), r: rnd(8, 20) }); } }
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
@@ -177,7 +177,7 @@ export class SocksGame extends Panel {
     if (type !== 'down' || this.wait > 0 || this.lostJoke) return;
     const i = this.cards.findIndex((_, k) => { const r = this.rect(k); return x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h; });
     if (i < 0) return; const c = this.cards[i]; if (c.open || c.done) return;
-    c.open = true; Sfx.play('pop');
+    c.open = true; Sfx.play('cloth', { vol: 0.6 });
     if (this.first < 0) { this.first = i; return; }
     this.moves++;
     const f = this.cards[this.first];
@@ -235,8 +235,8 @@ export class GardenGame extends Panel {
     for (let i = 0; i < 6; i++) {
       const p = this.pos(i); if (Math.hypot(x - p.x, y - p.y) > 55) continue;
       const s = this.spots[i];
-      if (s.stage === 0) { s.stage = 1; s.water = 0; Sfx.play('pop'); this.fx.text(p.x, p.y - 40, 'Sămânță!', '#8b5e34', 0.7); }
-      else if (s.stage < 4) { s.water++; this.fx.burst('drop', p.x, p.y - 60, 8, 0.8, 80, { rot: Math.PI / 2, grav: 300, max: 0.6 }); Sfx.play('splash'); if (s.water >= 3) { s.stage++; s.water = 0; if (s.stage === 4) this.fx.burst('sparkle', p.x, p.y - 30, 8, 6.28, 90); } }
+      if (s.stage === 0) { s.stage = 1; s.water = 0; Sfx.play('dig', { vol: 0.6 }); this.fx.text(p.x, p.y - 40, 'Sămânță!', '#8b5e34', 0.7); }
+      else if (s.stage < 4) { s.water++; this.fx.burst('drop', p.x, p.y - 60, 8, 0.8, 80, { rot: Math.PI / 2, grav: 300, max: 0.6 }); Sfx.play('pour', { vol: 0.5, rate: 1.2 }); if (s.water >= 3) { s.stage++; s.water = 0; if (s.stage === 4) this.fx.burst('sparkle', p.x, p.y - 30, 8, 6.28, 90); } }
       else { s.stage = 0; this.harvested++; Sfx.play('coin'); this.fx.text(p.x, p.y - 50, '+🍓', '#e63946', 1.1); this.fx.hearts(p.x, p.y - 40, 3); }
       return;
     }

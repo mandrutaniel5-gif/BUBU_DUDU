@@ -48,7 +48,7 @@ export class FridgeCleanGame extends Panel {
       for (const it of this.items) {
         if (it.gone) continue;
         if (Math.hypot(x - (B.x + it.x * B.w), y - (B.y + it.y * B.h)) < 30) {
-          if (it.bad) { it.gone = 0.01; Sfx.play('pop'); this.fx.text(x, y - 30, ['Bleah!', 'Puah!', 'La gunoi!', 'Iiiu!'][Math.floor(Math.random() * 4)], '#7cb342', 0.9); }
+          if (it.bad) { it.gone = 0.01; Sfx.play('squelch'); this.fx.text(x, y - 30, ['Bleah!', 'Puah!', 'La gunoi!', 'Iiiu!'][Math.floor(Math.random() * 4)], '#7cb342', 0.9); }
           else { this.mistakes++; Sfx.play('bad'); this.shake = 4; this.fx.text(x, y - 30, 'E bun! Nu-l arunca 😱', '#e63946', 0.9); }
           return;
         }
@@ -132,9 +132,9 @@ export class TubScrubGame extends Panel {
     if (type === 'up') this.down = false;
     if (type === 'move' && this.down) {
       const d = Math.hypot(x - this.lx, y - this.ly); this.lx = x; this.ly = y;
-      for (const g of this.grime) if (g.d > 0 && Math.hypot(x - (B.x + g.x * B.w), y - (B.y + g.y * B.h)) < g.r + 20) { g.d -= d / 600; if (g.d <= 0) { Sfx.play('pop'); this.fx.burst('sparkle', x, y, 6, 6.28, 80, { color: '#bde7ff', max: 0.5 }); } }
+      for (const g of this.grime) if (g.d > 0 && Math.hypot(x - (B.x + g.x * B.w), y - (B.y + g.y * B.h)) < g.r + 20) { g.d -= d / 600; if (g.d <= 0) { Sfx.play('bubble'); this.fx.burst('sparkle', x, y, 6, 6.28, 80, { color: '#bde7ff', max: 0.5 }); } }
       if (Math.random() < 0.4) this.foam.push({ x, y, r: rnd(6, 16), t: 0 });
-      if (Math.random() < 0.05) Sfx.play('step');
+      if (Math.random() < 0.05) Sfx.play(Math.random() < 0.5 ? 'squelch' : 'spray', { vol: 0.4 });
     }
   }
   key(k: string, d: boolean) { if (d && (k === ' ' || k === 'e')) { const g = this.grime.find(g => g.d > 0); if (g) g.d -= 0.2; } }
@@ -176,7 +176,7 @@ export class TvFixGame extends Panel {
   pointer(type: string, x: number, y: number) {
     if (this.phase === 'smack') {
       if (type !== 'down') return;
-      this.smacks++; this.shake = 8; Sfx.play('slap');
+      this.smacks++; this.shake = 8; Sfx.play('metal_hit', { vol: 0.7 });
       if (this.glow) { this.signal += 0.36; this.fx.text(x, y - 30, 'PAF! 📶', '#2ec4b6', 1.1); }
       else { this.signal = Math.max(0, this.signal - 0.1); this.fx.text(x, y - 30, 'Prea devreme!', '#e63946', 0.9); }
       return;

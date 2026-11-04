@@ -1,6 +1,6 @@
 // Pescuit la lacul din padure: arunci, astepti sa traga, agati la timp, apoi mulinezi fara sa rupi firul.
 import { Panel } from './base';
-import { Sfx } from '../engine/sfx';
+import { Sfx, type SndHandle } from '../engine/sfx';
 import type { WorldScene } from '../scenes/world';
 import { heartPath } from '../char/draw';
 
@@ -15,13 +15,16 @@ const FISH = [
 type Phase = 'cast' | 'wait' | 'bite' | 'reel' | 'show';
 export class FishingGame extends Panel {
   phase: Phase = 'cast'; waitT = 0; biteT = 0; fish = FISH[0];
+  reelSnd: SndHandle | null = null; reelT = 0;
   tension = 0.3; prog = 0; holding = false; caught = 0; lost = 0; showT = 0; lastName = '';
   constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🎣 Pescuit la lac', 'Atinge ca să arunci. Când se scufundă pluta → atinge repede!'); }
   pickFish() { const tot = FISH.reduce((a, f) => a + f.w, 0); let r = Math.random() * tot; for (const f of FISH) { r -= f.w; if (r <= 0) return f; } return FISH[0]; }
   tick(dt: number) {
+    if (this.phase !== 'reel' && this.reelSnd) { this.reelSnd.stop(); this.reelSnd = null; }
     if (this.phase === 'wait') { this.waitT -= dt; if (this.waitT <= 0) { this.phase = 'bite'; this.biteT = 0.9; Sfx.play('splash'); this.fish = this.pickFish(); } }
     else if (this.phase === 'bite') { this.biteT -= dt; if (this.biteT <= 0) { this.phase = 'cast'; this.lost++; this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.45, 'A scăpat… 🐟💨', '#4ea8de', 1); } }
     else if (this.phase === 'reel') {
+      if (this.holding) { this.reelT -= dt; if (this.reelT <= 0) { this.reelT = 1.9; this.reelSnd?.stop(0.2); this.reelSnd = Sfx.play('reel', { vol: 0.5 }); } }
       const pull = this.fish.pull * (0.6 + 0.6 * Math.abs(Math.sin(this.t * 2.3)));
       this.tension += (this.holding ? 0.55 : -0.6) * dt + (this.holding ? pull * 0.25 * dt : 0);
       this.tension = Math.max(0, this.tension);
@@ -29,16 +32,17 @@ export class FishingGame extends Panel {
       else if (!this.holding) this.prog -= dt * 0.05;
       if (this.tension >= 1) { this.phase = 'cast'; this.lost++; Sfx.play('bad'); this.shake = 6; this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.4, 'S-a rupt firul! 😩', '#e63946', 1.1); this.hero.play('cry'); }
       if (this.prog >= 1) { this.phase = 'show'; this.showT = 1.8; this.caught++; Sfx.play('good'); this.lastName = this.fish.name; this.hero.play(this.fish.id === 'gheata' ? 'laugh' : 'love'); if (this.fish.id !== 'gheata') { this.scene.op({ k: 'res', res: 'fish', delta: 1 }); this.scene.op({ k: 'stat', key: 'fishCaught', delta: 1 }); } }
-    } else if (this.phase === 'show') { this.showT -= dt; if (this.showT <= 0) this.phase = 'cast'; }
+    } else if (this.phase === 'show') { if (this.reelSnd) { this.reelSnd.stop(); this.reelSnd = null; } this.showT -= dt; if (this.showT <= 0) this.phase = 'cast'; }
     if (this.caught >= 3 || this.lost >= 4) this.finish(this.caught ? 1 + this.caught * 0.3 : 0, this.caught ? `Ai prins ${this.caught} pești! 🐟` : 'Azi nu trag peștii… 🎣');
   }
   press(down: boolean) {
     if (this.ended) return;
-    if (!down) { this.holding = false; return; }
-    if (this.phase === 'cast') { this.phase = 'wait'; this.waitT = 1.5 + Math.random() * 3; Sfx.play('pop'); this.prog = 0; this.tension = 0.3; }
+    if (!down) { this.holding = false; this.reelSnd?.stop(); this.reelSnd = null; return; }
+    if (this.phase === 'cast') { this.phase = 'wait'; this.waitT = 1.5 + Math.random() * 3; Sfx.play('whoosh'); Sfx.play('splash', { vol: 0.4, rate: 1.4, delay: 0.45 }); this.prog = 0; this.tension = 0.3; }
     else if (this.phase === 'bite') { this.phase = 'reel'; Sfx.play('plunge'); this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.45, 'Agățat! Ține apăsat ca să mulinezi', '#2ec4b6', 0.9); this.holding = true; }
     else if (this.phase === 'wait') { this.phase = 'cast'; this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.45, 'Prea devreme! Ai speriat peștii', '#e63946', 0.9); }
     else if (this.phase === 'reel') this.holding = true;
+    if (this.holding && this.phase === 'reel' && !this.reelSnd) this.reelSnd = Sfx.play('reel', { vol: 0.5 });
   }
   pointer(t: string) { if (t === 'down') this.press(true); if (t === 'up') this.press(false); }
   key(k: string, d: boolean) { if (k === ' ' || k === 'e') this.press(d); }

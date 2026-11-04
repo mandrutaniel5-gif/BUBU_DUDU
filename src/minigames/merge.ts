@@ -101,7 +101,7 @@ export class MergeGame extends Panel {
     const empty = this.b.cells.map((v, i) => v ? -1 : i).filter(i => i >= 0);
     if (!empty.length) return msg('Tava e plină! Unește ceva 🙂');
     const i = empty[0];
-    this.b.cells[i] = `${ci.id}:0`; this.pop[i] = 1; Sfx.play('pop'); this.paw = 1;
+    this.b.cells[i] = `${ci.id}:0`; this.pop[i] = 1; Sfx.play('leaves', { vol: 0.4, rate: 1.4 }); this.paw = 1;
     const key = ci.src.startsWith('cat:') ? catPick(r, ci.src.slice(4) as CropCat)! : ci.src;
     this.scene.op({ k: 'res', res: key, delta: -1 });
     this.scene.op({ k: 'stat', key: 'had-' + ci.src, delta: 1 });
@@ -120,7 +120,7 @@ export class MergeGame extends Panel {
     if (this.scene.storeMode === 'florarie') pay = Math.round(pay * ((this.scene.w.stats['dipl-florist-' + this.scene.myId] ?? 0) > 0 ? 1.8 : 1.5)); // cursul de florist: +30%
     this.scene.serveNpc(npcId, pay);
     this.served++; this.earned += pay; this.paw = 1;
-    Sfx.play('coin');
+    Sfx.play('register');
     const p = this.npcScreen(npc);
     this.fx.text((p.fx - this.cam) * this.W, this.counterY - this.H * 0.25, `+${pay} lei${grassy ? ' (curte netunsă -20%)' : ''}`, '#2ec4b6', 1.1);
     this.fx.hearts((p.fx - this.cam) * this.W, this.counterY - this.H * 0.2, 6);

@@ -42,6 +42,7 @@ export function finishJob(s: WorldScene, perf: number, detail: string): string {
     if (jobXp(s.w, job.id, who) >= LEVEL_NEED[lvl]) {
       s.op({ k: 'stat', key: jobKey(job.id, who, 'lvl'), delta: 1 }); setStat(s, jobKey(job.id, who, 'xp'), 0);
       promo = ` · ⭐ ${fem ? 'Promovată' : 'Promovat'}: ${LEVEL_NAMES[lvl + 1][fem ? 1 : 0]}!`;
+      setTimeout(() => { Sfx.play('levelup'); Sfx.play('applause', { vol: 0.5, delay: 0.4 }); }, 900);
       s.log(`${s.me.actor.spec.name} a fost ${fem ? 'promovată' : 'promovat'} la ${job.name[fem ? 1 : 0].toLowerCase()}: ${LEVEL_NAMES[lvl + 1][fem ? 1 : 0]} ⭐`);
     }
   }
