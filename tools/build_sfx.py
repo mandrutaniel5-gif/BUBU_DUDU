@@ -61,10 +61,12 @@ SFX = {
   'run_dirt':   (r(M, seq('FEETHmn_ShoeDirtRun_OS_%02d.ogg', 1, 5)), {'max': 0.4, 'db': -10}),
   'jump_land':  (r(M, ['FEETHmn_ShoeGrassLand_OS_01.ogg', 'FEETHmn_ShoeDirtLand_OS_01.ogg']), {'max': 0.6, 'db': -6}),
   # ---------- corpul
-  'fart':     (['npm/terminalfart/package/sounds/toot.mp3', 'npm/terminalfart/package/sounds/dry.mp3'], {'max': 1.6, 'db': -3}),
+  'fart':     (['npm/terminalfart/package/sounds/toot.mp3'], {'max': 1.2, 'db': -3}),  # doar „toot” (cel mai de desen animat); ii schimbam tonul in joc
   'fart_wet': (['npm/terminalfart/package/sounds/wet.mp3'], {'max': 1.8, 'db': -3}),
   'bigfart':  (['npm/terminalfart/package/sounds/hellacious.mp3', 'npm/terminalfart/package/sounds/poop-toot.mp3'], {'max': 2.6, 'db': -2}),
   'burp':     (r(M, ['HMNBurp_Burp_OS_01.ogg', 'HMNBurp_Burp_OS_02.ogg', 'HMNBurp_Burp_OS_03.ogg']), {'max': 1.4, 'db': -4}),
+  # chicoteli dragute (rubberduck, „80 CC0 creature SFX”, CC0) in locul rasului de om matur
+  'giggle':   (['atom/packs/opengameart-80-cc0-creature-sfx/audio/cute-%02d.m4a' % i for i in range(1, 11)], {'max': 0.8, 'db': -5}),
   'laugh_f':  (r(M, ['VOXLaff_Female01Laugh_OS_01.ogg', 'VOXLaff_Female01Laugh_OS_02.ogg', 'VOXLaff_Female02Laugh_OS_01.ogg']), {'max': 2.2, 'db': -6}),
   'laugh_m':  (r(M, ['VOXLaff_Male01Laugh_OS_01.ogg', 'VOXLaff_Male02Laugh_OS_01.ogg', 'VOXLaff_Male02Laugh_OS_02.ogg']), {'max': 2.2, 'db': -6}),
   'yawn':     (['free/Owlish/Sound Effects Pack/Human/yawn1.opus', 'free/Owlish/Sound Effects Pack/Human/yawn2.opus'], {'max': 2.6, 'db': -6}),

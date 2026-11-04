@@ -221,27 +221,42 @@ def({
 });
 
 def({
-  id: 'fartjump', label: 'Super-salt', icon: '🚀', who: 'both', kind: 'emote', dur: 2.6,
+  // super-basina: te ghemuiesti si te umfli, BUM (nor verde mare, unda pe jos), zbori sus facand o tumba, aterizezi, apoi „Ahhh”
+  id: 'fartjump', label: 'Super-salt', icon: '🚀', who: 'both', kind: 'emote', dur: 3.0,
   pose(P, t, p) {
-    if (p < 0.3) {
-      const b = ease(seg(p, 0, 0.3));
-      P.sy = 1 - 0.18 * b; P.sx = 1 + 0.1 * b; P.eyes = 'strain'; P.mouth = 'flat';
-      P.dx = wave(t, 18, 1.5 * b); P.armL = P.armR = lerp(0.25, -0.3, b); P.sweat = b; P.blush = 1.2;
-    } else if (p < 0.8) {
-      const q = seg(p, 0.3, 0.8);
-      P.dy = -4 * 150 * q * (1 - q);
-      P.rot = ease(seg(q, 0.15, 0.7)) * Math.PI * 2;
-      P.sy = 1 + 0.12 * (1 - q); P.sx = 1 - 0.06 * (1 - q);
-      P.armL = P.armR = 2.6; P.eyes = 'star'; P.mouth = 'grin'; P.legL = P.legR = 4; P.shadowScale = 1;
+    if (p < 0.26) {
+      const b = ease(seg(p, 0, 0.26));
+      P.sy = 1 - 0.2 * b; P.sx = 1 + 0.22 * b; P.eyes = b > 0.6 ? 'strain' : 'dot'; P.mouth = 'flat'; P.blush = 1 + b * 0.8;
+      P.dx = wave(t, 26, 2.4 * b); P.armL = P.armR = lerp(0.25, -0.45, b); P.legL = P.legR = 0; P.sweat = b;
+    } else if (p < 0.72) {
+      const q = seg(p, 0.26, 0.72);
+      P.dy = -4 * 230 * q * (1 - q);
+      P.rot = ease(seg(q, 0.1, 0.8)) * Math.PI * 2;
+      P.sy = 1 + 0.16 * (1 - q); P.sx = 1 - 0.08 * (1 - q);
+      P.armL = P.armR = 2.7; P.eyes = 'star'; P.mouth = 'grin'; P.legL = P.legR = 4; P.blush = 1.2; P.shadowScale = 1 - Math.sin(q * Math.PI) * 0.6;
+    } else if (p < 0.84) {
+      const q = seg(p, 0.72, 0.84), sq = Math.sin(q * Math.PI);
+      P.sy = 1 - 0.3 * sq; P.sx = 1 + 0.22 * sq; P.eyes = 'happy'; P.mouth = 'open'; P.armL = P.armR = lerp(2.2, 0.6, q);
     } else {
-      const q = seg(p, 0.8, 1);
-      const sq = Math.sin(q * Math.PI) * (1 - q);
-      P.sy = 1 - 0.25 * sq; P.sx = 1 + 0.18 * sq; P.eyes = 'happy'; P.mouth = 'open'; P.armL = P.armR = lerp(1.5, 0.25, q);
+      const q = seg(p, 0.84, 1);
+      P.eyes = 'happy'; P.mouth = 'smirk'; P.blush = 1.1; P.armL = P.armR = lerp(1.2, 0.3, ease(q)); P.sy = 1 + Math.sin(q * Math.PI) * 0.04;
     }
   },
-  events: [[0.3, f => { f.fart(0, -4, 2.2); f.text(0, -60, 'SUPER PÂRȚ!', '#7cb342', 1.3); f.shake(8); f.sound('bigfart'); }],
-           [0.8, f => { f.burst('puff', 0, 0, 8, 3, 60, { rot: 0, max: 0.6 }); f.shake(4); }]],
-  tick(f, t, p, dt) { if (p > 0.3 && p < 0.55 && every(t, dt, 0.05)) { const q = seg(p, 0.3, 0.8); f.emit('fart', (Math.random() - 0.5) * 10, -4 * 150 * q * (1 - q) - 4, { vy: 20, vx: (Math.random() - 0.5) * 30, max: 1.0, size: 0.8 }); } },
+  events: [
+    [0.06, f => { f.text(0, -112, 'Hmmm…', '#7a5a4a', 0.8); }],
+    [0.17, f => { f.fart(0, -6, 0.6); f.sound('fart'); f.shake(2); }],
+    [0.26, f => {
+      f.fart(-14, -4, 3.2); f.fart(14, -4, 3.2);
+      f.burst('fart', 0, -6, 16, 6.28, 150, { rot: 0, max: 2.4, size: 1.6 });
+      f.emit('shock', 0, -4, { vy: 0, max: 0.6, color: '#9be05a', size: 2.2 }); f.emit('shock', 0, -4, { vy: 0, max: 0.9, color: '#c8f29a', size: 3 });
+      f.text(0, -130, 'SUPER PÂRȚ!', '#5a9a2a', 1.7); f.shake(13); f.sound('bigfart');
+    }],
+    [0.72, f => { f.burst('puff', 0, 0, 12, 3.2, 90, { rot: 0, max: 0.7 }); f.shake(6); f.sound('jump_land'); }],
+    [0.88, f => { f.text(0, -110, 'Ahhh… 😌', '#8d6e63', 0.9); }],
+  ],
+  tick(f, t, p, dt) {
+    if (p > 0.26 && p < 0.7 && every(t, dt, 0.035)) { const q = seg(p, 0.26, 0.72); f.emit('fart', (Math.random() - 0.5) * 14, -4 * 230 * q * (1 - q) + 6, { vy: 30, vx: (Math.random() - 0.5) * 40, max: 1.3, size: 0.9 + Math.random() * 0.5 }); }
+  },
 });
 
 def({

@@ -235,7 +235,7 @@ export class WorldScene implements Scene {
   }
   onRemoteEvent(e: NetEvent) {
     switch (e.t) {
-      case 'emote': this.pawnOf(e.who).actor.play(e.anim); break;
+      case 'emote': this.pawnOf(e.who).actor.play(e.anim); if (e.anim === 'fartjump' && this.sameArea()) this.superFart(this.pawnOf(e.who)); break;
       case 'pair': this.runPair(e.who, e.pair, false); break;
       case 'op': {
         const prevCh = this.chapter;
@@ -691,19 +691,24 @@ export class WorldScene implements Scene {
     this.npcs = list.map(n => { const o = old.get(n.id); return o ? Object.assign(o, { ...n, x: o.x, y: o.y, actor: o.actor, spec: o.spec, tx: n.x }) : { ...n, tx: n.x }; });
   }
   npcPublic() { return this.npcs.map(({ actor, spec, ...n }) => n); }
-  spawnNpc() {
+  /** clientii florariei (alta lume decat cei de la taraba de acasa) */
+  florNpcs: Npc[] = [];
+  /** clientii magazinului deschis acum: florarie sau taraba */
+  shopNpcs() { return this.storeMode === 'florarie' ? this.florNpcs : this.npcs; }
+  spawnNpc(florist = false) {
     const served = this.w.stats.served ?? 0;
-    const chains = this.storeMode === 'florarie' ? ['flower'] : orderableChains(this.w.res ?? {}, this.w.stats);
-    const kinds = Object.keys(NPC_SPECS);
+    const chains = florist ? ['flower'] : orderableChains(this.w.res ?? {}, this.w.stats);
+    // la taraba vin sateni in haine de zi cu zi; la florarie, cumparatori eleganti (alte personaje, alte haine)
+    const kinds = florist ? ['cat', 'fox', 'bunny'] : ['granny', 'pig', 'dog', 'bunny'];
     const n = served > 8 && Math.random() < 0.3 ? 2 : 1;
     const wants: string[] = [];
     for (let i = 0; i < n; i++) {
       const ch = Math.random() < 0.5 ? chains[chains.length - 1] : chains[Math.floor(Math.random() * chains.length)];
       const maxL = Math.min(MAX_LVL[ch], Math.floor(served / 4) + 1);
       const l = Math.floor(Math.random() ** 1.6 * (maxL + 1));
-      wants.push(`${ch}:${Math.min(maxL, l)}`);
+      wants.push(`${ch}:${Math.min(maxL, florist ? Math.max(1, l) : l)}`); // la florarie se cer buchete, nu fire
     }
-    this.npcs.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), kind: kinds[Math.floor(Math.random() * kinds.length)], x: -1, y: ROAD_Y, tx: 0, state: 'come', wants, pay: wants.reduce((s, c) => s + itemValue(c), 1), t: 0 });
+    (florist ? this.florNpcs : this.npcs).push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), kind: kinds[Math.floor(Math.random() * kinds.length)], x: -1, y: ROAD_Y, tx: 0, state: 'come', wants, pay: wants.reduce((s, c) => s + itemValue(c), 1), t: 0 });
   }
   updateNpcs(dt: number) {
     const host = this.isHost;
@@ -713,14 +718,31 @@ export class WorldScene implements Scene {
       const waiting = this.npcs.filter(n => n.state !== 'leave').length;
       const open = !!this.w.furn.standOpen && !this.w.furn.standBroken;
       if (open && h >= 20) { this.op({ k: 'furn', key: 'standOpen', value: false }); this.hud.toast('🌙 Taraba s-a închis pentru noapte'); for (const n of this.npcs) if (n.state !== 'leave') { n.state = 'leave'; n.happy = false; } }
-      const flor = this.storeMode === 'florarie' && this.minigame?.id === 'merge';
-      if (flor && this.npcSpawnT > 8) this.npcSpawnT = 8;
-      if ((open || flor) && this.npcSpawnT <= 0 && h >= 7 && h < 20 && waiting < 3) { this.npcSpawnT = 25 + Math.random() * 25; this.spawnNpc(); }
+      if (open && this.npcSpawnT <= 0 && h >= 7 && h < 20 && waiting < 3) { this.npcSpawnT = 25 + Math.random() * 25; this.spawnNpc(false); }
     }
+    // florăria (doar cât e deschisă, pe telefonul celui care vinde)
+    const flor = this.storeMode === 'florarie' && this.minigame?.id === 'merge';
+    if (flor) {
+      this.florSpawnT -= dt;
+      if (this.florSpawnT <= 0 && this.florNpcs.filter(n => n.state !== 'leave').length < 3) { this.florSpawnT = 14 + Math.random() * 14; this.spawnNpc(true); }
+      this.stepNpcs(this.florNpcs, dt, true);
+      this.florNpcs = this.florNpcs.filter(n => n.x < MAP_W + 1.5);
+    } else if (this.florNpcs.length) this.florNpcs = [];
+    this.stepNpcs(this.npcs, dt, host);
+    if (host) this.npcs = this.npcs.filter(n => n.x < MAP_W + 1.5);
+  }
+  florSpawnT = 3;
+  /** misca clientii spre tejghea, ii asaza la rand, pleaca dupa ce sunt serviti */
+  private stepNpcs(list: Npc[], dt: number, host: boolean) {
     const slots = [9.6, 8.3, 7.0];
     let si = 0;
-    for (const n of this.npcs) {
-      if (!n.spec) { n.spec = NPC_SPECS[n.kind]; n.actor = new Actor('bubu', this.fx, n.spec); n.actor.scale = ACTOR_SCALE * 0.92; if (n.kind === 'granny') n.actor.outfit = { head: 'none', face: 'none', neck: 'scarf' }; }
+    for (const n of list) {
+      if (!n.spec) {
+        n.spec = NPC_SPECS[n.kind]; n.actor = new Actor('bubu', this.fx, n.spec); n.actor.scale = ACTOR_SCALE * 0.92;
+        const fl = list === this.florNpcs, hsh = n.id.charCodeAt(n.id.length - 1);
+        n.actor.outfit = fl ? { head: ['joben', 'palarie', 'none'][hsh % 3], face: 'none', neck: hsh % 2 ? 'bowtie' : 'none', body: n.kind === 'fox' ? 'costum' : 'rochie' } as any
+          : n.kind === 'granny' ? { head: 'batic', face: 'none', neck: 'scarf', body: 'ie' } as any : { head: ['palarie', 'cap', 'none'][hsh % 3], face: 'none', neck: 'none', body: ['salopeta', 'vesta', 'tricou'][hsh % 3] } as any;
+      }
       const a = n.actor!;
       if (host) {
         if (n.state === 'come') { const tx = slots[Math.min(2, si)]; n.x += Math.sign(tx - n.x) * Math.min(Math.abs(tx - n.x), 1.4 * dt); if (Math.abs(tx - n.x) < 0.02) { n.state = 'wait'; a.play('wave'); } }
@@ -733,10 +755,10 @@ export class WorldScene implements Scene {
       const s = iso(n.x, n.y); a.x = s.x; a.y = s.y; a.update(dt);
       if (n.state === 'wait' && !a.busy) a.mood = n.t > 80 ? 'sulky' : 'happy';
     }
-    if (host) this.npcs = this.npcs.filter(n => n.x < MAP_W + 1.5);
   }
   serveNpc(id: string, pay: number) {
-    this.op({ k: 'npcServe', id });
+    const fn = this.florNpcs.find(x => x.id === id);
+    if (fn) { fn.state = 'leave'; fn.happy = true; fn.actor?.play('love'); } else this.op({ k: 'npcServe', id });
     this.op({ k: 'money', delta: pay }); this.op({ k: 'stat', key: 'served', delta: 1 }); this.op({ k: 'hearts', delta: 1 });
     const served = this.w.stats.served ?? 0;
     if (served % 5 === 0) this.hud.toast(`🧺 ${served} clienți mulțumiți! Clienții vor cere produse tot mai mari ✨`);
@@ -1324,6 +1346,18 @@ export class WorldScene implements Scene {
     this.hud.closeMenus();
   }
 
+  /** ceata verde ramasa dupa super-basina + reactia celuilalt daca e aproape */
+  fogs: { x: number; y: number; t: number }[] = [];
+  superFart(who: Pawn) {
+    setTimeout(() => this.fogs.push({ x: who.gx, y: who.gy, t: 0 }), 780);
+    const other = who === this.me ? this.partner : this.me;
+    if (!this.sameArea() || Math.hypot(other.gx - who.gx, other.gy - who.gy) > 3.5) return;
+    setTimeout(() => {
+      if (other.activity || other.riding) return;
+      other.actor.play(Math.random() < 0.5 ? 'faint' : 'dizzy');
+      const q = iso(other.gx, other.gy, 110); this.fx.text(q.x, q.y, Math.random() < 0.5 ? 'Pfuuu! 🤢' : 'Aer! Aer! 😵', '#5a9a2a', 1);
+    }, 1100);
+  }
   fartJump() {
     const c = this.w.chars[this.myId];
     if (c.fart < 25) { this.hud.toast('💨 Nu ai destule gaze... mănâncă ceva! 🫘'); this.me.actor.play('puppy'); return; }
@@ -1333,6 +1367,7 @@ export class WorldScene implements Scene {
     this.me.path = [];
     this.me.actor.play('fartjump');
     this.net.sendEvent({ t: 'emote', who: this.myId, anim: 'fartjump' });
+    this.superFart(this.me);
     // salt in directia privirii, trecand peste obstacole joase
     const dir = screenDirToGrid(this.me.actor.flip * 1, this.me.facingBack ? -0.5 : 0.5);
     const start = { x: this.me.gx, y: this.me.gy };
@@ -1616,6 +1651,7 @@ export class WorldScene implements Scene {
     }
     this.fx.update(dt);
     for (const fl of this.flings) fl.t += dt; this.flings = this.flings.filter(fl => fl.t < fl.dur + 1.4);
+    for (const fg of this.fogs) fg.t += dt; this.fogs = this.fogs.filter(fg => fg.t < 4);
     this.shake *= Math.pow(0.02, dt);
 
     // camera urmareste jucatorul
@@ -1663,8 +1699,8 @@ export class WorldScene implements Scene {
     if (this.travel) { p.actor.moving = false; return; }
     if (p.board) { p.actor.moving = false; if (p.activity) this.stopActivity(p); return; } // stai pe vehicul: nu te misti
     if (this.jump) {
-      this.jump.t += dt / 1.3;
-      const q = Math.min(1, Math.max(0, (this.jump.t - 0.23) / 0.4));
+      this.jump.t += dt / 3.0; // la fel de lung ca animatia super-basinii
+      const q = Math.min(1, Math.max(0, (this.jump.t - 0.26) / 0.46));
       p.gx = this.jump.from.x + (this.jump.to.x - this.jump.from.x) * q;
       p.gy = this.jump.from.y + (this.jump.to.y - this.jump.from.y) * q;
       if (this.jump.t >= 1) this.jump = null;
@@ -1941,6 +1977,10 @@ export class WorldScene implements Scene {
       return (a.x0 + a.x1 + a.y0 + a.y1) - (b.x0 + b.x1 + b.y0 + b.y1);
     });
     for (const it of items) if (inHouse(it.x0, it.y0, it.x1, it.y1)) { ctx.save(); try { it.draw(); } catch (e) { ErrorLog.add(e, 'desen obiect'); } ctx.restore(); }
+    for (const fg of this.fogs) {
+      const k = fg.t / 4, q = iso(fg.x, fg.y, 20 + k * 30);
+      for (let i = 0; i < 7; i++) { const a = i * 0.9 + fg.t * 0.3, r = 30 + k * 110 + (i % 3) * 14; ctx.fillStyle = `rgba(160,210,90,${0.32 * (1 - k)})`; ctx.beginPath(); ctx.ellipse(q.x + Math.cos(a) * r * 0.55, q.y + Math.sin(a) * r * 0.22 - i * 3, r * 0.5, r * 0.28, 0, 0, 7); ctx.fill(); }
+    }
     // moneda aruncata: arc deasupra, apoi stropi si cercuri pe apa
     for (const fl of this.flings) {
       const k = Math.min(1, fl.t / fl.dur), gx = fl.x0 + (fl.x1 - fl.x0) * k, gy = fl.y0 + (fl.y1 - fl.y0) * k;

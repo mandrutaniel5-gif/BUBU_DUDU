@@ -60,14 +60,15 @@ export class BedtimeGame extends Panel {
     const rnd = seeded(scene.nightKey() * 7919 + 13);
     const pool: Step[] = ['pos', 'tug', 'story', 'stars', 'dream', 'sheep'];
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-    const withMsg = rnd() < 0.6;
-    this.plan = [...(withMsg ? ['msg' as Step] : []), ...pool.slice(0, withMsg ? 2 : 3)];
+    // varianta aleasa de voi (A): simplu — doar pupicul de noapte buna, cu biletel daca vrei
+    this.plan = [];
+    void pool;
     this.story = STORIES[Math.floor(rnd() * STORIES.length)];
   }
   /** urmatorul moment din seara asta (la sfarsit: pupicul de noapte buna) */
   next() {
     const s = this.plan[this.planI++];
-    if (!s) { const myFart = this.scene.w.chars[this.scene.myId].fart; if (myFart >= 50 && !this.dutchOffered) { this.dutchOffered = true; this.dutchBy = null; this.go('dutch'); return; } this.go('kiss'); return; }
+    if (!s) { this.go('kiss'); return; }
     if (s === 'tug') { this.myTaps = 0; this.theirTaps = 0; this.tugWinner = null; this.tugDoneT = 0; }
     if (s === 'sheep') { this.sheep = []; this.sheepT = 0; this.sheepCount = 0; }
     if (s === 'stars') { this.stars = []; this.starT = 0; this.caughtStars = 0; }
@@ -95,7 +96,7 @@ export class BedtimeGame extends Panel {
     this.me.update(dt); this.pa.update(dt);
     const ai = this.partnerAI;
     switch (this.step) {
-      case 'intro': if (this.stepT > 2) this.next(); break;
+      case 'intro': if (this.stepT > 1.4) this.next(); break;
       case 'msg':
         if (ai && this.theirMsg === null && this.stepT > 3) { const l = AI_MSG[this.scene.partner.id]; this.theirMsg = l[Math.floor(Math.random() * l.length)]; }
         if (this.myMsg && (this.theirMsg !== null || this.stepT > 40)) this.go('msgShow');
@@ -153,10 +154,11 @@ export class BedtimeGame extends Panel {
         break;
       case 'kiss':
         if (ai) this.theirKiss = this.stepT > 1.2;
+        if (ai && this.theirMsg === null && this.stepT > 1.8) { const l = AI_MSG[this.scene.partner.id]; this.theirMsg = Math.random() < 0.6 ? l[Math.floor(Math.random() * l.length)] : '💤'; }
         if (this.kissHold && this.theirKiss) this.kiss = Math.min(1, this.kiss + dt * 0.45);
         else this.kiss = Math.max(0, this.kiss - dt * 0.2);
         if (this.kiss >= 1) { this.go('night'); this.score += 1; Sfx.play('kiss'); this.fx.hearts(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.45, 16); }
-        if (this.stepT > 30) this.go('night');
+        if (this.stepT > 20) this.go('night');
         break;
       case 'night': if (this.stepT > 3.2) this.finish(1 + this.score, 'Noapte bună 💕'); break;
     }
@@ -195,6 +197,7 @@ export class BedtimeGame extends Panel {
     d.querySelector('.skip')!.addEventListener('click', () => send(''));
   }
   removeInput() { this.input?.remove(); this.input = null; }
+  noteBtn() { const b = this.box; return { x: b.x + b.w / 2 - 95, y: b.y + b.h - 92, w: 190, h: 42 }; }
 
   pointer(type: string, x: number, y: number) {
     const b = this.box;
@@ -214,7 +217,11 @@ export class BedtimeGame extends Panel {
     }
     if (this.step === 'sheep' && type === 'down') { const sh = this.sheep.find(q => !q.counted && q.t > 0.85 && q.t < 1.45); if (sh) { sh.counted = true; this.sheepCount++; Sfx.play('sheep', { vol: 0.35, rate: 1.2 }); } else Sfx.play('boing', { vol: 0.3 }); }
     if (this.step === 'dutch' && type === 'down') this.dutchTap(x, y);
-    if (this.step === 'kiss') { if (type === 'down') { this.kissHold = true; this.send({ kiss: true }); } if (type === 'up') { this.kissHold = false; this.send({ kiss: false }); } }
+    if (this.step === 'kiss') {
+      const nb = this.noteBtn();
+      if (type === 'down' && !this.myMsg && !this.input && x > nb.x && x < nb.x + nb.w && y > nb.y && y < nb.y + nb.h) { this.showInput(); return; }
+      if (type === 'down') { this.kissHold = true; this.send({ kiss: true }); } if (type === 'up') { this.kissHold = false; this.send({ kiss: false }); }
+    }
   }
   dutchTap(x: number, y: number) {
     const b = this.box;
@@ -359,12 +366,15 @@ export class BedtimeGame extends Panel {
       }
       case 'kiss': {
         drawBed('spoon');
-        T('💋 Pupicul de noapte bună', y + 60, 22);
-        T(this.partnerAI ? 'Ține apăsat ca să-i dai pupic' : 'Țineți apăsat AMÂNDOI în același timp!', y + 92, 15, '#ffd6e4');
-        const r = 20 + this.kiss * 60;
-        heartPath(ctx, x + w / 2, y + 200, r); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
+        T('🌙 Noapte bună!', y + 56, 24);
+        T(this.partnerAI ? 'Ține apăsat ca să-i dai pupic' : 'Țineți apăsat amândoi pentru pupic', y + 88, 15, '#ffd6e4');
+        // biletelul (optional) si ce ti-a scris celalalt
+        if (this.theirMsg && this.theirMsg !== '💤') { ctx.font = '700 14px "Baloo 2", sans-serif'; const lines = wrap(ctx, this.theirMsg, w * 0.6); const bh = 22 + lines.length * 18; ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x + w * 0.18, y + 112, w * 0.64, bh, 14); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#ff4d6d'; ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.fillText(`💌 ${this.scene.partner.actor.spec.name}:`, x + w / 2, y + 124); ctx.fillStyle = O; ctx.font = '700 14px "Baloo 2", sans-serif'; lines.forEach((l, i) => ctx.fillText(l, x + w / 2, y + 142 + i * 18)); }
+        { const nb = this.noteBtn(); if (!this.myMsg) { ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(nb.x, nb.y, nb.w, nb.h, 16); ctx.fill(); ctx.stroke(); ctx.fillStyle = O; ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillText('💌 Scrie-i un bilețel', nb.x + nb.w / 2, nb.y + nb.h / 2 + 1); } else { ctx.font = '700 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffd6e4'; ctx.fillText('💌 Bilețel trimis', nb.x + nb.w / 2, nb.y + nb.h / 2); } }
+        const r = 18 + this.kiss * 34;
+        heartPath(ctx, x + w / 2, bedY - 118, r); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
         ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff';
-        ctx.fillText(`${this.kissHold ? '💗 tu' : '🤍 tu'}   ${this.theirKiss ? '💗' : '🤍'} ${this.scene.partner.actor.spec.name}`, x + w / 2, y + 290);
+        ctx.fillText(`${this.kissHold ? '💗 tu' : '🤍 tu'}   ${this.theirKiss ? '💗' : '🤍'} ${this.scene.partner.actor.spec.name}`, x + w / 2, this.noteBtn().y + 62);
         break;
       }
       case 'story': {

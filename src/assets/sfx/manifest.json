@@ -202,8 +202,7 @@
 },
 "fart": {
 "files": [
-"fart_0.mp3",
-"fart_1.mp3"
+"fart_0.mp3"
 ]
 },
 "fart_wet": {
@@ -222,6 +221,20 @@
 "burp_0.mp3",
 "burp_1.mp3",
 "burp_2.mp3"
+]
+},
+"giggle": {
+"files": [
+"giggle_0.mp3",
+"giggle_1.mp3",
+"giggle_2.mp3",
+"giggle_3.mp3",
+"giggle_4.mp3",
+"giggle_5.mp3",
+"giggle_6.mp3",
+"giggle_7.mp3",
+"giggle_8.mp3",
+"giggle_9.mp3"
 ]
 },
 "laugh_f": {

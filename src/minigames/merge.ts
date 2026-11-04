@@ -3,6 +3,7 @@
 // Pe tejghea: tava cu produse (joc de unit) si laditele cu resurse reale din camara.
 import { Panel } from './base';
 import { Sfx } from '../engine/sfx';
+import { iconCanvas } from '../ui/icons';
 import type { WorldScene, Npc } from '../scenes/world';
 import { g } from '../game/gender';
 import { drawItem, ITEM_NAMES, MAX_LVL } from '../world/items';
@@ -38,6 +39,12 @@ const COLS = 7, ROWS = 4;
 const lvl = (c: string) => +c.split(':')[1];
 const chain = (c: string) => c.split(':')[0];
 export const newBoard = (): MergeBoard => ({ v: 3, cells: Array(COLS * ROWS).fill(null) });
+/** tejgheaua se tine ca text („flower:2||veg:0|…”): Firebase pierde golurile din liste */
+export const encBoard = (cells: (string | null)[]) => cells.map(c => c ?? '').join('|');
+export const decBoard = (enc: string): MergeBoard => { const c = enc.split('|').map(x => x || null); while (c.length < COLS * ROWS) c.push(null); return { v: 3, cells: c.slice(0, COLS * ROWS) }; };
+/** produsele luate de pe tejghea stau in inventar ca „prod_lant_nivel” */
+export const prodKey = (code: string) => `prod_${chain(code)}_${lvl(code)}`;
+export const prodCode = (key: string) => { const m = /^prod_([a-z]+)_(\d+)$/.exec(key); return m ? `${m[1]}:${m[2]}` : null; };
 
 const O = '#3a2a22';
 const SLOT_X = [0.74, 0.5, 0.26]; // pozitiile la tejghea (fractiune din latime)
@@ -52,19 +59,46 @@ export class MergeGame extends Panel {
   hits: { id: string; x: number; y: number; r: number }[] = [];
   clouds = [0.1, 0.45, 0.8].map((x, i) => ({ x, y: 0.06 + i * 0.04, s: 0.6 + i * 0.25 }));
 
+  which: 'stall' | 'florist'; lastEnc = ''; invOpen = false;
   constructor(scene: WorldScene, done: (s: number) => void) {
     super(scene, done, scene.storeMode === 'florarie' ? '💐 Florăria lui Bubu' : '🧺 Taraba lui Bubu', '');
-    const c = scene.w.chars[scene.myId] as any;
-    if (!c.merge || c.merge.v !== 3) c.merge = newBoard();
-    this.b = c.merge;
+    this.which = scene.storeMode === 'florarie' ? 'florist' : 'stall';
+    const saved = scene.w.boards?.[this.which];
+    if (saved) this.b = decBoard(saved);
+    else {
+      // prima data: mutam pe tejgheaua comuna ce aveai pe tava ta veche
+      const c = scene.w.chars[scene.myId] as any;
+      this.b = this.which === 'stall' && c.merge?.v === 3 ? { v: 3, cells: [...c.merge.cells] } : newBoard();
+      this.commit();
+    }
+    this.lastEnc = encBoard(this.b.cells);
   }
+  /** trimite tejgheaua (s-a schimbat ceva pe ea) */
+  commit() { const enc = encBoard(this.b.cells); this.lastEnc = enc; this.scene.op({ k: 'board', which: this.which, enc }); }
+  /** iei produsul de pe tejghea in inventar */
+  takeToBag(i: number) {
+    const it = this.b.cells[i]; if (!it) return;
+    this.b.cells[i] = null; this.commit();
+    this.scene.op({ k: 'res', res: prodKey(it), delta: 1 });
+    Sfx.play('cloth', { vol: 0.6 }); this.fx.text(this.W - 70, this.layout().genY - 10, 'În inventar 🎒', '#2ec4b6', 0.8);
+  }
+  /** pui pe tejghea un produs din inventar */
+  putFromBag(key: string) {
+    const code = prodCode(key); if (!code || (this.scene.w.res?.[key] ?? 0) < 1) return;
+    const i = this.b.cells.findIndex(c => !c); if (i < 0) { this.fx.text(this.W / 2, this.counterY + 30, 'Tejgheaua e plină! 🙂', '#e63946', 0.9); Sfx.play('bad'); return; }
+    this.b.cells[i] = code; this.pop[i] = 1; this.commit();
+    this.scene.op({ k: 'res', res: key, delta: -1 }); Sfx.play('pop');
+  }
+  bagProds() { const r = this.scene.w.res ?? {}; return Object.keys(r).filter(k => k.startsWith('prod_') && r[k] > 0 && (this.which === 'florist' ? k.startsWith('prod_flower') : true)).sort(); }
   abort() { this.scene.sendCharSync(); this.finish(this.served > 0 ? 1 : 0.2, this.served ? `Ai câștigat ${this.earned} lei! 💰` : 'Taraba se închide 👋'); }
   tick(dt: number) {
+    const enc = this.scene.w.boards?.[this.which];
+    if (enc && enc !== this.lastEnc && !this.drag) { this.b = decBoard(enc); this.lastEnc = enc; }
     for (const k in this.pop) { this.pop[k] -= dt * 3; if (this.pop[k] <= 0) delete this.pop[k]; }
     this.paw = Math.max(0, this.paw - dt * 3);
     // camera urmareste clientul care tocmai vine
     if (!this.pan) {
-      const v = this.scene.npcs.find(n => n.state === 'come') ?? this.queue()[0];
+      const v = this.scene.shopNpcs().find(n => n.state === 'come') ?? this.queue()[0];
       this.camT = v ? (this.npcScreen(v).fx - 0.5) * 0.5 : 0;
       this.cam += (this.camT - this.cam) * Math.min(1, dt * 1.5);
     }
@@ -84,8 +118,8 @@ export class MergeGame extends Panel {
     const L = this.layout(); const c = Math.floor((x - L.gx) / L.cs), r = Math.floor((y - L.gy) / L.cs);
     return c >= 0 && c < COLS && r >= 0 && r < ROWS ? r * COLS + c : -1;
   }
-  queue() { return this.scene.npcs.filter(n => n.state === 'wait').slice(0, 3); }
-  slotOf(n: Npc) { const q = this.scene.npcs.filter(m => m.state !== 'leave'); return Math.max(0, Math.min(2, q.indexOf(n))); }
+  queue() { return this.scene.shopNpcs().filter(n => n.state === 'wait').slice(0, 3); }
+  slotOf(n: Npc) { const q = this.scene.shopNpcs().filter(m => m.state !== 'leave'); return Math.max(0, Math.min(2, q.indexOf(n))); }
 
   /** unde se vede un NPC in perspectiva: fx (0..1 pe latime, inainte de camera), adancime k (0 departe, 1 la tejghea) */
   npcScreen(n: Npc) {
@@ -107,7 +141,7 @@ export class MergeGame extends Panel {
     const empty = this.b.cells.map((v, i) => v ? -1 : i).filter(i => i >= 0);
     if (!empty.length) return msg('Tava e plină! Unește ceva 🙂');
     const i = empty[0];
-    this.b.cells[i] = `${ci.id}:0`; this.pop[i] = 1; Sfx.play('leaves', { vol: 0.4, rate: 1.4 }); this.paw = 1;
+    this.b.cells[i] = `${ci.id}:0`; this.pop[i] = 1; Sfx.play('leaves', { vol: 0.4, rate: 1.4 }); this.paw = 1; this.commit();
     const key = ci.src.startsWith('cat:') ? catPick(r, ci.src.slice(4) as CropCat)! : ci.src;
     this.scene.op({ k: 'res', res: key, delta: -1 });
     this.scene.op({ k: 'stat', key: 'had-' + ci.src, delta: 1 });
@@ -115,10 +149,11 @@ export class MergeGame extends Panel {
   }
 
   deliver(npcId: string) {
-    const npc = this.scene.npcs.find(n => n.id === npcId); if (!npc || npc.state !== 'wait') return;
+    const npc = this.scene.shopNpcs().find(n => n.id === npcId); if (!npc || npc.state !== 'wait') return;
     const idx: number[] = [];
     for (const want of npc.wants) { const i = this.b.cells.findIndex((v, k) => v === want && !idx.includes(k)); if (i < 0) { Sfx.play('bad'); this.fx.text(this.W / 2, this.counterY - 20, 'Încă nu ai ce cere ' + (npc.spec?.name.split(' ')[1] ?? 'clientul'), '#e63946', 0.9); npc.actor?.play('puppy'); return; } idx.push(i); }
     for (const i of idx) this.b.cells[i] = null;
+    this.commit();
     let pay = npc.pay;
     const grassy = Object.keys(this.scene.w.grass ?? {}).length > 15;
     if (grassy) pay = Math.round(pay * 0.8);
@@ -137,7 +172,8 @@ export class MergeGame extends Panel {
     const L = this.layout();
     if (type === 'down') {
       for (const h of this.hits) if (Math.hypot(x - h.x, y - h.y) < h.r) { this.deliver(h.id); return; }
-      if (y > L.genY && y < L.genY + L.crateH) { const w4 = (this.W - 40) / 4; const k = Math.floor((x - 20) / w4); if (k >= 0 && k < 4) this.spawn(k); return; }
+      if (this.invOpen) { this.invTap(x, y); return; }
+      if (y > L.genY && y < L.genY + L.crateH) { const w5 = (this.W - 40) / 5; const k = Math.floor((x - 20) / w5); if (k >= 0 && k < 4) this.spawn(k); else if (k === 4) { this.invOpen = true; Sfx.play('cloth', { vol: 0.5 }); } return; }
       const i = this.cellAt(x, y);
       if (i >= 0 && this.b.cells[i]) { this.drag = { from: i, x, y }; return; }
       if (y < this.counterY) this.pan = { x0: x, cam0: this.cam };
@@ -148,20 +184,36 @@ export class MergeGame extends Panel {
       this.pan = null;
       if (!this.drag) return;
       const from = this.drag.from; this.drag = null;
+      // aruncat peste 🎒 = il iei in inventar
+      { const w5 = (this.W - 40) / 5; if (y > L.genY && y < L.genY + L.crateH && x > 20 + 4 * w5) { this.takeToBag(from); return; } }
       // aruncat peste un client = i-l dai
       for (const h of this.hits) if (Math.hypot(x - h.x, y - h.y) < h.r * 1.3) { this.deliver(h.id); return; }
       const to = this.cellAt(x, y); if (to < 0 || to === from) return;
       const a = this.b.cells[from]!, t = this.b.cells[to];
       if (t === a && lvl(a) < MAX_LVL[chain(a)]) {
         const nc = `${chain(a)}:${lvl(a) + 1}`;
-        this.b.cells[to] = nc; this.b.cells[from] = null; this.pop[to] = 1.4;
+        this.b.cells[to] = nc; this.b.cells[from] = null; this.pop[to] = 1.4; this.commit();
         Sfx.play('good'); this.shake = 3; this.paw = 1;
         const cx = L.gx + (to % COLS + 0.5) * L.cs, cy = L.gy + (Math.floor(to / COLS) + 0.5) * L.cs;
         this.fx.burst('sparkle', cx, cy, 10, 6.28, 120, { max: 0.6 });
         this.fx.text(cx, cy - 30, ITEM_NAMES[chain(nc)][lvl(nc)] + '!', '#ff9f1c', 0.8);
         this.scene.op({ k: 'need', who: this.scene.myId, need: 'fun', delta: 0.8 });
-      } else { this.b.cells[to] = a; this.b.cells[from] = t; Sfx.play('click'); }
+      } else { this.b.cells[to] = a; this.b.cells[from] = t; Sfx.play('click'); this.commit(); }
     }
+  }
+  invBox() { const w = Math.min(this.W - 40, 520), h = Math.min(this.H * 0.6, 300); return { x: (this.W - w) / 2, y: this.H - h - 20, w, h }; }
+  invCell(i: number) { const B = this.invBox(), cols = 6, cw = (B.w - 24) / cols; return { x: B.x + 12 + (i % cols) * cw, y: B.y + 44 + Math.floor(i / cols) * 74, w: cw - 6, h: 68 }; }
+  invTap(x: number, y: number) {
+    const B = this.invBox(); if (x < B.x || x > B.x + B.w || y < B.y || y > B.y + B.h || (x > B.x + B.w - 40 && y < B.y + 40)) { this.invOpen = false; return; }
+    this.bagProds().forEach((k, i) => { const c = this.invCell(i); if (x > c.x && x < c.x + c.w && y > c.y && y < c.y + c.h) this.putFromBag(k); });
+  }
+  drawInv(ctx: CanvasRenderingContext2D) {
+    const B = this.invBox(), r = this.scene.w.res ?? {}, list = this.bagProds();
+    ctx.fillStyle = 'rgba(40,20,30,.35)'; ctx.fillRect(0, 0, this.W, this.H);
+    ctx.fillStyle = '#fff8f0'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(B.x, B.y, B.w, B.h, 18); ctx.fill(); ctx.stroke();
+    ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.fillText(list.length ? '🎒 Atinge un produs ca să-l pui pe tejghea' : '🎒 N-ai produse în inventar · trage unul aici de pe tejghea', B.x + B.w / 2, B.y + 24);
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(B.x + B.w - 20, B.y + 20, 13, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = O; ctx.fillText('✕', B.x + B.w - 20, B.y + 25);
+    list.forEach((k, i) => { const c = this.invCell(i), code = prodCode(k)!; if (c.y + c.h > B.y + B.h) return; ctx.fillStyle = '#fbe7cc'; ctx.beginPath(); ctx.roundRect(c.x, c.y, c.w, c.h, 10); ctx.fill(); ctx.stroke(); drawItem(ctx, code, c.x + c.w / 2, c.y + 28, 40, this.t); ctx.font = '800 11px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.fillText(`×${r[k]}`, c.x + c.w / 2, c.y + c.h - 8); });
   }
   key(k: string, d: boolean) {
     if (!d) return;
@@ -240,7 +292,7 @@ export class MergeGame extends Panel {
       ctx.fillStyle = '#a88f6a'; ctx.beginPath(); ctx.ellipse(((x % (W * 1.6)) + W * 1.6) % (W * 1.6) - W * 0.3, yy, 2 + depth * 4, 1 + depth * 2, 0, 0, 7); ctx.fill();
     }
     // clientii (de la departe spre aproape)
-    const list = [...this.scene.npcs].map(n => ({ n, p: this.npcScreen(n) })).sort((a, b) => a.p.k - b.p.k);
+    const list = [...this.scene.shopNpcs()].map(n => ({ n, p: this.npcScreen(n) })).sort((a, b) => a.p.k - b.p.k);
     this.hits = [];
     for (const { n, p } of list) {
       if (!n.spec || !n.actor) continue;
@@ -309,7 +361,7 @@ export class MergeGame extends Panel {
       }
     }
     // ladițele cu resurse reale
-    const w4 = (W - 40) / 4; const r = this.scene.w.res ?? {};
+    const w4 = (W - 40) / 5; const r = this.scene.w.res ?? {};
     CHAIN_INFO.forEach((ci, k) => {
       const bx = 20 + k * w4, by = L.genY, n = have(r, ci.src);
       ctx.fillStyle = '#c98e5f'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by + L.crateH * 0.35, w4 - 10, L.crateH * 0.62, 8); ctx.fill(); ctx.stroke();
@@ -319,6 +371,11 @@ export class MergeGame extends Panel {
       ctx.restore();
       ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(n ? `${ci.srcLabel} ×${n}` : `${ci.srcLabel}: 0`, bx + (w4 - 10) / 2, by + L.crateH * 0.8);
     });
+    // 🎒 inventarul: trage aici un produs ca sa-l pastrezi, atinge ca sa pui unul inapoi
+    { const bx = 20 + 4 * w4, by = L.genY, n = this.bagProds().reduce((a, k) => a + (r[k] ?? 0), 0), hot = this.drag && this.drag.y > L.genY - 20 && this.drag.x > bx;
+      ctx.fillStyle = hot ? '#ffe1ea' : '#8fb8de'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by + L.crateH * 0.22, w4 - 10, L.crateH * 0.75, 12); ctx.fill(); ctx.stroke();
+      const ic = iconCanvas('🎒', 96); if (ic) ctx.drawImage(ic, bx + (w4 - 10) / 2 - L.crateH * 0.25, by + L.crateH * 0.24, L.crateH * 0.5, L.crateH * 0.5);
+      ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(`Inventar${n ? ' ×' + n : ''}`, bx + (w4 - 10) / 2, by + L.crateH * 0.86); }
     // labutele mele sprijinite pe tejghea
     const spec = this.scene.me.actor.spec;
     for (const side of [-1, 1]) {
@@ -330,6 +387,7 @@ export class MergeGame extends Panel {
     // produsul tras
     if (this.drag) { const it = this.b.cells[this.drag.from]; if (it) drawItem(ctx, it, this.drag.x, this.drag.y, L.cs * 1.1, this.t); }
     if (!q.length) { ctx.font = '700 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 4; const tt = this.scene.w.minutes / 60 >= 20 || this.scene.w.minutes / 60 < 7 ? 'E noapte, clienții vin dimineață 🌙' : 'Pregătește produse… vin clienți pe drum 🚶'; ctx.strokeText(tt, W / 2, cy - 14); ctx.fillText(tt, W / 2, cy - 14); }
+    if (this.invOpen) this.drawInv(ctx);
     heartPath(ctx, 0, 0, 0); // (pastreaza importul)
     void basePose;
   }

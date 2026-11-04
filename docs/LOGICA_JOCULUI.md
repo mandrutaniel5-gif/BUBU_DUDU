@@ -123,3 +123,14 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - În aplicația instalată (Android / iOS / PC) nu mai folosim copia offline (service worker): putea păstra versiunea veche după o actualizare. La prima pornire o ștergem și reîncărcăm o dată. În browser rămâne, dar ia mereu întâi versiunea nouă de pe internet.
 - Erorile nu mai opresc jocul: actualizarea și desenul merg separat, fiecare obiect se desenează separat. Erorile se țin minte (ultimele 30): Meniu → 📋 Erori → Copiază.
 - Versiunea partenerului: dacă celălalt telefon are altă versiune (sau una veche, fără verificare), primești o atenționare.
+
+## Pasul 1: reparații (v1.3.2)
+
+- **Rutina de seară (varianta A):** un singur moment, „Noapte bună!”: țineți apăsat amândoi pentru pupic (cu partenerul AI, doar tu). Opțional, „💌 Scrie-i un bilețel”; bilețelul partenerului apare deasupra. După 20 s fără pupic, noaptea trece oricum.
+- **Cina (varianta A):** fiecare alege din meniu; preferatul partenerului e marcat cu 💕 („preferatul lui Bubu”). Dacă îl comanzi, primești inimioare în plus. Nimic de ghicit; toastul se face singur la final.
+- **Sunete:** râsul e o chicoteală de desen animat (mai subțire la Bubu, mai groasă la Dudu); bășinile sunt „toot” de desen animat, iar super-bășina e un triplu „tooot” din ce în ce mai sus.
+- **Super-bășina (`fartjump`, 3 s):** se ghemuiește și se umflă, BUUM cu nori verzi, cercuri și „SUPER PÂRȚ!”, zboară învârtindu-se cu dâră, aterizează, „Ahhh… 😌”. Norul rămâne în cameră, iar cine e aproape amețește.
+- **Taraba comună:** tabla tarabei și a florăriei e a amândurora (se salvează în lume, `w.boards`), deci vedeți aceleași produse. A cincea ladă e 🎒 **Inventarul**: tragi un produs pe ea ca să-l iei (`prod_<lanț>_<nivel>`), o atingi ca să pui la loc ce ai pregătit.
+- **Inventarul complet** (butonul 🎒): împărțit pe Mâncare gătită, Produse pentru tarabă (cu poze), Ingrediente, Recolte și pădure, Flori, Materiale și semințe, Altele. E comun pentru amândoi.
+- **Clienți separați:** la tarabă vin bunica, purcelușul, cățelul, iepurașul (cu batic, pălărie, salopetă); la florărie vin pisica, vulpea, iepurașul, la patru ace (joben, costum, rochie), și cer doar flori.
+

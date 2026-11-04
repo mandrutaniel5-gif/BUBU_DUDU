@@ -40,5 +40,6 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 | `energy.cjs` | Cât de repede obosești tăind copaci |
 | `econ.cjs` | Limitele de vânzare (cherestea, piață) |
 | `stall.cjs` | Prețurile de la tarabă și tâmplăria fără limită |
+| `pas1.cjs` | Pasul 1: taraba comună (2 jucători), inventarul, clienții florăriei, rutina de seară, cina |
 
 Testele nu pot verifica Firebase-ul adevărat (serverul de test nu are acces la internetul lui Google). Pentru Firebase rămâne testul pe două telefoane.

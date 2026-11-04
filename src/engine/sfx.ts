@@ -202,13 +202,19 @@ function setLoop(key: string, id: string, vol: number, o: LoopOpts = {}) {
 }
 
 // ce sunete sintetizate inlocuim cu inregistrari (acelasi nume)
-const REAL: Record<string, string | string[]> = { fart: ['fart', 'fart', 'fart_wet'], bigfart: 'bigfart', burp: 'burp', pop: 'pop', click: 'click', coin: 'coin', good: 'good', bad: 'bad', splash: 'splash', plunge: 'squelch', step: 'step_wood' };
+const REAL: Record<string, string | string[]> = { fart: 'fart', bigfart: 'bigfart', burp: 'burp', pop: 'pop', click: 'click', coin: 'coin', good: 'good', bad: 'bad', splash: 'splash', plunge: 'squelch', step: 'step_wood' };
 
 export const Sfx = {
   /** reda un sunet: inregistrare reala daca exista, altfel cel sintetizat */
   play(id: string, o?: PlayOpts): SndHandle | null {
     if (muted) return null;
     try {
+      // basini de desen animat: "toot" cu ton variat; super-basina = doua toot-uri lungi si joase, unul dupa altul
+      if ((id === 'fart' || id === 'bigfart') && MAN.fart?.files.some(f => RAW[f])) {
+        const v = o?.vol ?? 1;
+        if (id === 'fart') return sample('fart', { ...o, vol: v, rate: (o?.rate ?? 1) * (1.05 + Math.random() * 0.3), vary: 0.04 });
+        sample('fart', { vol: v, rate: 0.62, vary: 0.02 }); sample('fart', { vol: v * 0.85, rate: 0.8, delay: 0.32, vary: 0.03 }); return sample('fart', { vol: v * 0.7, rate: 1.05, delay: 0.62, vary: 0.05 });
+      }
       let real = REAL[id] ?? (MAN[id] ? id : null);
       if (Array.isArray(real)) real = real[Math.floor(Math.random() * real.length)];
       if (real && MAN[real]?.files.some(f => RAW[f])) { if ((o?.vol ?? 1) <= 0.002) return null; played.push(real); if (played.length > 60) played.shift(); return sample(real, o); }

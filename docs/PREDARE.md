@@ -139,8 +139,6 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 
 **Probleme știute / datorie tehnică:**
 - Zonele împart aceeași scenă și aceleași liste globale (`FURNITURE`, `WALLS`, `w.furn`). Din cauza asta apar „scurgeri”, ca veioza care se vede în pădure. **De rezolvat în Pasul 2**, cu regiuni separate.
-- Taraba (tabla de unire a produselor) e salvată doar pe telefonul celui care o folosește. Celălalt nu o vede și produsele nu se pot lua înapoi. **De rezolvat în Pasul 1c.**
-- Clienții tarabei și cei ai florăriei sunt aceiași (aceeași listă de NPC). **De rezolvat în Pasul 1c.**
 - Fișierul `world.ts` e prea mare și trebuie spart în module la lumea mare.
 - Secretele Android de release nu sunt puse. E în regulă: cheia de test fixă merge.
 
@@ -155,6 +153,7 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | 1.2.6–1.2.9 | Fără spam de prezență, cheie APK fixă, baterie, hărțile casei nu mai apar în oraș, taraba profitabilă |
 | 1.3.0 | Multiplayer fără ciudățenii (invitații), animații noi (roata mare, cinema, masa, călușei, fântâna), rutina de seară variată |
 | 1.3.1 | Copia offline ștearsă în aplicație, jurnal de erori, avertizare de versiune |
+| 1.3.2 | **Pasul 1 gata:** rutina de seară simplă (A), cina clară (A), chicoteli și bășini de desen animat, super-bășina refăcută, taraba comună + inventar complet, clienți separați la florărie |
 
 ## 7. Direcția (stabilită cu proprietarul)
 
@@ -184,7 +183,7 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 - **Progresul actual se păstrează mereu.** De exemplu, cine a ajuns deja în sat are podul reparat.
 
 **Ordinea de lucru** (câte o versiune pentru fiecare pas, **testată înainte**):
-1. **Reparații:**
+1. **Reparații** ✅ (1.3.2):
    - rutina de seară A, cina A;
    - sunete potrivite (chicoteli, bășini de desen animat), super-bășina refăcută;
    - **taraba comună** + **inventar complet** (iei / pui produse, pregătiți marfa dinainte);

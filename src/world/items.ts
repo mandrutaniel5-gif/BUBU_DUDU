@@ -109,3 +109,12 @@ export function drawItem(c: C, code: string, x: number, y: number, s: number, t 
 export function drawSource(c: C, ch: string, x: number, y: number, s: number) {
   drawItem(c, `${ch}:0`, x, y, s);
 }
+
+/** iconita unui produs de taraba (pentru inventar, in pagina) */
+const prodUrls: Record<string, string> = {};
+export function itemIconURL(code: string) {
+  if (prodUrls[code]) return prodUrls[code];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 96; const c = cv.getContext('2d')!;
+  drawItem(c, code, 48, 50, 84, 0);
+  return (prodUrls[code] = cv.toDataURL());
+}

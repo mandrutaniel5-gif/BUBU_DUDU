@@ -40,7 +40,9 @@ export type WorldOp =
   | { k: 'clock'; gameMin: number }
   | { k: 'plot'; key: string; plot: unknown }
   | { k: 'plots'; all: unknown }
-  | { k: 'town'; key: string; value: unknown };
+  | { k: 'town'; key: string; value: unknown }
+  // tejgheaua tarabei / florariei, comuna (celulele codate intr-un text, ca Firebase sa nu piarda golurile)
+  | { k: 'board'; which: 'stall' | 'florist'; enc: string };
 
 export type NetStatus = 'offline' | 'connecting' | 'online' | 'error';
 

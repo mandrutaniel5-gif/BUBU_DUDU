@@ -10,7 +10,7 @@ export type Mood = 'happy' | 'calm' | 'sad' | 'angry' | 'sleepy' | 'sick' | 'hun
 
 /** sunetele scoase de personaj la unele emotii (fata / baiat) */
 const VOICE: Record<string, string | [string, string]> = {
-  laugh: ['laugh_f', 'laugh_m'], sick: 'cough', sleep: 'yawn', cry: 'sniff', dizzy: 'boing', faint: 'jump_land',
+  laugh: 'giggle', sick: 'cough', sleep: 'yawn', cry: 'sniff', dizzy: 'boing', faint: 'jump_land',
   shy: 'gasp', tantrum: 'jump_land', flex: 'cloth', puppy: 'sniff', boba: 'drink', hungry: 'gulp',
 };
 
@@ -57,7 +57,9 @@ export class Actor {
       const k = this.audible?.() ?? 1;
       const girl = this.spec.id === 'bubu' || (this.spec.id !== 'dudu' && (this.spec.accessory === 'bow' || /Leana|Ina|Rita|Bunica|Doamna/.test(this.spec.name)));
       const snd = typeof v === 'string' ? v : girl ? v[0] : v[1];
-      if (k > 0.02) Sfx.play(snd, { vol: 0.6 * k, rate: this.spec.id === 'bubu' || this.spec.id === 'dudu' ? 1 : 1.1 });
+      // tonul vocii: Bubu subtire, Dudu mai gros; la ras doua chicoteli ("hi-hi")
+      const rate = this.spec.id === 'bubu' ? 1.18 : this.spec.id === 'dudu' ? 0.82 : girl ? 1.25 : 0.95;
+      if (k > 0.02) { Sfx.play(snd, { vol: 0.6 * k, rate }); if (id === 'laugh') Sfx.play('giggle', { vol: 0.5 * k, rate: rate * 1.05, delay: 0.32 }); }
     }
   }
   stop() { this.anim = IDLE; this.animT = 0; this.onDone = undefined; }

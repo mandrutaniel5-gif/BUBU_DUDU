@@ -17,7 +17,7 @@ interface ActSound { start?: S; loop?: [string, number, LoopOpts?]; every?: [S, 
 export const ACT_SOUNDS: Record<string, ActSound> = {
   sleep: { start: 'yawn' },
   bath: { start: 'faucet_on', loop: ['bath_loop', 0.5], every: ['splash', 2.4, 0.5], end: 'faucet_off' },
-  toilet: { start: 'zip', every: [['fart', 'fart_wet', 'squelch'], 1.6, 0.55], end: 'flush' },
+  toilet: { start: 'zip', every: [['fart', 'squelch'], 1.8, 0.45], end: 'flush' },
   teeth: { start: 'faucet_on', loop: ['water_loop', 0.22], end: 'faucet_off' },
   dishes: { start: 'faucet_on', loop: ['water_loop', 0.4], every: ['dishes', 1.5, 0.6], end: 'faucet_off' },
   laundry: { start: 'door_close', loop: ['machine_loop', 0.5] },

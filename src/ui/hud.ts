@@ -9,6 +9,8 @@ import { moodText, g } from '../game/gender';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
 import { GOALS, CHAPTERS, chapterOf, currentGoal, INV_INFO, SHOP_BUY, SHOP_ONLINE, SHOP_SELL, SHOP_CITY, PRICE } from '../game/economy';
+import { prodCode } from '../minigames/merge';
+import { ITEM_NAMES, itemIconURL } from '../world/items';
 import { RECIPES, RECIPE, canCook, missingFor, ingIcon, ingLabel, effectText, dishesOwned, dishCount, type Recipe } from '../game/food';
 import { drawCharacter, SPECS } from '../char/draw';
 import { basePose } from '../char/pose';
@@ -313,11 +315,34 @@ export class Hud {
       b.addEventListener('click', () => { this.closeModal(); pick(crop); });
     });
   }
+  /** inventarul comun, pe sectiuni (ce aveti amandoi: Bubu isi poate pregati marfa dinainte) */
   openInventory() {
     const r = this.s.w.res ?? {};
-    const rows = [...Object.entries(RES_INFO), ...Object.entries(INV_INFO)].filter(([k]) => (r[k] ?? 0) > 0).map(([k, i]) => `<li><b>${i.icon} ${i.label}</b><i>${r[k]}</i></li>`).join('') || '<li>Gol… 🙂</li>';
-    this.modal(`<h3>🎒 Cămara voastră</h3><p class="sub">💰 ${this.s.w.money ?? 0} lei</p><ul class="goals inv">${rows}</ul>`);
+    const info = (k: string): { icon: string; label: string; img?: string } | null => {
+      const code = prodCode(k);
+      if (code) { const [ch, l] = code.split(':'); return { icon: '', label: ITEM_NAMES[ch]?.[+l] ?? k, img: itemIconURL(code) }; }
+      return (RES_INFO as Record<string, { icon: string; label: string }>)[k] ?? INV_INFO[k] ?? null;
+    };
+    const SECT: [string, (k: string) => boolean][] = [
+      ['🍲 Mâncare gătită', k => k.startsWith('dish_') || k === 'meals'],
+      ['🧺 Produse pentru tarabă', k => k.startsWith('prod_')],
+      ['🥚 Ingrediente', k => ['flour', 'egg', 'milk', 'cheese', 'meat', 'cornmeal', 'rice', 'lemon', 'water'].includes(k)],
+      ['🥕 Recolte și pădure', k => ['veg', 'carrot', 'potato', 'tomato', 'cabbage', 'strawberry', 'mushroom', 'berry', 'fish'].includes(k)],
+      ['🌸 Flori', k => ['flower', 'tulip', 'rose', 'sunflower'].includes(k)],
+      ['🪵 Materiale și semințe', k => ['wood', 'stone', 'hay', 'fert', 'soil'].includes(k) || k.startsWith('seed_')],
+    ];
+    const used = new Set<string>();
+    const keys = Object.keys(r).filter(k => (r[k] ?? 0) > 0 && info(k));
+    const html = SECT.map(([title, test]) => {
+      const ks = keys.filter(k => !used.has(k) && test(k)); ks.forEach(k => used.add(k));
+      if (!ks.length) return '';
+      return `<h4>${title}</h4><div class="invgrid">${ks.map(k => { const it = info(k)!; return `<div class="invit">${it.img ? `<img class="di big" src="${it.img}" alt="">` : `<span>${it.icon}</span>`}<b>${it.label}</b><i>×${r[k]}</i></div>`; }).join('')}</div>`;
+    }).join('');
+    const rest = keys.filter(k => !used.has(k));
+    const more = rest.length ? `<h4>📦 Altele</h4><div class="invgrid">${rest.map(k => { const it = info(k)!; return `<div class="invit"><span>${it.icon}</span><b>${it.label}</b><i>×${r[k]}</i></div>`; }).join('')}</div>` : '';
+    this.modal(`<h3>🎒 Inventarul vostru</h3><p class="sub">💰 ${this.s.w.money ?? 0} lei · e comun: ce pune unul, poate lua și celălalt. Produsele pentru tarabă le pui pe tejghea din 🎒 de la tarabă.</p>${html || '<p>Gol… 🙂</p>'}${more}`);
   }
+
   showChapter(doneText?: string) {
     const ch = chapterOf(this.s.w);
     this.modal(`${doneText ? `<h3>${doneText}</h3>` : ''}<h3>📖 ${ch.title}</h3><p>${ch.intro}</p><ul class="goals">${ch.goals.map(g => `<li><b>${g.icon} ${g.text}</b><small>${g.hint}</small></li>`).join('')}</ul>`);
