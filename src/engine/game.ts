@@ -1,3 +1,4 @@
+import { ErrorLog } from './errors';
 import { Settings } from '../game/settings';
 export interface Scene {
   enter(): void;
@@ -70,9 +71,9 @@ export class Game {
       const dt = Math.min(0.05, (t - (this.last || t)) / 1000) * this.timeScale;
       this.last = t;
       if (this.scene) {
-        this.scene.update(dt);
+        try { this.scene.update(dt); } catch (e) { ErrorLog.add(e, 'update ' + this.sceneName); }
         this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-        this.scene.draw(this.ctx);
+        try { this.scene.draw(this.ctx); } catch (e) { ErrorLog.add(e, 'draw ' + this.sceneName); this.ctx.restore?.(); }
       }
     };
     requestAnimationFrame(loop);

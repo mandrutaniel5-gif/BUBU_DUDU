@@ -117,3 +117,9 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - Pădurea: butonul face mereu ce scrie pe el (copacul înaintea animalului); animalele prietene te urmează de la câțiva pași, cel mult două, și nu te încurcă la lucru.
 - Animații noi: roata mare (roată întreagă cu cabine, apus, păsări, satul care se luminează; sus pupic sau dorință), cinema (cortină, film în 4 scene cu titluri, proiector, spectatori), masa (stați pe scaune, farfuria cu mâncarea aleasă, aburi), călușeii (te învârți pe un căluț, cu muzică), fântâna (moneda zboară, stropi și cercuri pe apă).
 - Rutina de seară: în fiecare seară alt amestec de momente (bilețel, poziția de somn, pătura, poveste, stele căzătoare, ce visăm, numărat oițe), la fel pentru amândoi, apoi pupicul de noapte bună.
+
+## Siguranță la actualizare și erori (v1.3.1)
+
+- În aplicația instalată (Android / iOS / PC) nu mai folosim copia offline (service worker): putea păstra versiunea veche după o actualizare. La prima pornire o ștergem și reîncărcăm o dată. În browser rămâne, dar ia mereu întâi versiunea nouă de pe internet.
+- Erorile nu mai opresc jocul: actualizarea și desenul merg separat, fiecare obiect se desenează separat. Erorile se țin minte (ultimele 30): Meniu → 📋 Erori → Copiază.
+- Versiunea partenerului: dacă celălalt telefon are altă versiune (sau una veche, fără verificare), primești o atenționare.

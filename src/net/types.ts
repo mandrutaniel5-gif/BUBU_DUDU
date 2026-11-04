@@ -15,7 +15,9 @@ export type NetEvent =
   | { t: 'ridecall'; who: CharId; vehicle: string }
   // invitatie: mergem impreuna (autobuz, cinema, restaurant, roata mare...)? celalalt alege
   | { t: 'invite'; who: CharId; id: string; what: string; label: string; icon: string }
-  | { t: 'inviteReply'; who: CharId; id: string; ok: boolean };
+  | { t: 'inviteReply'; who: CharId; id: string; ok: boolean }
+  // ce versiune are celalalt (ca sa va spunem daca nu e aceeasi)
+  | { t: 'ver'; who: CharId; ver: string };
 
 export type WorldOp =
   | { k: 'furn'; key: string; value: unknown }

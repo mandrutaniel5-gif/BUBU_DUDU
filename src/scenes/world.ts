@@ -12,6 +12,9 @@ import { Fx } from '../char/fx';
 import { NPC_SPECS, drawCharacter, type CharId, type CharSpec } from '../char/draw';
 import { Sfx } from '../engine/sfx';
 import { Soundscape } from '../engine/soundscape';
+import { ErrorLog } from '../engine/errors';
+import pkg from '../../package.json';
+const APP_VER = pkg.version;
 import { RECIPE, RECIPES, canCook, consumeList, bestRecipe, bestDish, dishCount, dishKey, dishesOwned, READY_MEAL } from '../game/food';
 import { g } from '../game/gender';
 import type { Scene, Game } from '../engine/game';
@@ -193,6 +196,7 @@ export class WorldScene implements Scene {
 
   // ------------------------------------------------------------------ retea
   private offlineTimer: ReturnType<typeof setTimeout> | null = null;
+  private partnerVer = ''; private verWarned = false;
   private joinedToastAt = 0;
   setPartnerOnline(on: boolean) {
     if (on) {
@@ -202,6 +206,9 @@ export class WorldScene implements Scene {
       this.partnerOnline = true; this.partner.control = 'remote'; this.hud.setPartner(true);
       if (Date.now() - this.joinedToastAt > 60000) { this.joinedToastAt = Date.now(); this.hud.toast(`${this.partner.actor.spec.name} a intrat în joc! 💞`); }
       this.sendCharSync();
+      // ii spunem ce versiune avem; daca el nu ne spune a lui in 12 s, are o versiune mai veche (fara asta)
+      this.net.sendEvent({ t: 'ver', who: this.myId, ver: APP_VER });
+      setTimeout(() => { if (this.partnerOnline && !this.partnerVer && !this.verWarned) { this.verWarned = true; this.hud.toast(`⚠️ ${this.partner.actor.spec.name} are o versiune mai veche a jocului. Instalați amândoi ultima versiune (${APP_VER})`); } }, 12000);
       return;
     }
     if (!this.partnerOnline || this.offlineTimer) return;
@@ -246,6 +253,11 @@ export class WorldScene implements Scene {
         break;
       }
       case 'invite': this.onInvite(e); break;
+      case 'ver': {
+        this.partnerVer = e.ver;
+        if (e.ver !== APP_VER && !this.verWarned) { this.verWarned = true; this.hud.toast(`⚠️ ${this.partner.actor.spec.name} are versiunea ${e.ver}, tu ${APP_VER}. Instalați amândoi ultima versiune ca să meargă totul bine`); }
+        break;
+      }
       case 'inviteReply': {
         const pi = this.pendingInvite; if (!pi || pi.id !== e.id) break;
         clearTimeout(pi.timer); this.pendingInvite = null;
@@ -1241,7 +1253,7 @@ export class WorldScene implements Scene {
     if (pawn.control !== 'remote') this.net.sendEvent({ t: 'act', who: pawn.id, act: null });
     if (act.a.furnFlag) this.op({ k: 'furn', key: act.a.furnFlag[0], value: act.a.furnFlag[2] });
     // coboara de pe obiect
-    if (pawn.z > 0 || this.nav.hits(pawn.gx, pawn.gy)) {
+    if (act.furn && (pawn.z > 0 || this.nav.hits(pawn.gx, pawn.gy))) {
       const s = this.nav.standSpot(act.furn.gx, act.furn.gy, act.furn.w, act.furn.d, pawn.gx + 0.5, pawn.gy + 1);
       if (s) { pawn.gx = s.x; pawn.gy = s.y; }
       pawn.z = 0;
@@ -1805,7 +1817,7 @@ export class WorldScene implements Scene {
   updateActivity(p: Pawn, dt: number) {
     if (!p.activity) return;
     p.activity.t += dt;
-    if (p.activity.a.place === 'ride') {
+    if (p.activity.a.place === 'ride' && p.activity.furn) {
       const f = p.activity.furn, a = p.activity.t * 1.5 + (p === this.me ? 0 : Math.PI), cx = f.gx + f.w / 2, cy = f.gy + f.d / 2;
       p.gx = cx + Math.cos(a) * 0.72; p.gy = cy + Math.sin(a) * 0.72; p.z = 16 + Math.sin(p.activity.t * 3.2) * 6;
       const tg = iso(-Math.sin(a), Math.cos(a)); p.actor.flip = tg.x >= 0 ? 1 : -1; p.facingBack = tg.y < 0;
@@ -1912,9 +1924,9 @@ export class WorldScene implements Scene {
     for (const p of [this.me, this.partner]) {
       if (p === this.partner && !this.sameArea()) continue;
       // la masa: farfuria cu mancarea aleasa, pe masa, in fata personajului (se goleste pe masura ce mananca)
-      if (p.activity?.a.id === 'eat' && p.activity.furn.type === 'table') { const f = p.activity.furn, act = p.activity; items.push({ x0: f.gx, y0: f.gy, x1: f.gx + f.w, y1: f.gy + f.d + 0.002, draw: () => this.drawPlate(ctx, p.gx, f.gy + 0.36, act) }); }
+      if (p.activity?.a.id === 'eat' && p.activity.furn?.type === 'table') { const f = p.activity.furn, act = p.activity; items.push({ x0: f.gx, y0: f.gy, x1: f.gx + f.w, y1: f.gy + f.d + 0.002, draw: () => this.drawPlate(ctx, p.gx, f.gy + 0.36, act) }); }
       const inside = p.activity?.a.place;
-      if (inside === 'bed' || inside === 'tub' || inside === 'toilet' || inside === 'sofa' || inside === 'ride') {
+      if ((inside === 'bed' || inside === 'tub' || inside === 'toilet' || inside === 'sofa' || inside === 'ride') && p.activity!.furn) {
         // desenat imediat dupa obiectul pe care sta
         const f = p.activity!.furn;
         const eps = inside === 'sofa' ? 0.01 : 0.001;
@@ -1928,7 +1940,7 @@ export class WorldScene implements Scene {
       if (b.y1 <= a.y0 + 1e-6) return 1;
       return (a.x0 + a.x1 + a.y0 + a.y1) - (b.x0 + b.x1 + b.y0 + b.y1);
     });
-    for (const it of items) if (inHouse(it.x0, it.y0, it.x1, it.y1)) it.draw();
+    for (const it of items) if (inHouse(it.x0, it.y0, it.x1, it.y1)) { ctx.save(); try { it.draw(); } catch (e) { ErrorLog.add(e, 'desen obiect'); } ctx.restore(); }
     // moneda aruncata: arc deasupra, apoi stropi si cercuri pe apa
     for (const fl of this.flings) {
       const k = Math.min(1, fl.t / fl.dur), gx = fl.x0 + (fl.x1 - fl.x0) * k, gy = fl.y0 + (fl.y1 - fl.y0) * k;
@@ -2037,7 +2049,7 @@ export class WorldScene implements Scene {
       if (p.rideKind === 'bike') drawTandemSide(ctx, 0, 0, 0.5, this.time, opt); else drawScooterSide(ctx, 0, 0, 0.58, this.time, opt);
       ctx.restore();
     } else {
-      const atTable = p.activity?.a.id === 'eat' && p.activity.furn.type === 'table';
+      const atTable = p.activity?.a.id === 'eat' && p.activity.furn?.type === 'table';
       if (atTable) { isoBox(ctx, p.gx - 0.26, p.gy - 0.34, 0.52, 0.1, 44, boxOf('#a0703f')); isoBox(ctx, p.gx - 0.26, p.gy - 0.26, 0.52, 0.46, 14, boxOf('#c98e5f')); }
       p.actor.draw(ctx);
     }

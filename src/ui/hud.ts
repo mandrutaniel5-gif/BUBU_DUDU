@@ -4,6 +4,7 @@ import { PAIRS } from '../scenes/world';
 import { ANIM_LIST } from '../char/anims';
 import { NEEDS, NEED_INFO, SICK_INFO, REQUESTS, clockText, nightAmount } from '../game/state';
 import { Sfx } from '../engine/sfx';
+import { ErrorLog } from '../engine/errors';
 import { moodText, g } from '../game/gender';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
@@ -22,6 +23,7 @@ export class Hud {
   private lastAction = '';
 
   constructor(private s: WorldScene) {
+    ErrorLog.setToaster(t => this.toast(t));
     const me = s.me.actor.spec, pa = s.partner.actor.spec;
     const root = document.createElement('div');
     root.className = 'hud';

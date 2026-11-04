@@ -1,3 +1,6 @@
+import { ErrorLog } from './engine/errors';
+import pkg from '../package.json';
+ErrorLog.ver = pkg.version;
 import './style.css';
 import { Game } from './engine/game';
 import { StudioScene } from './scenes/studio';
@@ -54,5 +57,16 @@ const start = location.hash.slice(1);
 });
 addEventListener('hashchange', () => { const n = location.hash.slice(1); if (n in game.scenes && n !== game.sceneName) game.go(n); });
 
-// aplicatie instalabila (PWA): functioneaza si offline
-if ('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorker.register('./sw.js').catch(() => {});
+// copia offline a jocului (service worker) e doar pentru varianta din browser. In aplicatia instalata
+// (Android / iOS / PC) poate pastra versiunea VECHE dupa o actualizare: o stergem si reincarcam o data.
+const native = !!(window as any).Capacitor || !location.protocol.startsWith('http') || navigator.userAgent.includes('Electron') || location.hostname === 'localhost' && !location.port;
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  if (native) {
+    navigator.serviceWorker.getRegistrations().then(async regs => {
+      const had = regs.length > 0 || !!navigator.serviceWorker.controller;
+      await Promise.all(regs.map(r => r.unregister()));
+      try { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } catch { /* */ }
+      if (had && !sessionStorage.getItem('bd-sw-cleaned')) { sessionStorage.setItem('bd-sw-cleaned', '1'); location.reload(); }
+    }).catch(() => {});
+  } else navigator.serviceWorker.register('./sw.js').catch(() => {});
+}

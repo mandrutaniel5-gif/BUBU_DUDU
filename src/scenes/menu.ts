@@ -3,6 +3,7 @@ import { Actor } from '../char/actor';
 import { Fx } from '../char/fx';
 import { Sfx } from '../engine/sfx';
 import { isEco } from '../engine/game';
+import { ErrorLog } from '../engine/errors';
 import pkg from '../../package.json';
 import { Settings } from '../game/settings';
 import type { Scene, Game } from '../engine/game';
@@ -45,7 +46,7 @@ export class MenuScene implements Scene {
         <button class="play">▶ Intră în casă</button>
         <div class="row2"><button class="export" title="Salvează progresul într-un fișier">💾 Salvează în fișier</button><button class="import" title="Încarcă progresul dintr-un fișier">📂 Încarcă</button></div>
         <div class="row2"><button class="studio">🎬 Studio animații</button><button class="reset">🔄 Joc nou</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button><button class="credits" title="Credite">📜</button></div>
-        <div class="row2"><button class="eco" title="Economisire baterie: mai puține cadre pe secundă când stați, rezoluție puțin mai mică pe telefon">${isEco() ? '🔋 Economisire baterie: pornită' : '⚡ Economisire baterie: oprită'}</button></div>
+        <div class="row2"><button class="eco" title="Economisire baterie: mai puține cadre pe secundă când stați, rezoluție puțin mai mică pe telefon">${isEco() ? '🔋 Economisire baterie: pornită' : '⚡ Economisire baterie: oprită'}</button><button class="errs" title="Erorile jocului (le poți copia și trimite)">📋 Erori (${ErrorLog.all().length})</button></div>
         <p class="ver">v${pkg.version} · făcut cu 💕 pentru noi doi</p>
       </div>`;
     document.getElementById('ui')!.appendChild(this.ui);
@@ -65,6 +66,9 @@ export class MenuScene implements Scene {
         (b.dataset.who === 'bubu' ? this.bubu : this.dudu).play('wave');
       }
       if (b.classList.contains('credits')) { this.showCredits(); return; }
+      if (b.classList.contains('errs')) { this.showErrors(); return; }
+      if (b.classList.contains('errcopy')) { const t = `Bubu & Dudu v${pkg.version} · ${navigator.userAgent}\n` + ErrorLog.text(); navigator.clipboard?.writeText(t).then(() => { b.textContent = '✔ Copiat'; }).catch(() => { b.textContent = 'Ține apăsat pe text → Copiază'; }); return; }
+      if (b.classList.contains('errclear')) { ErrorLog.clear(); this.ui.querySelector('.cred')?.remove(); const eb = this.ui.querySelector('.errs'); if (eb) eb.textContent = '📋 Erori (0)'; return; }
       if (b.classList.contains('eco')) { const on = !isEco(); Settings.set({ eco: on }); b.textContent = on ? '🔋 Economisire baterie: pornită' : '⚡ Economisire baterie: oprită'; dispatchEvent(new Event('resize')); return; }
       if (b.classList.contains('xcred')) { this.ui.querySelector('.cred')?.remove(); return; }
       if (b.classList.contains('mute')) { const m = !Settings.get().muted; Settings.set({ muted: m }); Sfx.setMuted(m); b.textContent = m ? '🔇' : '🔊'; }
@@ -126,6 +130,16 @@ export class MenuScene implements Scene {
       }
     });
     Sfx.setMuted(s.muted);
+  }
+  showErrors() {
+    this.ui.querySelector('.cred')?.remove();
+    const d = document.createElement('div'); d.className = 'cred';
+    const esc = (t: string) => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } as Record<string, string>)[c]);
+    const list = ErrorLog.all();
+    d.innerHTML = `<div class="cred-in"><h3>📋 Erori</h3><p class="sub">Versiunea jocului: <b>v${pkg.version}</b>. ${list.length ? 'Copiază lista și trimite-mi-o, ca să le repar.' : 'Nicio eroare. 🎉'}</p>
+      ${list.length ? `<pre class="errlist">${esc(ErrorLog.text())}</pre>` : ''}
+      <div class="row2">${list.length ? '<button class="errcopy">📋 Copiază</button><button class="errclear">🗑️ Șterge</button>' : ''}<button class="xcred">Închide</button></div></div>`;
+    this.ui.appendChild(d);
   }
   showCredits() {
     this.ui.querySelector('.cred')?.remove();
