@@ -60,7 +60,7 @@ export interface WorldState {
   town?: Record<string, unknown>;                       // sat/oras: cereri sateni, banca, mobila apartament
 }
 
-const fullNeeds = (): Record<NeedKey, number> => ({ hunger: 70, energy: 85, warmth: 60, hygiene: 80, fun: 70, love: 75, health: 100 });
+const fullNeeds = (): Record<NeedKey, number> => ({ hunger: 70, energy: 100, warmth: 60, hygiene: 80, fun: 70, love: 75, health: 100 });
 
 export function newWorld(): WorldState {
   return {
@@ -94,9 +94,10 @@ export function moodFrom(c: CharState): Mood {
   return 'happy';
 }
 
-// ritmul de scadere pe ora de joc (o zi = 24 h de joc): foamea cere 2-3 mese pe zi,
-// energia tine toata ziua daca dormi noaptea, curatenia cere o baie pe zi
-const DECAY: Record<NeedKey, number> = { hunger: 7.5, energy: 2.5, warmth: 4, hygiene: 3.8, fun: 3.8, love: 3, health: 0 };
+// ritmul de scadere pe ora de joc (o ora de joc = 1 minut real): foamea cere 2-3 mese pe zi,
+// energia tine de dimineata pana seara (7 -> 22) chiar daca muncesti mult, daca ai dormit noaptea;
+// curatenia cere o baie pe zi
+const DECAY: Record<NeedKey, number> = { hunger: 7.5, energy: 2.2, warmth: 4, hygiene: 3.8, fun: 3.8, love: 3, health: 0 };
 
 /** trece timpul; intoarce evenimente (ex. s-a imbolnavit) */
 export function tickNeeds(c: CharState, hours: number, asleep: boolean, warmGain = 0, cold = 1): string[] {

@@ -37,7 +37,7 @@ export class Hud {
       <div class="card partner">
         <div class="name">${pa.id === 'bubu' ? '🐼' : '🐻'} ${pa.name} <span class="pst">🤖 AI</span></div>
         <div class="pmood"></div>
-        <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="skipch" title="Provizoriu: capitolul următor">⏭</button> <button class="mini-btn" data-a="menu">⚙</button></div>
+        <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="menu">⚙</button></div>
       </div>
       <div class="actions">
         <button class="act big" data-a="action"><span class="ic">✋</span><span class="lb">Acțiune</span></button>
@@ -76,7 +76,6 @@ export class Hud {
       if (a === 'bok') s.confirmBuild();
       if (a === 'scooter') s.toggleScooter();
       if (a === 'goals') this.openGoals();
-      if (a === 'skipch' && confirm('(Provizoriu) Treci la capitolul următor?')) s.devSkipChapter();
       if (a === 'inv') this.openInventory();
       if (a === 'bend') s.endBuild();
       if (a === 'menu') { s.save(); (window as any).game.go('menu'); }

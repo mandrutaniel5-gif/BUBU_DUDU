@@ -105,7 +105,7 @@ export class MergeGame extends Panel {
     const key = ci.src.startsWith('cat:') ? catPick(r, ci.src.slice(4) as CropCat)! : ci.src;
     this.scene.op({ k: 'res', res: key, delta: -1 });
     this.scene.op({ k: 'stat', key: 'had-' + ci.src, delta: 1 });
-    this.scene.op({ k: 'need', who: this.scene.myId, need: 'energy', delta: -0.5 });
+    this.scene.op({ k: 'need', who: this.scene.myId, need: 'energy', delta: -0.1 });
   }
 
   deliver(npcId: string) {
