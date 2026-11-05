@@ -4,7 +4,7 @@ const { chromium } = require('playwright');
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   await p.goto('http://localhost:5173/?skipload&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 });
   const hide = () => p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
-  await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 4; s.w.stats.apartment = 1; s.w.gameMin = Math.floor(s.w.gameMin / 1440) * 1440 + 11 * 60; s.debugGo('city'); });
+  await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 6; s.w.stats.chapV = 2; s.w.stats.apartment = 1; s.w.gameMin = Math.floor(s.w.gameMin / 1440) * 1440 + 11 * 60; s.debugGo('city'); });
   await p.waitForTimeout(4600); await hide();
   await p.evaluate(() => { const s = game.scene; s.me.gx = 205.5; s.me.gy = 37.8; s.partner.gx = 206.5; s.partner.gy = 38; /* usa blocului (v1.6: Strada Scolii) */ }); await p.waitForTimeout(2000);
   await p.screenshot({ path: 'apt2_city_door.png' });

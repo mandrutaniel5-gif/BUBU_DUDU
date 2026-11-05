@@ -8,6 +8,7 @@ import { fillTextIcons } from '../ui/icons';
 import { drawPOI } from './poi';
 import { WORLD, ORIGIN, CORE_W, CORE_H, ROADS, RIVER, LAKE, BROOK, BRIDGE, BROOK_BRIDGE, type RoadRect } from './layout';
 import { HOUSES } from './houses';
+import { drawParcel } from './season';
 import { VILLAGE_BOUNDS, villageFloorW } from './village';
 import { CITY_BOUNDS, cityFloorW } from './city';
 
@@ -62,6 +63,7 @@ const CORES: Rect[] = [
   { x0: -1, y0: -1, x1: MAP_W + 1, y1: MAP_H },
   { x0: ORIGIN.forest.x, y0: ORIGIN.forest.y, x1: ORIGIN.forest.x + CORE_W, y1: ORIGIN.forest.y + CORE_H },
   VILLAGE_BOUNDS,
+  { x0: 23, y0: -6, x1: 44, y1: 14 }, // ferma voastra (Capitolul 5): cotetul, grajdul, oile, stupii
   CITY_BOUNDS,
 ];
 const nearRoad = (x: number, y: number, m: number) => [...ROADS, ...STREETS].some(r => x >= r.x0 - m && x < r.x1 + m && y >= r.y0 - m && y < r.y1 + m);
@@ -106,10 +108,11 @@ wall(WORLD.x0, 64.4, WORLD.x1, 64.6);                                  // margin
 wall(-12.6, -8.4, -12.4, 64.4);                                        // dealul impadurit din vest
 
 // --- campurile vecinilor: culturile, gardurile, sperietoarea
-for (const fl of FIELDS) {
-  put({ id: id('crop'), type: 'cropfield' as any, kind: fl.crop, gx: fl.x0, gy: fl.y0, w: fl.x1 - fl.x0, d: fl.y1 - fl.y0, solid: true });
+FIELDS.forEach((fl, i) => {
+  // primele patru campuri sunt parcelele care se cumpara in Capitolul 5 (Ferma)
+  put({ id: i < 4 ? `parcel-${i + 1}` : id('crop'), type: 'cropfield' as any, kind: fl.crop, ...(i < 4 ? { action: act('st-parcel', 'Parcela de câmp', '🟫') } : {}), gx: fl.x0, gy: fl.y0, w: fl.x1 - fl.x0, d: fl.y1 - fl.y0, solid: true });
   put({ id: id('fence'), type: 'fenceline' as any, gx: fl.x0 - 0.5, gy: fl.y0 - 0.55, w: fl.x1 - fl.x0 + 1, d: 0.1, solid: true });
-}
+});
 put({ id: id('scare'), type: 'scarecrow' as any, gx: 22, gy: 32, w: 1, d: 1, solid: true });
 put({ id: id('scare'), type: 'scarecrow' as any, gx: 86, gy: 44, w: 1, d: 1, solid: true });
 // --- ferma vecinilor (vest): casa, hambarul, fanul, oile la pascut
@@ -200,7 +203,7 @@ export function chapterBlocks(chapter: number, bridgeFixed: boolean): Rect[] {
   const R: Rect[] = [];
   if (chapter < 2) R.push({ x0: 18, y0: -8.7, x1: 22, y1: -8.3 });
   if (!bridgeFixed) R.push({ x0: BRIDGE.x0 + 2.2, y0: BRIDGE.y0, x1: BRIDGE.x0 + 3.8, y1: BRIDGE.y1 });
-  if (chapter < 4) R.push({ x0: BROOK_BRIDGE.x1 - 1.7, y0: 24, x1: BROOK_BRIDGE.x1 - 1.3, y1: 26 }); // pe podet: pe langa el e apa
+  if (chapter < 6) R.push({ x0: BROOK_BRIDGE.x1 - 1.7, y0: 24, x1: BROOK_BRIDGE.x1 - 1.3, y1: 26 }); // pe podet: pe langa el e apa
   return R;
 }
 
@@ -245,14 +248,18 @@ function drawTree(c: CanvasRenderingContext2D, f: Furn, t: number) {
   for (const [dx, dy, r, k] of [[-17, -6, 20, 0], [17, -8, 20, 0], [0, -24, 24, 1], [-9, -40, 16, 2], [11, -38, 16, 2]] as const) e(c, q.x + (dx + sw) * big, q.y + dy * big, r * big, r * 0.9 * big, cols[k]);
   if (kind === 'apple') for (const [dx, dy] of [[-12, -16], [14, -26], [2, -42], [-4, -8]]) e(c, q.x + dx * big + sw, q.y + dy * big, 3.5, 3.5, '#e63946', true, 1.2);
 }
-function drawCountryHouse(c: CanvasRenderingContext2D, h: typeof COUNTRY_HOUSES[number], t: number, night: number) {
+function drawCountryHouse(c: CanvasRenderingContext2D, h: typeof COUNTRY_HOUSES[number], t: number, night: number) { // eslint-disable-line
   const { gx, gy, w, d } = h, H = h.h;
+  // satul pe moarte: casele parasite sunt cenusii, cu geamurile batute in scanduri (se repara dupa proiectele satului)
+  const aband = !!(globalThis as any).__abandoned?.has(h.id);
+  if (aband) h = { ...h, wall: '#c9c4bd', roof: '#7d756d' };
   isoBox(c, gx, gy, w, d, H, { top: shade(h.wall, 0.95), left: h.wall, right: shade(h.wall, 0.88) });
   const P = (u: number, z: number) => h.front === 'y' ? iso(gx + u * w, gy + d, z) : iso(gx + w, gy + u * d, z);
   quad(c, [P(0, 0), P(1, 0), P(1, 6), P(0, 6)], shade(h.wall, 0.75), 1.5);
   const lit = night > 0.4;
   for (const u of [0.2, 0.8]) { quad(c, [P(u - 0.1, 22), P(u + 0.1, 22), P(u + 0.1, 40), P(u - 0.1, 40)], lit ? '#ffe680' : '#bfe8ff'); quad(c, [P(u - 0.13, 20), P(u - 0.1, 20), P(u - 0.1, 42), P(u - 0.13, 42)], '#7cc576', 1); quad(c, [P(u + 0.1, 20), P(u + 0.13, 20), P(u + 0.13, 42), P(u + 0.1, 42)], '#7cc576', 1); }
   quad(c, [P(0.43, 4), P(0.57, 4), P(0.57, 34), P(0.43, 34)], '#8a5d32');
+  if (aband) for (const u of [0.2, 0.8, 0.5]) for (const z of [26, 34]) { const a1 = P(u - 0.13, z), b1 = P(u + 0.13, z + 4); c.strokeStyle = O; c.lineWidth = 5; c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(b1.x, b1.y); c.stroke(); c.strokeStyle = '#a0703f'; c.lineWidth = 3; c.stroke(); }
   // acoperisul in doua ape
   const RH = 30;
   if (h.front === 'y') {
@@ -274,7 +281,7 @@ function drawCountryHouse(c: CanvasRenderingContext2D, h: typeof COUNTRY_HOUSES[
 
 /** fumul din cosul unei case de la tara (animat, peste imaginea casei) */
 export function houseSmoke(c: CanvasRenderingContext2D, f: Furn, t: number) {
-  const h = COUNTRY_HOUSES.find(x => x.id === f.id); if (!h) return;
+  const h = COUNTRY_HOUSES.find(x => x.id === f.id); if (!h || (globalThis as any).__abandoned?.has(h.id)) return;
   const ch = iso(h.gx + h.w * 0.3, h.gy + h.d * 0.3, h.h + 18);
   for (let i = 0; i < 3; i++) { const k = (((t * 0.35 + i / 3 + h.gx * 0.13) % 1) + 1) % 1; c.globalAlpha = 0.5 * (1 - k); e(c, ch.x + k * 14, ch.y - 20 - k * 30, 4 + k * 7, 3.5 + k * 6, '#eeeeee', false); }
   c.globalAlpha = 1;
@@ -285,6 +292,8 @@ export function drawCountryType(c: CanvasRenderingContext2D, f: Furn, t: number,
     case 'oak': drawTree(c, f, t); return true;
     case 'farmhouse': { const h = COUNTRY_HOUSES.find(x => x.id === f.id); if (h) drawCountryHouse(c, h, t, night); return true; }
     case 'cropfield': {
+      const pc = (globalThis as any).__parcels?.[f.id];
+      if (pc?.owned) { drawParcel(c, f, pc, t, (kind, x, y, sc) => cropPlant(c, kind, { x, y }, t, sc)); return true; }
       const kind = f.kind ?? 'wheat', s = kind === 'cabbage' ? 1 : 1;
       for (let k = 0; k < w + d; k++) for (let i = 0; i < w; i++) { const j = k - i; if (j < 0 || j >= d) continue; cropPlant(c, kind, iso(gx + i + 0.5, gy + j + 0.5), t, s); }
       return true;

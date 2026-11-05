@@ -2,7 +2,7 @@
 
 Fișierul ăsta e pentru oricine (om sau AI) continuă proiectul: ce e jocul, cum e făcut, ce îi place și ce nu îi place proprietarului, ce merge, ce s-a testat și încotro mergem. **Citește-l tot înainte să schimbi ceva.**
 
-Ultima actualizare: versiunea **1.6.0** (noiembrie 2026).
+Ultima actualizare: versiunea **1.7.0** (noiembrie 2026).
 
 ---
 
@@ -186,6 +186,7 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | 1.4.0 | **Pasul 2: lumea mare** — o singură lume legată, vehiculele merg pe drum, harta și miniharta, satul și orașul mărite, câmpuri, lac, Podul Mare, partenerul AI te poate însoți |
 | 1.4.1 | Ferestrele (inventar, hartă, magazine) stau deasupra butoanelor de jos pe ecranele mici; mesajele se văd și peste ferestre |
 | 1.4.2 | Multiplayer: vehiculul mutat de partener (scuterul în sat, tractorul în pădure) se vede corect și pe celălalt telefon |
+| 1.7.0 | **Viziunea, toată:** 9 capitole (Podul și Ferma inserate, salvările mutate fără pierderi); **Podul** reparat de voi (lemne, scânduri, pietre, mâncare, bani) cu scenă animată; **Satul renaște**: satul pe moarte (case părăsite, brutăria / școala / piața / parcul închise) readus la viață prin 6 proiecte la Primărie; **Ferma**: 4 parcele de cumpărat, plug / semănătoare / cisternă / combină care merg singure pe rânduri, grâu / porumb / floarea-soarelui, găini, vacă (lapte → brânză), oi, stupi; **angajații** (7 meserii, salariu, pricepere, pleacă dacă nu-i plătiți, raport dimineața, lucrează și când sunteți la oraș); **orașul important**: supermarketul cumpără marfa, magazinul „Bubu & Dudu” pe teren (rafturi, vitrină, vânzări zilnice), contracte cu camionul, târgul orașului; **Nunta** la biserica din sat: inelul, cererea la lac (scenă), rochia, voalul, costumul, tortul, lăutarii, invitații (săteni prieteni), cununia, hora, buchetul, artificii, genericul; **vehicule semi-automate**: destinații pe drum (Acasă, Cheresteaua, Lacul, Satul, Orașul), ⏸ / ▶ / ↩, „Oprește la…”, „Mergi la” de pe hartă, bicicleta ×3 și scuterul ×5 față de mers; **anotimpuri** (ninsoare, frunze, petale), **sărbători și evenimente** (Mărțișor, Paște, Crăciun, Dragobete, Revelion, furtuna cu acoperișul, vizita bunicilor, zilele voastre, târgul lunar, nunta Inei); **prietenii pe 5 trepte** cu secrete și daruri; **albume** (pești, flori, rețete, haine); reparații: lumea se sincronizează între telefoane (toaleta care „revenea” înfundată), conectarea dintr-o apăsare, meniul încape pe telefon, podul nu mai scrie „rupt” după reparare |
 | 1.6.0 | **Case cu cod și parolă** (camere unice; online doar așa); bicicleta / scuterul cumpărate se văd imediat la partener; **iPhone**: sunetul nu se mai oprește (sesiune audio „playback”, repornire după întreruperi), jocul e marcat ca joc (Game Mode); **florăria** e un magazin adevărat (interior, clopoțel la ușă) și vinde doar flori: de câmp, buchete din grădină, răsaduri în ghiveci; **Cheresteaua lui Nea Vasile** pe drum (cântar, comenzile zilei, gaterul cu scânduri) = afacerea lui Dudu din Capitolul 1; roluri Bubu / Dudu în Capitolele 0-2; **satul și orașul refăcute** (ulițe, piață, bulevarde, ușile spre stradă, casele sătenilor au ușă: bați și vorbești cu ei); miniharta clară, care se mărește (⤢) și nu acoperă nimic; ⏭ și ♾️ la vedere |
 | 1.5.0 | **Viteză pe laptop** (lumea „coaptă” în podea, rezoluție adaptivă, eco implicit, placa video forțată în aplicația Windows); butoanele de test „Capitolul următor” și „Resurse infinite” (în fereastra cu obiective); soba fără horn (părea o lampă prin pat), laptopul lângă perete, copacul și piatra mutate din spatele casei, mașină de tuns iarba în loc de magazie; indicatoare orientate corect; bănci noi, pe care vă așezați amândoi; personajul prins într-un obstacol iese singur; **Dudu are rolul lui din Capitolul 1** (vinde lemne la cherestea cu 3 lei bucata, obiective marcate Dudu/Bubu); partenerul AI nu mai rămâne blocat dansând după un capitol nou |
 
@@ -295,14 +296,16 @@ Proprietarul a ales să **îmbine toate cele trei direcții** propuse. Cuvintele
 | 1 | **Casa** | ✅ | `CHAPTERS` id 0 (Căsuța) |
 | 2 | **Curtea** | ✅ | id 1 (Curtea); Dudu are rolul lui din 1.5.0 |
 | 3 | **Pădurea** | ✅ | id 2 (Pădurea, tractorașul) |
-| 4 | **Podul** | ⬜ | azi podul îl repară sătenii singuri la finalul capitolului de pădure. Trebuie să devină un capitol: aduceți lemne din pădure, piatră și bani; reparați podul care leagă casa de sat |
-| 5 | **Satul renaște** | 🟡 | id 3 (Satul) are magazine, croitorie, școală, parc, florăria lui Bubu, tâmplăria lui Dudu. Lipsesc: satul „pe moarte” la început, panoul de proiecte, sătenii noi, casele și evenimentele care apar după fiecare proiect |
-| 6 | **Ferma** | ⬜ | parcele, utilaje, animale (vezi mai sus); angajații încep aici |
-| 7 | **Drumul spre oraș** | 🟡 | id 4 (Orașul): autobuz, joburi, diplome, apartament, mall; bariera spre oraș se deschide aici. Trebuie legat de afacerile de la țară, nu „lași tot și te angajezi” |
-| 8 | **Afacerea din oraș** | ⬜ | magazinul „Bubu & Dudu”, contractele cu restaurantele, camionul, târgul orașului |
-| 9 | **Nunta** | ⬜ | ideile propuse atunci: cererea în căsătorie (inelul), rochia și costumul, locul (biserica din sat, `w-church` există, sau restaurantul), **invitații sunt sătenii** cu care v-ați împrietenit, petrecerea cu un minijoc de dans |
+| 4 | **Podul** | ✅ 1.7.0 | azi podul îl repară sătenii singuri la finalul capitolului de pădure. Trebuie să devină un capitol: aduceți lemne din pădure, piatră și bani; reparați podul care leagă casa de sat |
+| 5 | **Satul renaște** | ✅ 1.7.0 | id 3 (Satul) are magazine, croitorie, școală, parc, florăria lui Bubu, tâmplăria lui Dudu. Lipsesc: satul „pe moarte” la început, panoul de proiecte, sătenii noi, casele și evenimentele care apar după fiecare proiect |
+| 6 | **Ferma** | ✅ 1.7.0 | parcele, utilaje, animale (vezi mai sus); angajații încep aici |
+| 7 | **Drumul spre oraș** | ✅ 1.7.0 | id 4 (Orașul): autobuz, joburi, diplome, apartament, mall; bariera spre oraș se deschide aici. Trebuie legat de afacerile de la țară, nu „lași tot și te angajezi” |
+| 8 | **Afacerea din oraș** | ✅ 1.7.0 | magazinul „Bubu & Dudu”, contractele cu restaurantele, camionul, târgul orașului |
+| 9 | **Nunta** | ✅ 1.7.0 (la biserica din sat, cum a hotărât proprietarul) | ideile propuse atunci: cererea în căsătorie (inelul), rochia și costumul, locul (biserica din sat, `w-church` există, sau restaurantul), **invitații sunt sătenii** cu care v-ați împrietenit, petrecerea cu un minijoc de dans |
 
 După capitole, **anotimpurile și sărbătorile** merg pe toată durata jocului.
+
+**Cum e făcut în cod (1.7.0):** `CHAPTERS` din `src/game/economy.ts` are acum 9 capitole, cu id-urile 0-8: Casa (0), Curtea (1), Pădurea (2), **Podul (3)**, Satul renaște (4), **Ferma (5)**, Drumul spre oraș (6), **Afacerea din oraș (7)**, **Nunta (8)**. Constantele `BRIDGE_CHAPTER`, `VILLAGE_CHAPTER`, `FARM_CHAPTER`, `CITY_CHAPTER`, `SHOP_CHAPTER`, `WEDDING_CHAPTER`. Sistemele noi sunt în [`src/scenes/story.ts`](../src/scenes/story.ts), scenele mari animate în [`src/minigames/cutscene.ts`](../src/minigames/cutscene.ts), anotimpurile și desenele fermei în [`src/world/season.ts`](../src/world/season.ts). Migrarea: `migrateChapters()` din `world.ts` (`stats.chapV = 2`).
 
 **Atenție la numerotare:** capitolul e salvat în `w.stats.chapter`. Dacă se inserează Podul și Ferma între cele de azi, salvările vechi se mută (migrare). Cine e deja în sat are podul reparat; nimeni nu pierde progres.
 
@@ -317,28 +320,26 @@ Pentru nuntă, detaliile personale (data, locul cererii, rochia, nașii) se înt
 
 **Vehiculele:**
 - ✅ merg singure pe drum (1.4.0);
-- ⬜ butoanele ⏸ Oprește / ▶ Pornește / ↩ Întoarce;
-- ⬜ alegerea direcției la răscruci;
-- ⬜ destinația aleasă pe harta mare;
-- ⬜ utilajele agricole merg singure pe rânduri (Capitolul 5).
+- ✅ butoanele ⏸ Oprește / ▶ Pornește / ↩ Întoarce (1.7.0);
+- ✅ la fiecare oprire de pe drum: „⤵ Oprește la…” (1.7.0); drumul mare e unul singur, deci răscrucile sunt opririle lui;
+- ✅ destinația aleasă pe harta mare: cu vehiculul sau pe jos (1.7.0);
+- ✅ utilajele agricole merg singure pe rânduri (1.7.0).
 
 **Podul:**
-- 🟡 în Capitolul 2, Podul Mare îl repară sătenii singuri, la final;
-- ⬜ pentru jocurile noi: un obiectiv „Duceți lemne și piatră la Podul Mare” (lemne, piatră, bani);
+- ✅ Capitolul 3 · Podul (1.7.0): lemne, scânduri, pietre, mâncare caldă și bani, apoi scena cu meșterii;
 - salvările care au trecut de Capitolul 2 rămân cu podul reparat.
 
 **Proiectele satului:**
-- 🟡 Primăria vinde azi florăria și tâmplăria;
-- ⬜ panoul cu proiecte: iluminatul, parcul mărit, gara cu trenul, drumul asfaltat, terenul de joacă;
-- ⬜ fiecare proiect aduce săteni, case și evenimente.
+- ✅ Primăria → Proiectele satului (1.7.0): brutăria, piața, școala, parcul, iluminatul, drumul pietruit; fiecare redeschide clădirea, repară două case părăsite și aduce o familie nouă;
+- ⬜ mai târziu: gara cu trenul (pentru o zonă nouă, de munte), terenul de joacă.
 
-**Anotimpurile și sărbătorile** ⬜:
+**Anotimpurile și sărbătorile** ✅ 1.7.0 (de întrebat proprietarul datele adevărate ale zilelor de naștere și ale aniversării; acum: Bubu vara ziua 2, Dudu toamna ziua 5):
 - primăvară, vară, toamnă, **iarnă cu zăpadă** (omul de zăpadă există deja în construcție);
 - sărbătorile: Mărțișorul (1 martie), Dragobetele (24 februarie), Paștele (ouă vopsite), Crăciunul (brad, colinde, cadouri, sanie), Revelionul (artificii);
 - zilele voastre: zilele de naștere și aniversarea cuplului (de întrebat datele);
 - evenimentele satului: hramul, târgul, nunțile sătenilor.
 
-**„Nu mai ai ce face”** ⬜:
+**„Nu mai ai ce face”** ✅ 1.7.0 (cartonașul de dimineață: evenimentele zilei, raportul angajaților, ce are de făcut fiecare):
 - o listă de treburi pe zi pentru fiecare;
 - cereri noi de la săteni;
 - evenimente care apar singure, ca să existe mereu ceva de făcut în doi.

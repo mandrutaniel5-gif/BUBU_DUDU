@@ -48,8 +48,8 @@ export class MenuScene implements Scene {
         <label class="m-firebase hidden">Config Firebase (JSON din consola Firebase)<textarea name="fb" rows="4" placeholder='{"apiKey":"...","databaseURL":"https://...firebaseio.com", ...}'>${s.net.firebase.apiKey ? JSON.stringify(s.net.firebase) : ''}</textarea></label>
         <button class="play">▶ Intră în casă</button>
         <div class="row2"><button class="export" title="Salvează progresul într-un fișier">💾 Salvează în fișier</button><button class="import" title="Încarcă progresul dintr-un fișier">📂 Încarcă</button></div>
-        <div class="row2"><button class="studio">🎬 Studio animații</button><button class="reset">🔄 Joc nou</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button><button class="credits" title="Credite">📜</button></div>
-        <div class="row2"><button class="eco" title="Economisire baterie: mai puține cadre pe secundă când stați, rezoluție puțin mai mică pe telefon">${isEco() ? '🔋 Economisire baterie: pornită' : '⚡ Economisire baterie: oprită'}</button><button class="errs" title="Erorile jocului (le poți copia și trimite)">📋 Erori (${ErrorLog.all().length})</button></div>
+        <div class="row2"><button class="studio">🎬 Studio</button><button class="reset">🔄 Joc nou</button><button class="mute">${s.muted ? '🔇' : '🔊'}</button><button class="credits" title="Credite">📜</button></div>
+        <div class="row2"><button class="eco" title="Economisire baterie: mai puține cadre pe secundă când stați, rezoluție puțin mai mică pe telefon">${isEco() ? '🔋 Eco: pornit' : '⚡ Eco: oprit'}</button><button class="errs" title="Erorile jocului (le poți copia și trimite)">📋 Erori (${ErrorLog.all().length})</button></div>
         <p class="ver">v${pkg.version} · făcut cu 💕 pentru noi doi</p>
       </div>`;
     document.getElementById('ui')!.appendChild(this.ui);
@@ -76,7 +76,7 @@ export class MenuScene implements Scene {
       if (b.classList.contains('errs')) { this.showErrors(); return; }
       if (b.classList.contains('errcopy')) { const t = `Bubu & Dudu v${pkg.version} · ${navigator.userAgent}\n` + ErrorLog.text(); navigator.clipboard?.writeText(t).then(() => { b.textContent = '✔ Copiat'; }).catch(() => { b.textContent = 'Ține apăsat pe text → Copiază'; }); return; }
       if (b.classList.contains('errclear')) { ErrorLog.clear(); this.ui.querySelector('.cred')?.remove(); const eb = this.ui.querySelector('.errs'); if (eb) eb.textContent = '📋 Erori (0)'; return; }
-      if (b.classList.contains('eco')) { const on = !isEco(); Settings.set({ eco: on }); b.textContent = on ? '🔋 Economisire baterie: pornită' : '⚡ Economisire baterie: oprită'; dispatchEvent(new Event('resize')); return; }
+      if (b.classList.contains('eco')) { const on = !isEco(); Settings.set({ eco: on }); b.textContent = on ? '🔋 Eco: pornit' : '⚡ Eco: oprit'; dispatchEvent(new Event('resize')); return; }
       if (b.classList.contains('xcred')) { this.ui.querySelector('.cred')?.remove(); return; }
       if (b.classList.contains('mute')) { const m = !Settings.get().muted; Settings.set({ muted: m }); Sfx.setMuted(m); b.textContent = m ? '🔇' : '🔊'; }
       if (b.classList.contains('paste')) {
@@ -126,7 +126,13 @@ export class MenuScene implements Scene {
         Sfx.play('good'); b.textContent = '✔ Șters!';
         setTimeout(() => (b.textContent = '🔄 Joc nou'), 1500);
       }
-      if (b.classList.contains('play')) {
+      if (b.classList.contains('play') || b.classList.contains('h-play')) this.play();
+    });
+    Sfx.setMuted(s.muted);
+  }
+  /** intra in joc (din butonul mare sau direct dupa ce ati gasit / facut casa) */
+  play() {
+        const mode = this.ui.querySelector('select') as HTMLSelectElement;
         const net: NetConfig = { ...Settings.get().net, mode: mode.value as NetConfig['mode'] };
         // online doar intr-o casa cu cod si parola (camera nu se mai poate ghici)
         if ((net.mode === 'firebase' || net.mode === 'server') && !isSecureRoom(net.room)) { this.showHouse('Ca să jucați online, faceți-vă întâi casa voastră, cu cod și parolă. Unul o creează, celălalt intră cu același cod și aceeași parolă.'); return; }
@@ -136,9 +142,6 @@ export class MenuScene implements Scene {
         if (net.mode === 'firebase' && !net.firebase.databaseURL) { alert('Lipsește databaseURL din config-ul Firebase'); return; }
         Settings.set({ net });
         this.game.go('world');
-      }
-    });
-    Sfx.setMuted(s.muted);
   }
   /** randul cu casa voastra (codul) din meniu */
   houseRow() {
@@ -165,10 +168,18 @@ export class MenuScene implements Scene {
         <div class="house-box"><h4>💞 Intră în casa partenerului</h4>
           <label>Codul casei<input name="hcode" placeholder="LALEA-7K3P" maxlength="14" autocapitalize="characters" /></label>
           <label>Parola<input name="hjpass" type="password" autocomplete="current-password" maxlength="40" /></label>
-          <button type="button" class="h-join">💞 Intră în casă</button></div>
+          <button type="button" class="h-join">💞 Intră la partener</button></div>
       </div>
       <p class="house-msg"></p>
-      <button class="xcred">Închide</button></div>`;
+      <div class="row2"><button class="xcred">Închide</button></div></div>`;
+    this.ui.appendChild(d);
+  }
+  /** casa e gata: codul mare, de spus partenerului, si un singur buton: intrati in joc */
+  showReady(title: string, sub: string) {
+    this.ui.querySelector('.cred')?.remove();
+    const d = document.createElement('div'); d.className = 'cred house';
+    d.innerHTML = `<div class="cred-in"><h3>${title}</h3><div class="house-code">${Settings.get().net.code ?? ''}</div><p class="sub">${sub}</p>
+      <div class="row2"><button type="button" class="h-copy">📋 Copiază codul</button><button type="button" class="h-play">▶ Intrăm în joc</button></div></div>`;
     this.ui.appendChild(d);
   }
   private houseMsg(t: string, ok = false) { const m = this.ui.querySelector('.house-msg') as HTMLElement | null; if (m) { m.textContent = t; m.classList.toggle('ok', ok); } }
@@ -196,7 +207,8 @@ export class MenuScene implements Scene {
     if (seed) try { localStorage.setItem(`bd-save-${r.room}`, JSON.stringify({ json: seed.json, ts: Date.now() })); } catch { /* */ }
     Settings.set({ net: { ...Settings.get().net, room: r.room, code: r.code }, resetAt: seed ? 0 : Settings.get().resetAt });
     Sfx.play('good'); this.houseRow();
-    const dudu = Settings.get().who === 'bubu'; this.showHouse(`✅ Casa e gata! Codul: ${r.code}. Spune-i ${dudu ? 'lui Dudu' : 'lui Bubu'} codul și parola, ca să intre și ${dudu ? 'el' : 'ea'}.`);
+    const dudu = Settings.get().who === 'bubu';
+    this.showReady(`✅ Casa e gata!`, `Spune-i ${dudu ? 'lui Dudu' : 'lui Bubu'} codul și parola, ca să intre și ${dudu ? 'el' : 'ea'}.`);
   }
   private async doJoin(b: HTMLButtonElement) {
     const code = normCode((this.ui.querySelector('[name=hcode]') as HTMLInputElement).value), pass = (this.ui.querySelector('[name=hjpass]') as HTMLInputElement).value;
@@ -207,7 +219,8 @@ export class MenuScene implements Scene {
     if (!r.ok) { this.houseMsg('❌ ' + r.msg); Sfx.play('bad'); return; }
     Settings.set({ net: { ...Settings.get().net, room: r.room, code: r.code }, resetAt: 0 });
     Sfx.play('good'); this.houseRow();
-    this.showHouse(`✅ Ați intrat în casa ${r.code}. Apasă „Intră în casă”!`);
+    this.ui.querySelector('.cred')?.remove();
+    this.play(); // casa e gasita: intri direct in joc (nu mai apesi inca o data)
   }
   showErrors() {
     this.ui.querySelector('.cred')?.remove();

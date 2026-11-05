@@ -17,7 +17,10 @@ export type NetEvent =
   | { t: 'invite'; who: CharId; id: string; what: string; label: string; icon: string }
   | { t: 'inviteReply'; who: CharId; id: string; ok: boolean }
   // ce versiune are celalalt (ca sa va spunem daca nu e aceeasi)
-  | { t: 'ver'; who: CharId; ver: string };
+  | { t: 'ver'; who: CharId; ver: string }
+  // sincronizarea lumii: fiecare spune cand s-a schimbat ultima oara lumea lui; cel cu lumea mai noua o trimite intreaga
+  | { t: 'sync'; who: CharId; mod: number }
+  | { t: 'world'; who: CharId; mod: number; json: string };
 
 export type WorldOp =
   | { k: 'furn'; key: string; value: unknown }

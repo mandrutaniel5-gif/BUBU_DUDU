@@ -7,6 +7,7 @@ import { drawForestType } from './forest';
 import { drawVillageType } from './village';
 import { drawCityType } from './city';
 import { drawCountryType } from './country';
+import { drawStoryType } from './season';
 
 const O = '#3a2a22';
 
@@ -26,6 +27,7 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
   if (drawVillageType(ctx, f, t, st.night ?? 0, (globalThis as any).__villageOwned ?? {})) return;
   if (drawCityType(ctx, f, t, st.night ?? 0, (globalThis as any).__villageOwned ?? {})) return;
   if (drawForestType(ctx, f, t, !!st.depleted?.[f.id])) return;
+  if (drawStoryType(ctx, f, t)) return;
   if (drawCountryType(ctx, f, t, st.night ?? 0)) return;
   if (drawBuildType(ctx, f, t, st.night ?? 0, !!st.depleted?.[f.id])) return;
   switch (f.type) {

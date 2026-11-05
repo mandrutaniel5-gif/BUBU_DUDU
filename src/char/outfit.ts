@@ -31,6 +31,10 @@ export const ITEMS: Item[] = [
   { id: 'rochie', slot: 'body', label: 'Rochie de seară', icon: '💃', price: 205, shop: 'oras' },
   { id: 'costum', slot: 'body', label: 'Costum elegant', icon: '🤵', price: 240, shop: 'oras' },
   { id: 'joben', slot: 'head', label: 'Joben', icon: '🎩', price: 100, shop: 'oras' },
+  // nunta (Buticul Elegant, din capitolul Nunta)
+  { id: 'mireasa', slot: 'body', label: 'Rochie de mireasă', icon: '👰', price: 650, shop: 'oras' },
+  { id: 'voal', slot: 'head', label: 'Voal de mireasă', icon: '💐', price: 120, shop: 'oras' },
+  { id: 'mire', slot: 'body', label: 'Costum de mire', icon: '🤵', price: 600, shop: 'oras' },
 ];
 // accesoriile vechi se gasesc tot la Croitoria din sat (coroana: la oras)
 for (const it of ITEMS) if (!it.shop) it.shop = it.id === 'crown' ? 'oras' : 'sat';
@@ -90,6 +94,10 @@ export function drawHeadItem(ctx: CanvasRenderingContext2D, id: string, t: numbe
       ctx.beginPath(); ctx.ellipse(16, -12, 18, 5, -0.15, 0, 7); st(ctx, '#c1121f');
       ctx.beginPath(); ctx.arc(0, -29, 2.5, 0, 7); st(ctx, '#fff', 1.2);
       heartPath(ctx, -6, -18, 4); ctx.fillStyle = '#fff'; ctx.fill(); break;
+    case 'voal':
+      // voalul: coronita de flori albe si tulul care cade pe spate, miscat de vant
+      ctx.globalAlpha = 0.55; ctx.beginPath(); ctx.moveTo(-20, -24); ctx.quadraticCurveTo(-34 + Math.sin(t * 2) * 3, 10, -26, 40); ctx.lineTo(26, 40); ctx.quadraticCurveTo(34 + Math.sin(t * 2 + 1) * 3, 10, 20, -24); ctx.closePath(); st(ctx, '#ffffff', 1); ctx.globalAlpha = 1;
+      for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.arc(i * 6, -26 - Math.abs(i) * 0.8, 3.6, 0, 7); st(ctx, i % 2 ? '#fff' : '#ffd6e4', 1.2); } break;
     case 'crown':
       ctx.beginPath(); ctx.moveTo(-14, -18); ctx.lineTo(-16, -34); ctx.lineTo(-7, -26); ctx.lineTo(0, -38); ctx.lineTo(7, -26); ctx.lineTo(16, -34); ctx.lineTo(14, -18); ctx.closePath(); st(ctx, '#ffd23f');
       for (const [x, c] of [[-8, '#e63946'], [0, '#4cc9f0'], [8, '#7cc576']] as const) { ctx.beginPath(); ctx.arc(x, -22, 2.2, 0, 7); ctx.fillStyle = c; ctx.fill(); }
@@ -170,6 +178,20 @@ export function drawBodyItem(ctx: CanvasRenderingContext2D, id: string, clipBody
       ctx.fillStyle = '#ffffffaa'; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(hip - 20 + i * 8, -20 + Math.sin(t * 3 + i) * 1, 1.2, 0, 7); ctx.fill(); }
       ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hip - 40, -40); ctx.quadraticCurveTo(hip, -36, hip + 40, -40); ctx.stroke();
     }); break;
+    case 'mireasa': garment(() => {
+      // rochia alba de mireasa: corset cu dantela, fusta larga, perlute care sclipesc
+      ctx.fillStyle = '#fffdf8'; ctx.beginPath(); ctx.moveTo(hip - 30, -44); ctx.lineTo(hip + 30, -44); ctx.lineTo(hip + 48, 8); ctx.quadraticCurveTo(hip, 16, hip - 48, 8); ctx.closePath(); ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.strokeStyle = '#e8dccb'; ctx.lineWidth = 1.2; for (let x = -36; x <= 36; x += 12) { ctx.beginPath(); ctx.moveTo(hip + x * 0.6, -22); ctx.quadraticCurveTo(hip + x, -6, hip + x * 1.2, 8); ctx.stroke(); }
+      ctx.fillStyle = '#f3e9da'; for (let x = -26; x <= 26; x += 6) { ctx.beginPath(); ctx.arc(hip + x, -44, 3, 0, Math.PI); ctx.fill(); }
+      for (let i = 0; i < 7; i++) { ctx.fillStyle = `rgba(255,214,228,${0.5 + 0.5 * Math.sin(t * 4 + i)})`; ctx.beginPath(); ctx.arc(hip - 18 + i * 6, -30 + (i % 2) * 6, 1.4, 0, 7); ctx.fill(); }
+    }); break;
+    case 'mire': garment(() => {
+      // costumul de mire: frac negru, camasa alba, papion si trandafirul alb la rever
+      ctx.fillStyle = '#23232b'; ctx.fillRect(hip - 40, -50, 80, 56);
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(hip - 10, -50); ctx.lineTo(hip + 10, -50); ctx.lineTo(hip, -18); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#23232b'; ctx.beginPath(); ctx.moveTo(hip - 7, -47); ctx.lineTo(hip, -43); ctx.lineTo(hip + 7, -47); ctx.lineTo(hip + 7, -40); ctx.lineTo(hip, -43); ctx.lineTo(hip - 7, -40); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(hip - 20, -36, 4, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#7cc576'; ctx.beginPath(); ctx.ellipse(hip - 16, -32, 3, 1.5, 0.6, 0, 7); ctx.fill();
+    }, () => { ctx.fillStyle = '#23232b'; ctx.fillRect(-12, -10, 24, 30); ctx.fillStyle = '#fff'; ctx.fillRect(-12, 13, 24, 3); }); break;
     case 'costum': garment(() => {
       ctx.fillStyle = '#2f3b5c'; ctx.fillRect(hip - 40, -50, 80, 56);
       ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(hip - 9, -50); ctx.lineTo(hip + 9, -50); ctx.lineTo(hip, -22); ctx.closePath(); ctx.fill();

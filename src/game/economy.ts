@@ -117,8 +117,8 @@ export const CHAPTERS: Chapter[] = [
     ],
   },
   {
-    id: 2, title: 'Capitolul 2 · Pădurea', done: '🌉 Sătenii au reparat Podul Mare! Pe jos sau cu bicicleta, satul vă așteaptă',
-    intro: 'Dudu merge cu tractorașul la pădure, taie lemne și livrează comenzile cheresteliei. Bubu culege ciuperci, prinde pește și se împrietenește cu animalele. Cu banii cumpărați online o bicicletă.',
+    id: 2, title: 'Capitolul 2 · Pădurea', done: '🌉 Pădurea e a voastră! Dar Podul Mare spre sat e rupt… Hai să-l reparăm',
+    intro: 'Dudu merge cu tractorașul la pădure, taie lemne și livrează comenzile cheresteliei. Bubu culege ciuperci, prinde pește și se împrietenește cu animalele. Lemnele și scândurile vor repara Podul Mare.',
     goals: [
       { id: 'tractor', icon: '🚜', text: 'Prima tură la pădure cu tractorașul', hint: 'Tractorașul stă la poarta din spatele curții (spre pădure)', done: w => st(w, 'forestTrips') > 0, reward: { money: 10 }, who: 'dudu' },
       { id: 'logs15', icon: '🪓', text: 'Taie 15 lemne în pădure', hint: 'Brazii și copacii din pădure', done: w => st(w, 'forestWood') >= 15, reward: { money: 15 }, who: 'dudu' },
@@ -126,17 +126,30 @@ export const CHAPTERS: Chapter[] = [
       { id: 'fish3', icon: '🎣', text: 'Prinde 3 pești la lac', hint: 'Podețul de la lacul din pădure', done: w => (st(w, 'fishCaught')) >= 3, reward: { money: 15 }, who: 'bubu' },
       { id: 'friend', icon: '🦌', text: 'Împrietenește-te cu un animal din pădure', hint: 'Apropie-te încet și mângâie-l de 3 ori', done: w => st(w, 'petFriends') >= 1, reward: { hearts: 10 }, who: 'bubu' },
       { id: 'saworders', icon: '📜', text: 'Livrează 2 comenzi la cherestea', hint: 'Cheresteaua lui Nea Vasile are în fiecare zi două comenzi: lemne de foc sau scânduri', done: w => st(w, 'sawOrders') >= 2, reward: { money: 20 }, who: 'dudu' },
-      { id: 'bike', icon: '🚲', text: 'Cumpărați o bicicletă', hint: `Laptopul din casă → Vehicule (${PRICE.bike} lei)`, done: w => st(w, 'bike') > 0, reward: { hearts: 15 } },
     ],
   },
   {
-    id: 3, title: 'Capitolul 3 · Satul', done: '🏙️ Satul vă iubește! Luați autobuzul din sat spre oraș 🚌',
-    intro: 'Pe drum, peste Podul Mare, ajungeți în sat (pe jos sau cu bicicleta): magazine, croitorie, parc, școală. Bubu își deschide o florărie, Dudu o tâmplărie!',
+    id: 3, title: 'Capitolul 3 · Podul', done: '🌉 Podul Mare e reparat! Satul de dincolo vă așteaptă',
+    intro: 'Podul Mare, singurul drum spre sat, e rupt. Meșterii din sat îl repară, dar au nevoie de voi: lemne și scânduri de la Dudu, pietre și mâncare caldă de la Bubu, și bani pentru meșteri. Duceți totul la pod!',
+    goals: [
+      { id: 'brwood', icon: '🪵', text: 'Duceți 20 de lemne la Podul Mare', hint: 'Podul Mare, pe drum spre lac → „Ajutați la pod”', done: w => st(w, 'bridge-wood') >= 20, reward: { money: 10 }, who: 'dudu' },
+      { id: 'brplank', icon: '📏', text: 'Duceți 6 scânduri de la gater', hint: 'Cheresteaua → Gaterul (2 lemne fac o scândură), apoi la pod', done: w => st(w, 'bridge-plank') >= 6, reward: { money: 10 }, who: 'dudu' },
+      { id: 'brstone', icon: '🪨', text: 'Duceți 12 pietre la Podul Mare', hint: 'Pietrele din pădure și din curte', done: w => st(w, 'bridge-stone') >= 12, reward: { money: 10 }, who: 'bubu' },
+      { id: 'brmeal', icon: '🍲', text: 'Gătește 3 porții pentru meșteri', hint: 'Gătește la aragaz, apoi duce mâncarea la pod', done: w => st(w, 'bridge-meal') >= 3, reward: { hearts: 10 }, who: 'bubu' },
+      { id: 'brmoney', icon: '💰', text: 'Plătiți meșterii: 150 de lei', hint: 'Banii de la tarabă și de la cherestea', done: w => st(w, 'bridge-money') >= 150, reward: { hearts: 5 } },
+      { id: 'bike', icon: '🚲', text: 'Cumpărați o bicicletă', hint: `Laptopul din casă → Vehicule (${PRICE.bike} lei)`, done: w => st(w, 'bike') > 0, reward: { hearts: 15 } },
+      { id: 'brfix', icon: '🌉', text: 'Podul reparat!', hint: 'Când ați adus tot, meșterii repară podul (la pod)', done: w => st(w, 'bridgeFixed') > 0, reward: { money: 30, hearts: 20 } },
+    ],
+  },
+  {
+    id: 4, title: 'Capitolul 4 · Satul renaște', done: '🌾 Satul a prins viață! Câmpurile de lângă casă vă așteaptă: e timpul fermei voastre',
+    intro: 'Satul e aproape părăsit: case goale, brutăria și școala închise, tinerii plecați la oraș. Îl readuceți la viață prin proiectele de la Primărie. După fiecare proiect se mută săteni noi. Bubu își deschide florăria, Dudu tâmplăria!',
     goals: [
       { id: 'village1', icon: '🏘️', text: 'Prima vizită în sat', hint: 'Pe drum spre dreapta, peste Podul Mare (pe jos sau cu bicicleta)', done: w => st(w, 'villageTrips') > 0, reward: { money: 10 } },
       { id: 'clothes', icon: '🧵', text: 'Cumpără haine de la Croitorie', hint: 'Ie, vestă, salopetă, rochiță cu buline…', done: w => st(w, 'clothesBought') > 0, reward: { hearts: 5 } },
-      { id: 'school', icon: '🏫', text: 'Mergi la o lecție la școală', hint: 'Școala satului', done: w => st(w, 'school') > 0, reward: { money: 10 } },
+      { id: 'school', icon: '🏫', text: 'Mergi la o lecție la școală', hint: 'Școala satului (după ce o redeschideți la Primărie)', done: w => st(w, 'school') > 0, reward: { money: 10 } },
       { id: 'ferris', icon: '🎡', text: 'O tură romantică cu roata mare', hint: `Parcul din sat (${PRICE.ferris} lei)`, done: w => st(w, 'ferris') > 0, reward: { hearts: 10 } },
+      { id: 'proj3', icon: '📋', text: 'Terminați 3 proiecte ale satului', hint: 'Primăria → Proiectele satului (brutăria, școala, iluminatul, parcul, piața, drumul pietruit)', done: w => st(w, 'projectsDone') >= 3, reward: { money: 40, hearts: 15 } },
       { id: 'scooter', icon: '🛵', text: 'Cumpărați un scuter', hint: `Laptopul → Vehicule (${PRICE.scooter} lei)`, done: w => st(w, 'scooter') > 0, reward: { hearts: 10 } },
       { id: 'florarie', icon: '💐', text: 'Deschide florăria lui Bubu', hint: `Primăria → ${PRICE.florarie} lei`, done: w => st(w, 'florarie') > 0, reward: { hearts: 10 } },
       { id: 'workshop', icon: '🪚', text: 'Deschide tâmplăria lui Dudu', hint: `Primăria → ${PRICE.workshop} lei + ${PRICE.workshopWood} lemne`, done: w => st(w, 'workshop') > 0, reward: { hearts: 10 } },
@@ -146,24 +159,71 @@ export const CHAPTERS: Chapter[] = [
     ],
   },
   {
-    id: 4, title: 'Capitolul 4 · Orașul', done: '🏡 V-ați mutat la oraș! Povestea continuă…',
-    intro: 'Autobuzul din sat vă duce la oraș: blocuri înalte, mașini, cinema, restaurant. Munciți la cafenea sau la birou, ieșiți la întâlniri și cumpărați-vă un apartament!',
+    id: 5, title: 'Capitolul 5 · Ferma', done: '🚌 Ferma merge! Drumul spre oraș s-a deschis: acolo se vând produsele voastre',
+    intro: 'Câmpurile din jurul casei sunt de vânzare. Dudu cumpără utilajele: plugul, semănătoarea, cisterna și combina, care merg singure pe rânduri. Bubu are grija animalelor: găinile, vaca, oile și stupii. Și primii angajați vă ajută!',
+    goals: [
+      { id: 'parcel1', icon: '🟫', text: 'Cumpărați prima parcelă', hint: 'Indicatorul „Câmpurile de vânzare”, la sud de drum, lângă casă', done: w => st(w, 'parcels') >= 1, reward: { hearts: 10 } },
+      { id: 'plow', icon: '🚜', text: 'Arați parcela cu plugul', hint: 'Laptopul → Utilaje (plugul), apoi atingeți parcela', done: w => st(w, 'fieldPlowed') >= 1, reward: { money: 10 }, who: 'dudu' },
+      { id: 'sow', icon: '🌱', text: 'Semănați cu semănătoarea', hint: 'Grâu, porumb sau floarea-soarelui', done: w => st(w, 'fieldSown') >= 1, reward: { money: 10 }, who: 'dudu' },
+      { id: 'harvestF', icon: '🌾', text: 'Prima recoltă cu combina', hint: 'Udați cu cisterna ca să crească mai repede, apoi recoltați', done: w => st(w, 'fieldHarvested') >= 1, reward: { money: 40, hearts: 10 }, who: 'dudu' },
+      { id: 'hens', icon: '🐔', text: 'Luați găini în coteț', hint: 'Poarta fermei, lângă curte → Animale', done: w => st(w, 'hens') >= 1, reward: { hearts: 5 }, who: 'bubu' },
+      { id: 'eggs', icon: '🥚', text: 'Strânge 6 ouă', hint: 'Cotețul: o dată pe zi', done: w => st(w, 'eggsCollected') >= 6, reward: { money: 10 }, who: 'bubu' },
+      { id: 'cow', icon: '🐄', text: 'Luați o văcuță', hint: 'Poarta fermei → Animale', done: w => st(w, 'cows') >= 1, reward: { hearts: 5 } },
+      { id: 'cheese', icon: '🧀', text: 'Fă brânză din lapte', hint: 'Mulge vaca, apoi „Fă brânză” la grajd', done: w => st(w, 'cheeseMade') >= 1, reward: { money: 15 }, who: 'bubu' },
+      { id: 'bees', icon: '🐝', text: 'Puneți un stup și strângeți miere', hint: 'Poarta fermei → Animale → Stup', done: w => st(w, 'honeyCollected') >= 1, reward: { hearts: 10 }, who: 'bubu' },
+      { id: 'hire1', icon: '🧑‍🌾', text: 'Angajați primul om', hint: 'Primăria → Oameni de muncă (salariu pe zi)', done: w => st(w, 'hired') >= 1, reward: { hearts: 10 } },
+    ],
+  },
+  {
+    id: 6, title: 'Capitolul 6 · Drumul spre oraș', done: '🏪 Orașul vă știe! E timpul magazinului vostru „Bubu & Dudu”',
+    intro: 'Drumul spre oraș s-a deschis: blocuri, mașini, cinema, restaurant. Afacerile de la țară rămân (angajații lucrează și când sunteți plecați). Ieșiți la întâlniri, învățați la universitate, cumpărați-vă un apartament!',
     goals: [
       { id: 'city1', icon: '🚌', text: 'Prima călătorie cu autobuzul la oraș', hint: `Stația de autobuz din sat (${PRICE.bus} lei de persoană)`, done: w => st(w, 'cityTrips') > 0, reward: { money: 10 } },
+      { id: 'citysell', icon: '🧺', text: 'Vindeți 15 produse de la fermă la oraș', hint: 'Supermarketul cumpără ouă, lapte, brânză, miere, lână și grâne', done: w => st(w, 'citySold') >= 15, reward: { money: 30 } },
       { id: 'cafe3', icon: '☕', text: 'Lucrează 3 ture la cafenea', hint: 'Cafeneaua (7:00-21:00) — fă cafelele din comandă', done: w => st(w, 'cafeShifts') >= 3, reward: { money: 30 } },
       { id: 'diploma', icon: '🎓', text: 'Obține o diplomă la universitate', hint: 'Universitatea: cursul de birou, de prim ajutor, florist sau tâmplar', done: w => st(w, 'diplomas') >= 1, reward: { hearts: 10 } },
       { id: 'office1', icon: '💼', text: 'O zi de muncă la birou sau la spital', hint: 'Ai nevoie de diploma potrivită', done: w => st(w, 'officeShifts') + st(w, 'nurseShifts') >= 1, reward: { money: 20 } },
       { id: 'elegant', icon: '🎩', text: 'Cumpără haine elegante', hint: 'Buticul Elegant: rochie de seară, costum, joben', done: w => ['rochie', 'costum', 'joben', 'crown'].some(i => Object.values(w.chars).some(c => (c as any).owned?.includes(i))), reward: { hearts: 10 } },
       { id: 'cinema', icon: '🎬', text: 'Mergeți la film împreună', hint: `Cinema (${PRICE.cinema} lei) — mână în mână la scena cu inimioara`, done: w => st(w, 'cinema') > 0, reward: { hearts: 10 } },
-      { id: 'resto', icon: '🕯️', text: 'Cină romantică la restaurant', hint: `Restaurant La Doi (${PRICE.resto} lei) — ghicește ce-și dorește partenerul`, done: w => st(w, 'restoDates') > 0, reward: { hearts: 15 } },
+      { id: 'resto', icon: '🕯️', text: 'Cină romantică la restaurant', hint: `Restaurant La Doi (${PRICE.resto} lei): alegeți ce mâncați; preferatul partenerului e marcat`, done: w => st(w, 'restoDates') > 0, reward: { hearts: 15 } },
       { id: 'icecream', icon: '🍦', text: 'Înghețată în parc', hint: `Căruciorul cu înghețată din parc (${PRICE.ice} lei)`, done: w => st(w, 'icecream') > 0, reward: { hearts: 5 } },
       { id: 'apartment', icon: '🏙️', text: 'Cumpărați un apartament', hint: 'Banca: 5000 lei pe loc sau 1000 lei avans + credit', done: w => st(w, 'apartment') > 0, reward: { hearts: 25 } },
       { id: 'decor', icon: '🛍️', text: 'Mobilați apartamentul', hint: 'Mall-ul: acvariu, pian, consolă, espressor…', done: w => st(w, 'decorBought') >= 2, reward: { hearts: 10 } },
       { id: 'aptnight', icon: '🛏️', text: 'Prima noapte în apartamentul vostru', hint: 'Culcați-vă în patul cel mare din apartament', done: w => st(w, 'aptNights') > 0, reward: { money: 50, hearts: 20 } },
     ],
   },
+  {
+    id: 7, title: 'Capitolul 7 · Afacerea din oraș', done: '💍 Afacerea voastră e cunoscută în tot orașul! Dudu are o surpriză…',
+    intro: 'Terenul de vânzare din oraș devine magazinul vostru „Bubu & Dudu”, cu produsele de la fermă. Bubu aranjează vitrina, Dudu face contractele cu restaurantele și duce marfa cu camionul. La final, târgul orașului!',
+    goals: [
+      { id: 'lot', icon: '🏗️', text: 'Cumpărați terenul din oraș', hint: 'Indicatorul „Teren de vânzare”, la est de Parcul Central', done: w => st(w, 'shopLot') > 0, reward: { hearts: 10 } },
+      { id: 'shopbuilt', icon: '🏪', text: 'Construiți magazinul „Bubu & Dudu”', hint: 'Pe teren: scânduri, pietre și bani', done: w => st(w, 'shopBuilt') > 0, reward: { hearts: 20 } },
+      { id: 'vitrina', icon: '🪟', text: 'Aranjați vitrina', hint: 'În magazin → Vitrina', done: w => st(w, 'vitrina') >= 1, reward: { money: 20 }, who: 'bubu' },
+      { id: 'stock20', icon: '📦', text: 'Puneți 20 de produse pe rafturi', hint: 'În magazin → Pune pe raft (ouă, lapte, brânză, miere, flori, grâne…)', done: w => st(w, 'shopStocked') >= 20, reward: { money: 20 } },
+      { id: 'shopsold', icon: '🧾', text: 'Magazinul vinde 30 de produse', hint: 'Se vinde singur în fiecare zi (mai mult cu vânzător angajat)', done: w => st(w, 'shopSold') >= 30, reward: { money: 50 } },
+      { id: 'truck', icon: '🚚', text: 'Cumpărați camionul', hint: 'Laptopul → Vehicule', done: w => st(w, 'truck') > 0, reward: { hearts: 10 }, who: 'dudu' },
+      { id: 'contract2', icon: '📜', text: 'Livrați 2 contracte la restaurante', hint: 'În magazin → Contracte (cu camionul)', done: w => st(w, 'contracts') >= 2, reward: { money: 80 }, who: 'dudu' },
+      { id: 'fair', icon: '🎪', text: 'Standul vostru la târgul orașului', hint: 'Când magazinul a vândut destul: Parcul Central → Târgul orașului', done: w => st(w, 'fairDone') > 0, reward: { money: 100, hearts: 25 } },
+    ],
+  },
+  {
+    id: 8, title: 'Capitolul 8 · Nunta', done: '💒 Bubu și Dudu s-au căsătorit! Casă de piatră! Povestea continuă: proaspăt căsătoriți',
+    intro: 'Dudu cumpără inelul și o cere de soție pe Bubu. Apoi pregătiți nunta în sat, la biserică: rochia și costumul, tortul, lăutarii și invitațiile pentru sătenii prieteni. La final: cununia, hora și petrecerea!',
+    goals: [
+      { id: 'ring', icon: '💍', text: 'Dudu cumpără inelul de logodnă', hint: 'Mall-ul din oraș → Bijuterii', done: w => st(w, 'ring') > 0, reward: { hearts: 10 }, who: 'dudu' },
+      { id: 'propose', icon: '💖', text: 'Cererea în căsătorie', hint: 'Dudu, cu inelul: la foișorul de la lac sau pe o bancă, cu Bubu lângă tine → „Cere-o de soție”', done: w => st(w, 'engaged') > 0, reward: { hearts: 50 }, who: 'dudu' },
+      { id: 'dress', icon: '👰', text: 'Rochia de mireasă și voalul', hint: 'Buticul Elegant din oraș', done: w => (((w.chars.bubu as any).owned ?? []) as string[]).includes('mireasa'), reward: { hearts: 10 }, who: 'bubu' },
+      { id: 'suit', icon: '🤵', text: 'Costumul de mire', hint: 'Buticul Elegant din oraș', done: w => (((w.chars.dudu as any).owned ?? []) as string[]).includes('mire'), reward: { hearts: 10 }, who: 'dudu' },
+      { id: 'cake', icon: '🎂', text: 'Tortul de nuntă', hint: 'Brutăria din sat → Tort de nuntă', done: w => st(w, 'weddingCake') > 0, reward: { hearts: 5 }, who: 'bubu' },
+      { id: 'music', icon: '🎻', text: 'Lăutarii pentru petrecere', hint: 'Primăria → Nunta → Lăutarii', done: w => st(w, 'weddingMusic') > 0, reward: { hearts: 5 }, who: 'dudu' },
+      { id: 'invites', icon: '💌', text: 'Invitați 4 săteni prieteni', hint: 'Vorbiți cu sătenii (prieteni măcar pe treapta 2) → Invită la nuntă', done: w => st(w, 'invited') >= 4, reward: { hearts: 10 } },
+      { id: 'wedding', icon: '💒', text: 'Nunta la biserica din sat', hint: 'Când e totul gata: biserica din sat → Nunta noastră', done: w => st(w, 'married') > 0, reward: { money: 500, hearts: 100 } },
+    ],
+  },
 ];
 
+/** capitolele (numerotare din v1.7: 9 capitole) */
+export const BRIDGE_CHAPTER = 3, VILLAGE_CHAPTER = 4, FARM_CHAPTER = 5, CITY_CHAPTER = 6, SHOP_CHAPTER = 7, WEDDING_CHAPTER = 8;
 export const GOALS: Goal[] = CHAPTERS.flatMap(c => c.goals);
 export const chapterOf = (w: WorldState) => CHAPTERS[Math.min(CHAPTERS.length - 1, (w.stats.chapter ?? 0))];
 export const currentGoal = (w: WorldState) => chapterOf(w).goals.find(g => !w.stats['goal-' + g.id]);

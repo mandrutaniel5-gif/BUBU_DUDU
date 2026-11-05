@@ -9,6 +9,9 @@ const FISH = [
   { id: 'caras', name: 'Caras', col: '#f2b04a', size: 1, pull: 0.8, w: 5 },
   { id: 'pastrav', name: 'Păstrăv', col: '#9ad1b0', size: 1.2, pull: 1.1, w: 3 },
   { id: 'stiuca', name: 'Știucă', col: '#7a9a6a', size: 1.6, pull: 1.6, w: 1.5 },
+  { id: 'crap', name: 'Crap', col: '#c9a24a', size: 1.4, pull: 1.3, w: 2.5 },
+  { id: 'biban', name: 'Biban', col: '#9ab86a', size: 1, pull: 0.9, w: 3 },
+  { id: 'somn', name: 'Somn', col: '#5a5a6a', size: 1.9, pull: 1.9, w: 0.8 },
   { id: 'gheata', name: 'O gheată veche 👢', col: '#6b4a2f', size: 1, pull: 0.5, w: 1 },
 ];
 
@@ -31,7 +34,7 @@ export class FishingGame extends Panel {
       if (this.holding && this.tension < 0.85) this.prog += dt * 0.35 / this.fish.size;
       else if (!this.holding) this.prog -= dt * 0.05;
       if (this.tension >= 1) { this.phase = 'cast'; this.lost++; Sfx.play('bad'); this.shake = 6; this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.4, 'S-a rupt firul! 😩', '#e63946', 1.1); this.hero.play('cry'); }
-      if (this.prog >= 1) { this.phase = 'show'; this.showT = 1.8; this.caught++; Sfx.play('good'); this.lastName = this.fish.name; this.hero.play(this.fish.id === 'gheata' ? 'laugh' : 'love'); if (this.fish.id !== 'gheata') { this.scene.op({ k: 'res', res: 'fish', delta: 1 }); this.scene.op({ k: 'stat', key: 'fishCaught', delta: 1 }); } }
+      if (this.prog >= 1) { this.phase = 'show'; this.showT = 1.8; this.caught++; Sfx.play('good'); this.lastName = this.fish.name; this.hero.play(this.fish.id === 'gheata' ? 'laugh' : 'love'); if (this.fish.id !== 'gheata') { this.scene.op({ k: 'res', res: 'fish', delta: 1 }); this.scene.op({ k: 'stat', key: 'fishCaught', delta: 1 }); this.scene.op({ k: 'stat', key: 'fish-' + this.fish.id, delta: 1 }); } }
     } else if (this.phase === 'show') { if (this.reelSnd) { this.reelSnd.stop(); this.reelSnd = null; } this.showT -= dt; if (this.showT <= 0) this.phase = 'cast'; }
     if (this.caught >= 3 || this.lost >= 4) this.finish(this.caught ? 1 + this.caught * 0.3 : 0, this.caught ? `Ai prins ${this.caught} pești! 🐟` : 'Azi nu trag peștii… 🎣');
   }

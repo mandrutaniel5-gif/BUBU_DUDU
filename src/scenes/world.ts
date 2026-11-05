@@ -32,6 +32,10 @@ import { Nav } from '../world/nav';
 import { CATALOG, RES_INFO, drawGhost, drawTallGrass, type BuildItem } from '../world/build';
 import { GOALS, CHAPTERS, chapterOf, PRICE, INV_INFO } from '../game/economy';
 import { orderableChains, itemValue } from '../minigames/merge';
+import { DESTS, DEST_BY_ID } from '../world/layout';
+import { CITY_CHAPTER, BRIDGE_CHAPTER, WEDDING_CHAPTER } from '../game/economy';
+import * as Story from './story';
+import { drawSeason } from '../world/season';
 import { sawPrice, KEEP_WOOD, nWood, nPlanks } from '../minigames/sawmill';
 import { drawItem, MAX_LVL } from '../world/items';
 import { CROPS, WET_MIN, plotStage, catCount, catPick, seedKey, drawPlotSoil, drawCropPlant, type Plot } from '../world/garden';
@@ -68,6 +72,8 @@ export interface Pawn {
   pendingCrop?: string;
   riding?: boolean;     // conduce un vehicul
   rideKind?: RideKind;
+  /** lucrul pe camp cu utilajul (plug, semanatoare, cisterna, combina) */
+  fieldOp?: string;
   passenger?: boolean;  // sta in spate pe scuterul celuilalt
   board?: boolean;      // sta pe vehiculul parcat, gata de plecare (asteapta partenerul sau porneste)
   callBoard?: boolean;  // (AI) a fost chemat sa urce in spate
@@ -77,10 +83,11 @@ export interface Pawn {
 
 export type RideKind = 'scooter' | 'bike' | 'tractor' | 'bus' | 'taxi';
 /** viteza pe drum (dale / secunda) */
-const RIDE_SPEED: Record<RideKind, number> = { bike: 7, scooter: 10, tractor: 4.5, bus: 11, taxi: 15 };
+// bicicleta e de 3 ori mai rapida decat mersul pe jos, scuterul de 5 ori (viziunea stabilita)
+const RIDE_SPEED: Record<RideKind, number> = { bike: SPEED * 3, scooter: SPEED * 5, tractor: 4.5, bus: 11, taxi: 15 };
 /** statisticile care schimba obiectele din lume (vehiculele cumparate, capitolul, podul, afacerile) */
 const PLACED_STATS = new Set(['bike', 'scooter', 'chapter', 'bridgeFixed', 'florarie', 'workshop', 'sawmillOpen']);
-export interface Ride { kind: RideKind; path: Pt[]; len: number; s: number; v: number; dest: string; duo: boolean; t: number }
+export interface Ride { kind: RideKind; path: Pt[]; len: number; s: number; v: number; dest: string; duo: boolean; t: number; from?: string; paused?: boolean }
 
 export interface Npc { id: string; kind: string; x: number; y: number; sx?: number; tx: number; state: 'come' | 'wait' | 'leave'; wants: string[]; pay: number; t: number; happy?: boolean; spec?: CharSpec; actor?: Actor }
 
@@ -136,7 +143,7 @@ export class WorldScene implements Scene {
   /** drumul cu vehiculul (bicicleta, scuter, tractor, autobuz, taxi), in lume */
   ride: Ride | null = null;
   travel: { t: 0 | number; to: string; from?: string; switched?: boolean; vehicle?: 'tractor' | 'bike' | 'scooter' | 'bus' | 'door' | 'taxi'; withPartner?: boolean } | null = null;
-  walkers: { a: Actor; x: number; y: number; tx: number; ty: number; t: number; greetT: number; vid?: string; name?: string; region: 'village' | 'city' }[] = [];
+  walkers: { a: Actor; x: number; y: number; tx: number; ty: number; t: number; greetT: number; vid?: string; name?: string; region: 'village' | 'city'; emp?: boolean; paths?: Pt[] }[] = [];
   critters: Critter[] = [];
   timeMult = 1;
   npcs: Npc[] = []; npcSpawnT = 6;
@@ -195,9 +202,12 @@ export class WorldScene implements Scene {
     if (saved && saved.ts < resetAt) saved = null;
     if (saved) { try { const w = JSON.parse(saved.json) as WorldState; if (w.v === 1) this.w = { ...newWorld(), ...w }; } catch { /* corupt */ } }
     this.migrateWorld();
+    this.migrateChapters();
     // Capitolul 0: casa veche, totul e de facut
     if (this.w.stats.chapter === undefined) {
       this.w.stats.chapter = 0;
+      // lume noua: un telefon nou (fara salvare) ia lumea partenerului; un „Joc nou” ales din meniu e mai nou decat ea
+      this.w.mod = resetAt || 0;
       Object.assign(this.w.furn, { standBroken: true, standOpen: false, clogged: true, fridgeDirty: true, tubDirty: true, dishesDirty: true, tvBroken: true, fire: 0 });
       this.w.res = { wood: 4, stone: 0, flower: 0, seeds: 3, veg: 2, meals: 0, flour: 2, lemon: 0, hay: 0, egg: 4, milk: 2, water: 2 };
       this.w.money = 10;
@@ -223,7 +233,7 @@ export class WorldScene implements Scene {
     this.hud.setNet(this.net.status);
     // te intorci exact unde erai (in lume sau in apartament)
     this.restoreArea();
-    this.spawnWalkers(); this.cars = makeCars(); this.spawnCritters();
+    this.spawnWalkers(); this.syncWalkers(); this.cars = makeCars(); this.spawnCritters();
     this.floorChunks.reset(this.chunkScale());
     // "cat ai lipsit"
     const last = Number(localStorage.getItem('bd-last-seen-' + this.myId) || 0);
@@ -256,6 +266,8 @@ export class WorldScene implements Scene {
       this.sendCharSync();
       // ii spunem ce versiune avem; daca el nu ne spune a lui in 12 s, are o versiune mai veche (fara asta)
       this.net.sendEvent({ t: 'ver', who: this.myId, ver: APP_VER });
+      // comparam lumile: cine are lumea mai noua o trimite intreaga (altfel cel venit mai tarziu juca pe o lume veche)
+      this.net.sendEvent({ t: 'sync', who: this.myId, mod: this.w.mod ?? 0 });
       setTimeout(() => { if (this.partnerOnline && !this.partnerVer && !this.verWarned) { this.verWarned = true; this.hud.toast(`⚠️ ${this.partner.actor.spec.name} are o versiune mai veche a jocului. Instalați amândoi ultima versiune (${APP_VER})`); } }, 12000);
       return;
     }
@@ -281,6 +293,19 @@ export class WorldScene implements Scene {
     // ce vehicul are partenerul (inainte nu se trimitea si il vedeai pe scuter cand el era pe bicicleta)
     if (s.rideKind) this.partner.rideKind = s.rideKind; else if (s.riding && !this.partner.rideKind) this.partner.rideKind = (this.w.stats.scooter ?? 0) > 0 && !(this.w.stats.bike ?? 0) ? 'scooter' : 'bike';
   }
+  private syncAsked = false;
+  /** lumea mai noua venita de la partener: o luam intreaga (raman doar pozitia si zona ta) */
+  adoptWorld(json: string, mod: number) {
+    if (mod <= (this.w.mod ?? 0)) return;
+    let w: WorldState; try { w = JSON.parse(json); } catch { return; }
+    if (!w || w.v !== 1) return;
+    const mine = this.w.chars[this.myId];
+    w.chars[this.myId] = { ...w.chars[this.myId], gx: mine.gx, gy: mine.gy, area: (mine as any).area } as any;
+    const prevCh = this.chapter;
+    this.w = { ...newWorld(), ...w, mod };
+    this.syncPlaced(); this.hud.refreshGoal(); this.dirty = true;
+    if (this.chapter !== prevCh) this.hud.toast(`📖 V-ați sincronizat: ${CHAPTERS[Math.min(CHAPTERS.length - 1, this.chapter)].title}`);
+  }
   onRemoteEvent(e: NetEvent) {
     switch (e.t) {
       case 'emote': this.pawnOf(e.who).actor.play(e.anim); if (e.anim === 'fartjump' && this.sameArea()) this.superFart(this.pawnOf(e.who)); break;
@@ -288,6 +313,7 @@ export class WorldScene implements Scene {
       case 'op': {
         const prevCh = this.chapter;
         this.applyLocal(e.op);
+        { const k = (e.op as any).k; if (k !== 'need' && k !== 'clock' && k !== 'npcs' && k !== 'char') this.w.mod = Date.now(); }
         const ok = e.op as any; if (ok.k === 'stat' && typeof ok.key === 'string' && ok.key.startsWith('goal-')) { const g = GOALS.find(x => 'goal-' + x.id === ok.key); if (g) this.hud.toast(`✅ Obiectiv: ${g.icon} ${g.text}`); this.hud.refreshGoal(); }
         if (this.chapter > prevCh) { this.syncPlaced(); Sfx.play('good'); this.me.actor.play('dance_hop'); setTimeout(() => this.hud.showChapter(CHAPTERS[prevCh].done), 900); }
         break;
@@ -302,6 +328,14 @@ export class WorldScene implements Scene {
         break;
       }
       case 'invite': this.onInvite(e); break;
+      case 'sync': {
+        if (!this.partnerOnline) this.setPartnerOnline(true);
+        const mine = this.w.mod ?? 0;
+        if (mine > e.mod + 500) { this.save(); this.net.sendEvent({ t: 'world', who: this.myId, mod: mine, json: JSON.stringify(this.w) }); }
+        else if (e.mod > mine + 500 && !this.syncAsked) { this.syncAsked = true; this.net.sendEvent({ t: 'sync', who: this.myId, mod: mine }); }
+        break;
+      }
+      case 'world': this.adoptWorld(e.json, e.mod); break;
       case 'ver': {
         this.partnerVer = e.ver;
         if (e.ver !== APP_VER && !this.verWarned) { this.verWarned = true; this.hud.toast(`⚠️ ${this.partner.actor.spec.name} are versiunea ${e.ver}, tu ${APP_VER}. Instalați amândoi ultima versiune ca să meargă totul bine`); }
@@ -330,7 +364,7 @@ export class WorldScene implements Scene {
     }
   }
   /** aplica local si trimite partenerului */
-  op(o: WorldOp) { this.applyLocal(o); this.net.sendEvent({ t: 'op', op: o }); if (o.k !== 'need' && o.k !== 'clock' && o.k !== 'npcs') this.dirty = true; }
+  op(o: WorldOp) { this.applyLocal(o); this.net.sendEvent({ t: 'op', op: o }); if (o.k !== 'need' && o.k !== 'clock' && o.k !== 'npcs') { this.dirty = true; this.w.mod = Date.now(); } }
   applyLocal(o: WorldOp) {
     if (o.k === 'npcs') { this.mergeNpcs(o.list as Npc[]); return; }
     if (o.k === 'npcServe') { const n = this.npcs.find(x => x.id === o.id); if (n) { n.state = 'leave'; n.happy = true; n.actor?.play('love'); } return; }
@@ -359,19 +393,20 @@ export class WorldScene implements Scene {
     const Fo = ORIGIN.forest;
     if (kind === 'tractor') return at === 'forest' ? { gx: Fo.x + 4, gy: Fo.y + 24, w: 2 } : { gx: 19, gy: -4, w: 2 };
     if (at === 'village') return kind === 'bike' ? { gx: 99, gy: 27, w: 1 } : { gx: 100.5, gy: 27, w: 1 }; // la intrarea in sat, in parcarea de la sud de drum
+    const d = DEST_BY_ID[at]; if (d && at !== 'home') return { gx: d.park.gx + (kind === 'scooter' ? 1.5 : 0), gy: d.park.gy, w: 1 }; // la cherestea, la lac, la oras
     return kind === 'bike' ? { gx: 4, gy: 23, w: 1 } : { gx: 2, gy: 23, w: 1 };
   }
   /** reconstruieste obiectele adaugate in lume (vehicule, razoare, constructii) + navigarea */
   syncPlaced() {
     if (this.space !== 'world' || currentArea() !== 'world') return;
-    const dyn = (id: string) => id === 'h-tractor' || id === 'h-wood' || id === 'h-bike' || id === 'h-scooter' || id === 'v-bike' || id === 'v-scooter' || id === 'f-tractor' || id.startsWith('p-') || id.startsWith('plot:');
+    const dyn = (id: string) => id === 'h-wood' || /-(bike|scooter|tractor)$/.test(id) || id.startsWith('p-') || id.startsWith('plot:') || id.startsWith('st-') || id === 'c-ourshop';
     for (let i = FURNITURE.length - 1; i >= 0; i--) if (dyn(FURNITURE[i].id)) FURNITURE.splice(i, 1);
     // vehiculele stau unde le-ati lasat: acasa (la indicator) sau in sat (la intrare); tractorul la poarta din spate sau in padure
     // (cat timp cineva merge cu el, vehiculul parcat doar nu se deseneaza; vezi draw)
     for (const k of ['bike', 'scooter'] as const) {
       if (!((this.w.stats[k] ?? 0) > 0)) continue;
-      const at = this.vehAt(k), sp = this.parkSpot(k, at), v = at === 'village';
-      FURNITURE.push({ id: (v ? 'v-' : 'h-') + k, type: (k === 'bike' ? 'parkedbike' : 'parkedscooter') as any, gx: sp.gx, gy: sp.gy, w: 1, d: 1, solid: false, action: { id: k === 'bike' ? 'tripbike' : 'tripscooter', label: v ? (k === 'bike' ? 'Acasă cu bicicleta' : 'Acasă cu scuterul') : (k === 'bike' ? 'În sat cu bicicleta' : 'În sat cu scuterul'), icon: k === 'bike' ? '🚲' : '🛵' } });
+      const at = this.vehAt(k), sp = this.parkSpot(k, at), v = at !== 'home';
+      FURNITURE.push({ id: (at === 'home' ? 'h-' : at === 'village' ? 'v-' : at + '-') + k, type: (k === 'bike' ? 'parkedbike' : 'parkedscooter') as any, gx: sp.gx, gy: sp.gy, w: 1, d: 1, solid: false, action: { id: k === 'bike' ? 'tripbike' : 'tripscooter', label: k === 'bike' ? 'Urcă pe bicicletă' : 'Urcă pe scuter', icon: k === 'bike' ? '🚲' : '🛵' } }); void v;
     }
     if (this.chapter >= 2) {
       { const at = this.vehAt('tractor'), sp = this.parkSpot('tractor', at); FURNITURE.push({ id: at === 'forest' ? 'f-tractor' : 'h-tractor', type: 'tractor' as any, gx: sp.gx, gy: sp.gy, w: 2, d: 1, solid: true, action: at === 'forest' ? { id: 'gohome', label: 'Înapoi acasă cu tractorașul', icon: '🚜' } : { id: 'forest', label: 'Spre pădure cu tractorașul', icon: '🚜' } }); }
@@ -379,6 +414,7 @@ export class WorldScene implements Scene {
     // gramada de lemne (cheresteaua le cumpara): treaba lui Dudu, inca din Capitolul 1
     // stiva de lemne din curte (doar arata cate aveti; se vand la cheresteaua de pe drum)
     if (this.chapter >= 1) FURNITURE.push({ id: 'h-wood', type: 'logpile' as any, gx: 17, gy: 15, w: 1, d: 1, solid: true, action: { id: 'woodpile', label: 'Stiva de lemne', icon: '🪵' } });
+    Story.place(this, f => FURNITURE.push(f));
     for (const key of Object.keys(this.w.plots ?? {})) { const [x, y] = key.split(',').map(Number); FURNITURE.push({ id: 'plot:' + key, type: 'soilplot', gx: x, gy: y, w: 1, d: 1, solid: false, action: { id: 'plot', label: 'Răzor', icon: '🌱' } }); }
     for (const p of this.w.placed ?? []) {
       const it = CATALOG.find(c => c.type === p.type); if (!it) continue;
@@ -454,7 +490,8 @@ export class WorldScene implements Scene {
     for (const p of [this.me, this.partner]) { this.w.chars[p.id].gx = p.gx; this.w.chars[p.id].gy = p.gy; }
     (this.w.chars[this.myId] as any).area = this.area;
     if (this.partner.control !== 'remote') (this.w.chars[this.partner.id] as any).area = this.aiArea;
-    this.w.ts = Date.now();
+    // salvarea poarta ora ultimei schimbari reale (nu ora de acum): un telefon care doar a stat nu mai suprascrie progresul celuilalt
+    this.w.mod ??= this.w.ts ?? Date.now(); this.w.ts = this.w.mod;
     const json = JSON.stringify(this.w);
     this.net.saveWorld(json, this.w.ts, force);
     this.dirty = false;
@@ -584,7 +621,11 @@ export class WorldScene implements Scene {
   actionFor(f: Furn): { id: string; label: string; icon: string } | null {
     if (!f.action) return null;
     // vehiculul cu care partenerul e pe drum: nu e aici de fapt (se vede doar dupa ce il parcheaza)
-    { const k = f.id === 'h-bike' || f.id === 'v-bike' ? 'bike' : f.id === 'h-scooter' || f.id === 'v-scooter' ? 'scooter' : f.id === 'h-tractor' || f.id === 'f-tractor' ? 'tractor' : '';
+    // podul: dupa ce e reparat nu mai are actiune (inainte scria „Podul e rupt” si dupa reparare)
+    if (f.id === 'w-bridge-gap') return this.bridgeFixed() ? null : { id: 'st-bridge', label: this.chapter >= BRIDGE_CHAPTER ? 'Ajută la Podul Mare' : 'Podul e rupt', icon: '🌉' };
+    // cererea in casatorie: pe banca sau la foisor, cu inelul si cu partenerul langa tine
+    if (f.action.id === 'bench' && Story.canPropose(this)) return { id: 'st-propose', label: this.myId === 'dudu' ? 'Cere-o de soție 💍' : 'Dudu are o surpriză… 💍', icon: '💍' };
+    { const k = /-bike$/.test(f.id) ? 'bike' : /-scooter$/.test(f.id) ? 'scooter' : /-tractor$/.test(f.id) ? 'tractor' : '';
       if (k && ((this.partner.riding && this.partner.rideKind === k && !this.partner.board && this.sameArea()) || (this.ride && this.ride.kind === k))) return null; }
     if (f.id === 'toilet' && this.w.furn.clogged) return { id: 'unclog', label: 'Desfundă toaleta!', icon: '🪠' };
     if (f.id === 'stand') {
@@ -624,9 +665,11 @@ export class WorldScene implements Scene {
     // cheresteaua: tu intri in curtea ei (cantarul, comenzile, gaterul); partenerul AI duce lemnele la cantar
     if (act.id === 'sawmill') { if (pawn === this.me) { if (!this.closed('w-sawmill')) this.startCustom('sawmill'); } else if ((this.w.res?.wood ?? 0) > 5 + 2) this.startActivity(pawn, ACTIVITIES.sellwood, f); return; }
     if (act.id === 'woodpile') { if (pawn === this.me) this.hud.toast(`🪵 Stiva voastră: ${nWood(this.w.res?.wood ?? 0)}${(this.w.res?.plank ?? 0) ? ` și ${nPlanks(this.w.res?.plank ?? 0)}` : ''}. Le vindeți la Cheresteaua lui Nea Vasile, pe drum spre lac (azi ${sawPrice(this.w.day, this.myId)} lei lemnul)`); return; }
-    if (act.id === 'roadblock') { if (pawn === this.me) this.hud.toast(this.chapter >= 4 ? '🏙️ Drumul spre oraș e deschis' : '🚧 Drumul spre oraș e închis (lucrări). Se deschide mai târziu în poveste'); return; }
+    if (act.id === 'roadblock') { if (pawn === this.me) this.hud.toast(this.cityOpen() ? '🏙️ Drumul spre oraș e deschis' : '🚧 Drumul spre oraș e închis (lucrări). Se deschide în Capitolul 6'); return; }
     if (act.id === 'forestgate') { if (pawn === this.me) this.hud.toast(this.chapter >= 2 ? '🌲 Poarta pădurii e deschisă' : '🔒 Pădurea se deschide în Capitolul 2'); return; }
     // casele satenilor: bati la usa si vorbesti cu ei (acasa), chiar daca nu sunt pe strada
+    if (act.id === 'st-propose') { if (pawn === this.me) this.playScene('propose', true); return; }
+    if (act.id.startsWith('st-')) { if (pawn === this.me) Story.action(this, act.id, f); return; }
     if (act.id.startsWith('v-visit-') && pawn === this.me) { const vid = act.id.slice(8); this.me.actor.play('wave'); Sfx.play('doorbell', { vol: 0.6 }); TownUI.openVillager(this, vid); return; }
     if (act.id.startsWith('v-') && pawn === this.me) { this.villageAction(act.id, f); return; }
     if ((act.id.startsWith('c-') || act.id === 'a-exit') && pawn === this.me) { this.cityAction(act.id, f); return; }
@@ -874,7 +917,7 @@ export class WorldScene implements Scene {
     } else if (id === 'harvest' && p.crop && p.prog >= 1) {
       const c = CROPS[p.crop]; const n = c.yield + (p.fert ? 1 : 0);
       this.op({ k: 'res', res: c.id, delta: n }); this.op({ k: 'plot', key, plot: { crop: null, prog: 0, wetUntil: 0, fert: 0 } });
-      this.op({ k: 'stat', key: 'harvested', delta: 1 }); this.op({ k: 'stat', key: c.cat === 'veg' ? 'vegTotal' : 'flowerTotal', delta: n });
+      this.op({ k: 'stat', key: 'harvested', delta: 1 }); this.op({ k: 'stat', key: c.cat === 'veg' ? 'vegTotal' : 'flowerTotal', delta: n }); this.op({ k: 'stat', key: 'harv-' + c.id, delta: n });
       say(`+${n} ${c.name}`); this.fx.hearts(P.x, P.y, 3);
     }
   }
@@ -939,6 +982,25 @@ export class WorldScene implements Scene {
    * Salvarile de dinainte de lumea mare tineau pozitia in coordonatele zonei (padure / sat / oras);
    * acum toate sunt in coordonatele lumii. O singura data: mutam pozitiile la locul lor din lume.
    */
+  /**
+   * v1.7: capitolele urmeaza viziunea (9): Casa, Curtea, Padurea, PODUL, Satul renaste, FERMA, Drumul spre oras,
+   * Afacerea din oras, Nunta. Salvarile vechi se muta fara sa piarda nimic: vechiul Sat (3) devine 4, vechiul Oras (4) devine 6;
+   * cine ajunsese in sat are podul reparat si proiectele satului care existau deja (brutaria, scoala, piata, parcul).
+   */
+  migrateChapters() {
+    const st = this.w.stats;
+    if (st.chapV === 2 || st.chapter === undefined) { st.chapV = 2; return; }
+    const old = st.chapter;
+    if (old >= 3) {
+      st.chapter = old === 3 ? 4 : old >= 4 ? 6 : old;
+      st.bridgeFixed = 1;
+      for (const p of ['bakery', 'school', 'market', 'park']) st['proj-' + p] = 1;
+      st.projectsDone = Math.max(st.projectsDone ?? 0, 4);
+      for (const g of ['brwood', 'brplank', 'brstone', 'brmeal', 'brmoney', 'brfix']) st['goal-' + g] = 1;
+      if (old >= 4) for (const g of ['parcel1', 'plow', 'sow', 'harvestF', 'hens', 'eggs', 'cow', 'cheese', 'bees', 'hire1']) st['goal-' + g] = 1;
+    } else if ((st.bridgeFixed ?? 0) > 0) { /* podul reparat inainte (vechiul final de padure): ramane */ }
+    st.chapV = 2;
+  }
   migrateWorld() {
     const w = this.w as WorldState & { worldV?: number };
     if (w.worldV === 2) return;
@@ -985,7 +1047,7 @@ export class WorldScene implements Scene {
     if (r && id !== 'country') this.hud.regionBanner(r.icon, r.name);
   }
   /** cum sunt blocate drumurile acum (poarta padurii, podul, bariera spre oras) */
-  bridgeFixed() { return this.chapter >= 3 || (this.w.stats.bridgeFixed ?? 0) > 0; }
+  bridgeFixed() { return this.chapter > BRIDGE_CHAPTER || (this.w.stats.bridgeFixed ?? 0) > 0; }
   worldBlocks() { return this.space === 'world' ? chapterBlocks(this.chapter, this.bridgeFixed()) : []; }
   spawnCritters() {
     const kinds: CritterKind[] = ['deer', 'squirrel', 'hedgehog', 'bird', 'squirrel', 'deer', 'hedgehog'];
@@ -1054,7 +1116,7 @@ export class WorldScene implements Scene {
       // departe de tine nu se misca (nu se vede oricum): economisim bateria
       const md = Math.hypot(this.me.gx - v.x, this.me.gy - v.y);
       if (md > 45) continue;
-      const PATHS = v.region === 'city' ? CITY_PATHS : VILLAGE_PATHS;
+      const PATHS = v.paths ?? (v.region === 'city' ? CITY_PATHS : VILLAGE_PATHS);
       v.t -= dt; v.greetT -= dt;
       if (v.t <= 0 && Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1) { v.t = 2 + Math.random() * 5; const p = PATHS[Math.floor(Math.random() * PATHS.length)]; const tx = p.x + (Math.random() - 0.5) * 1.2, ty = p.y + (Math.random() - 0.5) * 0.8; if (!this.nav.hits(tx, ty)) { v.tx = tx; v.ty = ty; } }
       const dx = v.tx - v.x, dy = v.ty - v.y, d = Math.hypot(dx, dy);
@@ -1073,15 +1135,17 @@ export class WorldScene implements Scene {
   villageAction(id: string, f: Furn) {
     const st = this.w.stats;
     if (this.closed(id)) return;
+    // satul renaste: cladirile inchise pana la proiectul lor de la Primarie
+    { const cl = Story.villageClosed(this, id); if (cl) { this.hud.toast(`🔒 ${cl.icon} ${cl.name} e închis${cl.id === 'school' || cl.id === 'market' ? 'ă' : ''} de ani de zile. Îl redeschideți prin proiectul de la Primărie`); Sfx.play('bad'); return; } }
     switch (id) {
       case 'v-grocery': Town.villageGrocery(this); break;
       case 'v-post': TownUI.openJob(this, 'post'); break;
-      case 'v-bakery': this.choice('🥖 Brutăria', 'Cumperi pâine sau lucrezi o tură?', [['🛒', 'Cumpără pâine', () => Town.villageBakeryShop(this)], ['👩‍🍳', 'Lucrează ca brutar' + (this.myId === 'bubu' ? 'iță' : ''), () => TownUI.openJob(this, 'bakery')]]); break;
+      case 'v-bakery': this.choice('🥖 Brutăria', 'Cumperi pâine sau lucrezi o tură?', [['🛒', 'Cumpără pâine', () => Town.villageBakeryShop(this)], ['👩‍🍳', 'Lucrează ca brutar' + (this.myId === 'bubu' ? 'iță' : ''), () => TownUI.openJob(this, 'bakery')], ...(this.chapter >= WEDDING_CHAPTER ? [['🎂', 'Tortul de nuntă (300 lei)', () => Story.buyCake(this)] as [string, string, () => void]] : [])]); break;
       case 'v-clinic': this.choice('🩺 Dispensarul satului', 'Doctorița Rita vă îngrijește și vă dă medicamente.', [['🩺', `Consult (vindecă boala) · ${PRICE.consultVillage} lei`, () => { const e = Town.cure(this, PRICE.consultVillage); this.hud.toast(e ?? '🩺 Gata, sănătoși! Să nu mai răciți 💕'); Sfx.play(e ? 'bad' : 'good'); }], ['💊', 'Farmacia', () => Town.pharmacy(this, false)]]); break;
       case 'v-board': TownUI.openBoard(this); break;
       case 'v-clothes': this.hud.openClothes('sat'); break;
       case 'v-market': Town.villageMarket(this); break;
-      case 'v-hall': this.hud.openHall(); break;
+      case 'v-hall': Story.openHallMenu(this); break;
       case 'v-home': this.boardBest(); break;
       case 'v-bus': {
         this.askCompany('bus', 'Autobuzul spre oraș', '🚌', duo => {
@@ -1090,7 +1154,7 @@ export class WorldScene implements Scene {
           this.op({ k: 'money', delta: -cost }); this.hud.toast(`🎫 ${duo ? 'Două bilete' : 'Un bilet'} (${cost} lei) — ${duo ? 'urcați' : 'urcă'} în autobuz!`); this.startRide('bus', 'city', duo);
         }); break;
       }
-      case 'v-church': this.hud.toast(new Date().getDay() === 0 ? '⛪ E duminică: clopotele bat de sărbătoare 🔔' : '⛪ Biserica satului. Clopotele bat la 8, 12 și 18 🔔'); break;
+      case 'v-church': Story.openChurch(this); break;
       case 'v-fountain':
         if ((this.w.money ?? 0) < 1) { this.hud.toast('N-ai nicio monedă 🙂'); return; }
         this.op({ k: 'money', delta: -1 }); this.op({ k: 'need', who: this.myId, need: 'love', delta: 6 }); Sfx.play('coin'); Sfx.play('splash', { delay: 0.6, vol: 0.4, rate: 1.6 });
@@ -1135,12 +1199,12 @@ export class WorldScene implements Scene {
         }); break;
       }
       case 'c-boutique': this.hud.openClothes('oras'); break;
-      case 'c-super': Town.citySuper(this); break;
+      case 'c-super': this.choice('🛒 Supermarketul', 'Cumpărați sau vindeți produsele de la fermă?', [['🛒', 'Cumpără', () => Town.citySuper(this)], ['🧺', 'Vinde produsele de la fermă', () => Story.sellFarmCity(this)]]); break;
       case 'c-cafe': TownUI.openJob(this, 'cafe'); break;
       case 'c-office': TownUI.openJob(this, 'office'); break;
       case 'c-bank': TownUI.openBank(this); break;
       case 'c-uni': TownUI.openUni(this); break;
-      case 'c-mall': Town.cityMall(this); break;
+      case 'c-mall': if (this.chapter >= WEDDING_CHAPTER) this.choice('🛍️ Mall-ul', 'Mobilă pentru apartament sau bijuterii?', [['🛋️', 'Mobilă', () => Town.cityMall(this)], ['💍', 'Bijuterii: inelul de logodnă (800 lei)', () => Story.buyRing(this)]]); else Town.cityMall(this); break;
       case 'c-gara': this.hud.toast('🚂 Gara orașului: trenurile spre alte orașe pornesc mai târziu în poveste'); break;
       case 'c-hospital': this.choice('🏥 Spitalul orașului', 'Doctori, farmacie și locuri de muncă.', [['🩺', `Consult (vindecă boala) · ${PRICE.consultCity} lei`, () => { const e = Town.cure(this, PRICE.consultCity); this.hud.toast(e ?? '🩺 Sănătoși tun! 💪'); Sfx.play(e ? 'bad' : 'good'); }], ['💊', 'Farmacia', () => Town.pharmacy(this, true)], ['🩹', 'Lucrează la spital', () => TownUI.openJob(this, 'nurse')]]); break;
       case 'a-aquarium': this.decorUse('aquarium'); break;
@@ -1251,7 +1315,7 @@ export class WorldScene implements Scene {
       if (score > 0) this.op({ k: 'hearts', delta: Math.round(score * 3) });
     });
     this.minigame = { id: mini, obj };
-    this.hud.setMinigame(true);
+    this.hud.setMinigame(true, mini === 'cutscene'); // in scenele mari nu apar mesaje peste ele
   }
 
   /** urci pe vehiculul parcat: de aici alegi Porneste singur / Cheama partenerul / Coboara */
@@ -1265,11 +1329,11 @@ export class WorldScene implements Scene {
       this.hud.toast(`💕 Ai urcat în spate! Așteaptă să pornească ${pa.actor.spec.name}`); this.hud.setRide('passenger'); return;
     }
     if (this.me.board) return;
-    if (!this.bridgeFixed()) { this.hud.toast('🌉 Podul Mare spre sat e rupt… încă nu se poate trece'); Sfx.play('bad'); return; }
+    // cu podul rupt poti merge totusi pana la cherestea sau la lac (destinatiile de dincoace de pod)
     this.stopActivity(this.me); this.me.path = [];
     this.me.gx = f.gx + 0.5; this.me.gy = f.gy + 0.55; this.me.z = 0;
     this.me.riding = true; this.me.rideKind = kind; this.me.board = true;
-    this.me.actor.flip = f.id.startsWith('v-') ? -1 : 1; // spre drum: acasa satul e la dreapta, din sat casa e la stanga
+    this.me.actor.flip = f.id.startsWith('h-') ? 1 : -1;
     Sfx.play(kind === 'scooter' ? 'car_start' : 'bike_bell', { vol: 0.6, rate: kind === 'scooter' ? 1.3 : 1 });
     this.hud.setRide('driver');
   }
@@ -1292,7 +1356,62 @@ export class WorldScene implements Scene {
   rideStart() {
     if (!this.me.board || !this.me.rideKind) return;
     const kind = this.me.rideKind;
-    this.startRide(kind, this.vehAt(kind) === 'village' ? 'home' : 'village', !!this.partner.passenger);
+    this.rideTo(this.vehAt(kind) === 'home' ? 'village' : 'home');
+  }
+  /** orasul e deschis (bariera de pe podet s-a ridicat)? */
+  cityOpen() { return this.chapter >= CITY_CHAPTER; }
+  /** se poate ajunge acolo pe drum? (podul rupt, bariera spre oras) */
+  canReach(dest: string) {
+    const d = DEST_BY_ID[dest]; if (!d) return false;
+    if (d.x > 64 && !this.bridgeFixed()) return false;
+    if (d.x > 150 && !this.cityOpen()) return false;
+    return true;
+  }
+  /** de ce nu se poate ajunge (sau null) */
+  reachWhy(dest: string) { const d = DEST_BY_ID[dest]; if (!d) return 'Nu știu drumul'; if (d.x > 64 && !this.bridgeFixed()) return '🌉 Podul Mare e rupt'; if (d.x > 150 && !this.cityOpen()) return '🚧 Drumul spre oraș e închis'; return null; }
+  /** pornesti cu bicicleta / scuterul spre o destinatie de pe drum */
+  rideTo(dest: string) {
+    if (!this.me.board || !this.me.rideKind || this.ride) return;
+    const why = this.reachWhy(dest); if (why) { this.hud.toast(why); Sfx.play('bad'); return; }
+    this.startRide(this.me.rideKind, dest, !!this.partner.passenger);
+  }
+  /** destinatia aleasa pe harta mare: cu vehiculul (daca esti pe el sau e langa tine) sau pe jos */
+  mapGo(dest: string) {
+    const why = this.reachWhy(dest); if (why) { this.hud.toast(why); Sfx.play('bad'); return; }
+    if (this.ride) { if (this.ride.kind === 'bike' || this.ride.kind === 'scooter') this.rideStopAt(dest); return; }
+    if (this.me.board) { this.rideTo(dest); return; }
+    const f = this.nearVehicle(5);
+    if (f) { this.boardVehicle((f.type as string) === 'parkedscooter' ? 'scooter' : 'bike', f); if (this.me.board) this.rideTo(dest); return; }
+    const d = DEST_BY_ID[dest], path = this.nav.path(this.me.gx, this.me.gy, d.x, d.y + 0.6, 120000);
+    if (!path) { this.hud.toast('🚶 Nu găsesc drumul pe jos de aici'); return; }
+    this.stopActivity(this.me); this.me.path = path; this.me.pendingInteract = null;
+    this.hud.toast(`🚶 Pe jos spre ${d.icon} ${d.name}${(this.w.stats.bike ?? 0) || (this.w.stats.scooter ?? 0) ? ' (cu bicicleta sau scuterul e mai repede)' : ''}`);
+  }
+  /** ⏸ / ▶ pe drum */
+  ridePause() { const r = this.ride; if (!r) return; r.paused = !r.paused; Sfx.play(r.paused ? 'click' : (r.kind === 'bike' ? 'bike_bell' : 'car_start'), { vol: 0.5, rate: r.kind === 'scooter' ? 1.3 : 1 }); }
+  /** ↩ intoarce: inapoi de unde ai plecat */
+  rideBack() {
+    const r = this.ride; if (!r || !r.from || r.kind === 'bus' || r.kind === 'taxi') return;
+    this.rideRetarget(r.from, r.dest);
+  }
+  /** opresti la alta destinatie de pe drum (cea pe langa care treci) */
+  rideStopAt(dest: string) { const r = this.ride; if (!r) return; this.rideRetarget(dest, r.from); }
+  private rideRetarget(dest: string, from?: string) {
+    const r = this.ride!, me = this.me, line = r.kind === 'tractor' ? FOREST_TRACK : MAIN_ROAD;
+    const d = DEST_BY_ID[dest]; if (!d && r.kind !== 'tractor') return;
+    const stop = r.kind === 'tractor' ? (dest === 'forest' ? STOPS.forestTractor : STOPS.homeTractor) : { x: d.x, y: d.y };
+    const park = this.parkSpot(r.kind, dest), end = { x: park.gx + park.w / 2, y: park.gy + 0.55 };
+    const s0 = projectOn(line, { x: me.gx, y: me.gy }), s1 = projectOn(line, stop);
+    r.path = [{ x: me.gx, y: me.gy }, ...subLine(line, s0, s1), end]; r.len = polyLen(r.path); r.s = 0; r.v = Math.min(r.v, 2); r.dest = dest; r.from = from; r.paused = false;
+    Sfx.play('whoosh', { vol: 0.4 });
+  }
+  /** destinatia urmatoare pe langa care treci (pentru „Oprește la…”) */
+  rideNextStop(): string | null {
+    const r = this.ride; if (!r || (r.kind !== 'bike' && r.kind !== 'scooter')) return null;
+    const me = { x: this.me.gx, y: this.me.gy }, sMe = projectOn(MAIN_ROAD, me), sEnd = projectOn(MAIN_ROAD, DEST_BY_ID[r.dest] ?? me);
+    let best: string | null = null, bd = 1e9;
+    for (const d of DESTS) { if (d.id === r.dest || !this.canReach(d.id)) continue; const s = projectOn(MAIN_ROAD, d); const ahead = sEnd > sMe ? s - sMe : sMe - s; const before = sEnd > sMe ? s < sEnd : s > sEnd; if (ahead > 1 && ahead < 16 && before && ahead < bd) { bd = ahead; best = d.id; } }
+    return best;
   }
   rideCall() {
     const pa = this.partner, kind = this.me.rideKind ?? 'bike';
@@ -1342,13 +1461,15 @@ export class WorldScene implements Scene {
     const line = kind === 'tractor' ? FOREST_TRACK : MAIN_ROAD;
     const stop = kind === 'tractor' ? (dest === 'forest' ? STOPS.forestTractor : STOPS.homeTractor)
       : kind === 'bus' ? (dest === 'city' ? STOPS.cityBus : STOPS.villageBus)
-      : dest === 'village' ? STOPS.village : STOPS.home;
+      : kind === 'taxi' ? STOPS.home
+      : DEST_BY_ID[dest] ? { x: DEST_BY_ID[dest].x, y: DEST_BY_ID[dest].y } : dest === 'village' ? STOPS.village : STOPS.home;
+    const fromDest = kind === 'bike' || kind === 'scooter' ? this.vehAt(kind) : kind === 'tractor' ? (dest === 'forest' ? 'home' : 'forest') : undefined;
     const s0 = projectOn(line, from), s1 = projectOn(line, stop);
     const park = kind === 'bike' || kind === 'scooter' || kind === 'tractor' ? this.parkSpot(kind, dest) : null;
     const end = park ? { x: park.gx + park.w / 2, y: park.gy + 0.55 } : stop;
     const path = [from, ...subLine(line, s0, s1), end];
     this.stopActivity(me); me.path = []; me.board = false; me.riding = true; me.rideKind = kind; me.passenger = false;
-    this.ride = { kind, path, len: polyLen(path), s: 0, v: 0, dest, duo, t: 0 };
+    this.ride = { kind, path, len: polyLen(path), s: 0, v: 0, dest, duo, t: 0, from: fromDest };
     this.hud.closeMenus(); this.hud.setRide('riding');
     const pa = this.partner;
     if (!duo && pa.control !== 'remote' && pa.follow && this.sameArea() && Math.hypot(pa.gx - me.gx, pa.gy - me.gy) < 6) { duo = true; this.ride.duo = true; }
@@ -1365,7 +1486,8 @@ export class WorldScene implements Scene {
     r.t += dt;
     // porneste usor, franeaza la capat
     const left = r.len - r.s;
-    r.v = Math.min(vmax, r.v + vmax * dt / 1.4, Math.max(1.2, Math.sqrt(2 * (vmax / 1.6) * Math.max(0, left))));
+    if (r.paused) { r.v = Math.max(0, r.v - vmax * dt * 1.5); } // ⏸ franeaza si sta pe loc
+    else r.v = Math.min(vmax, r.v + vmax * dt / 1.4, Math.max(1.2, Math.sqrt(2 * (vmax / 1.6) * Math.max(0, left))));
     r.s = Math.min(r.len, r.s + r.v * dt);
     const p = pointAt(r.path, r.s);
     me.gx = p.x; me.gy = p.y; me.z = 0;
@@ -1378,11 +1500,12 @@ export class WorldScene implements Scene {
     const r = this.ride; if (!r) return;
     this.ride = null;
     const me = this.me, pa = this.partner;
+    if (r.dest === 'field') { me.riding = false; me.board = false; me.fieldOp = undefined; me.actor.moving = false; this.hud.setRide(null); if (this.nav.hits(me.gx, me.gy)) me.gy = Math.ceil(me.gy) + 0.6; const d = this.fieldDone; this.fieldDone = null; d?.(); this.sendCharSync(); return; }
     me.riding = false; me.board = false; me.actor.moving = false;
     if (r.kind === 'bike' || r.kind === 'scooter' || r.kind === 'tractor') this.op({ k: 'veh', kind: r.kind, at: r.dest });
     this.syncPlaced();
     // cobori langa vehicul (sau la statie)
-    const near = FURNITURE.find(f => ['h-bike', 'v-bike', 'h-scooter', 'v-scooter', 'h-tractor', 'f-tractor', 'v-bus', 'c-bus'].includes(f.id) && Math.hypot(f.gx + f.w / 2 - me.gx, f.gy + f.d / 2 - me.gy) < 3);
+    const near = FURNITURE.find(f => (/-(bike|scooter|tractor)$/.test(f.id) || ['v-bus', 'c-bus'].includes(f.id)) && Math.hypot(f.gx + f.w / 2 - me.gx, f.gy + f.d / 2 - me.gy) < 3);
     const spot = near ? this.nav.standSpot(near.gx, near.gy, near.w, near.d, me.gx, me.gy + 1) : null;
     if (spot) { me.gx = spot.x; me.gy = spot.y; } else if (this.nav.hits(me.gx, me.gy)) { me.gy += 0.8; }
     if (pa.passenger && pa.control !== 'remote') { pa.passenger = false; const q = this.nav.standSpot(Math.floor(me.gx), Math.floor(me.gy), 1, 1, me.gx + 1, me.gy); pa.gx = q?.x ?? me.gx + 0.6; pa.gy = q?.y ?? me.gy + 0.3; pa.z = 0; }
@@ -1649,6 +1772,9 @@ export class WorldScene implements Scene {
     this.hud.setMinigame(true);
   }
   onMiniEvent(_who: CharId, data: unknown) {
+    // scenele mari pornite de partener: le vezi si tu, in acelasi timp (lumea se schimba la el si vine prin op-uri)
+    const sc = (data as { scene?: string } | null)?.scene;
+    if (sc) { if (this.minigame) this.minigame.obj.abort?.(); this.sceneId = sc; this.sceneRemote = true; this.startCustom('cutscene'); return; }
     if (this.minigame?.obj.net) this.minigame.obj.net(data);
     else { this.miniInbox.push(data); if (this.miniInbox.length > 20) this.miniInbox.shift(); }
   }
@@ -1719,6 +1845,7 @@ export class WorldScene implements Scene {
       }
       this.checkGoals();
       Town.dailyTick(this);
+      Story.daily(this);
       this.growPlots();
       if (this.isHost && this.partnerOnline) {
         this.netTick = (this.netTick + 1) % 6;
@@ -1793,11 +1920,12 @@ export class WorldScene implements Scene {
       if (r !== this.area) { const prev = this.area; this.area = r; this.onRegion(r, prev); }
       if (this.blockKey() !== this.navKey) this.syncPlaced(); // s-a deschis poarta padurii / podul / drumul spre oras
     }
-    (globalThis as any).__bridgeFixed = this.bridgeFixed(); (globalThis as any).__forestOpen = this.chapter >= 2; (globalThis as any).__cityOpen = this.chapter >= 4;
+    (globalThis as any).__bridgeFixed = this.bridgeFixed(); (globalThis as any).__forestOpen = this.chapter >= 2; (globalThis as any).__cityOpen = this.cityOpen();
     this.updateRide(dt);
     if (this.space === 'world') updateCars(this.cars, dt, this.time, [{ x: this.me.gx, y: this.me.gy }, ...(this.sameArea() ? [{ x: this.partner.gx, y: this.partner.gy }] : []), ...this.walkers.map(v => ({ x: v.x, y: v.y }))]);
     this.updateCritters(dt);
     this.updateWalkers(dt);
+    Story.tick(this, dt);
     (globalThis as any).__stand = { broken: !!this.w.furn.standBroken, open: !!this.w.furn.standOpen };
     (globalThis as any).__hour = this.w.minutes / 60;
     (globalThis as any).__villageOwned = { florarie: !!this.w.stats.florarie, workshop: !!this.w.stats.workshop, apartment: !!this.w.stats.apartment };
@@ -2117,7 +2245,45 @@ export class WorldScene implements Scene {
   }
 
   // ------------------------------------------------------------------ desen (in render.ts)
-  draw(ctx: CanvasRenderingContext2D) { drawWorld(this, ctx); }
+  draw(ctx: CanvasRenderingContext2D) { drawWorld(this, ctx); if (this.space === 'world' && !this.minigame) drawSeason(ctx, this.game.w, this.game.h, this.time, Story.seasonOf(this.w.day).id, this.w.minutes, Story.hasEvent(this, 'revelion')); }
+  // ------------------------------------------------------------------ scenele mari (podul, cererea, nunta, targul, camionul)
+  sceneId = ''; sceneRemote = false; pendingPay = 0; pendingClient = '';
+  /** porneste o scena animata; both = o vede si partenerul (pe telefonul lui) in acelasi timp */
+  playScene(id: string, both: boolean) {
+    if (this.minigame) return;
+    this.sceneId = id; this.startCustom('cutscene');
+    if (both && this.partnerOnline) this.net.sendEvent({ t: 'mini', who: this.myId, data: { scene: id } });
+  }
+  /** cand se termina scena (pe telefonul care a pornit-o): ce se schimba in lume */
+  sceneDone(id: string) {
+    if (id === 'bridge') Story.bridgeDone(this);
+    if (id === 'propose') Story.proposed(this);
+    if (id === 'wedding') Story.weddingDone(this);
+    if (id === 'shopbuilt') Story.shopBuiltDone(this);
+    if (id === 'fair') Story.fairDone(this);
+    if (id === 'truck') Story.truckDone(this);
+    this.syncPlaced(); this.hud.refreshGoal();
+  }
+  /** lucrul pe camp: tractorul cu utilajul merge singur pe randuri, peste toata parcela */
+  fieldDone: (() => void) | null = null;
+  startFieldRide(P: { x0: number; y0: number; x1: number; y1: number }, mach: string, done: () => void) {
+    if (this.ride || this.travel) return;
+    const path: Pt[] = [{ x: this.me.gx, y: this.me.gy }];
+    for (let y = P.y0 + 0.5, i = 0; y < P.y1; y += 1.5, i++) { path.push({ x: i % 2 ? P.x1 - 0.5 : P.x0 + 0.5, y }); path.push({ x: i % 2 ? P.x0 + 0.5 : P.x1 - 0.5, y }); }
+    this.stopActivity(this.me); this.me.path = []; this.me.board = false; this.me.riding = true; this.me.rideKind = 'tractor'; this.me.fieldOp = mach;
+    this.ride = { kind: 'tractor', path, len: polyLen(path), s: 0, v: 0, dest: 'field', duo: false, t: 0 };
+    this.fieldDone = done; this.hud.closeMenus(); this.hud.setRide('riding'); Sfx.play('car_start', { vol: 0.6, rate: 0.8 });
+  }
+  /** angajatii se vad pe la locul lor de munca (acasa, la ferma, la taraba) */
+  syncWalkers() {
+    this.walkers = this.walkers.filter(v => !v.emp);
+    const spots: Record<string, Pt[]> = { garden: [{ x: 10, y: 15 }, { x: 12, y: 13.5 }], animals: [{ x: 27, y: 10 }, { x: 33, y: 11 }], stall: [{ x: 8.5, y: 23.3 }, { x: 9.5, y: 23.3 }], florist: [{ x: 124.5, y: 29 }, { x: 124.5, y: 31 }], wood: [{ x: 15, y: 16 }, { x: 18, y: 17 }], tractor: [{ x: 18, y: -2 }, { x: 20, y: 28 }], shop: [{ x: 233, y: 38.5 }, { x: 236, y: 38.5 }] };
+    Story.staffOf(this).forEach((e, i) => {
+      const P = spots[e.role] ?? spots.garden, kinds = Object.keys(NPC_SPECS), a = new Actor('bubu', this.fx, NPC_SPECS[kinds[(i * 3 + e.name.length) % kinds.length]]); a.scale = ACTOR_SCALE * 0.92;
+      a.outfit = { head: e.role === 'tractor' || e.role === 'garden' ? 'palarie' : 'none', face: 'none', neck: 'none', body: e.role === 'shop' || e.role === 'florist' ? 'rochita' : 'salopeta' } as any;
+      this.walkers.push({ a, x: P[0].x, y: P[0].y, tx: P[0].x, ty: P[0].y, t: Math.random() * 3, greetT: 0, region: 'village', name: e.name, emp: true, paths: P } as any);
+    });
+  }
 }
 
 export { NEEDS, NEED_INFO, TW, TH };

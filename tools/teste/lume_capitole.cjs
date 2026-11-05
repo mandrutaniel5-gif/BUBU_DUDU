@@ -18,12 +18,12 @@ const { chromium } = require('playwright');
   await p.screenshot({ path: 'mig.png' });
   // 2) capitolele: obstacolele
   const can = (x0, y0, x1, y1) => p.evaluate(([x0, y0, x1, y1]) => !!game.scene.nav.path(x0, y0, x1, y1, 40000), [x0, y0, x1, y1]);
-  for (const ch of [1, 2, 3, 4]) {
-    await p.evaluate(ch => { const s = game.scene; s.w.stats.chapter = ch; s.syncPlaced(); }, ch);
+  for (const ch of [1, 2, 3, 4, 6]) { // v1.7: padurea din 2, podul reparat din 4 (Satul renaste), orasul din 6
+    await p.evaluate(ch => { const s = game.scene; s.w.stats.chapter = ch; s.w.stats.bridgeFixed = 0; s.syncPlaced(); }, ch);
     console.log(`cap ${ch}: padure`, await can(5.5, 13, 19.5, -14), ' sat', await can(30, 25, 113, 25), ' oras', await can(120, 25, 195, 25));
   }
   // 3) AI-ul "Vino cu mine": te urmeaza pe drum
-  await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 4; s.syncPlaced(); s.me.gx = 6; s.me.gy = 24.6; s.partner.gx = 7; s.partner.gy = 24.6; s.partner.activity = null; s.toggleFollow(); });
+  await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 6; s.syncPlaced(); s.me.gx = 6; s.me.gy = 24.6; s.partner.gx = 7; s.partner.gy = 24.6; s.partner.activity = null; s.toggleFollow(); });
   await p.evaluate(() => { const s = game.scene; s.walkTo(28, 25); });
   await p.waitForTimeout(12000);
   console.log('AI urmeaza:', await p.evaluate(() => { const s = game.scene; return [s.me.gx.toFixed(1), s.me.gy.toFixed(1), s.partner.gx.toFixed(1), s.partner.gy.toFixed(1), s.partner.follow]; }));

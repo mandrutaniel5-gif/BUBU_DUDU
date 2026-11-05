@@ -9,7 +9,7 @@ const { chromium } = require('playwright');
   await D.waitForTimeout(3000);
   const pos = p => p.evaluate(() => { const s = game.scene; return { me: [+s.me.gx.toFixed(1), +s.me.gy.toFixed(1), s.area], pa: [+s.partner.gx.toFixed(1), +s.partner.gy.toFixed(1), s.partnerArea(), s.partner.control], ride: s.ride?.kind ?? null, pass: !!s.me.passenger, veh: s.w.veh }; });
   console.log('conectati: D', JSON.stringify(await pos(D)), ' B', JSON.stringify(await pos(B)));
-  for (const p of [D, B]) await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 4; s.w.stats.bike = 1; s.w.stats.scooter = 1; s.w.money = 500; s.syncPlaced(); });
+  for (const p of [D, B]) await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 6; s.w.stats.chapV = 2; s.w.stats.bike = 1; s.w.stats.scooter = 1; s.w.money = 500; s.syncPlaced(); });
   await hide(D); await hide(B);
   // 1) amandoi la poarta; Dudu urca pe scuter, Bubu urca in spate (pe telefonul ei), Dudu porneste
   await D.evaluate(() => { const s = game.scene; s.me.gx = 3.5; s.me.gy = 24.5; });

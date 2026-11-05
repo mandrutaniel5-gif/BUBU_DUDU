@@ -63,6 +63,16 @@ export const MAIN_ROAD: Pt[] = [{ x: -20, y: 25 }, { x: 45, y: 25 }, { x: 45, y:
 /** drumeagul tractorului: de la poarta din spate pana in padure */
 export const FOREST_TRACK: Pt[] = [{ x: 20, y: -3.5 }, { x: 20, y: -12.5 }, { x: 13.6, y: -12.5 }];
 
+/** destinatiile bicicletei si ale scuterului, de-a lungul drumului mare (ordinea de pe drum) */
+export interface Dest { id: string; name: string; icon: string; x: number; y: number; park: { gx: number; gy: number } }
+export const DESTS: Dest[] = [
+  { id: 'home', name: 'Acasă', icon: '🏡', x: 4, y: 25, park: { gx: 4, gy: 23 } },
+  { id: 'sawmill', name: 'Cheresteaua', icon: '🪚', x: 30, y: 25, park: { gx: 25, gy: 22 } },
+  { id: 'lake', name: 'Lacul', icon: '🏞️', x: 80, y: 37, park: { gx: 79, gy: 35 } },
+  { id: 'village', name: 'Satul', icon: '🏘️', x: 101.5, y: 25, park: { gx: 99, gy: 27 } },
+  { id: 'city', name: 'Orașul', icon: '🏙️', x: 196.5, y: 25, park: { gx: 196, gy: 27 } },
+];
+export const DEST_BY_ID: Record<string, Dest> = Object.fromEntries(DESTS.map(d => [d.id, d]));
 /** opririle (pe drum) */
 export const STOPS = {
   home: { x: 4, y: 25 },          // poarta casei, la indicator

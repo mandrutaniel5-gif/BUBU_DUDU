@@ -1,4 +1,8 @@
 // Interfata de joc (DOM peste canvas).
+import { DESTS, DEST_BY_ID } from '../world/layout';
+import * as Story from '../scenes/story';
+import { MACHINES } from '../scenes/story';
+import { FARM_CHAPTER, SHOP_CHAPTER } from '../game/economy';
 import { TOWER_DOOR } from '../world/city';
 import type { WorldScene } from '../scenes/world';
 import { PAIRS } from '../scenes/world';
@@ -44,7 +48,7 @@ export class Hud {
       <div class="card partner">
         <div class="name">${pa.id === 'bubu' ? '🐼' : '🐻'} ${pa.name} <span class="pst">🤖 AI</span></div>
         <div class="pmood"></div>
-        <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="menu">⚙</button><button class="mini-btn" data-a="skipch" title="Capitolul următor (test)">⏭</button><button class="mini-btn" data-a="infinite" title="Resurse infinite (test)">♾️</button></div>
+        <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="menu">⚙</button><button class="mini-btn" data-a="skipch" title="Capitolul următor (test)">⏭</button><button class="mini-btn" data-a="infinite" title="Resurse infinite (test)">♾️</button><button class="mini-btn" data-a="albums" title="Albumele (pești, flori, rețete, haine)">📒</button></div>
       </div>
       <div class="actions">
         <button class="act big" data-a="action"><span class="ic">✋</span><span class="lb">Acțiune</span></button>
@@ -60,7 +64,7 @@ export class Hud {
       <div class="pop pairs hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>Împreună 💞</h4><div class="grid">${PAIRS.filter(p => !p.only || p.only === s.myId).map(p => `<button data-pair="${p.id}"><span>${p.icon}</span>${p.label}</button>`).join('')}<button data-pair="follow" class="pfollow"><span>🚶</span><i>Vino cu mine</i></button></div></div>
       <canvas class="minimap" data-a="map" title="Harta (atinge: toată lumea)"></canvas><button class="mapsize" data-a="mapsize" title="Mărește / micșorează harta">⤢</button>
       <div class="regionbanner hidden"><span class="ri"></span><b class="rn"></b></div>
-      <div class="ridebar hidden"><span class="rt"></span><div class="rbtns"><button data-a="rgo" class="go">▶ Pornește</button><button data-a="rcall">📣 Cheamă</button><button data-a="roff">⬇ Coboară</button></div></div>
+      <div class="ridebar hidden"><span class="rt"></span><div class="rbtns"><span class="rdest"></span><button data-a="rgo" class="go">▶ Pornește</button><button data-a="rpause">⏸ Oprește</button><button data-a="rback">↩ Întoarce</button><button data-a="rstop"></button><button data-a="rcall">📣 Cheamă</button><button data-a="roff">⬇ Coboară</button></div></div>
       <div class="buildbar hidden"><span class="bt"></span><button data-a="bok">✔ Pune</button><button data-a="bend">✖ Gata</button></div>
       <div class="toasts"></div>
       <div class="modal hidden"></div>
@@ -81,6 +85,10 @@ export class Hud {
       if (a === 'bell') s.ringBell();
       if (a === 'build') s.build ? s.endBuild() : this.openBuild();
       if (a === 'rgo') s.rideStart();
+      if (a === 'rpause') s.ridePause();
+      if (a === 'rback') s.rideBack();
+      if (a === 'rstop' && b.dataset.dest) s.rideStopAt(b.dataset.dest);
+      if (b.dataset.go) s.rideTo(b.dataset.go);
       if (a === 'rcall') s.rideCall();
       if (a === 'roff') s.rideOff();
       if (a === 'bok') s.confirmBuild();
@@ -91,6 +99,7 @@ export class Hud {
       if (a === 'inv') this.openInventory();
       if (a === 'bend') s.endBuild();
       if (a === 'menu') { s.save(); (window as any).game.go('menu'); }
+      if (a === 'albums') Story.openAlbums(s);
       // butoanele de test, la vedere (cerute de proprietar): confirmarea se face in fereastra jocului
       if (a === 'skipch') s.choice('⏭️ Capitolul următor', 'Treceți la capitolul următor? Obiectivele de acum se bifează singure (pentru testare).', [['⏭️', 'Da, capitolul următor', () => s.devSkipChapter()], ['✖', 'Nu acum', () => {}]]);
       if (a === 'infinite') { s.setInfinite(!s.infinite); this.toast(s.infinite ? '♾️ Resurse infinite pornite (doar pe acest dispozitiv)' : 'Resurse infinite oprite'); }
@@ -161,8 +170,9 @@ export class Hud {
   openMap() {
     const s = this.s;
     const r = s.space === 'apartment' ? null : REGION_BY_ID[s.area];
-    const m = this.modal(`<h3>🗺️ Harta lumii</h3><p class="sub">${r ? `Ești ${WHERE[s.area]?.replace(' · ', '') ?? r.name}` : 'Ești în apartament (Blocul Lalelelor)'}</p><canvas class="bigmap"></canvas>`);
+    const m = this.modal(`<h3>🗺️ Harta lumii</h3><p class="sub">${r ? `Ești ${WHERE[s.area]?.replace(' · ', '') ?? r.name}` : 'Ești în apartament (Blocul Lalelelor)'}</p><canvas class="bigmap"></canvas><div class="mapgo">${s.space === 'world' ? DESTS.map(d => `<button data-mapgo="${d.id}" class="${s.reachWhy(d.id) ? 'off' : ''}">${d.icon} ${d.name}</button>`).join('') : ''}</div>`);
     m.querySelector('.box')?.classList.add('mapbox');
+    m.querySelectorAll('[data-mapgo]').forEach(b => b.addEventListener('click', () => { this.closeModal(); s.mapGo((b as HTMLElement).dataset.mapgo!); }));
     const cv = m.querySelector('.bigmap') as HTMLCanvasElement;
     const tick = () => {
       if (m.classList.contains('hidden') || !cv.isConnected) return;
@@ -188,7 +198,7 @@ export class Hud {
     sk.classList.toggle('hidden', !c.sick);
     if (c.sick) { const t = `${SICK_INFO[c.sick].icon} ${SICK_INFO[c.sick].label}${c.request ? ' · vrei ' + (REQUESTS[c.request]?.icon ?? '') : ''}`; if (sk.dataset.t !== t) { sk.dataset.t = t; sk.innerHTML = `${t} <button class="mini-btn" data-a="bell">🔔 Cheamă</button>`; } }
     this.txt(this.els['.clock .time'], (nightAmount(w.minutes) > 0.5 ? '🌙 ' : '☀️ ') + clockText(w.minutes));
-    this.txt(this.els['.clock .day'], `Ziua ${w.day}`);
+    { const se = Story.seasonOf(w.day), ev = Story.eventsOf(w.day)[0]; this.txt(this.els['.clock .day'], `${se.icon} Ziua ${w.day}${ev ? ' · ' + ev.icon : ''}`); }
     this.txt(this.els['.clock .hearts'], `💗 ${w.hearts}`);
     this.txt(this.root.querySelector('.clock .money'), `💰 ${w.money ?? 0} lei`);
     const rs = (this.root.querySelector('.clock .res') as HTMLElement); const R = w.res ?? {}; const seeds = Object.keys(CROPS).reduce((a, c) => a + (R[seedKey(c)] ?? 0), 0); const rt = `🪵${R.wood ?? 0} 🪨${R.stone ?? 0} 🥕${catCount(R, 'veg')} 🌸${catCount(R, 'flower')} 🍲${dishCount(R)} 💧${R.water ?? 0} 🌰${seeds} · 🔥${Math.round((w.furn.fire as number) ?? 0)}% 🎒`; this.txt(rs, rt);
@@ -463,7 +473,7 @@ export class Hud {
     if (tab === 'sell') body = `<p class="sub">Vinde ce ai strâns (câte 1 la fiecare apăsare)</p><div class="shop">${SHOP_SELL.map(it => `<button data-sell="${it.id}" class="${(r[it.id] ?? 0) < 1 ? 'poor' : ''}"><span>${it.icon}</span><b>${it.label} (${r[it.id] ?? 0})</b><small>+${it.price} lei</small></button>`).join('')}</div>`;
     if (tab === 'hall') body = `<p class="sub">Investiții mari pentru familia voastră</p><div class="shop">${GOALS.filter(g => g.cost).map(g => { const done = !!w.stats['goal-' + g.id]; const c = g.cost!; return `<button data-goal="${g.id}" class="${done ? 'on' : ''}"><span>${g.icon}</span><b>${g.text}</b><small>${done ? '✔ gata' : [c.money ? '💰' + c.money : '', c.wood ? '🪵' + c.wood : '', c.stone ? '🪨' + c.stone : ''].join(' ')}</small></button>`; }).join('')}</div>`;
     if (tab === 'town') body = `<p class="sub">🚌 Autobuzul spre oraș pleacă din stația din dreapta pieței (${PRICE.bus} lei de persoană). La oraș: supermarket, buticul elegant, cinema, restaurant, cafeneaua și birourile (slujbe), parcul cu înghețată și apartamente de vânzare.</p>`;
-    const bike = online ? `<h4>🚲 Vehicule</h4><div class="shop"><button data-bike class="${(w.stats.bike ?? 0) > 0 ? 'on' : (w.money ?? 0) < PRICE.bike ? 'poor' : ''}"><span>🚲</span><b>Bicicletă în tandem</b><small>${(w.stats.bike ?? 0) > 0 ? '✔ o aveți' : `💰 ${PRICE.bike} lei`}</small></button><button data-scooter class="${(w.stats.scooter ?? 0) > 0 ? 'on' : (w.money ?? 0) < PRICE.scooter ? 'poor' : ''}"><span>🛵</span><b>Scuter albastru pentru doi</b><small>${(w.stats.scooter ?? 0) > 0 ? '✔ îl aveți' : `💰 ${PRICE.scooter} lei`}</small></button></div>` : '';
+    const bike = online ? `<h4>🚲 Vehicule</h4><div class="shop"><button data-bike class="${(w.stats.bike ?? 0) > 0 ? 'on' : (w.money ?? 0) < PRICE.bike ? 'poor' : ''}"><span>🚲</span><b>Bicicletă în tandem</b><small>${(w.stats.bike ?? 0) > 0 ? '✔ o aveți' : `💰 ${PRICE.bike} lei`}</small></button><button data-scooter class="${(w.stats.scooter ?? 0) > 0 ? 'on' : (w.money ?? 0) < PRICE.scooter ? 'poor' : ''}"><span>🛵</span><b>Scuter albastru pentru doi</b><small>${(w.stats.scooter ?? 0) > 0 ? '✔ îl aveți' : `💰 ${PRICE.scooter} lei`}</small></button></div>` + (s.chapter >= FARM_CHAPTER ? `<h4>🚜 Utilaje pentru câmp</h4><div class="shop">${Object.entries(MACHINES).map(([k, m]) => `<button data-mach="${k}" class="${(w.stats['mach-' + k] ?? 0) > 0 ? 'on' : (w.money ?? 0) < m.price ? 'poor' : ''}"><span>${m.icon}</span><b>${m.name}</b><small>${(w.stats['mach-' + k] ?? 0) > 0 ? '✔ îl aveți' : `💰 ${m.price} lei`} · ${m.op.toLowerCase()} singur pe rânduri</small></button>`).join('')}</div>` : '') + (s.chapter >= SHOP_CHAPTER ? `<h4>🚚 Camionul</h4><div class="shop"><button data-truck class="${(w.stats.truck ?? 0) > 0 ? 'on' : (w.money ?? 0) < 1600 ? 'poor' : ''}"><span>🚚</span><b>Camion de livrări</b><small>${(w.stats.truck ?? 0) > 0 ? '✔ îl aveți' : '💰 1600 lei'} · duce marfa la contracte</small></button></div>` : '') : '';
     const m = this.modal(`<h3>${online ? '💻 Magazin online · livrare la ușă' : city ? '🛒 Supermarketul din oraș' : '🏘️ Satul'}</h3><p class="sub">Ai 💰 ${w.money ?? 0} lei</p><div class="tabs">${tabs.map(([id, l]) => `<button data-tab="${id}" class="${id === tab ? 'on' : ''}">${l}</button>`).join('')}</div>${body}${bike}`);
     m.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => this.openVillage((b as HTMLElement).dataset.tab)));
     m.querySelectorAll('[data-buy]').forEach(b => b.addEventListener('click', () => {
@@ -478,6 +488,8 @@ export class Hud {
       s.op({ k: 'money', delta: -PRICE.bike }); s.op({ k: 'stat', key: 'bike', delta: 1 }); Sfx.play('bike_bell'); Sfx.play('good', { delay: 0.5 }); s.syncPlaced();
       this.toast('🚲 Ați cumpărat bicicleta! E parcată lângă poartă. Atinge-o ca să mergeți amândoi în sat'); s.log('Ați cumpărat o bicicletă pentru doi 🚲'); this.openVillage('online');
     });
+    m.querySelectorAll('[data-mach]').forEach(b => b.addEventListener('click', () => { const k = (b as HTMLElement).dataset.mach!, mm = MACHINES[k]; if ((w.stats['mach-' + k] ?? 0) > 0) return; if ((w.money ?? 0) < mm.price) { this.toast(`${mm.name} costă ${mm.price} lei 💰`); Sfx.play('bad'); return; } s.op({ k: 'money', delta: -mm.price }); s.op({ k: 'stat', key: 'mach-' + k, delta: 1 }); Sfx.play('car_start', { rate: 0.8 }); s.log(`Ați cumpărat ${mm.name.toLowerCase()} ${mm.icon}`); this.openVillage('online'); }));
+    m.querySelector('[data-truck]')?.addEventListener('click', () => { if ((w.stats.truck ?? 0) > 0) return; if ((w.money ?? 0) < 1600) { this.toast('Camionul costă 1600 lei 💰'); Sfx.play('bad'); return; } s.op({ k: 'money', delta: -1600 }); s.op({ k: 'stat', key: 'truck', delta: 1 }); Sfx.play('car_start', { rate: 0.7 }); s.log('Ați cumpărat camionul de livrări 🚚'); this.openVillage('online'); });
     m.querySelector('[data-scooter]')?.addEventListener('click', () => {
       if ((w.stats.scooter ?? 0) > 0) return;
       if ((w.money ?? 0) < PRICE.scooter) { this.toast(`Scuterul costă ${PRICE.scooter} lei 💰`); Sfx.play('bad'); return; }
@@ -556,16 +568,21 @@ export class Hud {
     const vname = veh === 'bike' ? 'bicicletă' : 'scuter', vic = VEH_ICON[rk] ?? '🛵';
     const dest = s.vehAt(veh) === 'village' ? 'acasă' : 'în sat';
     let txt: string, go: string, call = '', show = true;
+    let dests = '', pause = '', back = '', stopAt = '', stopName = '';
     if (this.rideMode === 'riding') {
       const r = s.ride!; const left = Math.max(1, Math.ceil((r.len - r.s) / Math.max(4, r.v || 4)));
-      txt = `${vic} ${DEST_TXT[r.dest] ?? 'Pe drum'}${r.duo ? ` cu ${nm} 💕` : ''} · mai ai ~${left} s`; go = '';
+      const dn = DEST_BY_ID[r.dest]?.name;
+      txt = r.dest === 'field' ? `🚜 Utilajul lucrează pe rânduri…` : `${vic} ${dn ? 'Spre ' + dn.replace('Acasă', 'casă') : DEST_TXT[r.dest] ?? 'Pe drum'}${r.paused ? ' · ⏸ oprit' : ''}${r.duo ? ` cu ${nm} 💕` : ''}${r.paused ? '' : ` · mai ai ~${left} s`}`; go = '';
+      if (r.kind === 'bike' || r.kind === 'scooter' || (r.kind === 'tractor' && r.dest !== 'field')) { pause = r.paused ? '▶ Pornește' : '⏸ Oprește'; back = r.from ? '↩ Întoarce' : ''; }
+      const ns = s.rideNextStop(); if (ns) { stopAt = ns; stopName = `⤵ Oprește la ${DEST_BY_ID[ns].icon} ${DEST_BY_ID[ns].name}`; }
     }
     else if (this.rideMode === 'passenger') { txt = pa.riding && !pa.board ? `${vic} Mergeți împreună 💕` : `${vic} Stai în spate. Așteaptă să pornească ${nm}`; go = ''; }
     else if (pa.passenger) { txt = `${vic} ${nm} a urcat în spate 💕`; go = `▶ Pornim ${dest}!`; }
     else if (pa.callBoard) { txt = `${vic} ${nm} vine să urce…`; go = `▶ Pornește singur${s.myId === 'bubu' ? 'ă' : ''}`; show = false; }
-    else { txt = `${vic} Ești pe ${vname}. Mergi singur${s.myId === 'bubu' ? 'ă' : ''} ${dest} sau ${pa.id === 'bubu' ? 'o aștepți pe' : 'îl aștepți pe'} ${nm}?`; go = `▶ Pornește singur${s.myId === 'bubu' ? 'ă' : ''}`; call = `📣 ${pa.id === 'bubu' ? 'Cheam-o pe' : 'Cheamă-l pe'} ${nm}`; }
+    else { txt = `${vic} Ești pe ${vname}. Unde mergi${pa.passenger ? '' : `, singur${s.myId === 'bubu' ? 'ă' : ''} sau cu ${nm}`}?`; go = ''; call = pa.passenger ? '' : `📣 ${pa.id === 'bubu' ? 'Cheam-o pe' : 'Cheamă-l pe'} ${nm}`; }
+    if (this.rideMode === 'driver') { const here = s.vehAt(veh); dests = DESTS.filter(d => d.id !== here).map(d => { const why = s.reachWhy(d.id); return `<button data-go="${d.id}" class="go${why ? ' off' : ''}" title="${why ?? ''}">${d.icon} ${d.name}</button>`; }).join(''); if (pa.passenger) txt = `${vic} ${nm} a urcat în spate 💕 Unde mergeți?`; }
     if (!s.sameArea()) call = '';
-    const key = txt + go + call + show;
+    const key = txt + go + call + show + dests + pause + back + stopAt;
     if (key === this.lastRide) return; this.lastRide = key;
     (bar.querySelector('.rt') as HTMLElement).textContent = txt;
     const bg = bar.querySelector('[data-a="rgo"]') as HTMLElement, bc = bar.querySelector('[data-a="rcall"]') as HTMLElement, bo = bar.querySelector('[data-a="roff"]') as HTMLElement;
@@ -573,9 +590,13 @@ export class Hud {
     // in mers nu se coboara (vehiculul merge singur pana la capat)
     bo.style.display = this.rideMode === 'riding' || (this.rideMode === 'passenger' && pa.riding && !pa.board) ? 'none' : '';
     bc.textContent = call; bc.style.display = call && show ? '' : 'none';
+    (bar.querySelector('.rdest') as HTMLElement).innerHTML = dests;
+    const bp = bar.querySelector('[data-a="rpause"]') as HTMLElement, bb = bar.querySelector('[data-a="rback"]') as HTMLElement, bs = bar.querySelector('[data-a="rstop"]') as HTMLElement;
+    bp.textContent = pause; bp.style.display = pause ? '' : 'none'; bb.textContent = back; bb.style.display = back ? '' : 'none';
+    bs.textContent = stopName; bs.dataset.dest = stopAt; bs.style.display = stopAt ? '' : 'none';
   }
 
-  setMinigame(on: boolean) { this.root.classList.toggle('in-mini', on); if (on) this.els['.modal'].classList.add('hidden'); }
+  setMinigame(on: boolean, scene = false) { this.root.classList.toggle('in-mini', on); this.root.classList.toggle('in-scene', on && scene); if (on && !scene) this.els['.modal'].classList.add('hidden'); }
 }
 
 /** unde e partenerul (eticheta din coltul lui) */

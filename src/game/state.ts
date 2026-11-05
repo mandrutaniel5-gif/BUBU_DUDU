@@ -40,7 +40,8 @@ export interface CharState {
 
 export interface WorldState {
   v: 1;
-  ts: number;            // ultima modificare (ms)
+  ts: number;            // cand s-a salvat (ms)
+  mod?: number;          // ultima schimbare ADEVARATA a lumii (ms): dupa ea se alege lumea mai noua intre telefoane
   created: number;       // cand s-a mutat cuplul in casa
   minutes: number;       // ora din zi in minute de joc (0..1440)
   day: number;

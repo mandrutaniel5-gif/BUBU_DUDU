@@ -197,3 +197,29 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - **Orașul:** bulevardul cu mașini și semafor, Strada Teilor (Banca, Universitatea, Birourile), bulevardul cu magazinele (Supermarket, Cafenea, Cinema, Restaurant, Butic, Mall), Strada Școlii (Spitalul, Blocul Lalelelor), Parcul Central, Gara, terenul de vânzare, parcurile din nord și din sud.
 - **Miniharta:** mică arată doar drumurile, apa, clădirile și pe voi; ⤢ o mărește (cu numele locurilor și iconițele magazinelor); atinsă deschide harta lumii. Stă sub cartonașul partenerului și nu acoperă butoanele.
 - **⏭ și ♾️** stau la vedere, lângă ⚙.
+
+## Viziunea întreagă (v1.7.0)
+
+**Capitolele (9):** Casa → Curtea → Pădurea → **Podul** → **Satul renaște** → **Ferma** → **Drumul spre oraș** → **Afacerea din oraș** → **Nunta**. Salvările vechi se mută singure: cine era în sat ajunge în „Satul renaște” cu podul reparat și cu proiectele care existau deja; cine era la oraș ajunge în „Drumul spre oraș”.
+
+**Podul (Cap. 3):** la Podul Mare → „Ajută la Podul Mare”: 20 de lemne și 6 scânduri (Dudu), 12 pietre și 3 porții de mâncare caldă (Bubu), 150 de lei. Când e tot, meșterii îl repară (scenă). Cu podul rupt, bicicleta merge totuși până la cherestea și la lac.
+
+**Satul renaște (Cap. 4):** satul e pe moarte (case cenușii cu scânduri la geamuri; brutăria, piața, școala, roata mare și călușeii închise). Primăria → Proiectele satului: contribuiți amândoi cu bani și materiale; fiecare proiect redeschide locul lui, repară două case și aduce o familie nouă. Iluminatul și drumul pietruit înfrumusețează satul.
+
+**Ferma (Cap. 5):** indicatorul „Câmpurile de vânzare” (sud de drum, lângă casă): 4 parcele (300-500 lei). Laptopul → Utilaje: plugul, semănătoarea, cisterna, combina. Atingi parcela: tractorul merge singur pe rânduri (ară, seamănă grâu / porumb / floarea-soarelui, udă, recoltează). Fără apă cresc în ~2 zile de joc, cu apă în ~1; iarna mai încet. Poarta fermei (lângă curte): găini (ouă în fiecare zi), vacă (lapte → „Fă brânză”, 3 lapte), oi (lână la 3 zile), stupi (miere la 2 zile).
+
+**Angajații:** Primăria → Oameni de muncă: 4 candidați pe zi (grădinar, îngrijitor de animale, vânzător la tarabă, florăreasă, tăietor de lemne, tractorist, vânzător la magazinul din oraș). Salariul se ia dimineața; dacă nu sunt bani două zile, pleacă. Pricepere crește zilnic. Dimineața: cartonașul cu raportul. Se văd la locul lor de muncă.
+
+**Orașul (Cap. 6-7):** supermarketul cumpără produsele de la fermă. Terenul de vânzare (1500 lei) → magazinul „Bubu & Dudu” (30 scânduri, 20 pietre, 800 lei, scenă). În magazin: rafturile (vânzări în fiecare zi), vitrina lui Bubu (3 niveluri, clienții plătesc mai mult), contractele săptămânii (cu camionul, laptopul → Vehicule, 1600 lei), apoi târgul orașului (după 30 de produse vândute și 2 contracte).
+
+**Nunta (Cap. 8), la biserica din sat:** inelul (Mall → Bijuterii, 800 lei); cererea: Dudu, cu inelul, pe o bancă sau la foișorul de la lac, cu Bubu lângă el (scenă pe ambele telefoane); rochia de mireasă, voalul și costumul de mire (Buticul Elegant); tortul (Brutăria); lăutarii (Primăria); invitații: 4 săteni măcar prieteni (treapta 2). La biserică → „Nunta noastră”: clopotele, mireasa, „Da!”, pupicul, hora (bateți din palme), tortul, buchetul, artificiile, genericul cu momentele voastre. Apoi jocul continuă.
+
+**Vehiculele:** pe bicicletă / scuter alegi unde mergi (Acasă, Cheresteaua, Lacul, Satul, Orașul); pe drum: ⏸ Oprește / ▶ Pornește, ↩ Întoarce, „⤵ Oprește la…” când treci pe lângă altă oprire. Harta mare → butoanele de jos: mergi acolo cu vehiculul de lângă tine sau pe jos. Bicicleta: de 3 ori mai repede decât mersul, scuterul de 5 ori.
+
+**Anotimpurile:** 7 zile fiecare (anul = 28 de zile): primăvara petale, vara lumină caldă, toamna frunze, iarna ninge. Sărbătorile și evenimentele apar în cartonașul de dimineață și lângă ceas: Mărțișorul, Paștele (ouă), nunta Inei (mergeți la biserică: prietenie cu toți), ziua lui Bubu, vizita bunicilor (daruri), ziua de lac, furtuna (acoperișul de reparat: 5 lemne, 2 scânduri), ziua lui Dudu, Crăciunul (daruri), Dragobetele, Revelionul (artificii seara), târgul lunar.
+
+**Prieteniile:** 5 trepte cu fiecare sătean (Cunoscut → Prieten → Bun prieten → Prieten apropiat → Prieten de suflet), fiecare cu un secret și un dar.
+
+**Albumele (📒, lângă ⚙):** pești (6 feluri), flori, rețete, haine; un album complet: 150 de lei și 20 💗.
+
+**Sincronizarea:** salvarea poartă ora ultimei schimbări reale; când intră partenerul, telefoanele își compară lumile, iar cel cu lumea mai nouă o trimite întreagă.

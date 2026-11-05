@@ -116,7 +116,7 @@ for (const [x, y] of [[215, 29], [219, 34], [213, 33], [222, 31]]) F.push({ id: 
 for (const [x, y] of [[210, 30], [225, 33]]) F.push({ id: `c-lamp${x}-${y}`, type: 'lamppost' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 for (const [x, y] of [[199, 15], [198, 27]]) F.push({ id: `c-pot${x}-${y}`, type: 'pot' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 // terenul de vanzare (pentru magazinul vostru, mai tarziu)
-F.push({ id: 'c-lot', type: 'roadsign' as any, gx: 230, gy: 27, w: 1, d: 1, solid: true, text: '🏗️ Teren de vânzare' });
+F.push({ id: 'c-lot', type: 'roadsign' as any, gx: 230, gy: 27, w: 1, d: 1, solid: true, text: '🏗️ Teren de vânzare', action: act('st-lot', 'Terenul de vânzare', '🏗️') });
 F.push({ id: 'c-lot2', type: 'roadsign' as any, gx: 199, gy: 41, w: 1, d: 1, solid: true, text: '🚂 Gara' });
 // parcul din nord si parcul mare din sud: copaci, bancute, a doua fantana
 const crnd = (i: number) => { const v = Math.sin(i * 77.7 + 3.1) * 43758.5; return v - Math.floor(v); };

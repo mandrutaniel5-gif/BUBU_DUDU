@@ -1,4 +1,5 @@
 // Ferestrele pentru sat si oras: job (cariera), universitate, banca, avizierul satului, discutia cu un satean.
+import * as Story from '../scenes/story';
 import type { WorldScene } from '../scenes/world';
 import { Sfx } from '../engine/sfx';
 import { drawCharacter, NPC_SPECS } from '../char/draw';
@@ -75,15 +76,18 @@ export function openBoard(s: WorldScene) {
 
 export function openVillager(s: WorldScene, vid: string) {
   const v = VILLAGERS.find(x => x.id === vid); if (!v) return;
-  const fr = s.w.stats['friend-' + vid] ?? 0, lvl = Math.min(5, Math.floor(fr / 2));
+  const fr = s.w.stats['friend-' + vid] ?? 0, lvl = Story.tierOf(s, vid), nextAt = Story.TIERS[lvl];
+  const secret = lvl ? Story.SECRETS[vid]?.[lvl - 1] : '';
+  const canInvite = s.chapter >= 8 && (s.w.stats.engaged ?? 0) > 0 && !(s.w.stats['invite-' + vid] ?? 0);
   const q = questsToday(s).find(x => x.who === vid);
   const have = q ? s.w.res?.[q.res] ?? 0 : 0;
   const hello = v.hello[Math.floor(Math.random() * v.hello.length)];
   const giftOk = (s.w.res?.flower ?? 0) > 0 && (s.w.stats[`gift-${vid}-${s.w.day}`] ?? 0) < 1;
-  const m = s.hud.modal(`<div class="villager"><img src="${portrait(v.spec)}" alt=""><div><h3>${v.name}</h3><p class="sub">${hearts(lvl)} prietenie</p><p class="say">„${hello}”</p></div></div>
+  const m = s.hud.modal(`<div class="villager"><img src="${portrait(v.spec)}" alt=""><div><h3>${v.name}</h3><p class="sub">${hearts(lvl)} ${Story.tierName(vid, lvl)} (${lvl}/5)${nextAt ? ` · mai ${nextAt - fr} până la treapta următoare` : ''}</p>${secret ? `<p class="sub">🤫 ${secret}</p>` : ''}<p class="say">„${hello}”</p></div></div>
     ${q ? `<p class="sub">${q.done ? '✔ Mi-ați adus azi ce aveam nevoie, mulțumesc!' : `Aș avea nevoie de <b>${questText(q)}</b>. Vă dau <b>${q.pay} lei</b>! (aveți ${have})`}</p>` : '<p class="sub">Azi n-am nevoie de nimic, dar mă bucur să vă văd! 😊</p>'}
     <div class="shop">${q && !q.done ? `<button data-deliver class="${have < q.qty ? 'poor' : ''}"><span>🤝</span><b>Dă-i</b><small>+${q.pay} lei · +prietenie</small></button>` : ''}
-      <button data-gift class="${giftOk ? '' : 'poor'}"><span>🌸</span><b>Dăruiește o floare</b><small>o dată pe zi · +prietenie</small></button></div>`);
+      <button data-gift class="${giftOk ? '' : 'poor'}"><span>🌸</span><b>Dăruiește o floare</b><small>o dată pe zi · +prietenie</small></button>${canInvite ? `<button data-invite class="${lvl >= 2 ? '' : 'poor'}"><span>💌</span><b>Invită la nuntă</b><small>${lvl >= 2 ? 'vine cu drag' : 'mai întâi prieteni (treapta 2)'}</small></button>` : ''}</div>`);
+  m.querySelector('[data-invite]')?.addEventListener('click', () => { Story.inviteVillager(s, vid); openVillager(s, vid); });
   m.querySelector('[data-deliver]')?.addEventListener('click', () => { const err = deliverQuest(s, q!); if (err) { s.hud.toast(err); Sfx.play('bad'); return; } s.hud.toast(`💕 ${v.name}: „Mulțumesc din suflet!” +${q!.pay} lei`); openVillager(s, vid); });
   m.querySelector('[data-gift]')?.addEventListener('click', () => {
     if (!giftOk) { s.hud.toast((s.w.res?.flower ?? 0) < 1 ? 'N-ai flori 🌸 (culege din curte)' : 'I-ai dăruit deja azi 🙂'); return; }

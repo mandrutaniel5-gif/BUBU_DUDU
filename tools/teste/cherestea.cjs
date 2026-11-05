@@ -19,7 +19,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   await p.evaluate(() => game.scene.minigame.obj.press('sell')); await sleep(1100); await p.screenshot({ path: 'saw_selling.png' });
   await sleep(5000);
   const m1 = await p.evaluate(() => ({ money: game.scene.w.money, wood: game.scene.w.res.wood }));
-  ok('vanzarea la cantar', m1.money - m0.money === m0.n * m0.price && m0.wood - m1.wood === m0.n, JSON.stringify({ m0, m1 }));
+  ok('vanzarea la cantar (+ premiul obiectivului, daca s-a bifat)', [0, 10].includes(m1.money - m0.money - m0.n * m0.price) && m0.wood - m1.wood === m0.n, JSON.stringify({ m0, m1 }));
   ok('5 lemne raman pentru soba', m1.wood >= 5);
   await p.screenshot({ path: 'saw_sold.png' });
   // gaterul: tinem linia cu calculul (ca un jucator bun)

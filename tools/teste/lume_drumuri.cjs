@@ -4,7 +4,7 @@ const { chromium } = require('playwright');
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto('http://localhost:5173/?skipload&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 });
   await p.waitForTimeout(800); await p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
-  await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 4; s.w.stats.bike = 1; s.w.stats.scooter = 1; s.w.money = 500; s.syncPlaced(); s.me.gx = 4; s.me.gy = 24.6; });
+  await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 6; s.w.stats.chapV = 2; s.w.stats.bike = 1; s.w.stats.scooter = 1; s.w.money = 500; s.syncPlaced(); s.me.gx = 4; s.me.gy = 24.6; });
   const st = (tag) => p.evaluate((tag) => { const s = game.scene; return tag + ' ' + JSON.stringify({ area: s.area, pos: [+s.me.gx.toFixed(1), +s.me.gy.toFixed(1)], ride: s.ride ? s.ride.kind + '→' + s.ride.dest + ' ' + s.ride.s.toFixed(0) + '/' + s.ride.len.toFixed(0) : null, veh: s.w.veh, partner: [+s.partner.gx.toFixed(1), +s.partner.gy.toFixed(1), !!s.partner.passenger], space: s.space }); }, tag);
   const F = (id) => p.evaluate((id) => !!game.scene.furnList.find(f => f.id === id), id);
   // 1) scuterul acasa -> sat, cu AI-ul chemat in spate

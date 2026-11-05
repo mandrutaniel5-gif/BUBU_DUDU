@@ -409,6 +409,28 @@ def({
   tick(f, t, _p, dt) { if (every(t, dt, 0.2)) f.emit('sparkle', (Math.random() - 0.5) * 80, -50 - Math.random() * 30, { vy: -10, max: 0.6 }); },
 });
 
+// strange ouale / mierea / lana: se apleaca, culege cu o mana, pune in cos cu cealalta
+def({
+  id: 'act_collect', label: 'Culege', icon: '🥚', who: 'both', kind: 'base', dur: 1.2, loop: true,
+  pose(P, t) {
+    const k = (t % 1.2) / 1.2, bend = Math.sin(k * Math.PI);
+    P.rot = 0.18 * bend; P.dy = 3 * bend; P.headDy = 3 * bend; P.headRot = 0.1 * bend;
+    P.armR = 0.4 + 1.1 * bend; P.armL = 0.9; P.legL = 0; P.legR = 0;
+    P.eyes = bend > 0.6 ? 'happy' : 'dot'; P.mouth = bend > 0.6 ? 'open' : 'smile'; P.pupilDy = 2;
+  },
+  events: [[0.5, f => f.emit('sparkle', 18, -20, { vy: -40, max: 0.5 })]],
+});
+// mulge vaca: ghemuit, mainile trag pe rand, laptele sare in galeata
+def({
+  id: 'act_milk', label: 'Mulge', icon: '🥛', who: 'both', kind: 'base', dur: 0.5, loop: true,
+  pose(P, t) {
+    const s = Math.sin(t * Math.PI * 2 / 0.5);
+    P.sy = 0.86; P.dy = 6; P.armL = 1.0 + s * 0.35; P.armR = 1.0 - s * 0.35; P.rot = 0.08;
+    P.eyes = 'happy'; P.mouth = 'w'; P.headRot = s * 0.04;
+  },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.25)) f.emit('drop', 24, -6, { vx: (Math.random() - 0.5) * 30, vy: 20, grav: 300, max: 0.4, color: '#ffffff' }); },
+});
+
 // cara un lemn pe deasupra capului (la cherestea): pasi mici, bratele sus, efort pe fata
 def({
   id: 'act_carry', label: 'Cară lemne', icon: '🪵', who: 'both', kind: 'base', dur: 0.7, loop: true,

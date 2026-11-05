@@ -133,7 +133,7 @@ export const VILLAGE_PATHS: Pt[] = [
 function e(c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, fill: string, st = true, lw = 2) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fillStyle = fill; c.fill(); if (st) { c.strokeStyle = O; c.lineWidth = lw; c.stroke(); } }
 function quad(c: CanvasRenderingContext2D, pts: Pt[], fill: string, lw = 2) { c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)); c.closePath(); c.fillStyle = fill; c.fill(); c.strokeStyle = O; c.lineWidth = lw; c.stroke(); }
 
-function drawBuilding(c: CanvasRenderingContext2D, b: BuildingDef, t: number, night: number, extra: { open?: boolean }, layer: '' | 'body' | 'live' = '') {
+function drawBuilding(c: CanvasRenderingContext2D, b: BuildingDef, t: number, night: number, extra: { open?: boolean; closed?: boolean }, layer: '' | 'body' | 'live' = '') {
   const { gx, gy, w, d, h } = b;
   if (layer === 'live') {
     // doar ce se misca: acele ceasului si steagul primariei, semnul plutitor
@@ -165,6 +165,8 @@ function drawBuilding(c: CanvasRenderingContext2D, b: BuildingDef, t: number, ni
   // usa
   quad(c, [P(0.42, 4), P(0.58, 4), P(0.58, 38), P(0.42, 38)], '#8a5d32');
   const kn = P(0.555, 20); e(c, kn.x, kn.y, 2, 2, '#ffd23f', false);
+  // inchisa de ani (satul pe moarte): scanduri batute peste usa si ferestre, pana la proiectul de la Primarie
+  if (extra.closed) for (const [u, z] of [[0.5, 14], [0.5, 28], [0.18, 32], [0.82, 32], [0.18, 42], [0.82, 42]] as const) { const a = P(u - 0.13, z - 3), bb = P(u + 0.13, z + 3); c.strokeStyle = O; c.lineWidth = 6; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(bb.x, bb.y); c.stroke(); c.strokeStyle = '#a0703f'; c.lineWidth = 4; c.stroke(); }
   // copertina cu dungi (la magazine)
   if (b.awning) {
     const n = 6;
@@ -214,7 +216,7 @@ export function drawVillageType(c: CanvasRenderingContext2D, f: Furn, t: number,
   switch (f.type as string) {
     case 'building': {
       const b = BUILDINGS.find(x => x.id === f.id); if (!b) return false;
-      drawBuilding(c, b, t, night, { open: f.id === 'v-florarie' ? extra.florarie : f.id === 'v-workshop' ? extra.workshop : undefined }, (globalThis as any).__layer ?? '');
+      drawBuilding(c, b, t, night, { open: f.id === 'v-florarie' ? extra.florarie : f.id === 'v-workshop' ? extra.workshop : undefined, closed: !!(globalThis as any).__vclosed?.has(f.id) }, (globalThis as any).__layer ?? '');
       return true;
     }
     case 'stalls': {

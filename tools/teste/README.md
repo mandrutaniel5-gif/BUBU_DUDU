@@ -25,6 +25,8 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 
 | Script | Ce testează |
 |---|---|
+| `poveste.cjs` | 1.7.0, **jucat cap-coadă**: bicicleta spre cherestea (⏸, parcarea), Podul (scena), Satul renaște (clădiri închise, 6 proiecte), Ferma (parcelă, plug, semănătoare, cisternă, combină, animale, brânză), angajații și raportul, magazinul din oraș, contractul cu camionul, cererea, nunta |
+| `mp_sincronizare.cjs` | 1.7.0, **2 jucători**: telefonul cu lumea veche primește lumea nouă (toaleta nu mai „revine” înfundată); salvarea fără schimbări nu mai mută ora |
 | `case_parola.cjs` | 1.6.0: casa nouă cu parolă (parola scurtă e refuzată), același cod + parolă = aceeași casă, alta parolă = altă cameră, online cere casă cu parolă |
 | `mp_cumparare.cjs` | 1.6.0, **2 jucători**: bicicleta cumpărată de Dudu apare imediat la Bubu |
 | `sunet_iphone.cjs` | 1.6.0: sunetul revine după suspendare + atingere și se reface după ce contextul audio e închis |
