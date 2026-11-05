@@ -52,7 +52,7 @@ export const ACTIVITIES: Record<string, Activity> = {
   berries: { id: 'berries', anim: 'act_garden', dur: 2, needs: { fun: 4, hunger: 3 }, text: 'Mure dulci 🫐' },
   gohome: { id: 'gohome', anim: 'wave', dur: 0.5, needs: {}, text: '' },
   forest: { id: 'forest', anim: 'wave', dur: 0.5, needs: {}, text: '' },
-  sellwood: { id: 'sellwood', anim: 'flex', dur: 1.5, needs: { fun: 4 }, text: 'Lemne vândute! 💰' },
+  sellwood: { id: 'sellwood', anim: 'act_carry', dur: 2.4, needs: { fun: 4 }, text: 'Lemne vândute! 💰' },
   repairstand: { id: 'repairstand', anim: 'act_scrub', dur: 3, needs: { fun: 6, energy: -1.5 }, text: 'Bang-bang 🔨' },
   openstand: { id: 'openstand', anim: 'wave', dur: 0.8, needs: { fun: 2 }, text: 'Deschis! 🧺' },
   carousel: { id: 'carousel', anim: 'act_sit', dur: 8, needs: { fun: 25, love: 3 }, place: 'ride', text: 'Uiiii! 🎠' },

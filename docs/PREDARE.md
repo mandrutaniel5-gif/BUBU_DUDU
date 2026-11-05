@@ -2,7 +2,7 @@
 
 Fișierul ăsta e pentru oricine (om sau AI) continuă proiectul: ce e jocul, cum e făcut, ce îi place și ce nu îi place proprietarului, ce merge, ce s-a testat și încotro mergem. **Citește-l tot înainte să schimbi ceva.**
 
-Ultima actualizare: versiunea **1.5.0** (noiembrie 2026).
+Ultima actualizare: versiunea **1.6.0** (noiembrie 2026).
 
 ---
 
@@ -44,6 +44,8 @@ npm run build:single   # dist-single/index.html: tot jocul într-un singur fiși
   - **nu schimba cheia**: asta obligă la dezinstalare, iar dezinstalarea pierde salvarea locală.
 - **Multiplayer online:**
   - implicit prin **Firebase Realtime Database**, cu configurația inclusă în cod: [`src/game/settings.ts`](../src/game/settings.ts) → `BUILTIN_FIREBASE`;
+  - **casele (1.6.0):** fiecare cuplu are o casă cu **cod unic + parolă** ([`src/net/house.ts`](../src/net/house.ts), [`docs/FIREBASE.md`](FIREBASE.md)); online se joacă doar într-o astfel de casă;
+  - ⚠️ **regulile Firebase** din [`database.rules.json`](../database.rules.json) trebuie puse o dată în consola Firebase (le pune proprietarul; din mediul de lucru nu se poate);
   - alternativ, serverul propriu de pe telefonul S10: [`server/`](../server/), [`docs/SERVER-S10.md`](SERVER-S10.md).
 - Alte documente:
   - [`docs/FIREBASE.md`](FIREBASE.md);
@@ -66,6 +68,8 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | [`src/scenes/render.ts`](../src/scenes/render.ts) | **Desenul lumii** (scos din `world.ts` în 1.5.0): podeaua „coaptă” cu tot ce nu se mișcă, apoi doar personajele/vehiculele și bucățile de obiecte aflate în fața lor |
 | [`src/scenes/menu.ts`](../src/scenes/menu.ts) | Meniul (cine ești, cum jucați, codul casei, salvare în fișier, credite, erori, eco) |
 | [`src/scenes/townctl.ts`](../src/scenes/townctl.ts) | Logica satului și a orașului: joburi, cursuri, magazine, bancă, misiuni, ziua nouă |
+| [`src/net/house.ts`](../src/net/house.ts) | Casele cu cod unic + parolă (SHA-256 pe telefon, rezervarea codului în Firebase / pe server) |
+| [`src/minigames/sawmill.ts`](../src/minigames/sawmill.ts) | Cheresteaua lui Nea Vasile: cântarul, comenzile zilei, gaterul (scânduri) |
 | [`src/game/state.ts`](../src/game/state.ts) | Starea lumii (`WorldState`), nevoile și cât de repede scad |
 | [`src/game/activities.ts`](../src/game/activities.ts) | Toate activitățile (somn, baie, toaletă, gătit, tăiat lemne…) și efectele lor |
 | [`src/game/economy.ts`](../src/game/economy.ts) | Inventarul, magazinele, prețurile (`PRICE`), obiectivele și capitolele |
@@ -74,7 +78,8 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | [`src/world/layout.ts`](../src/world/layout.ts) | **Harta lumii mari**: unde stă fiecare zonă (`ORIGIN`), regiunile, drumurile (`ROADS`, `MAIN_ROAD`), râul, lacul, podurile, opririle |
 | [`src/world/map.ts`](../src/world/map.ts) | Casa, curtea și asamblarea lumii (`AREAS.world`); podeaua precalculată (`floorAt`); interioarele (`setArea('apartment')`) |
 | [`src/world/country.ts`](../src/world/country.ts) | Câmpia: podeaua dintre zone, decorul generat (copaci, câmpuri, case, moara, lacul, podul, poarta pădurii, bariera), zidurile nevăzute, obstacolele pe capitole (`chapterBlocks`) |
-| [`src/world/village.ts`](../src/world/village.ts), [`city.ts`](../src/world/city.ts), [`forest.ts`](../src/world/forest.ts) | Satul, orașul (+ cartierele, apartamentul), pădurea, puse în lume cu offset |
+| [`src/world/village.ts`](../src/world/village.ts), [`city.ts`](../src/world/city.ts), [`forest.ts`](../src/world/forest.ts) | Satul și orașul (din 1.6.0 în coordonate de lume, pe rețea de ulițe / bulevarde: `V`, `CITY_STREETS`), apartamentul, pădurea |
+| [`src/world/houses.ts`](../src/world/houses.ts) | Casele de locuit (vecinii, sătenii); le desenează `country.ts` |
 | [`src/world/nav.ts`](../src/world/nav.ts) | Navigarea (A* cu heap, obstacole indexate pe dale) |
 | [`src/world/floor.ts`](../src/world/floor.ts), [`cull.ts`](../src/world/cull.ts), [`sprites.ts`](../src/world/sprites.ts) | Desenul rapid: podeaua pe bucăți de 512×256 în care se „coc” și obiectele statice (copaci, case, mobilă, pereți), doar obiectele de pe ecran, imagini gata desenate |
 | [`src/world/signs.ts`](../src/world/signs.ts) | Indicatoarele de drum: panoul stă de-a lungul drumului, săgeata arată spre destinație (`E`/`W`/`N`/`S`) |
@@ -181,6 +186,7 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | 1.4.0 | **Pasul 2: lumea mare** — o singură lume legată, vehiculele merg pe drum, harta și miniharta, satul și orașul mărite, câmpuri, lac, Podul Mare, partenerul AI te poate însoți |
 | 1.4.1 | Ferestrele (inventar, hartă, magazine) stau deasupra butoanelor de jos pe ecranele mici; mesajele se văd și peste ferestre |
 | 1.4.2 | Multiplayer: vehiculul mutat de partener (scuterul în sat, tractorul în pădure) se vede corect și pe celălalt telefon |
+| 1.6.0 | **Case cu cod și parolă** (camere unice; online doar așa); bicicleta / scuterul cumpărate se văd imediat la partener; **iPhone**: sunetul nu se mai oprește (sesiune audio „playback”, repornire după întreruperi), jocul e marcat ca joc (Game Mode); **florăria** e un magazin adevărat (interior, clopoțel la ușă) și vinde doar flori: de câmp, buchete din grădină, răsaduri în ghiveci; **Cheresteaua lui Nea Vasile** pe drum (cântar, comenzile zilei, gaterul cu scânduri) = afacerea lui Dudu din Capitolul 1; roluri Bubu / Dudu în Capitolele 0-2; **satul și orașul refăcute** (ulițe, piață, bulevarde, ușile spre stradă, casele sătenilor au ușă: bați și vorbești cu ei); miniharta clară, care se mărește (⤢) și nu acoperă nimic; ⏭ și ♾️ la vedere |
 | 1.5.0 | **Viteză pe laptop** (lumea „coaptă” în podea, rezoluție adaptivă, eco implicit, placa video forțată în aplicația Windows); butoanele de test „Capitolul următor” și „Resurse infinite” (în fereastra cu obiective); soba fără horn (părea o lampă prin pat), laptopul lângă perete, copacul și piatra mutate din spatele casei, mașină de tuns iarba în loc de magazie; indicatoare orientate corect; bănci noi, pe care vă așezați amândoi; personajul prins într-un obstacol iese singur; **Dudu are rolul lui din Capitolul 1** (vinde lemne la cherestea cu 3 lei bucata, obiective marcate Dudu/Bubu); partenerul AI nu mai rămâne blocat dansând după un capitol nou |
 
 ## 7. Direcția și tot ce mai e de făcut
@@ -189,7 +195,7 @@ Legendă: ✅ gata (nu se mai face o dată) · 🟡 făcut pe jumătate (scrie c
 
 ### 7.1 Ce cere proprietarul chiar acum (prioritate maximă)
 
-- ⬜ **Butonul ⏭ „Capitolul următor” la vedere, în joc.** În 1.5.0 e doar în fereastra cu obiective (📜), iar proprietarul nu l-a găsit. Pune-l înapoi lângă ⚙, în cartonașul partenerului, ca înainte. Codul vechi e în commit-ul `0098673`: `<button class="mini-btn" data-a="skipch">⏭</button>` → `s.devSkipChapter()`. Pune lângă el și ♾️ (resurse infinite, `s.setInfinite`). Confirmarea se face cu fereastra jocului, nu cu `confirm()`.
+- ✅ (1.6.0) **Butonul ⏭ „Capitolul următor” la vedere, în joc** (lângă ⚙, cu ♾️; confirmarea în fereastra jocului). Textul vechi: În 1.5.0 e doar în fereastra cu obiective (📜), iar proprietarul nu l-a găsit. Pune-l înapoi lângă ⚙, în cartonașul partenerului, ca înainte. Codul vechi e în commit-ul `0098673`: `<button class="mini-btn" data-a="skipch">⏭</button>` → `s.devSkipChapter()`. Pune lângă el și ♾️ (resurse infinite, `s.setInfinite`). Confirmarea se face cu fereastra jocului, nu cu `confirm()`.
 - ⬜ **Testul pe laptopul EliteBook** (Windows). Proprietarul a spus că 1.4.x mergea „mai greu ca GTA 5”, iar 1.5.0 e mult mai rapid în teste. Întreabă-l cum merge acum. Dacă tot e greu, vezi 7.5.
 
 ### 7.2 Decizii luate (nu se mai discută)
@@ -201,7 +207,10 @@ Legendă: ✅ gata (nu se mai face o dată) · 🟡 făcut pe jumătate (scrie c
 - **Bicicleta și scuterul rămân necesare**, pentru că lumea e mare.
 - **Fiecare personaj are rolul lui în fiecare capitol.** Nimic nu trebuie să depindă doar de unul. Rolurile sunt etichete (`who` pe obiectiv): o poate face oricare, dar fiecare are treaba lui și câștigul lui. Început în 1.5.0, cu Dudu în Capitolul 1.
 - **Progresul se păstrează mereu.** Salvările vechi merg mai departe (de exemplu, cine e deja în sat are podul reparat).
-- Satul și orașul se **păstrează și se măresc**, nu se refac de la zero. Pe jos, de acasă până în sat se fac ~45-60 de secunde.
+- Satul și orașul s-au **refăcut în 1.6.0** (proprietarul a cerut: extinderea veche era doar vizuală, înghesuită, fără logică). Regula de 2.5D: **ușa fiecărei clădiri e pe fața +x sau +y și dă direct într-o stradă**; nimic nu stă în fața ușilor; tot ce e nou trebuie să facă ceva. Pe jos, de acasă până în sat se fac ~45-60 de secunde.
+- **Online doar în case cu cod + parolă** (1.6.0). Parola nu se salvează nicăieri.
+- **Florăria vinde doar flori.** Taraba de acasă vinde de toate.
+- **Lemnele se vând la Cheresteaua lui Nea Vasile**, pe drum, nu din curte.
 
 ### 7.3 Ce e gata (pe scurt, ca să nu se refacă)
 
@@ -225,9 +234,9 @@ Legendă: ✅ gata (nu se mai face o dată) · 🟡 făcut pe jumătate (scrie c
   - ieșirea automată dintr-un obstacol;
   - AI-ul nu mai rămâne blocat dansând.
 - ✅ **Butoanele de test** „Capitolul următor” și „Resurse infinite” (în 📜). De pus și la vedere, vezi 7.1.
-- ✅ **Rolul lui Dudu în Capitolul 1:**
-  - vinde lemne la cherestea cu 3 lei bucata;
-  - obiectivele sunt marcate Dudu / Bubu.
+- ✅ **Rolul lui Dudu în Capitolele 0-2** (1.6.0): soba, toaleta, televizorul (Cap. 0); Cheresteaua lui Nea Vasile: cântarul cu prețul zilei (2-4 lei, Dudu +1), două comenzi pe zi, gaterul (2 lemne → o scândură, tăietura perfectă dă una în plus) (Cap. 1-2); tractorul și pădurea. Bubu: curățenia, grădina, taraba, florile, ciupercile, peștii, animalele.
+- ✅ **1.6.0:** casele cu parolă, bicicleta vizibilă la partener, sunetul pe iPhone, Game Mode, florăria, cheresteaua, satul și orașul refăcute, miniharta nouă.
+- ⬜ **De verificat de proprietar:** Firebase-ul adevărat cu două telefoane (casa nouă + intrarea partenerului), Game Mode și sunetul pe iPhone (din aici nu se poate testa: nu avem Mac / iPhone).
 
 ### 7.4 Capitolele până la nuntă
 
@@ -334,7 +343,8 @@ Câte o versiune pentru fiecare pas, **testată înainte** (vezi secțiunea 8):
 1. ✅ Reparații (1.3.2).
 2. ✅ Lumea mare (1.4.0-1.4.2).
 3. ✅ Viteză pe laptop + reparații vizuale + rolul lui Dudu în Capitolul 1 (1.5.0).
-4. ⬜ **Butonul ⏭ la vedere** (7.1) + tunsul ierbii cu mașina împinsă (7.6). O versiune mică, imediat.
+4. 🟡 **Butonul ⏭ la vedere** ✅ (1.6.0) + ⬜ tunsul ierbii cu mașina împinsă (7.6).
+4b. ✅ 1.6.0: case cu parolă, iPhone, florăria, cheresteaua, satul și orașul refăcute, miniharta.
 5. ⬜ Rolurile lui Bubu și ale lui Dudu în toate capitolele 0-4 (etichete și câștig propriu pentru fiecare) + Podul pentru jocurile noi.
 6. ⬜ Vehiculele: ⏸ / ▶ / ↩, răscruci, destinația pe hartă.
 7. ⬜ Capitolul 5 · Ferma noastră.

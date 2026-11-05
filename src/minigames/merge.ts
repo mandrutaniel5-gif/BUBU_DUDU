@@ -12,18 +12,33 @@ import { basePose } from '../char/pose';
 import { nightAmount } from '../game/state';
 import { catCount, catPick, type CropCat } from '../world/garden';
 
-const have = (res: Record<string, number>, src: string) => src.startsWith('cat:') ? catCount(res, src.slice(4) as CropCat) : (res[src] ?? 0);
+/** de unde vine fiecare produs: o categorie din gradina (cat:...) sau o lista de chei din inventar */
+const SRC_KEYS: Record<string, string[]> = {
+  wild: ['flower'],                                   // florile de camp (culese)
+  gflower: ['tulip', 'rose', 'sunflower'],            // florile din gradina
+  fseed: ['seed_tulip', 'seed_rose', 'seed_sunflower'], // rasadurile (semintele de flori)
+};
+const have = (res: Record<string, number>, src: string) => src.startsWith('cat:') ? catCount(res, src.slice(4) as CropCat) : SRC_KEYS[src] ? SRC_KEYS[src].reduce((a, k) => a + (res[k] ?? 0), 0) : (res[src] ?? 0);
+/** cheia din care se ia o bucata (cea mai numeroasa) */
+const pickKey = (res: Record<string, number>, src: string) => src.startsWith('cat:') ? catPick(res, src.slice(4) as CropCat) : SRC_KEYS[src] ? SRC_KEYS[src].filter(k => (res[k] ?? 0) > 0).sort((a, b) => (res[b] ?? 0) - (res[a] ?? 0))[0] ?? null : src;
 
-/** produsele prestabilite ale tarabei si sursa lor reala din inventar */
-export const CHAIN_INFO: { id: string; src: string; srcLabel: string; where: string }[] = [
+export interface ChainInfo { id: string; src: string; srcLabel: string; where: string }
+/** produsele tarabei de acasa si sursa lor reala din inventar */
+export const CHAIN_INFO: ChainInfo[] = [
   { id: 'flower', src: 'cat:flower', srcLabel: 'Flori', where: 'culege sau crește în grădină 🌸' },
   { id: 'veg', src: 'cat:veg', srcLabel: 'Legume', where: 'crește-le în grădină 🥕' },
   { id: 'sweet', src: 'flour', srcLabel: 'Făină', where: 'magazinul online 🛒' },
   { id: 'drink', src: 'lemon', srcLabel: 'Lămâi', where: 'magazinul online 🛒' },
 ];
+/** florăria lui Bubu vinde DOAR flori: de câmp, din grădină și răsaduri în ghiveci */
+export const FLORIST_CHAINS: ChainInfo[] = [
+  { id: 'flower', src: 'wild', srcLabel: 'Flori de câmp', where: 'culege-le din curte și de lângă drum 🌸' },
+  { id: 'garden', src: 'gflower', srcLabel: 'Flori din grădină', where: 'crește lalele, trandafiri sau floarea-soarelui 🌷' },
+  { id: 'pot', src: 'fseed', srcLabel: 'Răsaduri', where: 'semințe de flori: magazinul satului 🌰' },
+];
 /** ce poate cere un client: lanturile pentru care ai (sau ai avut) resursa */
-export function orderableChains(res: Record<string, number>, stats: Record<string, number>) {
-  const list = CHAIN_INFO.filter(c => have(res, c.src) > 0 || (stats['had-' + c.src] ?? 0) > 0).map(c => c.id);
+export function orderableChains(res: Record<string, number>, stats: Record<string, number>, florist = false) {
+  const list = (florist ? FLORIST_CHAINS : CHAIN_INFO).filter(c => have(res, c.src) > 0 || (stats['had-' + c.src] ?? 0) > 0).map(c => c.id);
   return list.length ? list : ['flower'];
 }
 /**
@@ -31,7 +46,7 @@ export function orderableChains(res: Record<string, number>, stats: Record<strin
  * le cresti) si de nivel: fiecare unire valoreaza mai mult decat cele doua bucati folosite (x2,3), ca sa merite.
  * Ex. lamaie 8, limonada 18, bubble tea 42, cocktail 97 lei (o lamaie costa 5 lei la magazin).
  */
-const CHAIN_BASE: Record<string, number> = { flower: 3, veg: 4, sweet: 8, drink: 8 };
+const CHAIN_BASE: Record<string, number> = { flower: 3, veg: 4, sweet: 8, drink: 8, garden: 5, pot: 7 };
 export const itemValue = (code: string) => { const [ch, ls] = code.split(':'); const l = +ls; return Math.round((CHAIN_BASE[ch] ?? 3) * 2.3 ** l); };
 
 export interface MergeBoard { v: 3; cells: (string | null)[] }
@@ -48,6 +63,8 @@ export const prodCode = (key: string) => { const m = /^prod_([a-z]+)_(\d+)$/.exe
 
 const O = '#3a2a22';
 const SLOT_X = [0.74, 0.5, 0.26]; // pozitiile la tejghea (fractiune din latime)
+/** usa florariei (fractiune din latime) */
+const FL_DOOR = 0.56;
 
 export class MergeGame extends Panel {
   b: MergeBoard;
@@ -60,6 +77,11 @@ export class MergeGame extends Panel {
   clouds = [0.1, 0.45, 0.8].map((x, i) => ({ x, y: 0.06 + i * 0.04, s: 0.6 + i * 0.25 }));
 
   which: 'stall' | 'florist'; lastEnc = ''; invOpen = false;
+  /** lazile de jos: taraba are 4 surse, florăria doar florile ei */
+  get chains() { return this.which === 'florist' ? FLORIST_CHAINS : CHAIN_INFO; }
+  /** latimea unei lazi (sursele + inventarul) */
+  slotW() { return (this.W - 40) / (this.chains.length + 1); }
+  seenNpc = new Set<string>();
   constructor(scene: WorldScene, done: (s: number) => void) {
     super(scene, done, scene.storeMode === 'florarie' ? '💐 Florăria lui Bubu' : '🧺 Taraba lui Bubu', '');
     this.which = scene.storeMode === 'florarie' ? 'florist' : 'stall';
@@ -89,7 +111,7 @@ export class MergeGame extends Panel {
     this.b.cells[i] = code; this.pop[i] = 1; this.commit();
     this.scene.op({ k: 'res', res: key, delta: -1 }); Sfx.play('pop');
   }
-  bagProds() { const r = this.scene.w.res ?? {}; return Object.keys(r).filter(k => k.startsWith('prod_') && r[k] > 0 && (this.which === 'florist' ? k.startsWith('prod_flower') : true)).sort(); }
+  bagProds() { const r = this.scene.w.res ?? {}; return Object.keys(r).filter(k => k.startsWith('prod_') && r[k] > 0 && (this.which === 'florist' ? FLORIST_CHAINS.some(c => k.startsWith('prod_' + c.id + '_')) : CHAIN_INFO.some(c => k.startsWith('prod_' + c.id + '_')))).sort(); }
   abort() { this.scene.sendCharSync(); this.finish(this.served > 0 ? 1 : 0.2, this.served ? `Ai câștigat ${this.earned} lei! 💰` : 'Taraba se închide 👋'); }
   tick(dt: number) {
     const enc = this.scene.w.boards?.[this.which];
@@ -103,7 +125,11 @@ export class MergeGame extends Panel {
       this.cam += (this.camT - this.cam) * Math.min(1, dt * 1.5);
     }
     for (const c of this.clouds) { c.x += dt * 0.006 * c.s; if (c.x > 1.3) c.x = -0.3; }
+    // florăria: clopoțelul de la ușă când intră un client nou
+    if (this.which === 'florist') for (const n of this.scene.shopNpcs()) if (!this.seenNpc.has(n.id)) { this.seenNpc.add(n.id); Sfx.play('shopbell', { vol: 0.7 }); this.bell = 1; }
+    this.bell = Math.max(0, this.bell - dt * 1.2);
   }
+  bell = 0;
 
   // ---- geometrie (tot ecranul)
   get horizon() { return this.H * 0.2; }
@@ -125,6 +151,14 @@ export class MergeGame extends Panel {
   npcScreen(n: Npc) {
     const slotWorld = [9.6, 8.3, 7.0][this.slotOf(n)];
     const sx = SLOT_X[this.slotOf(n)];
+    if (this.which === 'florist') {
+      // la florarie clientii intra pe usa din spate (dreapta ferestrei) si vin pana la tejghea
+      const door = FL_DOOR;
+      if (n.state === 'leave') { const v = Math.max(0, Math.min(1, (n.x - slotWorld) / 6)); return { fx: sx + (door - sx) * Math.min(1, v * 1.6), k: 1 - Math.min(1, v * 1.4) }; }
+      const x0 = n.sx ?? -1, u = Math.max(0, Math.min(1, (n.x - x0) / (slotWorld - x0)));
+      const kk = n.state === 'wait' ? 1 : u * u * (3 - 2 * u);
+      return { fx: door + (sx - door) * kk, k: kk };
+    }
     if (n.state === 'leave') { const v = Math.max(0, Math.min(1, (n.x - slotWorld) / 6)); return { fx: sx + v * 0.9, k: 1 - Math.min(1, v * 2.2) }; }
     const x0 = n.sx ?? -1, u = Math.max(0, Math.min(1, (n.x - x0) / (slotWorld - x0)));
     const kk = Math.max(0, (u - 0.55) / 0.45);
@@ -132,7 +166,7 @@ export class MergeGame extends Panel {
   }
 
   spawn(k: number) {
-    const ci = CHAIN_INFO[k]; if (!ci) return;
+    const ci = this.chains[k]; if (!ci) return;
     const msg = (t: string) => { this.fx.text(this.W / 2, this.counterY + 30, t, '#e63946', 0.9); Sfx.play('bad'); };
     const r = this.scene.w.res ?? {};
     if (have(r, ci.src) < 1) return msg(`N-ai ${ci.srcLabel.toLowerCase()} — ${ci.where}`);
@@ -142,7 +176,7 @@ export class MergeGame extends Panel {
     if (!empty.length) return msg('Tava e plină! Unește ceva 🙂');
     const i = empty[0];
     this.b.cells[i] = `${ci.id}:0`; this.pop[i] = 1; Sfx.play('leaves', { vol: 0.4, rate: 1.4 }); this.paw = 1; this.commit();
-    const key = ci.src.startsWith('cat:') ? catPick(r, ci.src.slice(4) as CropCat)! : ci.src;
+    const key = pickKey(r, ci.src)!;
     this.scene.op({ k: 'res', res: key, delta: -1 });
     this.scene.op({ k: 'stat', key: 'had-' + ci.src, delta: 1 });
     this.scene.op({ k: 'need', who: this.scene.myId, need: 'energy', delta: -0.1 });
@@ -173,7 +207,7 @@ export class MergeGame extends Panel {
     if (type === 'down') {
       for (const h of this.hits) if (Math.hypot(x - h.x, y - h.y) < h.r) { this.deliver(h.id); return; }
       if (this.invOpen) { this.invTap(x, y); return; }
-      if (y > L.genY && y < L.genY + L.crateH) { const w5 = (this.W - 40) / 5; const k = Math.floor((x - 20) / w5); if (k >= 0 && k < 4) this.spawn(k); else if (k === 4) { this.invOpen = true; Sfx.play('cloth', { vol: 0.5 }); } return; }
+      if (y > L.genY && y < L.genY + L.crateH) { const w5 = this.slotW(), n = this.chains.length; const k = Math.floor((x - 20) / w5); if (k >= 0 && k < n) this.spawn(k); else if (k === n) { this.invOpen = true; Sfx.play('cloth', { vol: 0.5 }); } return; }
       const i = this.cellAt(x, y);
       if (i >= 0 && this.b.cells[i]) { this.drag = { from: i, x, y }; return; }
       if (y < this.counterY) this.pan = { x0: x, cam0: this.cam };
@@ -185,7 +219,7 @@ export class MergeGame extends Panel {
       if (!this.drag) return;
       const from = this.drag.from; this.drag = null;
       // aruncat peste 🎒 = il iei in inventar
-      { const w5 = (this.W - 40) / 5; if (y > L.genY && y < L.genY + L.crateH && x > 20 + 4 * w5) { this.takeToBag(from); return; } }
+      { const w5 = this.slotW(); if (y > L.genY && y < L.genY + L.crateH && x > 20 + this.chains.length * w5) { this.takeToBag(from); return; } }
       // aruncat peste un client = i-l dai
       for (const h of this.hits) if (Math.hypot(x - h.x, y - h.y) < h.r * 1.3) { this.deliver(h.id); return; }
       const to = this.cellAt(x, y); if (to < 0 || to === from) return;
@@ -217,7 +251,7 @@ export class MergeGame extends Panel {
   }
   key(k: string, d: boolean) {
     if (!d) return;
-    if (k >= '1' && k <= '4') this.spawn(+k - 1);
+    if (k >= '1' && k <= String(this.chains.length)) this.spawn(+k - 1);
     if (k === 'arrowleft' || k === 'a') this.cam = Math.max(-0.35, this.cam - 0.08);
     if (k === 'arrowright' || k === 'd') this.cam = Math.min(0.35, this.cam + 0.08);
     if (k === ' ' || k === 'e') { const q = this.queue()[0]; if (q) this.deliver(q.id); }
@@ -247,6 +281,7 @@ export class MergeGame extends Panel {
   }
 
   drawWorld(ctx: CanvasRenderingContext2D, W: number, H: number, night: number) {
+    if (this.which === 'florist') { this.drawShop(ctx, W, H, night); return; }
     const hz = this.horizon, cy = this.counterY;
     const par = (f: number) => -this.cam * W * f; // parallax
     // cerul
@@ -307,6 +342,104 @@ export class MergeGame extends Panel {
     }
   }
 
+  // ------------------------------------------------------------------ florăria (interior de magazin, nu taraba de pe drum)
+  drawShop(ctx: CanvasRenderingContext2D, W: number, H: number, night: number) {
+    const cy = this.counterY, floorTop = H * 0.36, par = (f: number) => -this.cam * W * f;
+    // peretele cu tapet roz in dungi si lambriu alb
+    ctx.fillStyle = '#ffe4ec'; ctx.fillRect(0, 0, W, floorTop);
+    ctx.fillStyle = '#ffd3e0'; for (let x = (par(0.2) % 28) - 28; x < W; x += 28) ctx.fillRect(x, 0, 12, floorTop);
+    ctx.fillStyle = '#fff8f6'; ctx.fillRect(0, floorTop - H * 0.08, W, H * 0.08);
+    ctx.strokeStyle = '#ead6d0'; ctx.lineWidth = 2; for (let x = (par(0.2) % 60) - 60; x < W; x += 60) ctx.strokeRect(x + 6, floorTop - H * 0.07, 48, H * 0.06);
+    ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, floorTop - H * 0.08); ctx.lineTo(W, floorTop - H * 0.08); ctx.stroke();
+    // vitrina: strada satului, cu casele de vizavi
+    const wx0 = W * 0.05 + par(0.2), wx1 = W * 0.47 + par(0.2), wy0 = H * 0.05, wy1 = floorTop - H * 0.1;
+    ctx.save(); ctx.beginPath(); ctx.rect(wx0, wy0, wx1 - wx0, wy1 - wy0); ctx.clip();
+    const sky = ctx.createLinearGradient(0, wy0, 0, wy1); sky.addColorStop(0, night > 0.5 ? '#1d2550' : '#8fd3ff'); sky.addColorStop(1, night > 0.5 ? '#4a3f75' : '#fff1d6');
+    ctx.fillStyle = sky; ctx.fillRect(wx0, wy0, wx1 - wx0, wy1 - wy0);
+    for (const c of this.clouds) { const x = wx0 + c.x * (wx1 - wx0), y = wy0 + c.y * H * 0.8; ctx.fillStyle = '#ffffffcc'; for (const [dx, dy, r] of [[0, 0, 10], [10, -4, 13], [22, 0, 9]]) { ctx.beginPath(); ctx.arc(x + dx, y + dy, r, 0, 7); ctx.fill(); } }
+    const street = wy1 - (wy1 - wy0) * 0.18;
+    [['#fff1d6', '#c0573e'], ['#e8f1ff', '#5b7fbf'], ['#ffe1ea', '#e5809a'], ['#e7f6e2', '#5aa35a']].forEach(([wall, roof], i) => {
+      const x = wx0 + 6 + i * (wx1 - wx0) / 3.4 + par(0.15), w = (wx1 - wx0) / 4, hh = (wy1 - wy0) * 0.42;
+      ctx.fillStyle = wall; ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.fillRect(x, street - hh, w, hh); ctx.strokeRect(x, street - hh, w, hh);
+      ctx.fillStyle = roof; ctx.beginPath(); ctx.moveTo(x - 4, street - hh); ctx.lineTo(x + w / 2, street - hh - w * 0.4); ctx.lineTo(x + w + 4, street - hh); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = night > 0.5 ? '#ffe680' : '#bfe8ff'; ctx.fillRect(x + w * 0.2, street - hh * 0.7, w * 0.22, hh * 0.3); ctx.fillRect(x + w * 0.58, street - hh * 0.7, w * 0.22, hh * 0.3);
+    });
+    ctx.fillStyle = '#e9d8b8'; ctx.fillRect(wx0, street, wx1 - wx0, wy1 - street);
+    ctx.restore();
+    // rama vitrinei, cu ghivece pe pervaz
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 10; ctx.strokeRect(wx0, wy0, wx1 - wx0, wy1 - wy0);
+    ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.strokeRect(wx0 - 5, wy0 - 5, wx1 - wx0 + 10, wy1 - wy0 + 10);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo((wx0 + wx1) / 2, wy0); ctx.lineTo((wx0 + wx1) / 2, wy1); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(wx0 - 12, wy1 + 2, wx1 - wx0 + 24, 9, 3); ctx.fill(); ctx.stroke();
+    const ps = Math.min(46, H * 0.075);
+    for (const [f, code] of [[0.12, 'pot:1'], [0.36, 'garden:3'], [0.62, 'pot:1'], [0.88, 'garden:1']] as const) drawItem(ctx, code, wx0 + (wx1 - wx0) * f, wy1 - ps * 0.3, ps, this.t);
+    // usa cu geam si clopotelul (se misca atunci cand intra cineva)
+    const dx = W * FL_DOOR + par(0.2), dw = W * 0.085, dy0 = H * 0.06;
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(dx - dw / 2 - 6, dy0 - 6, dw + 12, floorTop - dy0 + 6, [10, 10, 0, 0]); ctx.fill(); ctx.stroke();
+    const open = Math.min(1, this.bell * 2);
+    ctx.fillStyle = '#6a8fae'; ctx.fillRect(dx - dw / 2, dy0, dw, floorTop - dy0);
+    ctx.fillStyle = '#f7c9d6'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.rect(dx - dw / 2, dy0, dw * (1 - open * 0.75), floorTop - dy0); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#d6f0ffcc'; ctx.fillRect(dx - dw / 2 + 6, dy0 + 8, dw * (1 - open * 0.75) - 12, (floorTop - dy0) * 0.45);
+    ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(dx - dw / 2 + dw * (1 - open * 0.75) - 7, dy0 + (floorTop - dy0) * 0.6, 3, 0, 7); ctx.fill();
+    { const sw = Math.sin(this.t * 18) * this.bell * 0.6; ctx.save(); ctx.translate(dx, dy0 - 6); ctx.rotate(sw); ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-7, 14); ctx.quadraticCurveTo(-7, 2, 0, 2); ctx.quadraticCurveTo(7, 2, 7, 14); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 16, 2.5, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore(); }
+    // firma de pe perete
+    { const x = W * 0.8 + par(0.2), y = H * 0.075; ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x - 78, y, 156, 30, 15); ctx.fill(); ctx.stroke(); ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ff4d6d'; ctx.fillText('Florăria lui Bubu', x, y + 16); }
+    // rafturile cu flori (dreapta) si cosul suspendat
+    const sx0 = W * 0.66 + par(0.2), sx1 = W * 0.97 + par(0.2), ss = Math.min(40, H * 0.065);
+    [[H * 0.17, ['garden:2', 'pot:0', 'flower:3', 'garden:1']], [H * 0.27, ['pot:1', 'garden:3', 'flower:2', 'pot:2']]].forEach(([y, items]) => {
+      const yy = y as number; (items as string[]).forEach((code, i) => drawItem(ctx, code, sx0 + 16 + i * (sx1 - sx0 - 32) / 3, yy - ss * 0.42, ss, this.t));
+      ctx.fillStyle = '#c98e5f'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(sx0, yy, sx1 - sx0, 8, 3); ctx.fill(); ctx.stroke();
+    });
+    { const hx = W * 0.6 + par(0.2); ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(hx, 0); ctx.lineTo(hx, H * 0.05); ctx.stroke(); drawItem(ctx, 'pot:3', hx, H * 0.1, Math.min(54, H * 0.09), this.t); }
+    // podeaua (dale in perspectiva)
+    const vx = W / 2 + par(0.4), vy = floorTop - H * 0.5;
+    ctx.fillStyle = '#f5ece4'; ctx.fillRect(0, floorTop, W, cy - floorTop + 4);
+    ctx.save(); ctx.beginPath(); ctx.rect(0, floorTop, W, cy - floorTop + 4); ctx.clip();
+    ctx.strokeStyle = '#e2d2c4'; ctx.lineWidth = 2;
+    for (let i = -12; i <= 12; i++) { const bx = W / 2 + i * W * 0.12 + par(0.9); ctx.beginPath(); ctx.moveTo(vx + (bx - vx) * 0.35, floorTop); ctx.lineTo(bx + (bx - vx) * 0.4, cy + 4); ctx.stroke(); }
+    for (let k = 1; k < 6; k++) { const y = floorTop + (cy - floorTop) * (k / 6) ** 1.6; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    ctx.restore(); void vy;
+    ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, floorTop); ctx.lineTo(W, floorTop); ctx.stroke();
+    // galetile mari cu flori langa vitrina (pe podea)
+    for (const [f, code] of [[0.08, 'garden:2'], [0.17, 'flower:3']] as const) { const x = W * f + par(0.35), y = floorTop + (cy - floorTop) * 0.35; ctx.fillStyle = '#c9d6df'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x - 16, y - 18); ctx.lineTo(x + 16, y - 18); ctx.lineTo(x + 12, y + 6); ctx.lineTo(x - 12, y + 6); ctx.closePath(); ctx.fill(); ctx.stroke(); drawItem(ctx, code, x, y - 30, 44, this.t); }
+    // clientii: intra pe usa si vin la tejghea
+    const list = [...this.scene.shopNpcs()].map(n => ({ n, p: this.npcScreen(n) })).sort((a, b) => a.p.k - b.p.k);
+    this.hits = [];
+    for (const { n, p } of list) {
+      if (!n.spec || !n.actor) continue;
+      const x = (p.fx - this.cam * (0.6 + p.k * 0.4)) * W;
+      const y = floorTop + 4 + p.k * (cy + H * 0.08 - floorTop - 4);
+      const sc = (0.7 + p.k * 1.75) * Math.min(1.4, H / 700);
+      const pose = { ...n.actor.pose }; pose.back = false;
+      drawCharacter(ctx, n.spec as CharSpec, pose, x, y, sc, 1, this.t, n.actor.outfit);
+      if (n.state === 'wait') this.drawOrder(ctx, n, x, Math.max(Math.min(54, 30 * sc) + 104, y - 96 * sc), sc);
+    }
+  }
+  /** ghirlanda de flori de deasupra tejghelei florariei */
+  drawGarland(ctx: CanvasRenderingContext2D, W: number) {
+    const n = Math.ceil(W / 34) + 1, cols = ['#ff9ab8', '#fff', '#c77dff', '#ffd23f', '#ff7aa2'];
+    ctx.strokeStyle = '#3d8b3d'; ctx.lineWidth = 3; ctx.beginPath();
+    for (let i = 0; i <= n; i++) { const x = i * 34, y = 10 + Math.sin(i * 0.9) * 3 + 8 * Math.sin((i % 6) / 6 * Math.PI); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke();
+    for (let i = 0; i <= n; i++) {
+      const x = i * 34, y = 10 + Math.sin(i * 0.9) * 3 + 8 * Math.sin((i % 6) / 6 * Math.PI), sw = Math.sin(this.t * 1.5 + i) * 1.5;
+      for (let k = 0; k < 5; k++) { const a = k * 1.2566 + sw * 0.1; ctx.fillStyle = cols[i % cols.length]; ctx.strokeStyle = O; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(x + Math.cos(a) * 5, y + Math.sin(a) * 5, 3.6, 3.6, 0, 0, 7); ctx.fill(); ctx.stroke(); }
+      ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 7); ctx.fill();
+    }
+  }
+  /** pe tejgheaua florariei: hartia de impachetat, panglica, foarfeca, tablita cu creta */
+  drawFloristTools(ctx: CanvasRenderingContext2D, W: number, cy: number) {
+    // tablita cu creta (in locul cartonasului de la taraba)
+    ctx.fillStyle = '#3d4a45'; ctx.strokeStyle = '#a0703f'; ctx.lineWidth = 5; ctx.beginPath(); ctx.roundRect(22, cy - 44, 132, 38, 6); ctx.fill(); ctx.stroke();
+    ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; ctx.fillText('Buchete proaspete', 88, cy - 31); ctx.font = '700 10px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffd6e4'; ctx.fillText('făcute de Bubu 💕', 88, cy - 16);
+    // sulul de hartie
+    const rx = W * 0.3; ctx.fillStyle = '#f2e3c6'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(rx - 34, cy - 18, 68, 16, 8); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#e8d3ad'; ctx.beginPath(); ctx.ellipse(rx + 34, cy - 10, 5, 8, 0, 0, 7); ctx.fill(); ctx.stroke();
+    // panglica pe mosor si foarfeca
+    const bx = W * 0.4; ctx.fillStyle = '#ff7aa2'; ctx.beginPath(); ctx.ellipse(bx, cy - 12, 12, 10, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(bx, cy - 12, 4, 3.5, 0, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#ff7aa2'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx + 10, cy - 6); ctx.quadraticCurveTo(bx + 30, cy + 2, bx + 22, cy + 10); ctx.stroke();
+    const fx = W * 0.62; ctx.save(); ctx.translate(fx, cy - 8); ctx.rotate(-0.3); ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.fillStyle = '#9aa5ad'; for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(24, sd * 3); ctx.lineTo(24, sd * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#ff9ab8'; ctx.beginPath(); ctx.ellipse(-8, sd * 6, 6, 4, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#9aa5ad'; } ctx.restore();
+  }
+
   drawOrder(ctx: CanvasRenderingContext2D, n: Npc, x: number, y: number, sc: number) {
     const k = n.wants.length, s = Math.min(54, 30 * sc);
     const bw = Math.max(110, 20 + k * (s + 6)), bh = s + 46;
@@ -324,6 +457,8 @@ export class MergeGame extends Panel {
 
   drawCounter(ctx: CanvasRenderingContext2D, W: number, H: number) {
     const cy = this.counterY;
+    if (this.which === 'florist') this.drawGarland(ctx, W);
+    else {
     // copertina cu dungi + stalpi (ne incadreaza privirea)
     const stripe = 46;
     for (let i = 0; i < W / stripe + 1; i++) {
@@ -332,25 +467,29 @@ export class MergeGame extends Panel {
     }
     ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); for (let i = 0; i < W / stripe + 1; i++) { ctx.moveTo(i * stripe, 34); ctx.quadraticCurveTo((i + 0.5) * stripe, 50, (i + 1) * stripe, 34); } ctx.stroke();
     for (const x of [10, W - 26]) { ctx.fillStyle = '#c98e5f'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x, 30, 16, cy - 20, 4); ctx.fill(); ctx.stroke(); }
+    }
     // tejgheaua (blatul din fata, apoi suprafata)
-    ctx.fillStyle = '#b07a4f'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(-6, cy, W + 12, H * 0.05, 6); ctx.fill(); ctx.stroke();
+    const fl = this.which === 'florist';
+    ctx.fillStyle = fl ? '#f3e9e4' : '#b07a4f'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(-6, cy, W + 12, H * 0.05, 6); ctx.fill(); ctx.stroke();
+    if (fl) { ctx.strokeStyle = '#e0c8c0'; ctx.lineWidth = 2; for (let x = 20; x < W; x += 34) { ctx.beginPath(); ctx.moveTo(x, cy + 4); ctx.lineTo(x, cy + H * 0.05 - 3); ctx.stroke(); } }
     const top = cy + H * 0.05;
-    const wood = ctx.createLinearGradient(0, top, 0, H); wood.addColorStop(0, '#e7b98a'); wood.addColorStop(1, '#d19a68');
+    const wood = ctx.createLinearGradient(0, top, 0, H); wood.addColorStop(0, fl ? '#fbefe9' : '#e7b98a'); wood.addColorStop(1, fl ? '#efd9cf' : '#d19a68');
     ctx.fillStyle = wood; ctx.fillRect(0, top, W, H - top);
-    ctx.strokeStyle = '#c48b5c'; ctx.lineWidth = 1.5; for (let y = top + 18; y < H; y += 26) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y + 4); ctx.stroke(); }
+    ctx.strokeStyle = fl ? '#e6cfc4' : '#c48b5c'; ctx.lineWidth = 1.5; for (let y = top + 18; y < H; y += 26) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y + 4); ctx.stroke(); }
+    if (fl) this.drawFloristTools(ctx, W, cy);
     // borcanul cu bani si cartonasul
     const jx = W - 54, jy = cy - 2;
     ctx.fillStyle = '#e3f6ffcc'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(jx - 20, jy - 40, 40, 42, 8); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#ffd23f'; for (let i = 0; i < Math.min(8, 1 + Math.floor((this.scene.w.money ?? 0) / 25)); i++) { ctx.beginPath(); ctx.ellipse(jx - 8 + (i % 3) * 8, jy - 6 - Math.floor(i / 3) * 6, 6, 3, 0, 0, 7); ctx.fill(); ctx.stroke(); }
     ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = O; ctx.fillText(`${this.scene.w.money ?? 0} lei`, jx, jy - 50);
-    ctx.fillStyle = '#fff8ef'; ctx.beginPath(); ctx.roundRect(24, cy - 32, 120, 28, 6); ctx.fill(); ctx.stroke();
-    ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText(this.scene.storeMode === 'florarie' ? 'Florăria lui Bubu' : 'Taraba lui Bubu', 84, cy - 18);
+    if (!fl) { ctx.fillStyle = '#fff8ef'; ctx.beginPath(); ctx.roundRect(24, cy - 32, 120, 28, 6); ctx.fill(); ctx.stroke(); }
+    if (!fl) { ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText('Taraba lui Bubu', 84, cy - 18); }
     // tava cu produse
     const L = this.layout(); const q = this.queue();
-    ctx.fillStyle = '#c48b5c'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(L.gx - 10, L.gy - 10, L.cs * COLS + 20, L.cs * ROWS + 20, 14); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = fl ? '#e9c9bd' : '#c48b5c'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(L.gx - 10, L.gy - 10, L.cs * COLS + 20, L.cs * ROWS + 20, 14); ctx.fill(); ctx.stroke();
     for (let i = 0; i < COLS * ROWS; i++) {
       const x = L.gx + (i % COLS) * L.cs, y = L.gy + Math.floor(i / COLS) * L.cs;
-      ctx.fillStyle = (i + Math.floor(i / COLS)) % 2 ? '#f6dcbc' : '#fbe7cc'; ctx.beginPath(); ctx.roundRect(x + 2, y + 2, L.cs - 4, L.cs - 4, 8); ctx.fill();
+      ctx.fillStyle = fl ? ((i + Math.floor(i / COLS)) % 2 ? '#fde8ef' : '#fff6f8') : (i + Math.floor(i / COLS)) % 2 ? '#f6dcbc' : '#fbe7cc'; ctx.beginPath(); ctx.roundRect(x + 2, y + 2, L.cs - 4, L.cs - 4, 8); ctx.fill();
       const it = this.b.cells[i];
       if (it && !(this.drag && this.drag.from === i)) {
         const s = 1 + (this.pop[i] ?? 0) * 0.2 * Math.sin((this.pop[i] ?? 0) * 8);
@@ -361,19 +500,27 @@ export class MergeGame extends Panel {
       }
     }
     // ladițele cu resurse reale
-    const w4 = (W - 40) / 5; const r = this.scene.w.res ?? {};
-    CHAIN_INFO.forEach((ci, k) => {
+    const w4 = this.slotW(); const r = this.scene.w.res ?? {};
+    this.chains.forEach((ci, k) => {
       const bx = 20 + k * w4, by = L.genY, n = have(r, ci.src);
+      if (fl) {
+        // galeata de zinc cu flori in apa (nu lada de legume)
+        const cw = w4 - 10, y0 = by + L.crateH * 0.35, hh = L.crateH * 0.62;
+        ctx.fillStyle = ['#c9d6df', '#d7c9e6', '#c9e2cf'][k % 3]; ctx.strokeStyle = O; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(bx, y0); ctx.lineTo(bx + cw, y0); ctx.lineTo(bx + cw - 8, y0 + hh); ctx.lineTo(bx + 8, y0 + hh); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = '#ffffff99'; ctx.lineWidth = 2; for (const f of [0.3, 0.7]) { ctx.beginPath(); ctx.moveTo(bx + 4, y0 + hh * f); ctx.lineTo(bx + cw - 4, y0 + hh * f); ctx.stroke(); }
+      } else {
       ctx.fillStyle = '#c98e5f'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by + L.crateH * 0.35, w4 - 10, L.crateH * 0.62, 8); ctx.fill(); ctx.stroke();
       ctx.strokeStyle = '#a0703f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx + 4, by + L.crateH * 0.62); ctx.lineTo(bx + w4 - 14, by + L.crateH * 0.62); ctx.stroke();
+      }
       ctx.save(); if (!n) ctx.globalAlpha = 0.3;
       for (let i = 0; i < Math.min(3, Math.max(1, n)); i++) drawItem(ctx, `${ci.id}:0`, bx + (w4 - 10) / 2 + (i - 1) * 16, by + L.crateH * 0.32, L.crateH * 0.55, this.t);
       ctx.restore();
-      ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(n ? `${ci.srcLabel} ×${n}` : `${ci.srcLabel}: 0`, bx + (w4 - 10) / 2, by + L.crateH * 0.8);
+      ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.fillStyle = fl ? O : '#fff'; ctx.fillText(n ? `${ci.srcLabel} ×${n}` : `${ci.srcLabel}: 0`, bx + (w4 - 10) / 2, by + L.crateH * 0.8);
     });
     // 🎒 inventarul: trage aici un produs ca sa-l pastrezi, atinge ca sa pui unul inapoi
-    { const bx = 20 + 4 * w4, by = L.genY, n = this.bagProds().reduce((a, k) => a + (r[k] ?? 0), 0), hot = this.drag && this.drag.y > L.genY - 20 && this.drag.x > bx;
-      ctx.fillStyle = hot ? '#ffe1ea' : '#8fb8de'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by + L.crateH * 0.22, w4 - 10, L.crateH * 0.75, 12); ctx.fill(); ctx.stroke();
+    { const bx = 20 + this.chains.length * w4, by = L.genY, n = this.bagProds().reduce((a, k) => a + (r[k] ?? 0), 0), hot = this.drag && this.drag.y > L.genY - 20 && this.drag.x > bx;
+      ctx.fillStyle = hot ? '#ffe1ea' : fl ? '#ffb3c7' : '#8fb8de'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by + L.crateH * 0.22, w4 - 10, L.crateH * 0.75, 12); ctx.fill(); ctx.stroke();
       const ic = iconCanvas('🎒', 96); if (ic) ctx.drawImage(ic, bx + (w4 - 10) / 2 - L.crateH * 0.25, by + L.crateH * 0.24, L.crateH * 0.5, L.crateH * 0.5);
       ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(`Inventar${n ? ' ×' + n : ''}`, bx + (w4 - 10) / 2, by + L.crateH * 0.86); }
     // labutele mele sprijinite pe tejghea
@@ -386,7 +533,7 @@ export class MergeGame extends Panel {
     }
     // produsul tras
     if (this.drag) { const it = this.b.cells[this.drag.from]; if (it) drawItem(ctx, it, this.drag.x, this.drag.y, L.cs * 1.1, this.t); }
-    if (!q.length) { ctx.font = '700 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 4; const tt = this.scene.w.minutes / 60 >= 20 || this.scene.w.minutes / 60 < 7 ? 'E noapte, clienții vin dimineață 🌙' : 'Pregătește produse… vin clienți pe drum 🚶'; ctx.strokeText(tt, W / 2, cy - 14); ctx.fillText(tt, W / 2, cy - 14); }
+    if (!q.length) { ctx.font = '700 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 4; const tt = this.scene.w.minutes / 60 >= 20 || this.scene.w.minutes / 60 < 7 ? 'E noapte, clienții vin dimineață 🌙' : fl ? 'Pregătește buchete… clopoțelul sună când intră cineva 🔔' : 'Pregătește produse… vin clienți pe drum 🚶'; ctx.strokeText(tt, W / 2, cy - 14); ctx.fillText(tt, W / 2, cy - 14); }
     if (this.invOpen) this.drawInv(ctx);
     heartPath(ctx, 0, 0, 0); // (pastreaza importul)
     void basePose;

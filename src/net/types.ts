@@ -66,7 +66,8 @@ export interface NetAdapter {
 
 export interface NetConfig {
   mode: 'solo' | 'local' | 'server' | 'firebase';
-  room: string;          // codul cuplului, ex. "bubududu-iubire"
+  room: string;          // camera: la casele noi „h…” (din cod + parola), la cele vechi un nume (ex. „casuta-noastra”)
+  code?: string;         // codul casei (ex. „LALEA-7K3P”), il spuneti partenerului impreuna cu parola
   serverUrl: string;     // ex. ws://192.168.1.50:8787 sau wss://s10.tailnet.ts.net
   firebase: { apiKey: string; authDomain: string; databaseURL: string; projectId: string; appId: string };
 }

@@ -8,6 +8,9 @@ import pkg from '../../package.json';
 import { Settings } from '../game/settings';
 import type { Scene, Game } from '../engine/game';
 import type { NetConfig } from '../net/types';
+import { createHouse, joinHouse, isSecureRoom, normCode } from '../net/house';
+import { WsAdapter } from '../net/adapters';
+import { loadCloud } from '../save/cloud';
 
 export class MenuScene implements Scene {
   /** meniul nu are nevoie de mai mult de 30 de cadre pe secunda */
@@ -40,7 +43,7 @@ export class MenuScene implements Scene {
           <option value="server">📱 Serverul nostru (Samsung S10 / PC)</option>
           <option value="local">🧪 Test: 2 tab-uri pe același dispozitiv</option>
         </select>
-        <label>Codul casei (același pentru amândoi)<input name="room" value="${s.net.room}" maxlength="40" /></label>
+        <div class="house-row"></div>
         <label class="m-server">Adresa serverului: lasă <b>auto</b> ca să se conecteze singur la S10<span class="srvrow"><input name="serverUrl" value="${s.net.serverUrl}" placeholder="auto (se conectează singur la S10)" /><button type="button" class="paste" title="Lipește linkul copiat">📋 Lipește</button></span></label>
         <label class="m-firebase hidden">Config Firebase (JSON din consola Firebase)<textarea name="fb" rows="4" placeholder='{"apiKey":"...","databaseURL":"https://...firebaseio.com", ...}'>${s.net.firebase.apiKey ? JSON.stringify(s.net.firebase) : ''}</textarea></label>
         <button class="play">▶ Intră în casă</button>
@@ -56,7 +59,7 @@ export class MenuScene implements Scene {
       this.ui.querySelector('.m-server')!.classList.toggle('hidden', mode.value !== 'server');
       this.ui.querySelector('.m-firebase')!.classList.add('hidden'); // config-ul Firebase e deja in joc
     };
-    mode.onchange = sync; sync();
+    mode.onchange = () => { sync(); this.houseRow(); }; sync(); this.houseRow();
     this.ui.addEventListener('click', e => {
       const b = (e.target as HTMLElement).closest('button') as HTMLButtonElement | null; if (!b) return;
       Sfx.unlock(); Sfx.play('click');
@@ -66,6 +69,10 @@ export class MenuScene implements Scene {
         (b.dataset.who === 'bubu' ? this.bubu : this.dudu).play('wave');
       }
       if (b.classList.contains('credits')) { this.showCredits(); return; }
+      if (b.classList.contains('house-open')) { this.showHouse(); return; }
+      if (b.classList.contains('h-create')) { this.doCreate(b); return; }
+      if (b.classList.contains('h-join')) { this.doJoin(b); return; }
+      if (b.classList.contains('h-copy')) { const c = Settings.get().net.code ?? ''; navigator.clipboard?.writeText(c).then(() => { b.textContent = '✔ Copiat'; }).catch(() => {}); return; }
       if (b.classList.contains('errs')) { this.showErrors(); return; }
       if (b.classList.contains('errcopy')) { const t = `Bubu & Dudu v${pkg.version} · ${navigator.userAgent}\n` + ErrorLog.text(); navigator.clipboard?.writeText(t).then(() => { b.textContent = '✔ Copiat'; }).catch(() => { b.textContent = 'Ține apăsat pe text → Copiază'; }); return; }
       if (b.classList.contains('errclear')) { ErrorLog.clear(); this.ui.querySelector('.cred')?.remove(); const eb = this.ui.querySelector('.errs'); if (eb) eb.textContent = '📋 Erori (0)'; return; }
@@ -84,7 +91,7 @@ export class MenuScene implements Scene {
       }
       if (b.classList.contains('export')) {
         // salvarea casei curente intr-un fisier .json (o pastrezi sau o trimiti pe alt telefon)
-        const room = (this.ui.querySelector('[name=room]') as HTMLInputElement).value.trim() || Settings.get().net.room;
+        const room = Settings.get().net.room;
         const raw = localStorage.getItem(`bd-save-${room}`);
         if (!raw) { alert('Încă nu există o salvare pentru casa „' + room + '”. Intră în joc o dată.'); return; }
         const blob = new Blob([JSON.stringify({ app: 'bubu-dudu', room, save: JSON.parse(raw) })], { type: 'application/json' });
@@ -101,11 +108,12 @@ export class MenuScene implements Scene {
           const f = inp.files?.[0]; if (!f) return;
           try {
             const d = JSON.parse(await f.text()); const save = d.save ?? d; if (!save?.json) throw new Error('format');
-            const room = d.room ?? Settings.get().net.room;
+            // salvarea intra in casa de acum (cu parola); daca n-aveti inca una, in casa din fisier
+            const cur = Settings.get().net, room = isSecureRoom(cur.room) ? cur.room : (d.room ?? cur.room);
             localStorage.setItem(`bd-save-${room}`, JSON.stringify({ json: save.json, ts: Date.now() }));
-            Settings.set({ net: { ...Settings.get().net, room }, resetAt: 0 });
-            (this.ui.querySelector('[name=room]') as HTMLInputElement).value = room;
-            alert('✔ Salvarea a fost încărcată (casa „' + room + '”). Apasă „Intră în casă”.');
+            Settings.set({ net: { ...cur, room, code: room === cur.room ? cur.code : undefined }, resetAt: 0 });
+            this.houseRow();
+            alert('✔ Salvarea a fost încărcată' + (cur.code && room === cur.room ? ` în casa ${cur.code}` : '') + '. Apasă „Intră în casă”.');
           } catch { alert('Fișierul nu e o salvare Bubu & Dudu.'); }
         };
         inp.click();
@@ -120,7 +128,8 @@ export class MenuScene implements Scene {
       }
       if (b.classList.contains('play')) {
         const net: NetConfig = { ...Settings.get().net, mode: mode.value as NetConfig['mode'] };
-        net.room = ((this.ui.querySelector('[name=room]') as HTMLInputElement).value.trim() || 'casuta-noastra').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+        // online doar intr-o casa cu cod si parola (camera nu se mai poate ghici)
+        if ((net.mode === 'firebase' || net.mode === 'server') && !isSecureRoom(net.room)) { this.showHouse('Ca să jucați online, faceți-vă întâi casa voastră, cu cod și parolă. Unul o creează, celălalt intră cu același cod și aceeași parolă.'); return; }
         net.serverUrl = (this.ui.querySelector('[name=serverUrl]') as HTMLInputElement).value.trim();
         const fbt = (this.ui.querySelector('[name=fb]') as HTMLTextAreaElement).value.trim();
         if (fbt) { try { net.firebase = { ...net.firebase, ...JSON.parse(fbt.replace(/(\w+)\s*:/g, '"$1":').replace(/""/g, '"').replace(/'/g, '"')) }; } catch { try { net.firebase = { ...net.firebase, ...JSON.parse(fbt) }; } catch { alert('Config Firebase invalid (trebuie JSON)'); return; } } }
@@ -130,6 +139,75 @@ export class MenuScene implements Scene {
       }
     });
     Sfx.setMuted(s.muted);
+  }
+  /** randul cu casa voastra (codul) din meniu */
+  houseRow() {
+    const row = this.ui.querySelector('.house-row') as HTMLElement | null; if (!row) return;
+    const n = Settings.get().net, sec = isSecureRoom(n.room) && !!n.code;
+    row.innerHTML = sec
+      ? `<div class="house-card"><span>🏠 Casa voastră: <b>${n.code}</b> 🔒</span><button type="button" class="house-open">🔑 Casa</button></div>`
+      : `<div class="house-card warn"><span>🔓 Nu aveți încă o casă cu parolă</span><button type="button" class="house-open">🏠 Faceți-vă casa</button></div>`;
+  }
+  /** fereastra „Casa voastra”: casa noua (cod unic + parola) sau intri in casa partenerului */
+  showHouse(note = '') {
+    this.ui.querySelector('.cred')?.remove();
+    const n = Settings.get().net, sec = isSecureRoom(n.room) && !!n.code;
+    const oldSave = !sec && !!localStorage.getItem(`bd-save-${n.room}`);
+    const d = document.createElement('div'); d.className = 'cred house';
+    d.innerHTML = `<div class="cred-in"><h3>🏠 Casa voastră</h3>
+      ${note ? `<p class="sub">${note}</p>` : '<p class="sub">Fiecare cuplu are casa lui, cu un cod unic și o parolă. Doar cine știe amândouă poate intra.</p>'}
+      ${sec ? `<div class="house-now"><span>Codul casei: <b>${n.code}</b></span><button type="button" class="h-copy">📋 Copiază codul</button><small>Spune-i ${Settings.get().who === 'bubu' ? 'lui Dudu' : 'lui Bubu'} codul și parola. Parola nu se salvează nicăieri: dacă o uitați, faceți o casă nouă din fișierul cu salvarea.</small></div>` : ''}
+      <div class="house-cols">
+        <div class="house-box"><h4>✨ Casă nouă</h4>
+          <label>Alege o parolă (cel puțin 4 caractere)<input name="hpass" type="password" autocomplete="new-password" maxlength="40" /></label>
+          ${oldSave || sec ? `<label class="chk"><input type="checkbox" name="hmove" checked /> Mută aici progresul de acum</label>` : ''}
+          <button type="button" class="h-create">✨ Creează casa</button></div>
+        <div class="house-box"><h4>💞 Intră în casa partenerului</h4>
+          <label>Codul casei<input name="hcode" placeholder="LALEA-7K3P" maxlength="14" autocapitalize="characters" /></label>
+          <label>Parola<input name="hjpass" type="password" autocomplete="current-password" maxlength="40" /></label>
+          <button type="button" class="h-join">💞 Intră în casă</button></div>
+      </div>
+      <p class="house-msg"></p>
+      <button class="xcred">Închide</button></div>`;
+    this.ui.appendChild(d);
+  }
+  private houseMsg(t: string, ok = false) { const m = this.ui.querySelector('.house-msg') as HTMLElement | null; if (m) { m.textContent = t; m.classList.toggle('ok', ok); } }
+  private async houseNet() {
+    const mode = (this.ui.querySelector('select') as HTMLSelectElement).value as NetConfig['mode'];
+    const net: NetConfig = { ...Settings.get().net, mode };
+    let url = (this.ui.querySelector('[name=serverUrl]') as HTMLInputElement).value.trim() || net.serverUrl;
+    if (mode === 'server') url = !url || /^auto/i.test(url) ? (await WsAdapter.resolveAuto()) ?? '' : WsAdapter.norm(url);
+    return { net, url };
+  }
+  private async doCreate(b: HTMLButtonElement) {
+    const pass = (this.ui.querySelector('[name=hpass]') as HTMLInputElement).value;
+    const move = (this.ui.querySelector('[name=hmove]') as HTMLInputElement | null)?.checked ?? false;
+    b.disabled = true; this.houseMsg('Se face casa…');
+    const { net, url } = await this.houseNet();
+    // progresul de pana acum (de pe telefon sau din cloud, cel mai nou) merge in casa noua
+    let seed: { json: string; ts: number } | null = null;
+    if (move) {
+      try { const raw = localStorage.getItem(`bd-save-${net.room}`); if (raw) seed = JSON.parse(raw); } catch { /* */ }
+      if (net.mode === 'firebase') { const c = await loadCloud(net.room); if (c && (!seed || c.ts > seed.ts)) seed = c; }
+    }
+    const r = await createHouse(net, url, pass, seed);
+    b.disabled = false;
+    if (!r.ok) { this.houseMsg('❌ ' + r.msg); Sfx.play('bad'); return; }
+    if (seed) try { localStorage.setItem(`bd-save-${r.room}`, JSON.stringify({ json: seed.json, ts: Date.now() })); } catch { /* */ }
+    Settings.set({ net: { ...Settings.get().net, room: r.room, code: r.code }, resetAt: seed ? 0 : Settings.get().resetAt });
+    Sfx.play('good'); this.houseRow();
+    const dudu = Settings.get().who === 'bubu'; this.showHouse(`✅ Casa e gata! Codul: ${r.code}. Spune-i ${dudu ? 'lui Dudu' : 'lui Bubu'} codul și parola, ca să intre și ${dudu ? 'el' : 'ea'}.`);
+  }
+  private async doJoin(b: HTMLButtonElement) {
+    const code = normCode((this.ui.querySelector('[name=hcode]') as HTMLInputElement).value), pass = (this.ui.querySelector('[name=hjpass]') as HTMLInputElement).value;
+    b.disabled = true; this.houseMsg('Caut casa…');
+    const { net, url } = await this.houseNet();
+    const r = await joinHouse(net, url, code, pass);
+    b.disabled = false;
+    if (!r.ok) { this.houseMsg('❌ ' + r.msg); Sfx.play('bad'); return; }
+    Settings.set({ net: { ...Settings.get().net, room: r.room, code: r.code }, resetAt: 0 });
+    Sfx.play('good'); this.houseRow();
+    this.showHouse(`✅ Ați intrat în casa ${r.code}. Apasă „Intră în casă”!`);
   }
   showErrors() {
     this.ui.querySelector('.cred')?.remove();

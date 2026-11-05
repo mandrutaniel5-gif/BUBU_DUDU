@@ -409,6 +409,18 @@ def({
   tick(f, t, _p, dt) { if (every(t, dt, 0.2)) f.emit('sparkle', (Math.random() - 0.5) * 80, -50 - Math.random() * 30, { vy: -10, max: 0.6 }); },
 });
 
+// cara un lemn pe deasupra capului (la cherestea): pasi mici, bratele sus, efort pe fata
+def({
+  id: 'act_carry', label: 'Cară lemne', icon: '🪵', who: 'both', kind: 'base', dur: 0.7, loop: true,
+  pose(P, t) {
+    const s = Math.sin(t * Math.PI * 2 / 0.7);
+    P.armL = P.armR = 2.75 + s * 0.06;
+    P.legL = Math.max(0, s) * 4; P.legR = Math.max(0, -s) * 4;
+    P.dy = -Math.abs(s) * 2; P.sy = 0.97 + Math.abs(s) * 0.03; P.sx = 1.03;
+    P.eyes = 'strain'; P.mouth = 'flat'; P.brows = 'up'; P.sweat = 0.6; P.headDy = 2;
+  },
+});
+
 def({
   id: 'burp', label: 'Râgâiala', icon: '🫧', who: 'dudu', kind: 'special', dur: 2.6,
   pose(P, t, p) {

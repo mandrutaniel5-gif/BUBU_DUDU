@@ -6,10 +6,44 @@ let muted = false;
 
 function ctx() {
   if (!ac) {
-    try { ac = new AudioContext(); } catch { return null; }
+    // iPhone: sesiunea audio "playback" (sunetul nu mai e taiat de butonul de silentios si nu se opreste la notificari)
+    try { const s = (navigator as any).audioSession; if (s && s.type !== 'playback') s.type = 'playback'; } catch { /* */ }
+    try { ac = new AudioContext({ latencyHint: 'interactive' }); } catch { try { ac = new AudioContext(); } catch { return null; } }
+    ac.onstatechange = () => { if (ac && ac.state !== 'running' && !document.hidden && !muted) tryResume(); };
   }
-  if (ac.state === 'suspended') ac.resume();
+  if (ac.state !== 'running' && (ac.state as string) !== 'closed' && !document.hidden && !muted) tryResume();
   return ac;
+}
+/** porneste din nou sunetul (pe iPhone merge sigur doar dintr-o atingere; altfel incercam si singuri) */
+function tryResume() { const a = ac; if (!a || (a.state as string) === 'closed') return; a.resume().catch(() => { /* asteptam o atingere */ }); }
+/**
+ * Pe iPhone (WebKit) contextul audio poate ramane "interrupted" / "suspended" dupa un apel, Siri, o notificare,
+ * ecranul blocat sau alta aplicatie cu sunet, ori poate ramane "running" cu ceasul oprit. Atunci il refacem de la zero:
+ * buclele de ambianta pornesc singure din nou (soundscape le cere la fiecare cadru), sunetele decodate raman.
+ */
+function rebuild() {
+  const old = ac; ac = null; master = sfxBus = ambBus = outNode = null;
+  for (const k of Object.keys(loops)) delete loops[k];
+  inUse.clear();
+  for (const k of Object.keys(pending)) delete pending[k];
+  try { old?.close(); } catch { /* */ }
+  ctx(); buses();
+}
+let lastTime = -1, stuck = 0, notRunning = 0;
+function watchdog() {
+  const a = ac; if (!a || document.hidden || muted) { stuck = notRunning = 0; return; }
+  if ((a.state as string) === 'closed') { rebuild(); return; }
+  if (a.state !== 'running') { tryResume(); notRunning++; return; }
+  notRunning = 0;
+  // ceasul audio trebuie sa mearga; daca sta pe loc cat timp e "running", contextul e blocat (bug WebKit)
+  if (a.currentTime === lastTime) { if (++stuck >= 2) { stuck = 0; rebuild(); } } else stuck = 0;
+  lastTime = a.currentTime;
+}
+/** la fiecare atingere: daca sunetul s-a oprit, il pornim (in gestul utilizatorului, singurul loc sigur pe iPhone) */
+function onGesture() {
+  const a = ac; if (!a || muted || document.hidden) return;
+  if ((a.state as string) === 'closed' || notRunning >= 3) { notRunning = 0; rebuild(); return; }
+  if (a.state !== 'running') tryResume();
 }
 
 function noiseBuffer(a: AudioContext, dur: number) {
@@ -232,12 +266,18 @@ export const Sfx = {
   /** volumul ambiantei (ex. mai incet in minijocuri) */
   ambLevel(v: number) { const a = ac; if (a && ambBus) ambBus.gain.setTargetAtTime(v, a.currentTime, 0.4); },
   load: loadAll,
-  setMuted(m: boolean) { muted = m; if (master && ac) master.gain.setTargetAtTime(m ? 0 : 1, ac.currentTime, 0.05); if (ac) { if (m) setTimeout(() => muted && ac?.suspend(), 120); else ac.resume(); } }, // fara sunet: oprim de tot procesarea audio (baterie)
+  setMuted(m: boolean) { muted = m; if (master && ac) master.gain.setTargetAtTime(m ? 0 : 1, ac.currentTime, 0.05); if (ac) { if (m) setTimeout(() => { if (muted) ac?.suspend().catch(() => {}); }, 120); else tryResume(); } }, // fara sunet: oprim de tot procesarea audio (baterie)
   get muted() { return muted; },
   unlock() { const a = ctx(); if (a) { buses(); loadAll(); } },
 };
 // pentru teste / depanare (din consola: __sfx.loops())
 const played: string[] = [];
-(globalThis as any).__sfx = { tap: () => { const a = buses(); if (!a || !outNode) return null; const d = a.createMediaStreamDestination(); outNode.connect(d); return d.stream; }, loops: () => Object.fromEntries(Object.entries(loops).map(([k, l]) => [k, l.id + ':' + l.target.toFixed(2)])), decoded: () => Object.keys(MAN).filter(id => MAN[id].files.some(f => RAW[f])).length, pcm: () => Math.round(decSecs), played };
+(globalThis as any).__sfx = { ctx: () => ac, tap: () => { const a = buses(); if (!a || !outNode) return null; const d = a.createMediaStreamDestination(); outNode.connect(d); return d.stream; }, loops: () => Object.fromEntries(Object.entries(loops).map(([k, l]) => [k, l.id + ':' + l.target.toFixed(2)])), decoded: () => Object.keys(MAN).filter(id => MAN[id].files.some(f => RAW[f])).length, pcm: () => Math.round(decSecs), played };
 // in fundal (aplicatia minimizata / alt tab): oprim sunetul de tot, revine cand te intorci
-if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend().catch(() => {}); else if (!muted) { lastTime = -1; stuck = 0; tryResume(); } });
+  // revenirea in aplicatie pe iPhone (pageshow / focus) si orice atingere: pornim sunetul daca s-a oprit
+  for (const ev of ['pageshow', 'focus']) addEventListener(ev, () => { if (ac && !muted && !document.hidden) tryResume(); });
+  for (const ev of ['pointerdown', 'touchend', 'keydown']) addEventListener(ev, onGesture, { capture: true, passive: true });
+  setInterval(watchdog, 1500);
+}

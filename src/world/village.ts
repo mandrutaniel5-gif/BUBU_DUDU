@@ -5,56 +5,129 @@ import { iso, isoBox, boxOf, shade, tilePath, type Pt } from './iso';
 import { heartPath } from '../char/draw';
 import { drawPOI, drawSign } from './poi';
 import { isOpen } from '../game/town';
-import { ORIGIN } from './layout';
-
-/** satul sta in lume la est de lac: coordonatele de mai jos sunt cele vechi (locale), plus OX/OY */
-const OX = ORIGIN.village.x, OY = ORIGIN.village.y;
+import { HOUSES } from './houses';
 
 const O = '#4a2a22';
 const act = (id: string, label: string, icon: string) => ({ id, label, icon });
 
-function villageFloor(wx: number, wy: number): Floor {
-  const x = wx - OX, y = wy - OY;
-  if ((y === 12 || y === 13) || (x === 10 || x === 11)) return 'path';
-  if (x >= 7 && x <= 14 && y >= 10 && y <= 15) return 'path';
-  if (x >= 13 && y >= 16 && x <= 20 && y <= 25) return (x + y) % 7 === 0 ? 'sand' : 'grass';
-  return 'grass';
+// Satul e desenat direct in coordonatele lumii (din v1.6.0), pe o retea de ulite. Regula de 2.5D: vedem doar fetele
+// dinspre +x (dreapta-jos) si +y (stanga-jos) ale cladirilor, deci fiecare usa sta pe una din fetele astea si da
+// direct intr-o strada sau in piata. Nimic nu sta in fata unei usi.
+//
+//          biserica (piateta)          case pe Ulita Bisericii (nord)
+//   ─────── Ulita Bisericii ──────────────────────────────┬──
+//   │    Posta  PRIMARIA  Dispensar                       │  parcul cu roata mare
+//   │ Brutaria ┌──── PIATA (fantana, piata, avizier) ──┐  │
+//   │ Alimentara Croitoria                     calusei  │  │
+//   ════════════════════ ULITA MARE (drumul) ═══════════╪══════ spre oras
+//   │ curtea scolii   Florăria ║ gradini   case          │
+//   │ Scoala  case    Tâmplăria║                         │
+//   ─────── Ulita Scolii ─────────────────────────────────┴──
+//            gradini, livezi, case
+export const VILLAGE_BOUNDS = { x0: 98, y0: -10, x1: 150, y1: 52 };
+const R = (x0: number, y0: number, x1: number, y1: number) => ({ x0, y0, x1, y1 });
+const inR = (x: number, y: number, r: { x0: number; y0: number; x1: number; y1: number }) => x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1;
+/** ulitele si pietele satului */
+export const V = {
+  main: R(98, 24, 150, 26),        // Ulita Mare (drumul care trece prin sat, spre oras)
+  north: R(100, 3, 148, 5),        // Ulita Bisericii
+  south: R(100, 39, 148, 41),      // Ulita Scolii
+  west: R(100, 5, 102, 39),        // ulita de vest
+  east: R(136, -8, 138, 50),       // ulita de est (de la biserica la gradini)
+  flowers: R(124, 26, 126, 39),    // Ulita Florilor (florăria si tâmplăria)
+  alley: R(117, 5, 119, 12),       // trecatoarea dintre Posta si Primarie
+  square: R(112, 12, 130, 24),     // piata satului
+  church: R(122, -8, 134, 3),      // piateta bisericii
+  park: R(138, 14, 148, 16),       // aleea din parc
+};
+export function villageFloorW(x: number, y: number): Floor {
+  if (inR(x, y, V.main)) return 'road';
+  if (inR(x, y, V.square) || inR(x, y, V.church)) return 'cobble';
+  for (const k of ['north', 'south', 'west', 'east', 'flowers', 'alley', 'park'] as const) if (inR(x, y, V[k])) return 'path';
+  return (x * 7 + y * 13) % 23 === 0 ? 'meadow' : 'grass';
 }
 
 /** cladirile: front = fata cu usa ('y' = spre stanga-jos, 'x' = spre dreapta-jos) */
 export interface BuildingDef { id: string; gx: number; gy: number; w: number; d: number; h: number; front: 'x' | 'y'; wall: string; roof: string; sign: string; awning?: string; action: { id: string; label: string; icon: string }; tower?: boolean }
 export const BUILDINGS: BuildingDef[] = [
-  { id: 'v-grocery', gx: 1, gy: 7, w: 4, d: 4, h: 58, front: 'y', wall: '#fff1d6', roof: '#7cb870', sign: 'Magazin Alimentar', awning: '#7cc576', action: act('v-grocery', 'Magazinul alimentar', '🛒') },
-  { id: 'v-clothes', gx: 5, gy: 7, w: 4, d: 4, h: 58, front: 'y', wall: '#ffe1ea', roof: '#e5809a', sign: 'Croitoria', awning: '#ff9ab8', action: act('v-clothes', 'Croitoria (haine)', '🧵') },
-  { id: 'v-hall', gx: 15, gy: 6, w: 5, d: 5, h: 74, front: 'y', wall: '#e8f1ff', roof: '#5b7fbf', sign: 'Primăria', action: act('v-hall', 'Primăria', '🏛️'), tower: true },
-  { id: 'v-school', gx: 5, gy: 15, w: 4, d: 3, h: 60, front: 'x', wall: '#fff6b8', roof: '#c0573e', sign: 'Școala', action: act('v-school', 'Școala satului', '🏫') },
-  { id: 'v-florarie', gx: 5, gy: 19, w: 4, d: 3, h: 54, front: 'x', wall: '#fff0f5', roof: '#ff9ab8', sign: 'Florăria lui Bubu', awning: '#ff7aa2', action: act('v-florarie', 'Florăria lui Bubu', '💐') },
-  { id: 'v-workshop', gx: 5, gy: 23, w: 4, d: 3, h: 54, front: 'x', wall: '#e7c08f', roof: '#8a5d32', sign: 'Tâmplăria lui Dudu', awning: '#c98e5f', action: act('v-workshop', 'Tâmplăria lui Dudu', '🪚') },
-  { id: 'v-bakery', gx: 1, gy: 1, w: 3, d: 3, h: 54, front: 'y', wall: '#fff3e0', roof: '#d9a05a', sign: 'Brutăria', awning: '#e8b06a', action: act('v-bakery', 'Brutăria (pâine / lucru)', '🍞') },
-  { id: 'v-post', gx: 5, gy: 1, w: 3, d: 3, h: 56, front: 'y', wall: '#e8f1ff', roof: '#5b7fbf', sign: 'Poșta', awning: '#7ab8ff', action: act('v-post', 'Poșta (lucrează ca poștaș)', '💌') },
-  { id: 'v-clinic', gx: 16, gy: 1, w: 4, d: 3, h: 58, front: 'y', wall: '#ffffff', roof: '#e63946', sign: 'Dispensar · Farmacie', awning: '#ff9a9a', action: act('v-clinic', 'Dispensarul (doctor, farmacie)', '🩺') },
+  // la Ulita Mare (usa spre drum)
+  { id: 'v-grocery', gx: 103, gy: 19, w: 4, d: 4, h: 58, front: 'y', wall: '#fff1d6', roof: '#7cb870', sign: 'Magazin Alimentar', awning: '#7cc576', action: act('v-grocery', 'Magazinul alimentar', '🛒') },
+  { id: 'v-clothes', gx: 107, gy: 19, w: 4, d: 4, h: 58, front: 'y', wall: '#ffe1ea', roof: '#e5809a', sign: 'Croitoria', awning: '#ff9ab8', action: act('v-clothes', 'Croitoria (haine)', '🧵') },
+  // pe latura de vest a pietei (usa spre piata)
+  { id: 'v-bakery', gx: 107, gy: 13, w: 4, d: 4, h: 54, front: 'x', wall: '#fff3e0', roof: '#d9a05a', sign: 'Brutăria', awning: '#e8b06a', action: act('v-bakery', 'Brutăria (pâine / lucru)', '🍞') },
+  // pe latura de nord a pietei
+  { id: 'v-post', gx: 113, gy: 8, w: 4, d: 4, h: 56, front: 'y', wall: '#e8f1ff', roof: '#5b7fbf', sign: 'Poșta', awning: '#7ab8ff', action: act('v-post', 'Poșta (lucrează ca poștaș)', '💌') },
+  { id: 'v-hall', gx: 119, gy: 6, w: 6, d: 6, h: 74, front: 'y', wall: '#e8f1ff', roof: '#5b7fbf', sign: 'Primăria', action: act('v-hall', 'Primăria', '🏛️'), tower: true },
+  { id: 'v-clinic', gx: 126, gy: 8, w: 4, d: 4, h: 58, front: 'y', wall: '#ffffff', roof: '#e63946', sign: 'Dispensar · Farmacie', awning: '#ff9a9a', action: act('v-clinic', 'Dispensarul (doctor, farmacie)', '🩺') },
+  // la sud de drum: Ulita Florilor (usa spre ulita) si Ulita Scolii
+  { id: 'v-florarie', gx: 119, gy: 27, w: 4, d: 4, h: 54, front: 'x', wall: '#fff0f5', roof: '#ff9ab8', sign: 'Florăria lui Bubu', awning: '#ff7aa2', action: act('v-florarie', 'Florăria lui Bubu', '💐') },
+  { id: 'v-workshop', gx: 119, gy: 32, w: 4, d: 4, h: 54, front: 'x', wall: '#e7c08f', roof: '#8a5d32', sign: 'Tâmplăria lui Dudu', awning: '#c98e5f', action: act('v-workshop', 'Tâmplăria lui Dudu', '🪚') },
+  { id: 'v-school', gx: 104, gy: 33, w: 5, d: 5, h: 60, front: 'y', wall: '#fff6b8', roof: '#c0573e', sign: 'Școala', action: act('v-school', 'Școala satului', '🏫') },
 ];
 
 const F: Furn[] = [];
-for (const b of BUILDINGS) F.push({ id: b.id, type: 'building' as any, gx: b.gx, gy: b.gy, w: b.w, d: b.d, solid: true, action: b.action });
-F.push({ id: 'v-market', type: 'stalls' as any, gx: 12, gy: 9, w: 3, d: 2, solid: true, action: act('v-market', 'Piața (vinde)', '💱') });
-F.push({ id: 'v-fountain', type: 'fountain' as any, gx: 8, gy: 14, w: 1, d: 1, solid: true, action: act('v-fountain', 'Aruncă o monedă', '🪙') });
-F.push({ id: 'v-ferris', type: 'ferris' as any, gx: 16, gy: 17, w: 3, d: 2, solid: true, action: act('v-ferris', 'Roata mare (15 lei)', '🎡') });
-F.push({ id: 'v-carousel', type: 'carousel' as any, gx: 14, gy: 22, w: 2, d: 2, solid: true, action: act('v-carousel', 'Călușeii (8 lei)', '🎠') });
-F.push({ id: 'v-bus', type: 'busstop' as any, gx: 20, gy: 11, w: 1, d: 1, solid: true, action: act('v-bus', 'Autobuzul spre oraș', '🚌') });
-F.push({ id: 'v-board', type: 'noticeboard' as any, gx: 14, gy: 11, w: 1, d: 1, solid: true, action: act('v-board', 'Avizierul satului (cereri)', '📜') });
-F.push({ id: 'v-home', type: 'signpost' as any, gx: 1, gy: 14, w: 1, d: 1, solid: true, action: act('v-home', 'Înapoi acasă', '🏡') });
-for (const [x, y] of [[9, 11], [12, 16], [3, 11], [19, 14], [12, 6]]) F.push({ id: `v-lamp${x}-${y}`, type: 'lamppost' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
-for (const [x, y] of [[0, 4], [9, 3], [13, 2], [21, 4], [2, 25], [11, 25], [19, 21], [21, 17], [17, 25], [0, 20]]) F.push({ id: `v-tree${x}-${y}`, type: 'tree' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
-for (const [x, y] of [[13, 19], [18, 23]]) F.push({ id: `v-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța', '🌅') });
-for (const [x, y] of [[4, 12], [14, 15], [9, 9], [20, 15]]) F.push({ id: `v-fl${x}-${y}`, type: 'flowers' as any, gx: x, gy: y, w: 1, d: 1, solid: false });
+const put = (f: Furn) => { F.push(f); return f; };
+for (const b of BUILDINGS) put({ id: b.id, type: 'building' as any, gx: b.gx, gy: b.gy, w: b.w, d: b.d, solid: true, action: b.action });
 
-for (const b of BUILDINGS) { b.gx += OX; b.gy += OY; }
-for (const f of F) { f.gx += OX; f.gy += OY; }
-AREAS.village = { floor: villageFloor, furniture: F, walls: [], spawn: { x: OX + 2.5, y: OY + 13.2 } };
+// --- casele satenilor: cele cu nume sunt ale satenilor (bati la usa si vorbesti cu ei), celelalte ale vecinilor
+const VCOL: [string, string][] = [['#fff1d6', '#c0573e'], ['#f5e1c8', '#8a5d32'], ['#ffe1ea', '#e5809a'], ['#fff6b8', '#e07a5f'], ['#e8f1ff', '#5b7fbf'], ['#e7f6e2', '#5aa35a'], ['#f3e6ff', '#8a6acd']];
+const HOME_OF: [string | null, number, number, 'x' | 'y'][] = [
+  // [satean, x, y, fata cu usa]
+  [null, 103, -1, 'y'], [null, 107, -1, 'y'], [null, 111, -1, 'y'], [null, 115, -1, 'y'], ['rita', 139, -1, 'y'], [null, 143, -1, 'y'], // Ulita Bisericii
+  ['leana', 111, 35, 'y'], ['gogu', 115, 35, 'y'],                 // Ulita Scolii, langa scoala
+  ['ina', 132, 27, 'x'], ['rex', 132, 31, 'x'],                     // ulita de est
+  ['miti', 140, 35, 'y'], [null, 144, 35, 'y'],                     // Ulita Scolii, la capat
+  [null, 132, 42, 'x'], [null, 132, 46, 'x'], [null, 103, 42, 'x'], // dupa Ulita Scolii
+];
+export const VILLAGER_HOMES: Record<string, { x: number; y: number }> = {};
+const NAMES: Record<string, string> = { leana: 'Bunica Leana', gogu: 'Nea Gogu', ina: 'Ina', rex: 'Rex', rita: 'Rita', miti: 'Miți' };
+HOME_OF.forEach(([who, gx, gy, front], i) => {
+  const [wall, roof] = VCOL[i % VCOL.length], id = who ? `vh-${who}` : `vh-${gx}-${gy}`;
+  HOUSES.push({ id, gx, gy, w: 3, d: 3, h: 44 + (i % 3) * 4, front, wall, roof, name: who ? `Casa: ${NAMES[who]}` : undefined });
+  put({ id, type: 'farmhouse' as any, gx, gy, w: 3, d: 3, solid: true, action: who ? act('v-visit-' + who, `Bate la ușa: ${NAMES[who]}`, '🚪') : undefined });
+  // pragul (unde stai cand bati la usa) si florile de langa usa
+  const door = front === 'y' ? { x: gx + 1.5, y: gy + 3.4 } : { x: gx + 3.4, y: gy + 1.5 };
+  if (who) VILLAGER_HOMES[who] = door;
+  for (const k of [0, 2]) put({ id: `${id}-fl${k}`, type: 'flowers' as any, gx: front === 'y' ? gx + k : gx + 3, gy: front === 'y' ? gy + 3 : gy + k, w: 1, d: 1, solid: false });
+});
+// biserica (clopotele bat la 8, 12 si 18), cu fata spre piateta
+put({ id: 'w-church', type: 'church' as any, gx: 126, gy: -8, w: 4, d: 4, solid: true, action: act('v-church', 'Biserica satului', '⛪') });
 
-/** puncte pe strazi pentru satenii care se plimba */
-export const VILLAGE_PATHS: Pt[] = [{ x: 1.5, y: 12.5 }, { x: 10.5, y: 12.5 }, { x: 20.5, y: 12.6 }, { x: 10.5, y: 3 }, { x: 10.5, y: 25 }, { x: 13, y: 14.5 }, { x: 7.5, y: 12.6 }, { x: 16, y: 12.5 }].map(p => ({ x: p.x + OX, y: p.y + OY }));
+// --- piata: fantana in mijloc, bancute in jur, taraba pietei, avizierul langa primarie, statia de autobuz la drum
+put({ id: 'v-fountain', type: 'fountain' as any, gx: 120.5, gy: 17.5, w: 1, d: 1, solid: true, action: act('v-fountain', 'Aruncă o monedă', '🪙') });
+for (const [x, y] of [[116, 17], [123, 20]]) put({ id: `v-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța din piață', '🌅') });
+put({ id: 'v-market', type: 'stalls' as any, gx: 126, gy: 15, w: 3, d: 2, solid: true, action: act('v-market', 'Piața (vinde)', '💱') });
+put({ id: 'v-board', type: 'noticeboard' as any, gx: 114, gy: 13, w: 1, d: 1, solid: true, action: act('v-board', 'Avizierul satului (cereri)', '📜') });
+put({ id: 'v-bus', type: 'busstop' as any, gx: 129, gy: 22, w: 1, d: 1, solid: true, action: act('v-bus', 'Autobuzul spre oraș', '🚌') });
+// la intrarea in sat: indicatorul spre casa (parcarea bicicletei si a scuterului e vizavi, la sud de drum)
+put({ id: 'v-home', type: 'signpost' as any, gx: 103, gy: 27, w: 1, d: 1, solid: true, action: act('v-home', 'Înapoi acasă', '🏡') });
+// --- gradinita cu calusei (la est de piata) si parcul cu roata mare (dupa ulita de est)
+put({ id: 'v-carousel', type: 'carousel' as any, gx: 131, gy: 16, w: 2, d: 2, solid: true, action: act('v-carousel', 'Călușeii (8 lei)', '🎠') });
+put({ id: 'v-ferris', type: 'ferris' as any, gx: 141, gy: 8, w: 3, d: 2, solid: true, action: act('v-ferris', 'Roata mare (15 lei)', '🎡') });
+for (const [x, y] of [[139, 19], [144, 19], [131, 21]]) put({ id: `v-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța din parc', '🌅') });
+// --- curtea scolii si gradinile satenilor
+for (const [x, y] of [[106, 29], [110, 28]]) put({ id: `v-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Banca din curtea școlii', '🌅') });
+for (const [x, y, w, d, crop] of [[127, 28, 4, 3, 'cabbage'], [127, 33, 4, 4, 'sunflower'], [106, 43, 7, 4, 'wheat'], [115, 43, 7, 4, 'corn'], [139, 43, 7, 4, 'cabbage'], [139, 27, 7, 4, 'lavender']] as [number, number, number, number, string][])
+  put({ id: `v-crop${x}-${y}`, type: 'cropfield' as any, kind: crop, gx: x, gy: y, w, d, solid: true });
+
+// --- felinare la drum si in piata (nu in fata usilor)
+for (const [x, y] of [[100, 23], [112, 23], [118, 23], [125, 23], [134, 23], [142, 23], [106, 27], [118, 27], [128, 27], [146, 27], [113, 12], [129, 12], [123, 2], [133, 2], [119, 38], [135, 38]]) put({ id: `v-lamp${x}-${y}`, type: 'lamppost' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
+// --- copaci: pe margini, in parcuri, in curti (niciodata pe ulite sau in fata usilor)
+for (const [x, y] of [[103, 14], [104, 16], [111, 6], [131, 6], [134, 9], [131, 13], [134, 14], [139, 10], [146, 9], [146, 12], [139, 22], [147, 21], [134, 20],
+  [104, 28], [113, 28], [116, 31], [109, 31], [130, 37], [146, 31], [147, 27], [99, 8], [99, 16], [99, 33], [100, -5], [106, -6], [114, -6], [119, -4], [142, -6], [147, -3], [147, 6],
+  [124, 43], [126, 47], [136, 51], [112, 48], [101, 47], [147, 45]]) put({ id: `v-tree${x}-${y}`, type: 'tree' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
+for (const [x, y] of [[112, 21], [129, 19], [113, 16], [140, 17], [145, 16], [133, 18], [104, 24 - 1]]) if (!F.some(f => f.gx === x && f.gy === y)) put({ id: `v-fl${x}-${y}`, type: 'flowers' as any, gx: x, gy: y, w: 1, d: 1, solid: false });
+
+AREAS.village = { floor: villageFloorW, furniture: F, walls: [], spawn: { x: 101.5, y: 25.2 } };
+
+/** puncte pe ulite pentru satenii care se plimba */
+export const VILLAGE_PATHS: Pt[] = [
+  { x: 105, y: 25 }, { x: 115, y: 25 }, { x: 131, y: 25 }, { x: 144, y: 25 },      // Ulita Mare
+  { x: 116, y: 14.5 }, { x: 125, y: 13 }, { x: 118.5, y: 21 }, { x: 127, y: 22 },  // piata
+  { x: 110, y: 4 }, { x: 128, y: 0 }, { x: 140, y: 4 },                              // Ulita Bisericii, biserica
+  { x: 125, y: 32 }, { x: 108, y: 40 }, { x: 130, y: 40 }, { x: 137, y: 33 },       // Ulita Florilor, Ulita Scolii, ulita de est
+  { x: 142, y: 15 }, { x: 101, y: 15 },                                               // parcul, ulita de vest
+];
 
 // ------------------------------------------------------------------ desen
 function e(c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, fill: string, st = true, lw = 2) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fillStyle = fill; c.fill(); if (st) { c.strokeStyle = O; c.lineWidth = lw; c.stroke(); } }

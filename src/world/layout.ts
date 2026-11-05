@@ -66,10 +66,10 @@ export const FOREST_TRACK: Pt[] = [{ x: 20, y: -3.5 }, { x: 20, y: -12.5 }, { x:
 /** opririle (pe drum) */
 export const STOPS = {
   home: { x: 4, y: 25 },          // poarta casei, la indicator
-  village: { x: 113.5, y: 25 },   // intrarea in sat (parcarea)
-  villageBus: { x: 132.5, y: 25 },
-  cityBus: { x: 210.5, y: 25 },
-  cityTaxi: { x: 202.5, y: 25 },
+  village: { x: 101.5, y: 25 },   // intrarea in sat (parcarea e la sud de drum)
+  villageBus: { x: 129.5, y: 25 }, // statia din coltul pietei
+  cityBus: { x: 209.5, y: 25 },
+  cityTaxi: { x: 203.5, y: 25 },
   homeTractor: { x: 20, y: -3.5 },
   forestTractor: { x: 13.6, y: -12.5 },
 };

@@ -254,8 +254,10 @@ html.h500 .toast { font-size:12px; padding:3px 10px; border-width:2.5px; border-
 .hud.in-mini .toast { font-size:11.5px; padding:2px 9px; }
 
 /* bara de plecare cu bicicleta / scuterul */
-.hud .minimap { position:absolute; right:12px; top:96px; width:132px; height:82px; border-radius:12px; cursor:pointer; pointer-events:auto; box-shadow:0 3px 0 var(--ink); }
-html.h500 .hud .minimap { top:76px; right:8px; width:112px; height:68px; }
+.hud .minimap { position:absolute; right:12px; top:96px; width:132px; height:82px; border-radius:12px; cursor:pointer; pointer-events:auto; box-shadow:0 3px 0 var(--ink); transition:width .2s, height .2s; }
+.hud .mapsize { position:absolute; width:24px; height:22px; padding:0; border:2px solid var(--ink); border-radius:8px; background:#fffaf5; color:var(--ink); font:800 13px/1 "Baloo 2", sans-serif; pointer-events:auto; z-index:2; }
+.hud.in-mini .mapsize { display:none !important; }
+
 .hud.in-mini .minimap { display:none !important; }
 .modal .box.mapbox { width:min(900px, calc(var(--gw, 100vw) - 24px)); max-width:none; }
 .modal .bigmap { width:100%; height:min(62vh, 460px); display:block; border:3px solid var(--ink); border-radius:14px; background:#8fc98a; }
@@ -310,3 +312,19 @@ html.h500 .hud.riding .actions { display:none; }
 .goals em.who { font-style:normal; font-size:10px; padding:0 6px; border-radius:8px; margin-left:4px; vertical-align:middle; border:1.5px solid var(--ink); }
 .goals em.who.dudu { background:#e9c9a3; } .goals em.who.bubu { background:#fff; }
 .devnote { font-size:11px; opacity:.7; margin-top:2px; }
+/* casa voastra (cod + parola) */
+.house-card { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding:6px 8px 6px 12px; border:3px solid var(--ink); border-radius:14px; background:#e9fbe6; font-size:14px; }
+.house-card.warn { background:#fff1d6; }
+.house-card button, .house-box button, .house-now button { border:3px solid var(--ink); border-radius:12px; background:#fff; font-weight:800; padding:5px 10px; box-shadow:0 3px 0 var(--ink); white-space:nowrap; font-family:inherit; color:var(--ink); }
+.cred.house .cred-in { max-width:640px; }
+.house-cols { display:flex; gap:10px; margin-top:6px; }
+.house-box { flex:1; border:3px solid var(--ink); border-radius:16px; padding:8px 10px 10px; background:#fff; }
+.house-box h4 { margin:0 0 4px; }
+.house-box label { display:block; font-weight:700; font-size:12px; margin-top:6px; }
+.house-box input:not([type=checkbox]) { width:100%; font-family:inherit; font-size:15px; border:3px solid var(--ink); border-radius:12px; padding:5px 9px; background:#fff; color:var(--ink); box-sizing:border-box; }
+.house-box label.chk { display:flex; align-items:center; gap:6px; }
+.house-box button { display:block; width:100%; margin-top:8px; background:#ffd6e4; }
+.house-now { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:8px 10px; border:3px dashed var(--ink); border-radius:14px; background:#e9fbe6; font-size:15px; }
+.house-now small { flex-basis:100%; font-size:11px; opacity:.8; }
+.house-msg { min-height:18px; margin:8px 0 0; font-weight:800; color:#c0392b; } .house-msg.ok { color:#2a7a3a; }
+html.w759 .house-cols { flex-direction:column; }

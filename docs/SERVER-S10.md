@@ -122,3 +122,9 @@ chmod +x ~/.termux/boot/bubu-dudu.sh
 ## Verificare
 `http://IP:8787/health` trebuie să răspundă `{"ok":true,...}`.
 Salvările sunt în `server/data/<codul-casei>.json`; fă-ți din când în când o copie.
+
+## Casele cu parolă (v1.6.0)
+
+Serverul ține și casele: `server/data/houses.json` are doar amprentele codurilor (nu codurile și nici parolele), iar fiecare casă are `server/data/<cheie>.meta.json`.
+În meniu: alegi „📱 Serverul nostru”, apoi 🏠 → „Casă nouă” / „Intră în casa partenerului”.
+**Actualizează serverul** (`git pull` în folderul lui, apoi pornește-l din nou), altfel casele noi nu se pot face pe el.

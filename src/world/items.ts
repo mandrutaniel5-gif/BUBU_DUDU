@@ -38,8 +38,27 @@ export const ITEM_NAMES: Record<string, string[]> = {
   veg: ['Morcov', 'Legătură de morcovi', 'Coș cu legume', 'Ladă de legume', 'Oala cu ciorbă'],
   sweet: ['Făină', 'Aluat', 'Biscuiți', 'Brioșă', 'Tort'],
   drink: ['Lămâie', 'Limonadă', 'Bubble tea', 'Cocktail de fructe'],
+  // florăria lui Bubu (doar flori): florile din grădină și plantele în ghiveci
+  garden: ['Lalea', 'Trei lalele', 'Buchet în hârtie', 'Aranjament în vază', 'Buchet de mireasă'],
+  pot: ['Răsad', 'Ghiveci înflorit', 'Jardinieră', 'Coș suspendat'],
 };
-export const MAX_LVL: Record<string, number> = { flower: 5, veg: 4, sweet: 4, drink: 3 };
+export const MAX_LVL: Record<string, number> = { flower: 5, veg: 4, sweet: 4, drink: 3, garden: 4, pot: 3 };
+
+function tulip(c: C, x: number, y: number, r: number, col: string, stem = 0, lean = 0) {
+  if (stem) { c.strokeStyle = '#3d8b3d'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + lean * 0.5, y + stem / 2, x + lean, y + stem); c.stroke(); }
+  c.beginPath(); c.moveTo(x - r, y - r * 0.2); c.lineTo(x - r * 0.55, y - r * 1.15); c.lineTo(x, y - r * 0.55); c.lineTo(x + r * 0.55, y - r * 1.15); c.lineTo(x + r, y - r * 0.2); c.quadraticCurveTo(x + r, y + r * 0.9, x, y + r * 0.9); c.quadraticCurveTo(x - r, y + r * 0.9, x - r, y - r * 0.2); c.closePath();
+  c.fillStyle = col; c.fill(); c.strokeStyle = O; c.lineWidth = 1.4; c.stroke();
+  E(c, x - r * 0.35, y + r * 0.1, r * 0.18, r * 0.35, '#ffffff66', false);
+}
+function rose(c: C, x: number, y: number, r: number, col = '#e63946') {
+  E(c, x, y, r, r * 0.9, col, true, 1.4);
+  c.strokeStyle = '#00000033'; c.lineWidth = 1.2; c.beginPath(); c.arc(x, y, r * 0.55, 0.4, 4.2); c.stroke(); c.beginPath(); c.arc(x + r * 0.1, y - r * 0.05, r * 0.25, 3, 7); c.stroke();
+}
+function pot(c: C, x: number, y: number, w: number, h: number, col = '#d9734a') {
+  c.beginPath(); c.moveTo(x - w / 2, y); c.lineTo(x + w / 2, y); c.lineTo(x + w * 0.38, y + h); c.lineTo(x - w * 0.38, y + h); c.closePath(); c.fillStyle = col; c.fill(); c.strokeStyle = O; c.lineWidth = 1.8; c.stroke();
+  R(c, x - w / 2 - 2, y - 4, w + 4, 6, 2, col);
+  E(c, x, y - 3, w / 2 - 1, 2, '#6b4a2f', false);
+}
 
 /** deseneaza produsul "lant:nivel" centrat in (x,y), marime s (latimea celulei) */
 export function drawItem(c: C, code: string, x: number, y: number, s: number, t = 0) {
@@ -93,6 +112,42 @@ export function drawItem(c: C, code: string, x: number, y: number, s: number, t 
         R(c, -22, -2, 44, 20, 5, '#fff3e0'); R(c, -22, -2, 44, 6, 3, '#ff9ab8'); R(c, -15, -16, 30, 16, 5, '#fff3e0'); R(c, -15, -16, 30, 5, 3, '#ff9ab8');
         for (const dx of [-7, 0, 7]) { R(c, dx - 1.5, -26, 3, 10, 1, '#7ab8ff', true, 1); E(c, dx, -28, 2, 3, '#ffd23f', false); }
         heartPath(c, 0, 8, 5); c.fillStyle = '#e63946'; c.fill();
+      }
+      break;
+    case 'garden':
+      if (l === 0) { leaf(c, -2, 10, -2.2, 12); tulip(c, 0, -8, 9, '#ff5c8a', 26, -2); }
+      else if (l === 1) { for (const [dx, col] of [[-9, '#ff5c8a'], [0, '#ffd23f'], [9, '#c77dff']] as const) tulip(c, dx, -10 - (dx ? 0 : 5), 7, col, 30 + (dx ? 0 : 5), -dx * 0.5); c.fillStyle = '#ff4d6d'; c.fillRect(-6, 14, 12, 4); }
+      else if (l === 2) {
+        c.beginPath(); c.moveTo(-20, -8); c.lineTo(20, -8); c.lineTo(5, 26); c.lineTo(-5, 26); c.closePath(); c.fillStyle = '#f2e3c6'; c.fill(); c.strokeStyle = O; c.lineWidth = 2; c.stroke();
+        c.strokeStyle = '#d9c29b'; c.lineWidth = 1; c.beginPath(); c.moveTo(-12, -8); c.lineTo(-2, 24); c.moveTo(12, -8); c.lineTo(2, 24); c.stroke();
+        rose(c, -9, -12, 7); tulip(c, 9, -12, 7, '#ff9ab8'); rose(c, 0, -19, 7, '#ff7aa2'); leaf(c, -16, -6, -2.6, 10); leaf(c, 16, -6, -0.5, 10);
+        c.save(); c.translate(0, 12); for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(0, 0); c.lineTo(sd * 9, -5); c.lineTo(sd * 9, 5); c.closePath(); c.fillStyle = '#7ab8ff'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.4; c.stroke(); } c.restore();
+      } else if (l === 3) {
+        c.beginPath(); c.moveTo(-12, 2); c.quadraticCurveTo(-18, 22, -8, 26); c.lineTo(8, 26); c.quadraticCurveTo(18, 22, 12, 2); c.closePath(); c.fillStyle = '#bde0fecc'; c.fill(); c.strokeStyle = O; c.lineWidth = 2; c.stroke();
+        c.fillStyle = '#7ec8f099'; c.fillRect(-12, 14, 24, 10);
+        for (const [dx, dy, k] of [[-14, -10, 0], [14, -10, 1], [0, -22, 0], [-6, -4, 2], [7, -4, 1], [0, -10, 2]] as const) { if (k === 0) rose(c, dx, dy, 6.5); else if (k === 1) tulip(c, dx, dy, 6, '#ffd23f'); else flower(c, dx, dy, 6, '#c77dff'); }
+        leaf(c, -18, -2, -2.8, 10); leaf(c, 18, -2, -0.3, 10);
+      } else {
+        // buchetul de mireasa: rotund, alb si roz, cu panglica lunga
+        for (const sd of [-1, 1]) { c.strokeStyle = '#ffd6e4'; c.lineWidth = 3; c.beginPath(); c.moveTo(0, 12); c.quadraticCurveTo(sd * 10, 22 + Math.sin(t * 3 + sd) * 2, sd * 6, 30); c.stroke(); }
+        E(c, 0, -4, 22, 18, '#e8f5e0');
+        for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283, rr = i % 2 ? 13 : 8; (i % 3 ? rose : (cc: C, xx: number, yy: number, r: number) => rose(cc, xx, yy, r, '#fff'))(c, Math.cos(a) * rr, -4 + Math.sin(a) * rr * 0.75, 5.5, '#ffb3c7'); }
+        rose(c, 0, -5, 6, '#fff');
+        R(c, -5, 10, 10, 8, 3, '#fff');
+        for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(0, 12); c.lineTo(sd * 8, 7); c.lineTo(sd * 8, 17); c.closePath(); c.fillStyle = '#ff9ab8'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.3; c.stroke(); }
+      }
+      break;
+    case 'pot':
+      if (l === 0) { pot(c, 0, 6, 26, 18); c.strokeStyle = '#3d8b3d'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(0, 3); c.lineTo(0, -10); c.stroke(); leaf(c, 0, -6, -2.5, 11); leaf(c, 0, -9, -0.6, 11); }
+      else if (l === 1) { pot(c, 0, 8, 28, 18); c.strokeStyle = '#3d8b3d'; c.lineWidth = 2.5; for (const dx of [-6, 0, 6]) { c.beginPath(); c.moveTo(dx * 0.4, 5); c.lineTo(dx, -12); c.stroke(); } leaf(c, -2, -2, -2.6, 11); leaf(c, 2, -2, -0.5, 11); flower(c, -7, -14, 6, '#ff7aa2'); flower(c, 7, -13, 6, '#ffd23f'); flower(c, 0, -19, 6, '#ff9ab8'); }
+      else if (l === 2) {
+        R(c, -24, 4, 48, 16, 4, '#a0703f'); c.strokeStyle = '#7a5232'; c.lineWidth = 1.3; for (const xx of [-12, 0, 12]) { c.beginPath(); c.moveTo(xx, 5); c.lineTo(xx, 19); c.stroke(); }
+        for (let i = 0; i < 5; i++) { const xx = -18 + i * 9; leaf(c, xx, 4, -2.3, 9); flower(c, xx, -6 - (i % 2) * 5, 5.5, ['#ff5c8a', '#ffd23f', '#c77dff', '#fff', '#ff9ab8'][i]); }
+      } else {
+        c.strokeStyle = O; c.lineWidth = 1.4; for (const sd of [-1, 0, 1]) { c.beginPath(); c.moveTo(0, -26); c.lineTo(sd * 18, -2); c.stroke(); } E(c, 0, -27, 3, 3, '#c9a24a', true, 1.2);
+        basket(c, 0, 4, 40, 14);
+        for (let i = 0; i < 6; i++) { const xx = -17 + i * 7, sw = Math.sin(t * 2 + i) * 1.5; c.strokeStyle = '#3d8b3d'; c.lineWidth = 2; c.beginPath(); c.moveTo(xx, 8); c.quadraticCurveTo(xx + sw, 18, xx + sw * 2, 26 - (i % 2) * 4); c.stroke(); flower(c, xx + sw * 2, 26 - (i % 2) * 4, 4.5, ['#ff5c8a', '#fff', '#c77dff'][i % 3]); }
+        for (let i = 0; i < 4; i++) flower(c, -12 + i * 8, -4 - (i % 2) * 3, 5.5, ['#ffd23f', '#ff9ab8', '#fff', '#ff7aa2'][i]);
       }
       break;
     case 'drink':

@@ -1,5 +1,6 @@
 // Podeaua: fiecare dala desenata o singura data, in "bucati" de 8x8 dale tinute minte (lumea e mare,
 // nu incape intr-o singura imagine). Se deseneaza doar bucatile care se vad (si cateva de langa, din timp).
+import { CITY_CROSS } from './city';
 import { iso, unIso, tilePath } from './iso';
 import { floorAt, spaceBounds, AREA, type Floor } from './map';
 import { ORIGIN, CORE_W, CORE_H } from './layout';
@@ -13,7 +14,6 @@ const COL: Partial<Record<Floor, [string, string]>> = {
 };
 const quad4 = (ctx: CanvasRenderingContext2D, pts: { x: number; y: number }[]) => { ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath(); ctx.fill(); };
 const isA = (x: number, y: number) => floorAt(x, y) === 'asphalt';
-const inCity = (x: number, y: number) => x >= ORIGIN.city.x && y >= ORIGIN.city.y && x < ORIGIN.city.x + CORE_W && y < ORIGIN.city.y + CORE_H;
 
 /** o dala de podea */
 export function drawTile(ctx: CanvasRenderingContext2D, x: number, y: number) {
@@ -59,9 +59,10 @@ export function drawTile(ctx: CanvasRenderingContext2D, x: number, y: number) {
     if (horiz && !vert) for (const u of [0.15, 0.6]) quad4(ctx, [iso(x + u, y + 0.97), iso(x + u + 0.25, y + 0.97), iso(x + u + 0.25, y + 1.03), iso(x + u, y + 1.03)]);
     if (vert && !horiz) for (const u of [0.15, 0.6]) quad4(ctx, [iso(x + 0.97, y + u), iso(x + 0.97, y + u + 0.25), iso(x + 1.03, y + u + 0.25), iso(x + 1.03, y + u)]);
     // trecerile de pietoni din centrul orasului
-    if (inCity(x, y)) {
-      const lx = x - ORIGIN.city.x, ly = y - ORIGIN.city.y;
-      const zebraX = (lx === 9 || lx === 12) && (ly === 12 || ly === 13), zebraY = (ly === 11 || ly === 14) && (lx === 10 || lx === 11);
+    {
+      // langa fiecare intersectie din oras
+      let zebraX = false, zebraY = false;
+      for (const r of CITY_CROSS) { if (y >= r.y0 && y < r.y1 && (x === r.x0 - 1 || x === r.x1)) zebraX = true; if (x >= r.x0 && x < r.x1 && (y === r.y0 - 1 || y === r.y1)) zebraY = true; }
       if (zebraX) for (let k = 0; k < 4; k++) { const v = k * 0.25 + 0.04; quad4(ctx, [iso(x + 0.1, y + v), iso(x + 0.9, y + v), iso(x + 0.9, y + v + 0.14), iso(x + 0.1, y + v + 0.14)]); }
       if (zebraY) for (let k = 0; k < 4; k++) { const u = k * 0.25 + 0.04; quad4(ctx, [iso(x + u, y + 0.1), iso(x + u, y + 0.9), iso(x + u + 0.14, y + 0.9), iso(x + u + 0.14, y + 0.1)]); }
     }

@@ -7,6 +7,9 @@ import { heartPath } from '../char/draw';
 import { fillTextIcons } from '../ui/icons';
 import { drawPOI } from './poi';
 import { WORLD, ORIGIN, CORE_W, CORE_H, ROADS, RIVER, LAKE, BROOK, BRIDGE, BROOK_BRIDGE, type RoadRect } from './layout';
+import { HOUSES } from './houses';
+import { VILLAGE_BOUNDS, villageFloorW } from './village';
+import { CITY_BOUNDS, cityFloorW } from './city';
 
 const O = '#3a2a22';
 const act = (id: string, label: string, icon: string) => ({ id, label, icon });
@@ -17,24 +20,9 @@ const inR = (x: number, y: number, r: { x0: number; y0: number; x1: number; y1: 
 // ------------------------------------------------------------------ podeaua
 /** strazile din cartierele satului si ale orasului (pe langa drumurile mari) */
 export const STREETS: RoadRect[] = [
-  // satul: strada de nord, strada de sud si ulita care le leaga prin piata
-  { x0: 104, y0: 2, x1: 147, y1: 4, kind: 'path' },
-  { x0: 104, y0: 44, x1: 147, y1: 46, kind: 'path' },
-  { x0: 122, y0: -4, x1: 124, y1: 12, kind: 'path' },
-  { x0: 122, y0: 39, x1: 124, y1: 52, kind: 'path' },
-  // orasul: strazile cartierelor (bulevardul nord-sud continua strada din centru)
-  { x0: 200, y0: -12, x1: 202, y1: 12, kind: 'asphalt' },
-  { x0: 200, y0: 39, x1: 202, y1: 64, kind: 'asphalt' },
-  { x0: 186, y0: 0, x1: 252, y1: 2, kind: 'asphalt' },
-  { x0: 186, y0: 48, x1: 252, y1: 50, kind: 'asphalt' },
-  { x0: 230, y0: -12, x1: 232, y1: 64, kind: 'asphalt' },
 ];
 /** piete, curti si parcuri */
 const PLAZAS: { x0: number; y0: number; x1: number; y1: number; kind: Floor }[] = [
-  { x0: 118, y0: -7, x1: 128, y1: 2, kind: 'cobble' },     // piateta bisericii
-  { x0: 204, y0: 51, x1: 228, y1: 64, kind: 'grass' },     // parcul mare din sud
-  { x0: 187, y0: -11, x1: 199, y1: -1, kind: 'grass' },    // parcul din nord
-  { x0: 233, y0: 26, x1: 251, y1: 47, kind: 'grass' },     // terenul de vanzare din est (pentru mai tarziu)
 ];
 /** campurile vecinilor (pamant arat; culturile sunt obiecte) */
 export const FIELDS: { x0: number; y0: number; x1: number; y1: number; crop: string }[] = [
@@ -52,6 +40,8 @@ function riverAt(y: number) { const m = y < 0 ? Math.round(1.6 * Math.sin(y / 6)
 export const lakeD = (x: number, y: number) => ((x + 0.5 - LAKE.cx) / LAKE.rx) ** 2 + ((y + 0.5 - LAKE.cy) / LAKE.ry) ** 2;
 export function isWaterXY(x: number, y: number) { const [r0, r1] = riverAt(y); return (x >= r0 && x < r1) || (x >= BROOK.x0 && x < BROOK.x1) || lakeD(x, y) < 1; }
 function countryFloor(x: number, y: number): Floor {
+  if (inR(x, y, VILLAGE_BOUNDS)) return villageFloorW(x, y); // satul isi are ulitele lui
+  if (inR(x, y, CITY_BOUNDS)) return cityFloorW(x, y);       // orasul, strazile lui
   if (inR(x, y, BRIDGE) || inR(x, y, BROOK_BRIDGE)) return 'bridge';
   for (const r of ROADS) if (inR(x, y, r)) return r.kind;
   for (const r of STREETS) if (inR(x, y, r)) return r.kind;
@@ -71,8 +61,8 @@ const taken = new Set<string>();
 const CORES: Rect[] = [
   { x0: -1, y0: -1, x1: MAP_W + 1, y1: MAP_H },
   { x0: ORIGIN.forest.x, y0: ORIGIN.forest.y, x1: ORIGIN.forest.x + CORE_W, y1: ORIGIN.forest.y + CORE_H },
-  { x0: ORIGIN.village.x, y0: ORIGIN.village.y, x1: ORIGIN.village.x + CORE_W, y1: ORIGIN.village.y + CORE_H },
-  { x0: ORIGIN.city.x, y0: ORIGIN.city.y, x1: ORIGIN.city.x + CORE_W, y1: ORIGIN.city.y + CORE_H },
+  VILLAGE_BOUNDS,
+  CITY_BOUNDS,
 ];
 const nearRoad = (x: number, y: number, m: number) => [...ROADS, ...STREETS].some(r => x >= r.x0 - m && x < r.x1 + m && y >= r.y0 - m && y < r.y1 + m);
 /** e loc liber pentru un obiect de w x d la (x,y)? */
@@ -124,28 +114,19 @@ put({ id: id('scare'), type: 'scarecrow' as any, gx: 22, gy: 32, w: 1, d: 1, sol
 put({ id: id('scare'), type: 'scarecrow' as any, gx: 86, gy: 44, w: 1, d: 1, solid: true });
 // --- ferma vecinilor (vest): casa, hambarul, fanul, oile la pascut
 const NEIGHBOR_HOUSES: Furn[] = [];
-export const COUNTRY_HOUSES: { id: string; gx: number; gy: number; w: number; d: number; h: number; front: 'x' | 'y'; wall: string; roof: string; name?: string }[] = [
+export const COUNTRY_HOUSES = HOUSES;
+HOUSES.push(
   { id: 'w-house-pop', gx: -9, gy: 12, w: 4, d: 3, h: 50, front: 'x', wall: '#fff1d6', roof: '#c0573e', name: 'Familia Popescu' },
   { id: 'w-house-ion', gx: 32, gy: 15, w: 3, d: 3, h: 46, front: 'y', wall: '#e8f1ff', roof: '#5b7fbf', name: 'Bunicul Ion' },
   { id: 'w-house-mar', gx: 86, gy: 40, w: 3, d: 3, h: 46, front: 'y', wall: '#ffe1ea', roof: '#e5809a', name: 'Livada Mariei' },
   { id: 'w-house-gr', gx: 165, gy: 18, w: 4, d: 3, h: 50, front: 'y', wall: '#fff6b8', roof: '#8a5d32', name: 'Han „La Răscruce”' },
-];
-// --- casele satului (in jurul centrului vechi), pe strada de nord si pe cea de sud
-const VCOL: [string, string][] = [['#fff1d6', '#c0573e'], ['#f5e1c8', '#8a5d32'], ['#ffe1ea', '#e5809a'], ['#fff6b8', '#e07a5f'], ['#e8f1ff', '#5b7fbf'], ['#e7f6e2', '#5aa35a'], ['#f3e6ff', '#8a6acd']];
-const VNAMES: Record<string, string> = { '104,-2': 'Bunica Leana', '108,-2': 'Nea Gogu', '113,-2': 'Ina', '130,-2': 'Rita', '135,-2': 'Miți', '140,-2': 'Rex' };
-let vi = 0;
-for (const [gy, xs] of [[-2, [104, 108, 113, 130, 135, 140]], [5, [104, 108, 114, 127, 135, 141]], [40, [104, 108, 113, 127, 131, 136, 141]], [47, [106, 113, 128, 136]]] as [number, number[]][]) for (const gx of xs) {
-  const [wall, roof] = VCOL[vi++ % VCOL.length];
-  COUNTRY_HOUSES.push({ id: `vh-${gx}-${gy}`, gx, gy, w: 3, d: 3, h: 44 + (vi % 3) * 4, front: 'y', wall, roof, name: VNAMES[`${gx},${gy}`] ? `Casa: ${VNAMES[`${gx},${gy}`]}` : undefined });
-}
-for (const h of COUNTRY_HOUSES) NEIGHBOR_HOUSES.push(put({ id: h.id, type: 'farmhouse' as any, gx: h.gx, gy: h.gy, w: h.w, d: h.d, solid: true }));
+);
+for (const h of COUNTRY_HOUSES) if (!h.id.startsWith('vh-')) NEIGHBOR_HOUSES.push(put({ id: h.id, type: 'farmhouse' as any, gx: h.gx, gy: h.gy, w: h.w, d: h.d, solid: true }));
 put({ id: id('barn'), type: 'barn' as any, gx: -10, gy: 4, w: 4, d: 3, solid: true });
-// florile din fata caselor din sat
-for (const h of COUNTRY_HOUSES) if (h.id.startsWith('vh-')) for (const x of [h.gx, h.gx + h.w - 1]) { const y = h.gy + h.d; if (!taken.has(x + ',' + y) && countryFloor(x, y) !== 'path') { F.push({ id: id('fl'), type: 'flowers', gx: x, gy: y, w: 1, d: 1, solid: false }); taken.add(x + ',' + y); } }
-// biserica satului, cu clopotnita (clopotele bat la 8, 12 si 18)
-put({ id: 'w-church', type: 'church' as any, gx: 124, gy: -6, w: 4, d: 4, solid: true, action: act('v-church', 'Biserica satului', '⛪') });
-for (const [x, y] of [[119, -5], [119, 0], [127, 0]]) put({ id: id('lamp'), type: 'lamppost' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
-for (const [x, y] of [[104, 8], [110, 8], [130, 8], [140, 8], [104, 39], [118, 39], [140, 46], [120, 46]]) tree(x, y, x % 3 ? 'apple' : 'oak');
+// cheresteaua lui Nea Vasile: pe drumul de la casa spre lac, cu fata (si curtea cu cantarul) spre drum
+put({ id: 'w-sawmill', type: 'sawmill' as any, gx: 26, gy: 17, w: 6, d: 4, solid: true, action: act('sawmill', 'Cheresteaua lui Nea Vasile', '🪚') });
+for (let x = 25; x <= 32; x++) for (let y = 21; y <= 23; y++) taken.add(x + ',' + y); // curtea din fata, libera
+put({ id: id('logs'), type: 'logstack' as any, gx: 32, gy: 19, w: 1, d: 2, solid: true });
 for (const [x, y] of [[-5, 5], [-4, 7], [-11, 9]]) put({ id: id('hay'), type: 'haystack' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 put({ id: id('fence'), type: 'fenceline' as any, gx: -11.5, gy: 38.5, w: 9, d: 0.1, solid: true });
 put({ id: id('fence'), type: 'fenceline' as any, gx: -11.5, gy: 46.5, w: 9, d: 0.1, solid: true });
@@ -154,7 +135,7 @@ put({ id: id('fence'), type: 'fenceline' as any, gx: -2.6, gy: 38.5, w: 0.1, d: 
 for (let i = 0; i < 5; i++) F.push({ id: id('sheep'), type: 'sheep' as any, gx: -10 + i * 1.6, gy: 40 + (i % 2) * 2.4, w: 1, d: 1, solid: false });
 for (let i = 0; i < 3; i++) F.push({ id: id('cow'), type: 'cow' as any, gx: 162 + i * 3, gy: 40 + (i % 2) * 2, w: 1, d: 1, solid: false });
 put({ id: id('mill'), type: 'windmill' as any, gx: 34, gy: 42, w: 2, d: 2, solid: true });
-put({ id: id('mill'), type: 'windmill' as any, gx: 102, gy: 30, w: 2, d: 2, solid: true });
+put({ id: id('mill'), type: 'windmill' as any, gx: 92, gy: 5, w: 2, d: 2, solid: true });
 // --- livada Mariei
 for (let x = 74; x < 86; x += 3) for (let y = 49; y < 58; y += 3) tree(x, y, 'apple');
 // --- lacul: debarcaderul de pescuit, bancute, foisorul, ratele, papura, nuferii
@@ -191,7 +172,7 @@ sign(41, 22, '🏘️ Satul · 🏞️ Lacul', 'E');
 sign(23, 22, '🏡 Acasă', 'W');
 sign(98, 34, '🏘️ Satul', 'N');
 sign(61, 34, '🌉 Podul Mare', 'E');
-sign(110, 22, '🏘️ Bun venit în sat!', '', true);
+sign(99, 21, '🏘️ Bun venit în sat!', '', true);
 sign(147, 22, '🏙️ Orașul', 'E');
 sign(154, 27, '🏘️ Satul · 🏡 Acasă', 'W');
 sign(186, 22, '🏙️ Bun venit în oraș!', '', true);
@@ -345,6 +326,40 @@ export function drawCountryType(c: CanvasRenderingContext2D, f: Furn, t: number,
       const dp = iso(tx + 0.7, ty + 1.4, 0); c.fillStyle = '#8a5d32'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(dp.x - 8, dp.y); c.lineTo(dp.x - 8, dp.y - 18); c.quadraticCurveTo(dp.x, dp.y - 30, dp.x + 8, dp.y - 18); c.lineTo(dp.x + 8, dp.y); c.closePath(); c.fill(); c.stroke();
       return true;
     }
+    case 'sawmill': {
+      // sopron deschis spre drum: acoperis intr-o singura apa doar peste jumatatea din spate (stivele de busteni),
+      // gaterul si scandurile stau in fata, la vedere
+      const H = 54, wall = '#c98e5f', roof = '#a0473e', back = d * 0.45;
+      tilePath(c, gx, gy, w, d); c.fillStyle = '#d9bf8f'; c.fill();                                                      // rumegus pe jos
+      for (let i = 0; i < 18; i++) { const p = iso(gx + 0.3 + hash(i, gx) * (w - 0.6), gy + 0.3 + hash(gy, i) * (d - 0.6)); e(c, p.x, p.y, 3, 1.3, '#c9a874', false); }
+      isoBox(c, gx, gy, w, 0.3, H + 20, { top: shade(wall, 0.95), left: shade(wall, 0.9), right: shade(wall, 0.8) });       // peretele din spate
+      isoBox(c, gx, gy, 0.3, back, H + 10, { top: shade(wall, 0.95), left: shade(wall, 0.85), right: shade(wall, 0.75) });  // peretele din stanga
+      // bustenii stivuiti sub acoperis
+      for (let r = 0; r < 3; r++) for (let k = 0; k < 7 - r; k++) { const p = iso(gx + 0.7 + k * 0.62 + r * 0.31, gy + 0.9, 7 + r * 12); e(c, p.x, p.y, 9, 7, '#a0703f', true, 1.5); e(c, p.x, p.y, 4.5, 3.5, '#e7c08f', false); }
+      // stalpii si acoperisul (mai sus in spate)
+      for (const u of [0.05, w / 2 - 0.1, w - 0.3]) isoBox(c, gx + u, gy + back - 0.2, 0.22, 0.22, H, boxOf('#8a5d32'));
+      const a0 = iso(gx - 0.15, gy - 0.15, H + 22), a1 = iso(gx + w + 0.15, gy - 0.15, H + 22), b1 = iso(gx + w + 0.15, gy + back + 0.15, H - 2), b0 = iso(gx - 0.15, gy + back + 0.15, H - 2);
+      quad(c, [iso(gx + w + 0.15, gy - 0.15, H + 22), b1, iso(gx + w + 0.15, gy + back + 0.15, H - 6), iso(gx + w + 0.15, gy - 0.15, H + 16)], shade(roof, 0.7));
+      quad(c, [a0, a1, b1, b0], roof);
+      for (let i = 1; i < 10; i++) { const a = iso(gx - 0.15 + i * (w + 0.3) / 10, gy - 0.15, H + 22), b = iso(gx - 0.15 + i * (w + 0.3) / 10, gy + back + 0.15, H - 2); c.strokeStyle = shade(roof, 0.75); c.lineWidth = 1.2; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); }
+      // firma pe streasina
+      const sp = iso(gx + w / 2, gy + back + 0.15, H + 8); c.fillStyle = '#fff8ef'; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.roundRect(sp.x - 80, sp.y - 13, 160, 22, 7); c.fill(); c.stroke();
+      c.font = '800 11px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#8a3a30'; fillTextIcons(c, '🪚 Cheresteaua · Nea Vasile', sp.x, sp.y - 2, 11, false); c.textBaseline = 'alphabetic';
+      // gaterul in fata: masa cu role, cadrul cu panza, un bustean pe jumatate taiat
+      isoBox(c, gx + 0.6, gy + back + 0.5, 3.4, 0.7, 12, boxOf('#9aa5ad'));
+      isoBox(c, gx + 0.7, gy + back + 0.65, 3.0, 0.4, 9, { top: '#c98e5f', left: '#a0703f', right: '#8a5d32' }, 12);
+      isoBox(c, gx + 2.0, gy + back + 0.35, 0.14, 0.14, 46, boxOf('#6b7780')); isoBox(c, gx + 2.0, gy + back + 1.2, 0.14, 0.14, 46, boxOf('#6b7780'));
+      isoBox(c, gx + 2.0, gy + back + 0.35, 0.14, 1.0, 6, boxOf('#6b7780'), 46);
+      { const p0 = iso(gx + 2.07, gy + back + 0.85, 46), p1 = iso(gx + 2.07, gy + back + 0.85, 12); c.strokeStyle = '#e8ecef'; c.lineWidth = 3; c.beginPath(); c.moveTo(p0.x, p0.y); c.lineTo(p1.x, p1.y); c.stroke(); }
+      // stiva de scanduri gata taiate (dreapta fata)
+      for (let k = 0; k < 5; k++) isoBox(c, gx + w - 1.5, gy + back + 0.4, 1.2, 1.5, 4, { top: k % 2 ? '#f0cf9e' : '#e7c08f', left: '#d9a273', right: '#c48b5c' }, k * 4);
+      // cantarul din curte, langa drum
+      isoBox(c, gx + 1.0, gy + d - 0.9, 1.2, 0.8, 4, boxOf('#9aa5ad'));
+      const dp = iso(gx + 2.25, gy + d - 0.5, 0); c.fillStyle = '#6b7780'; c.strokeStyle = O; c.lineWidth = 2; c.fillRect(dp.x - 2, dp.y - 30, 4, 30); c.strokeRect(dp.x - 2, dp.y - 30, 4, 30); e(c, dp.x, dp.y - 36, 8, 8, '#fff');
+      { const q = iso(gx + 2.25, gy + d - 0.5, 36); c.strokeStyle = '#e63946'; c.lineWidth = 2; c.beginPath(); c.moveTo(dp.x, dp.y - 36); c.lineTo(dp.x + 5, dp.y - 40); c.stroke(); void q; }
+      return true;
+    }
+    case 'logstack': { for (let r = 0; r < 3; r++) for (let k = 0; k < 4 - r; k++) { const p = iso(gx + 0.5, gy + 0.3 + k * 0.4 + r * 0.2, 5 + r * 10); e(c, p.x, p.y, 8, 6, '#a0703f', true, 1.5); e(c, p.x, p.y, 4, 3, '#e7c08f', false); } return true; }
     case 'barn': {
       isoBox(c, gx, gy, w, d, 54, { top: '#c0473e', left: '#d9574a', right: '#b8443a' });
       const P = (u: number, z: number) => iso(gx + w, gy + u * d, z);

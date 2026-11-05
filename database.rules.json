@@ -1,0 +1,23 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "houses": {
+      "$code": {
+        ".read": true,
+        ".write": "!data.exists() && newData.exists()"
+      }
+    },
+    "rooms": {
+      "$room": {
+        ".read": true,
+        ".write": true,
+        "events": {
+          ".indexOn": [
+            "ts"
+          ]
+        }
+      }
+    }
+  }
+}

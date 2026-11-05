@@ -228,11 +228,11 @@ export class Soundscape {
       L('amb2', 'amb_night', 0.5 * night);
       L('amb3', 'amb_crickets', 0.35 * night);
       L('amb4', 'amb_wind', 0.08);
-      L('spot-fountain', 'fountain_loop', 0.5 * near(ORIGIN.village.x + 8.5, ORIGIN.village.y + 14.5, 7, 1));
+      L('spot-fountain', 'fountain_loop', 0.5 * near(121, 18, 7, 1));
     } else if (area === 'city') {
       L('amb1', 'amb_city', 0.62 - 0.22 * night);
       L('amb2', 'amb_crickets', 0.12 * night);
-      L('spot-fountain', 'fountain_loop', 0.5 * near(ORIGIN.city.x + 19, ORIGIN.city.y + 18, 7, 1.5));
+      L('spot-fountain', 'fountain_loop', 0.5 * near(217, 32, 7, 1.5));
     } else if (area === 'lake') {
       L('amb1', 'amb_yard', 0.45 * day + 0.05);
       L('amb2', 'amb_lake', 0.5);

@@ -138,16 +138,8 @@ jobs:
       - run: npm run build
       - run: npx cap add ios
       - run: npx cap sync ios
-      - name: Doar pe orizontala
-        run: |
-          P=ios/App/App/Info.plist
-          for K in UISupportedInterfaceOrientations "UISupportedInterfaceOrientations~ipad"; do
-            /usr/libexec/PlistBuddy -c "Delete :$K" $P || true
-            /usr/libexec/PlistBuddy -c "Add :$K array" $P
-            /usr/libexec/PlistBuddy -c "Add :$K:0 string UIInterfaceOrientationLandscapeLeft" $P
-            /usr/libexec/PlistBuddy -c "Add :$K:1 string UIInterfaceOrientationLandscapeRight" $P
-          done
-          /usr/libexec/PlistBuddy -c "Add :UIRequiresFullScreen bool true" $P || true
+      - name: Joc pe orizontala, Game Mode, sunetul care nu se opreste
+        run: python3 ci/ios_patch.py ios/App/App
       - name: Build .ipa (nesemnat)
         working-directory: ios/App
         run: |

@@ -1,4 +1,4 @@
-// 1.5.0: butoanele de test (capitol, resurse infinite), Dudu vinde lemne din Capitolul 1, iesirea de sub pat,
+// 1.5.0: butoanele de test (capitol, resurse infinite), stiva de lemne din Capitolul 1, iesirea de sub pat,
 // fasia din spatele casei blocata, banca (amandoi pe sezut), indicatoarele
 const { chromium } = require('playwright');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -27,15 +27,14 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   const inf2 = await p.evaluate(() => ({ money: game.scene.w.money, wood: game.scene.w.res.wood }));
   ok('se umplu din nou', inf2.money >= 99999 && inf2.wood >= 999, JSON.stringify(inf2));
   await p.evaluate(() => { game.scene.setInfinite(false); document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); });
-  // Dudu vinde lemne in Capitolul 1 (3 lei bucata)
+  // din 1.6.0: lemnele se vand la Cheresteaua lui Nea Vasile (testul e in cherestea.cjs); stiva din curte doar le arata
   const sell = await p.evaluate(async () => {
-    const s = game.scene; const has = s.furnList.some(f => f.id === 'h-wood');
-    s.op({ k: 'res', res: 'wood', delta: 20 - (s.w.res.wood ?? 0) }); const m0 = s.w.money; s.w.stats['woodSold-' + s.w.day] = 0;
-    s.me.gx = 17.5; s.me.gy = 16.6; s.me.path = []; s.goTo('h-wood');
-    for (let i = 0; i < 40 && !(s.w.money > m0); i++) await new Promise(r => setTimeout(r, 200));
-    return { ch: s.chapter, has, lei: s.w.money - m0, wood: s.w.res.wood };
+    const s = game.scene; const has = s.furnList.some(f => f.id === 'h-wood') && s.furnList.some(f => f.id === 'w-sawmill');
+    const m0 = s.w.money; s.me.gx = 17.5; s.me.gy = 16.6; s.me.path = []; s.goTo('h-wood');
+    await new Promise(r => setTimeout(r, 2500));
+    return { ch: s.chapter, has, lei: s.w.money - m0 };
   });
-  ok('Dudu vinde lemne din Capitolul 1', sell.ch === 1 && sell.has && sell.lei === 15 * 3, JSON.stringify(sell));
+  ok('Capitolul 1: stiva din curte + cheresteaua pe drum', sell.ch === 1 && sell.has && sell.lei === 0, JSON.stringify(sell));
   // iesirea de sub pat / dintr-un obstacol
   const un = await p.evaluate(async () => { const s = game.scene; s.me.activity = null; s.me.gx = 4; s.me.gy = 3.5; s.me.z = 0; s.me.path = []; await new Promise(r => setTimeout(r, 1500)); return [s.me.gx, s.me.gy, s.nav.hits(s.me.gx, s.me.gy, 0.12)]; });
   ok('scos de sub pat', un[2] === false, un.map(v => typeof v === 'number' ? v.toFixed(2) : v).join(','));

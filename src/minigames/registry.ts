@@ -14,6 +14,7 @@ import { FridgeCleanGame, TubScrubGame, TvFixGame } from './house';
 import { BathGame, TeethGame, DishesGame, SocksGame, GardenGame, FridgeGame } from './chores';
 import { SoupGame, MedicineGame, CompressGame } from './care';
 import { CookGame } from './kitchen';
+import { SawmillGame } from './sawmill';
 
 /** id minijoc -> clasa. Activitatile cu `minigame` deschid minijocul pentru jucator. */
 export const MINIGAMES: Record<string, MinigameCtor> = {
@@ -28,5 +29,6 @@ export const MINIGAMES: Record<string, MinigameCtor> = {
   cafe: CafeGame, office: OfficeGame, cinema: CinemaGame, resto: RestoGame,
   post: PostGame, bakery: BakeryGame, nurse: NurseGame, course: CourseGame, shop: ShopScene,
   medicine: MedicineGame,
+  sawmill: SawmillGame,
   compress: CompressGame,
 };

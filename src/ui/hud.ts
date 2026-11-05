@@ -1,4 +1,5 @@
 // Interfata de joc (DOM peste canvas).
+import { TOWER_DOOR } from '../world/city';
 import type { WorldScene } from '../scenes/world';
 import { PAIRS } from '../scenes/world';
 import { ANIM_LIST } from '../char/anims';
@@ -43,7 +44,7 @@ export class Hud {
       <div class="card partner">
         <div class="name">${pa.id === 'bubu' ? '🐼' : '🐻'} ${pa.name} <span class="pst">🤖 AI</span></div>
         <div class="pmood"></div>
-        <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="menu">⚙</button></div>
+        <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="menu">⚙</button><button class="mini-btn" data-a="skipch" title="Capitolul următor (test)">⏭</button><button class="mini-btn" data-a="infinite" title="Resurse infinite (test)">♾️</button></div>
       </div>
       <div class="actions">
         <button class="act big" data-a="action"><span class="ic">✋</span><span class="lb">Acțiune</span></button>
@@ -57,7 +58,7 @@ export class Hud {
       </div>
       <div class="pop emotes hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>Emote-uri & dansuri</h4><div class="grid">${emotes.map(a => `<button data-emote="${a.id}"><span>${a.icon}</span>${a.label}</button>`).join('')}</div></div>
       <div class="pop pairs hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>Împreună 💞</h4><div class="grid">${PAIRS.filter(p => !p.only || p.only === s.myId).map(p => `<button data-pair="${p.id}"><span>${p.icon}</span>${p.label}</button>`).join('')}<button data-pair="follow" class="pfollow"><span>🚶</span><i>Vino cu mine</i></button></div></div>
-      <canvas class="minimap" data-a="map" title="Harta"></canvas>
+      <canvas class="minimap" data-a="map" title="Harta (atinge: toată lumea)"></canvas><button class="mapsize" data-a="mapsize" title="Mărește / micșorează harta">⤢</button>
       <div class="regionbanner hidden"><span class="ri"></span><b class="rn"></b></div>
       <div class="ridebar hidden"><span class="rt"></span><div class="rbtns"><button data-a="rgo" class="go">▶ Pornește</button><button data-a="rcall">📣 Cheamă</button><button data-a="roff">⬇ Coboară</button></div></div>
       <div class="buildbar hidden"><span class="bt"></span><button data-a="bok">✔ Pune</button><button data-a="bend">✖ Gata</button></div>
@@ -86,9 +87,13 @@ export class Hud {
       if (a === 'scooter') s.toggleScooter();
       if (a === 'goals') this.openGoals();
       if (a === 'map') this.openMap();
+      if (a === 'mapsize') { this.mapBig = !this.mapBig; try { localStorage.setItem('bd-mapbig', this.mapBig ? '1' : ''); } catch { /* */ } this.layoutMinimap(true); }
       if (a === 'inv') this.openInventory();
       if (a === 'bend') s.endBuild();
       if (a === 'menu') { s.save(); (window as any).game.go('menu'); }
+      // butoanele de test, la vedere (cerute de proprietar): confirmarea se face in fereastra jocului
+      if (a === 'skipch') s.choice('⏭️ Capitolul următor', 'Treceți la capitolul următor? Obiectivele de acum se bifează singure (pentru testare).', [['⏭️', 'Da, capitolul următor', () => s.devSkipChapter()], ['✖', 'Nu acum', () => {}]]);
+      if (a === 'infinite') { s.setInfinite(!s.infinite); this.toast(s.infinite ? '♾️ Resurse infinite pornite (doar pe acest dispozitiv)' : 'Resurse infinite oprite'); }
       if (b.dataset.emote) s.emote(b.dataset.emote);
       if (b.dataset.pair) s.pairAction(b.dataset.pair);
       if (b.dataset.close !== undefined) this.closeModal();
@@ -103,7 +108,7 @@ export class Hud {
   private lastUpd = 0;
   /** semnele de pe harta: tu, partenerul, vehiculele parcate */
   mapMarks(): MapMarks {
-    const s = this.s, tower = { x: ORIGIN.city.x + 2.5, y: ORIGIN.city.y + 24 };
+    const s = this.s, tower = TOWER_DOOR;
     const me = s.space === 'apartment' ? tower : { x: s.me.gx, y: s.me.gy };
     const ps = s.partnerSpace(), pa = ps === 'apartment' ? tower : { x: s.partner.gx, y: s.partner.gy };
     const vehicles: MapMarks['vehicles'] = [];
@@ -115,16 +120,42 @@ export class Hud {
     return { me: { ...me, name: s.me.actor.spec.name }, partner: { ...pa, name: s.partner.actor.spec.name }, vehicles, t: s.time };
   }
   private miniT = 0;
+  /** miniharta marita (se tine minte pe fiecare telefon) */
+  mapBig = (() => { try { return !!localStorage.getItem('bd-mapbig'); } catch { return false; } })();
+  private mapLayoutAt = 0; private mapKey = '';
+  /**
+   * locul minihartii: sub cartonasul partenerului, aliniata la dreapta lui, si niciodata peste butoanele de jos.
+   * Mica: cat cartonasul (cel mult 150 px). Marita: mai lata si mai inalta, cat incape pana la butoane.
+   */
+  layoutMinimap(force = false) {
+    const cv = this.root.querySelector('.minimap') as HTMLCanvasElement | null, btn = this.root.querySelector('.mapsize') as HTMLElement | null; if (!cv || !btn) return;
+    if (!force && performance.now() - this.mapLayoutAt < 700) return; this.mapLayoutAt = performance.now();
+    const R = this.root.getBoundingClientRect();
+    let card = (this.els['.pst'] as HTMLElement | undefined) ?? null; while (card && card.parentElement && card.parentElement !== this.root) card = card.parentElement;
+    const cr = card?.getBoundingClientRect(), act = (this.root.querySelector('[data-a="action"]') as HTMLElement | null)?.getBoundingClientRect();
+    const gw = R.width, gh = R.height;
+    const right = cr ? Math.max(6, R.right - cr.right) : 10, top = cr ? cr.bottom - R.top + 8 : 96;
+    const bottomLimit = (act && act.height ? act.top - R.top : gh - 90) - 10;
+    const cardW = cr ? cr.width : 140;
+    let w = this.mapBig ? Math.min(gw * 0.42, 340) : Math.min(cardW, 150), h = this.mapBig ? Math.min(240, bottomLimit - top) : Math.min(92, bottomLimit - top);
+    w = Math.max(90, w); h = Math.max(56, h);
+    const key = `${right}|${top}|${w}|${h}`; if (key === this.mapKey) return; this.mapKey = key;
+    Object.assign(cv.style, { right: right + 'px', top: top + 'px', width: w + 'px', height: h + 'px' });
+    Object.assign(btn.style, { right: (right + 4) + 'px', top: (top + h - 26) + 'px' });
+    btn.textContent = this.mapBig ? '⤡' : '⤢';
+  }
   drawMinimap() {
     const cv = this.root.querySelector('.minimap') as HTMLCanvasElement | null; if (!cv) return;
     const show = this.s.chapter > 0;
-    if ((cv.style.display !== 'none') !== show) cv.style.display = show ? '' : 'none';
+    const btn = this.root.querySelector('.mapsize') as HTMLElement | null;
+    if ((cv.style.display !== 'none') !== show) { cv.style.display = show ? '' : 'none'; if (btn) btn.style.display = show ? '' : 'none'; }
     if (!show) return;
+    this.layoutMinimap();
     const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
     const dpr = Math.min(2, devicePixelRatio || 1);
     if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
     const c = cv.getContext('2d')!; c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawMini(c, W, H, this.mapMarks(), this.s.ride ? 1.4 : 2.2);
+    drawMini(c, W, H, this.mapMarks(), this.mapBig ? (this.s.ride ? 0.5 : 0.65) : (this.s.ride ? 0.55 : 0.8), this.mapBig);
   }
   /** harta mare (toata lumea) */
   openMap() {

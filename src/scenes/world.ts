@@ -3,7 +3,7 @@ import * as Town from './townctl';
 import * as TownUI from '../ui/townui';
 import { VILLAGERS, DECOR, HOURS, isOpen } from '../game/town';
 import type { ShopConfig } from '../minigames/towngames';
-import { makeCars, updateCars, drawCar, carPos, CITY_PATHS, type Car , drawAptBuilding } from '../world/city';
+import { makeCars, updateCars, drawCar, carPos, CITY_PATHS, TOWER_DOOR, type Car , drawAptBuilding } from '../world/city';
 import { FloorChunks } from '../world/floor';
 import { furnIn, onScreen, furnChanged } from '../world/cull';
 import { chapterBlocks, houseSmoke } from '../world/country';
@@ -32,6 +32,7 @@ import { Nav } from '../world/nav';
 import { CATALOG, RES_INFO, drawGhost, drawTallGrass, type BuildItem } from '../world/build';
 import { GOALS, CHAPTERS, chapterOf, PRICE, INV_INFO } from '../game/economy';
 import { orderableChains, itemValue } from '../minigames/merge';
+import { sawPrice, KEEP_WOOD, nWood, nPlanks } from '../minigames/sawmill';
 import { drawItem, MAX_LVL } from '../world/items';
 import { CROPS, WET_MIN, plotStage, catCount, catPick, seedKey, drawPlotSoil, drawCropPlant, type Plot } from '../world/garden';
 import { ROAD_Y } from '../world/map';
@@ -77,6 +78,8 @@ export interface Pawn {
 export type RideKind = 'scooter' | 'bike' | 'tractor' | 'bus' | 'taxi';
 /** viteza pe drum (dale / secunda) */
 const RIDE_SPEED: Record<RideKind, number> = { bike: 7, scooter: 10, tractor: 4.5, bus: 11, taxi: 15 };
+/** statisticile care schimba obiectele din lume (vehiculele cumparate, capitolul, podul, afacerile) */
+const PLACED_STATS = new Set(['bike', 'scooter', 'chapter', 'bridgeFixed', 'florarie', 'workshop', 'sawmillOpen']);
 export interface Ride { kind: RideKind; path: Pt[]; len: number; s: number; v: number; dest: string; duo: boolean; t: number }
 
 export interface Npc { id: string; kind: string; x: number; y: number; sx?: number; tx: number; state: 'come' | 'wait' | 'leave'; wants: string[]; pay: number; t: number; happy?: boolean; spec?: CharSpec; actor?: Actor }
@@ -166,7 +169,7 @@ export class WorldScene implements Scene {
   pawnOf(id: CharId) { return this.me.id === id ? this.me : this.partner; }
   /** (teste) mergi direct intr-o regiune a lumii (in joc nu exista teleportare: se merge pe drum) */
   debugGo(region: string, company?: 'solo' | 'duo') {
-    const at: Record<string, { x: number; y: number }> = { home: { x: 6.5, y: 13.5 }, forest: { x: ORIGIN.forest.x + 4.5, y: ORIGIN.forest.y + 22.5 }, village: { x: ORIGIN.village.x + 2.5, y: ORIGIN.village.y + 13.2 }, city: { x: ORIGIN.city.x + 19.5, y: ORIGIN.city.y + 15.5 } };
+    const at: Record<string, { x: number; y: number }> = { home: { x: 6.5, y: 13.5 }, forest: { x: ORIGIN.forest.x + 4.5, y: ORIGIN.forest.y + 22.5 }, village: { x: 101.5, y: 25.2 }, city: { x: 209.5, y: 27.5 } };
     if (region === 'apartment') { this.goArea('apartment', company); return; }
     const p = at[region]; if (!p) return;
     if (this.space !== 'world') this.switchArea('world');
@@ -333,7 +336,9 @@ export class WorldScene implements Scene {
     if (o.k === 'npcServe') { const n = this.npcs.find(x => x.id === o.id); if (n) { n.state = 'leave'; n.happy = true; n.actor?.play('love'); } return; }
     if (o.k === 'char') { if (o.who !== this.myId) Object.assign(this.w.chars[o.who], o.state as object); return; }
     applyOp(this.w, o);
-    if (o.k === 'place' || o.k === 'unplace' || o.k === 'veh') this.syncPlaced(); // vehiculul mutat de partener: il vezi si tu la noul loc
+    // vehiculul mutat de partener: il vezi si tu la noul loc. La fel cand partenerul CUMPARA bicicleta / scuterul
+    // (inainte se vedea abia cand urca pe ea) sau cand se schimba capitolul / podul (tractorul, gramada de lemne)
+    if (o.k === 'place' || o.k === 'unplace' || o.k === 'veh' || (o.k === 'stat' && PLACED_STATS.has(o.key))) this.syncPlaced();
     if (o.k === 'jar' && o.from !== this.myId) this.hud.toast('💌 Ai primit un bilețel în Borcanul cu iubire!');
   }
   private lastStateKey = ''; private lastStateAt = 0; private lastCharSync = ''; private lastCharAt = 0;
@@ -351,9 +356,9 @@ export class WorldScene implements Scene {
   vehAt(kind: string) { return this.w.veh?.[kind] ?? 'home'; }
   /** locul de parcare al fiecarui vehicul */
   parkSpot(kind: string, at: string): { gx: number; gy: number; w: number } {
-    const V = ORIGIN.village, Fo = ORIGIN.forest;
+    const Fo = ORIGIN.forest;
     if (kind === 'tractor') return at === 'forest' ? { gx: Fo.x + 4, gy: Fo.y + 24, w: 2 } : { gx: 19, gy: -4, w: 2 };
-    if (at === 'village') return kind === 'bike' ? { gx: V.x - 5, gy: 22, w: 1 } : { gx: V.x - 4, gy: 22, w: 1 }; // la intrarea in sat, langa drum
+    if (at === 'village') return kind === 'bike' ? { gx: 99, gy: 27, w: 1 } : { gx: 100.5, gy: 27, w: 1 }; // la intrarea in sat, in parcarea de la sud de drum
     return kind === 'bike' ? { gx: 4, gy: 23, w: 1 } : { gx: 2, gy: 23, w: 1 };
   }
   /** reconstruieste obiectele adaugate in lume (vehicule, razoare, constructii) + navigarea */
@@ -372,7 +377,8 @@ export class WorldScene implements Scene {
       { const at = this.vehAt('tractor'), sp = this.parkSpot('tractor', at); FURNITURE.push({ id: at === 'forest' ? 'f-tractor' : 'h-tractor', type: 'tractor' as any, gx: sp.gx, gy: sp.gy, w: 2, d: 1, solid: true, action: at === 'forest' ? { id: 'gohome', label: 'Înapoi acasă cu tractorașul', icon: '🚜' } : { id: 'forest', label: 'Spre pădure cu tractorașul', icon: '🚜' } }); }
     }
     // gramada de lemne (cheresteaua le cumpara): treaba lui Dudu, inca din Capitolul 1
-    if (this.chapter >= 1) FURNITURE.push({ id: 'h-wood', type: 'logpile' as any, gx: 17, gy: 15, w: 1, d: 1, solid: true, action: { id: 'sellwood', label: 'Vinde lemne la cherestea', icon: '💰' } });
+    // stiva de lemne din curte (doar arata cate aveti; se vand la cheresteaua de pe drum)
+    if (this.chapter >= 1) FURNITURE.push({ id: 'h-wood', type: 'logpile' as any, gx: 17, gy: 15, w: 1, d: 1, solid: true, action: { id: 'woodpile', label: 'Stiva de lemne', icon: '🪵' } });
     for (const key of Object.keys(this.w.plots ?? {})) { const [x, y] = key.split(',').map(Number); FURNITURE.push({ id: 'plot:' + key, type: 'soilplot', gx: x, gy: y, w: 1, d: 1, solid: false, action: { id: 'plot', label: 'Răzor', icon: '🌱' } }); }
     for (const p of this.w.placed ?? []) {
       const it = CATALOG.find(c => c.type === p.type); if (!it) continue;
@@ -615,8 +621,13 @@ export class WorldScene implements Scene {
     if (act.id === 'tripbike' || act.id === 'tripscooter') { if (pawn === this.me) this.boardVehicle(act.id === 'tripbike' ? 'bike' : 'scooter', f); return; }
     if (act.id === 'village') { if (pawn === this.me) this.boardBest(); return; }
     if (act.id === 'bridgeinfo') { if (pawn === this.me) this.hud.toast(this.bridgeFixed() ? '🌉 Podul Mare' : '🌉 Podul Mare e rupt: lipsesc scânduri. Satul e dincolo de el…'); return; }
+    // cheresteaua: tu intri in curtea ei (cantarul, comenzile, gaterul); partenerul AI duce lemnele la cantar
+    if (act.id === 'sawmill') { if (pawn === this.me) { if (!this.closed('w-sawmill')) this.startCustom('sawmill'); } else if ((this.w.res?.wood ?? 0) > 5 + 2) this.startActivity(pawn, ACTIVITIES.sellwood, f); return; }
+    if (act.id === 'woodpile') { if (pawn === this.me) this.hud.toast(`🪵 Stiva voastră: ${nWood(this.w.res?.wood ?? 0)}${(this.w.res?.plank ?? 0) ? ` și ${nPlanks(this.w.res?.plank ?? 0)}` : ''}. Le vindeți la Cheresteaua lui Nea Vasile, pe drum spre lac (azi ${sawPrice(this.w.day, this.myId)} lei lemnul)`); return; }
     if (act.id === 'roadblock') { if (pawn === this.me) this.hud.toast(this.chapter >= 4 ? '🏙️ Drumul spre oraș e deschis' : '🚧 Drumul spre oraș e închis (lucrări). Se deschide mai târziu în poveste'); return; }
     if (act.id === 'forestgate') { if (pawn === this.me) this.hud.toast(this.chapter >= 2 ? '🌲 Poarta pădurii e deschisă' : '🔒 Pădurea se deschide în Capitolul 2'); return; }
+    // casele satenilor: bati la usa si vorbesti cu ei (acasa), chiar daca nu sunt pe strada
+    if (act.id.startsWith('v-visit-') && pawn === this.me) { const vid = act.id.slice(8); this.me.actor.play('wave'); Sfx.play('doorbell', { vol: 0.6 }); TownUI.openVillager(this, vid); return; }
     if (act.id.startsWith('v-') && pawn === this.me) { this.villageAction(act.id, f); return; }
     if ((act.id.startsWith('c-') || act.id === 'a-exit') && pawn === this.me) { this.cityAction(act.id, f); return; }
     if (act.id === 'growing') return;
@@ -781,7 +792,7 @@ export class WorldScene implements Scene {
   shopNpcs() { return this.storeMode === 'florarie' ? this.florNpcs : this.npcs; }
   spawnNpc(florist = false) {
     const served = this.w.stats.served ?? 0;
-    const chains = florist ? ['flower'] : orderableChains(this.w.res ?? {}, this.w.stats);
+    const chains = orderableChains(this.w.res ?? {}, this.w.stats, florist);
     // la taraba vin sateni in haine de zi cu zi; la florarie, cumparatori eleganti (alte personaje, alte haine)
     const kinds = florist ? ['cat', 'fox', 'bunny'] : ['granny', 'pig', 'dog', 'bunny'];
     const n = served > 8 && Math.random() < 0.3 ? 2 : 1;
@@ -916,7 +927,7 @@ export class WorldScene implements Scene {
     if (this.space === 'world') this.syncPlaced(); else { this.syncDecor(); }
     this.floorChunks.reset(); this.sprites.clear();
     // din apartament iesi pe usa blocului, in oras
-    const sp = this.space === 'apartment' ? AREAS.apartment.spawn : from === 'apartment' ? { x: ORIGIN.city.x + 4.1, y: ORIGIN.city.y + 25.1 } : AREAS.world.spawn;
+    const sp = this.space === 'apartment' ? AREAS.apartment.spawn : from === 'apartment' ? { x: TOWER_DOOR.x + 0.6, y: TOWER_DOOR.y + 0.5 } : AREAS.world.spawn;
     this.me.gx = sp.x; this.me.gy = sp.y; this.me.z = 0;
     this.area = this.space === 'apartment' ? 'apartment' : regionAt(sp.x, sp.y).id;
     (this.w.chars[this.myId] as any).area = this.area; this.sendCharSync();
@@ -1465,7 +1476,7 @@ export class WorldScene implements Scene {
     if (ctrl && a.id === 'chop' && this.area === 'forest') this.op({ k: 'stat', key: 'forestWood', delta: pawn.id === 'dudu' ? 3 : 2 });
     if (ctrl && a.id === 'sellwood') {
       const dayKey = 'woodSold-' + this.w.day, left = Math.max(0, PRICE.sawmillDay - (this.w.stats[dayKey] ?? 0));
-      const per = pawn.id === 'dudu' ? PRICE.sawmillDudu : PRICE.sawmill, n = Math.min(left, Math.max(0, (this.w.res?.wood ?? 0) - 5)), lei = n * per;
+      const per = sawPrice(this.w.day, pawn.id), n = Math.min(left, 6, Math.max(0, (this.w.res?.wood ?? 0) - KEEP_WOOD)), lei = n * per;
       if (!n && !left) this.hud.toast(`🪵 Cheresteaua a cumpărat azi destule lemne (${PRICE.sawmillDay}). Mai vino mâine!`);
       if (n) { this.op({ k: 'res', res: 'wood', delta: -n }); this.op({ k: 'money', delta: lei }); this.op({ k: 'stat', key: 'woodSold', delta: n }); this.op({ k: 'stat', key: dayKey, delta: n }); if (pawn === this.me) this.hud.toast(`🪵 Ai vândut ${n} lemne la cherestea: +${lei} lei (${per} lei bucata${pawn.id === 'dudu' ? ', Dudu știe să negocieze 😎' : ''}; cel mult ${PRICE.sawmillDay} pe zi)`); this.log(`${pawn.actor.spec.name} a vândut ${n} lemne la cherestea: +${lei} lei 💰`); }
     }
@@ -2000,7 +2011,7 @@ export class WorldScene implements Scene {
       else if ((R.water ?? 0) < 2 && aiHome && Object.values(this.w.plots ?? {}).some(p => p.crop)) target = FURNITURE.find(f => f.id === 'well');
     }
     else if (p.id === 'dudu' && aiHome && Object.keys(this.w.grass ?? {}).length > 10 && Math.random() < 0.5) target = pick(['mow']);
-    else if (p.id === 'dudu' && aiHome && (R.wood ?? 0) >= 14 && (this.w.stats['woodSold-' + this.w.day] ?? 0) < PRICE.sawmillDay && Math.random() < 0.5) target = FURNITURE.find(f => f.id === 'h-wood');
+    else if (p.id === 'dudu' && aiHome && (R.wood ?? 0) >= 14 && (this.w.stats['woodSold-' + this.w.day] ?? 0) < PRICE.sawmillDay && Math.random() < 0.5) target = FURNITURE.find(f => f.id === 'w-sawmill');
     if (target) { this.goInteract(p, target); return; }
     if (low[1] < 55) {
       if (low[0] === 'hunger') target = pick(['snack', 'eat']);

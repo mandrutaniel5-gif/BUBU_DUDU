@@ -111,6 +111,7 @@ export class WsAdapter extends Base {
       else if (d.t === 'ev') this.onEvent?.(d.e);
       else if (d.t === 'presence') this.onPresence?.(d.who, d.online);
       else if (d.t === 'save') { this.pendingLoad?.(d.data ?? null); this.pendingLoad = null; }
+      else if (d.t === 'denied') { this.closing = true; this.setStatus('error', 'Casa nu există pe serverul ăsta (alege din nou casa din meniu)'); }
     };
     ws.onclose = () => {
       this.ws = null;

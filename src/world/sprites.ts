@@ -5,7 +5,7 @@ import type { Furn } from './map';
 
 interface Sprite { cv: HTMLCanvasElement; used: number; S: number; bytes: number }
 /** tipurile care arata la fel tot timpul (sau aproape: legananul usor al frunzelor se opreste) */
-const STATIC = new Set(['oak', 'pine', 'tree', 'bush', 'rock', 'flowers', 'wildflower', 'fenceline', 'roadsign', 'farmhouse', 'barn', 'haystack', 'scarecrow', 'cropfield', 'bench', 'bridgerail', 'bridgegap', 'lilypad', 'gazebo', 'church', 'berrybush', 'mushroom', 'logpile', 'pier', 'flowerbed', 'stonepath', 'heartstone', 'fence', 'pot', 'lamppost', 'stalls', 'busstop', 'icecart', 'towerdoor', 'signpost',
+const STATIC = new Set(['sawmill', 'logstack', 'oak', 'pine', 'tree', 'bush', 'rock', 'flowers', 'wildflower', 'fenceline', 'roadsign', 'farmhouse', 'barn', 'haystack', 'scarecrow', 'cropfield', 'bench', 'bridgerail', 'bridgegap', 'lilypad', 'gazebo', 'church', 'berrybush', 'mushroom', 'logpile', 'pier', 'flowerbed', 'stonepath', 'heartstone', 'fence', 'pot', 'lamppost', 'stalls', 'busstop', 'icecart', 'towerdoor', 'signpost',
   // mobila casei (se refac cand li se schimba starea; vezi render.ts)
   'bed', 'nightstand', 'wardrobe', 'rug', 'plant', 'toilet', 'bathtub', 'sink', 'washer', 'fridge', 'stove', 'counter', 'table', 'sofa', 'tv', 'bookshelf', 'mailbox', 'doormat', 'lamp', 'well', 'laptop', 'gateway', 'shed', 'mower', 'stand', 'sapling', 'snowman', 'swing']);
 /** cladirile mari: corpul din imagine, iar semnul plutitor / ceasul / luminitele, desenate viu peste */

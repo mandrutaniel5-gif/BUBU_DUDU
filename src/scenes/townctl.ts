@@ -194,7 +194,7 @@ export function dailyTick(s: WorldScene) {
   const first = !st(s, 'lastDay');
   setStat(s, 'lastDay', day);
   // stergem contoarele zilnice vechi (vanzari la piata, cherestea, tamplarie) ca salvarea sa nu creasca
-  for (const k of Object.keys(s.w.stats)) { const m = /^(sold|woodSold|crafted)-(\d+)/.exec(k); if (m && +m[2] < day - 1) delete s.w.stats[k]; }
+  for (const k of Object.keys(s.w.stats)) { const m = /^(sold|woodSold|crafted|sawOrder)-(\d+)/.exec(k); if (m && +m[2] < day - 1) delete s.w.stats[k]; }
   if (first) return;
   const msgs: string[] = [];
   const b = bankOf(s.w); let money = s.w.money ?? 0;

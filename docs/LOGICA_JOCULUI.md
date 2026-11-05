@@ -171,3 +171,25 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - **Blocat:** cine rămâne prins într-un obstacol (după pat, între mobile) poate ieși mergând, iar după o secundă e scos singur pe cea mai apropiată dală liberă.
 - **Partenerul AI:** după o bucurie care se repetă (dansul de la capitol nou), se oprește după 4 secunde și își vede de treabă (înainte rămânea blocat).
 
+
+## Case cu parolă, cheresteaua, satul și orașul noi (v1.6.0)
+
+- **Casele:** Meniu → 🏠 → „Casă nouă” (alegi parola; jocul dă un cod unic, ex. `LALEA-7K3P`) sau „Intră în casa partenerului” (codul + parola).
+  - Camera din baza de date se calculează pe telefon din cod + parolă (SHA-256). Parola nu se trimite și nu se salvează.
+  - Online (Firebase sau serverul S10) se joacă doar într-o casă cu parolă. Bifa „Mută aici progresul de acum” duce salvarea veche în casa nouă.
+  - Regulile Firebase: `database.rules.json` (vezi `docs/FIREBASE.md`).
+- **Bicicleta / scuterul** cumpărate de unul apar imediat și la celălalt (înainte doar după ce urca pe ele).
+- **iPhone:** sunetul repornește singur după un apel, Siri, ecranul blocat sau altă aplicație (și la prima atingere); merge și cu telefonul pe silențios. Aplicația e marcată ca joc (Game Mode pe iOS 18), pe tot ecranul, fără bara de sus.
+- **Florăria lui Bubu:** un magazin adevărat (vitrină spre sat, rafturi, ușă cu clopoțel). Vinde doar flori:
+  - flori de câmp → floricică … coroniță;
+  - florile din grădină (lalele, trandafiri, floarea-soarelui) → lalea … buchet de mireasă;
+  - răsaduri (semințe de flori) → ghiveci … coș suspendat.
+- **Cheresteaua lui Nea Vasile** (pe drum, între casă și lac, deschisă 7-19):
+  - ⚖️ cântarul: prețul zilei 2-4 lei pe lemn (Dudu +1 leu), cel mult 15 lemne pe zi, 5 lemne rămân mereu pentru sobă; lemnele zboară unul câte unul pe cântar;
+  - 📜 două comenzi pe zi (lemne de foc sau scânduri), plătite mai bine (Dudu +15%), aceleași pe ambele telefoane;
+  - 🪚 gaterul: 2 lemne → o scândură; ții linia albă de pe buștean pe pânză (tragi în sus / jos sau W / S); o tăietură perfectă dă o scândură în plus; scândurile se vând cu 8 lei sau la comenzi;
+  - stiva din curte doar arată lemnele; partenerul AI duce și el lemne la cherestea.
+- **Satul:** Ulița Mare (drumul), piața cu fântâna, Primăria, Poșta, Dispensarul, Brutăria; Alimentara și Croitoria la drum; Ulița Florilor cu Florăria și Tâmplăria; Școala; biserica cu piațeta; parcul cu roata mare și călușeii; casele sătenilor (bați la ușă și vorbești cu ei); grădini și livezi. Parcarea e la intrare, la sud de drum.
+- **Orașul:** bulevardul cu mașini și semafor, Strada Teilor (Banca, Universitatea, Birourile), bulevardul cu magazinele (Supermarket, Cafenea, Cinema, Restaurant, Butic, Mall), Strada Școlii (Spitalul, Blocul Lalelelor), Parcul Central, Gara, terenul de vânzare, parcurile din nord și din sud.
+- **Miniharta:** mică arată doar drumurile, apa, clădirile și pe voi; ⤢ o mărește (cu numele locurilor și iconițele magazinelor); atinsă deschide harta lumii. Stă sub cartonașul partenerului și nu acoperă butoanele.
+- **⏭ și ♾️** stau la vedere, lângă ⚙.

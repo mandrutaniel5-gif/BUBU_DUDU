@@ -6,7 +6,7 @@ const { chromium } = require('playwright');
   const hide = () => p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
   await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 4; s.w.stats.apartment = 1; s.w.gameMin = Math.floor(s.w.gameMin / 1440) * 1440 + 11 * 60; s.debugGo('city'); });
   await p.waitForTimeout(4600); await hide();
-  await p.evaluate(() => { const s = game.scene; s.me.gx = 190 + 3; s.me.gy = 12 + 25.2; s.partner.gx = 190 + 4; s.partner.gy = 12 + 25.4; }); await p.waitForTimeout(2000);
+  await p.evaluate(() => { const s = game.scene; s.me.gx = 205.5; s.me.gy = 37.8; s.partner.gx = 206.5; s.partner.gy = 38; /* usa blocului (v1.6: Strada Scolii) */ }); await p.waitForTimeout(2000);
   await p.screenshot({ path: 'apt2_city_door.png' });
   console.log('near:', await p.evaluate(() => game.scene.nearestFurn(game.scene.me)?.id));
   // intra pe usa
