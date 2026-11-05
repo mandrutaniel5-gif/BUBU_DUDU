@@ -176,7 +176,7 @@ F.push({ id: 'w-bridge-gap', type: 'bridgegap' as any, gx: BRIDGE.x0 + 2, gy: BR
 F.push({ id: 'w-bbridge-n', type: 'bridgerail' as any, gx: BROOK_BRIDGE.x0, gy: BROOK_BRIDGE.y0, w: BROOK_BRIDGE.x1 - BROOK_BRIDGE.x0, d: 0.06, solid: false });
 F.push({ id: 'w-bbridge-s', type: 'bridgerail' as any, gx: BROOK_BRIDGE.x0, gy: BROOK_BRIDGE.y1 - 0.06, w: BROOK_BRIDGE.x1 - BROOK_BRIDGE.x0, d: 0.06, solid: false });
 // bariera de pe soseaua spre oras (pana in Capitolul 4)
-F.push({ id: 'w-roadblock', type: 'roadblock' as any, gx: BROOK_BRIDGE.x1, gy: 24, w: 1, d: 2, solid: false, action: act('roadblock', 'Drumul spre oraș', '🚧') });
+F.push({ id: 'w-roadblock', type: 'roadblock' as any, gx: BROOK_BRIDGE.x1 - 2, gy: 24, w: 1, d: 2, solid: false, action: act('roadblock', 'Drumul spre oraș', '🚧') });
 // poarta padurii
 F.push({ id: 'w-forestgate', type: 'forestgate' as any, gx: 18, gy: -8.6, w: 4, d: 0.2, solid: false, action: act('forestgate', 'Poarta pădurii', '🌲') });
 // --- indicatoarele
@@ -211,7 +211,7 @@ export function chapterBlocks(chapter: number, bridgeFixed: boolean): Rect[] {
   const R: Rect[] = [];
   if (chapter < 2) R.push({ x0: 18, y0: -8.7, x1: 22, y1: -8.3 });
   if (!bridgeFixed) R.push({ x0: BRIDGE.x0 + 2.2, y0: BRIDGE.y0, x1: BRIDGE.x0 + 3.8, y1: BRIDGE.y1 });
-  if (chapter < 4) R.push({ x0: BROOK_BRIDGE.x1 + 0.3, y0: 24, x1: BROOK_BRIDGE.x1 + 0.7, y1: 26 });
+  if (chapter < 4) R.push({ x0: BROOK_BRIDGE.x1 - 1.7, y0: 24, x1: BROOK_BRIDGE.x1 - 1.3, y1: 26 }); // pe podet: pe langa el e apa
   return R;
 }
 

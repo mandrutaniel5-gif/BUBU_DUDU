@@ -11,7 +11,7 @@ const { chromium } = require('playwright');
   await p.evaluate(() => { const s = game.scene; const t = { id: 'table', type: 'table', gx: 10, gy: 9, w: 2, d: 1 }; s.startActivity(s.me, { id: 'eat', anim: 'act_eat', dur: 8, needs: { hunger: 30 }, text: 'x', dish: 'dish_sarmale' }, t); s.startActivity(s.partner, { id: 'eat', anim: 'act_eat', dur: 8, needs: { hunger: 30 }, text: 'x', dish: 'dish_ciorba' }, t); });
   await p.waitForTimeout(1500); await p.screenshot({ path: 'an_table.png' });
   // roata mare in doi (AI) si singur
-  await p.evaluate(() => { const s = game.scene; s.stopActivity(s.me); s.stopActivity(s.partner); s.goArea('village', 'duo'); }); await p.waitForTimeout(5000); await hide();
+  await p.evaluate(() => { const s = game.scene; s.stopActivity(s.me); s.stopActivity(s.partner); s.debugGo('village', 'duo'); }); await p.waitForTimeout(5000); await hide();
   for (const [duo, tag] of [[true, 'duo'], [false, 'solo']]) {
     await p.evaluate(d => { const s = game.scene; s.duo = d; s.startCustom('ferris'); }, duo);
     await p.waitForTimeout(2500); await p.screenshot({ path: `an_ferris_${tag}_1.png` });
@@ -26,7 +26,7 @@ const { chromium } = require('playwright');
   await p.evaluate(() => { const s = game.scene; s.me.gx = 9.8; s.me.gy = 15.8; s.villageAction('v-fountain', { id: 'v-fountain', type: 'fountain', gx: 8, gy: 14, w: 1, d: 1 }); });
   await p.waitForTimeout(350); await p.screenshot({ path: 'an_coin_1.png' }); await p.waitForTimeout(500); await p.screenshot({ path: 'an_coin_2.png' });
   // restaurant singur in oras
-  await p.evaluate(() => { game.scene.goArea('city', 'solo'); }); await p.waitForTimeout(5000); await hide();
+  await p.evaluate(() => { game.scene.debugGo('city', 'solo'); }); await p.waitForTimeout(5000); await hide();
   await p.evaluate(() => { const s = game.scene; s.duo = false; s.startCustom('resto'); }); await p.waitForTimeout(800); await p.screenshot({ path: 'an_resto_solo.png' }); await end(); await p.waitForTimeout(1500);
   await p.evaluate(() => { const s = game.scene; s.duo = false; s.startCustom('cinema'); game.scene.minigame.obj.k = 0.4; }); await p.waitForTimeout(1200); await p.screenshot({ path: 'an_cinema_solo.png' }); await end(); await p.waitForTimeout(1500);
   // rutina de seara: planul a trei seri diferite

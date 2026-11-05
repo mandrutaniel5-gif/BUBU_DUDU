@@ -11,7 +11,7 @@ const { chromium } = require('playwright');
   // juca un "joc avansat": capitol 3, sat, bani, mancare, haine, misiuni
   await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 3; s.w.stats.bike = 1; s.w.money = 400; s.w.res.dish_sarmale = 2; s.w.res.meals = 1; s.syncPlaced(); });
   await p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
-  await p.evaluate(() => game.scene.goArea('village')); await p.waitForTimeout(5000);
+  await p.evaluate(() => game.scene.debugGo('village')); await p.waitForTimeout(5000);
   await p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
   await p.evaluate(() => { const s = game.scene; s.me.gx = 9.5; s.me.gy = 7.5; }); await p.waitForTimeout(2000);
   await p.screenshot({ path: 'repro_1.png' });

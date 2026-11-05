@@ -4,9 +4,9 @@ const { chromium } = require('playwright');
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   await p.goto('http://localhost:5173/?skipload&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 });
   const hide = () => p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
-  await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 4; s.w.stats.apartment = 1; s.w.gameMin = Math.floor(s.w.gameMin / 1440) * 1440 + 11 * 60; s.goArea('city'); });
+  await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 4; s.w.stats.apartment = 1; s.w.gameMin = Math.floor(s.w.gameMin / 1440) * 1440 + 11 * 60; s.debugGo('city'); });
   await p.waitForTimeout(4600); await hide();
-  await p.evaluate(() => { const s = game.scene; s.me.gx = 3; s.me.gy = 25.2; s.partner.gx = 4; s.partner.gy = 25.4; }); await p.waitForTimeout(2000);
+  await p.evaluate(() => { const s = game.scene; s.me.gx = 190 + 3; s.me.gy = 12 + 25.2; s.partner.gx = 190 + 4; s.partner.gy = 12 + 25.4; }); await p.waitForTimeout(2000);
   await p.screenshot({ path: 'apt2_city_door.png' });
   console.log('near:', await p.evaluate(() => game.scene.nearestFurn(game.scene.me)?.id));
   // intra pe usa

@@ -134,3 +134,19 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - **Inventarul complet** (butonul 🎒): împărțit pe Mâncare gătită, Produse pentru tarabă (cu poze), Ingrediente, Recolte și pădure, Flori, Materiale și semințe, Altele. E comun pentru amândoi.
 - **Clienți separați:** la tarabă vin bunica, purcelușul, cățelul, iepurașul (cu batic, pălărie, salopetă); la florărie vin pisica, vulpea, iepurașul, la patru ace (joben, costum, rochie), și cer doar flori.
 
+## Pasul 2: lumea mare (v1.4.0)
+
+- **O singură lume, legată, fără teleportări.** Zonele de dinainte sunt puse întregi la locul lor (`src/world/layout.ts`, `ORIGIN`): casa la (0,0), pădurea la nord, în spatele curții, satul la est, după lac, orașul la capătul șoselei. Între ele: câmpia (`src/world/country.ts`).
+- **Drumul casă → sat:** pe drumul de țară spre dreapta, pe lângă câmpurile vecinilor, coboară pe lângă lac, trece peste **Podul Mare**, apoi urcă spre sat. Pe jos ~52 de secunde (alergând ~30). Satul → orașul: pe șosea, peste pârâu (~80 de dale).
+- **Capitolele închid drumurile:** pădurea are o poartă (se deschide în Capitolul 2), Podul Mare e rupt până în Capitolul 3 („sătenii l-au reparat”), drumul spre oraș are o barieră pe podețul pârâului până în Capitolul 4.
+- **Vehiculele merg singure pe drum** (nu se conduc, nu e GTA): bicicleta (7 dale/s), scuterul (10), tractorul (4,5), autobuzul (11), taxiul (15). Camera merge după vehicul și se depărtează puțin. Partenerul vine în spate / cu invitație. Pasul 3 adaugă Oprește / Întoarce / răscruci / destinația pe hartă.
+- **Vehiculele rămân unde le lași** (`w.veh`): bicicleta și scuterul acasă (la indicator) sau la intrarea în sat; tractorul la poarta din spatele curții sau în pădure.
+- **Apartamentul** rămâne un interior (ușa blocului și scara).
+- **Harta:** miniharta din dreapta sus (tu, partenerul, vehiculele); atingi → harta mare, de sus (nordul = pădurea).
+- **Când intri într-o regiune** îi apare numele sus (Acasă, Pădurea, Lacul, Satul, Orașul).
+- **Partenerul AI:** caută lucruri doar în jurul lui; „Vino cu mine” (meniul 💞) te însoțește peste tot, și urcă cu tine în vehicul; dacă rămâne departe când tu ești acasă, se întoarce singur pe drum.
+- **Satul mărit:** strada de nord și de sud cu casele sătenilor (Bunica Leana, Nea Gogu, Ina, Rita, Miți, Rex), biserica cu clopotnița. **Orașul mărit:** cartiere de blocuri, birouri și magazine, parcul mare cu fântână, gara, terenul de vânzare (pentru magazinul vostru, mai târziu).
+- **Câmpia:** câmpurile vecinilor (grâu, porumb, floarea-soarelui, varză, lavandă), ferma familiei Popescu cu hambar, fân și oi, morile de vânt, livada Mariei, lacul cu rațe, papură, nuferi, debarcader de pescuit și foișor, hanul „La Răscruce”, vaci.
+- **Salvările vechi** se mută singure în lume (o singură dată, `worldV = 2`): cine era în sat apare în același loc din sat, iar vehiculul rămâne acolo.
+- **Baterie:** podeaua se desenează pe bucăți care nu se suprapun, doar obiectele de pe ecran, iar copacii, casele, câmpurile, gardurile se desenează o dată ca imagine și apoi doar se lipesc.
+

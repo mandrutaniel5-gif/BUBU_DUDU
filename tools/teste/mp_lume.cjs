@@ -1,0 +1,60 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1000, height: 560 } });
+  const errs = [];
+  const room = 'mpw' + Date.now();
+  const open = async who => { const p = await ctx.newPage(); p.on('pageerror', e => errs.push(who + ': ' + e)); p.on('console', m => { if ((m.type() === 'error' || m.type() === 'warning') && !/firebase|ERR_|Failed to load|WebSocket|tunnel/i.test(m.text())) errs.push(who + ' ' + m.type() + ': ' + m.text().slice(0, 300)); }); await p.goto(`http://localhost:5173/?skipload&who=${who}&mode=local&room=${room}#world`); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 }); return p; };
+  const D = await open('dudu'); const B = await open('bubu');
+  const hide = p => p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
+  await D.waitForTimeout(3000);
+  const pos = p => p.evaluate(() => { const s = game.scene; return { me: [+s.me.gx.toFixed(1), +s.me.gy.toFixed(1), s.area], pa: [+s.partner.gx.toFixed(1), +s.partner.gy.toFixed(1), s.partnerArea(), s.partner.control], ride: s.ride?.kind ?? null, pass: !!s.me.passenger, veh: s.w.veh }; });
+  console.log('conectati: D', JSON.stringify(await pos(D)), ' B', JSON.stringify(await pos(B)));
+  for (const p of [D, B]) await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 4; s.w.stats.bike = 1; s.w.stats.scooter = 1; s.w.money = 500; s.syncPlaced(); });
+  await hide(D); await hide(B);
+  // 1) amandoi la poarta; Dudu urca pe scuter, Bubu urca in spate (pe telefonul ei), Dudu porneste
+  await D.evaluate(() => { const s = game.scene; s.me.gx = 3.5; s.me.gy = 24.5; });
+  await B.evaluate(() => { const s = game.scene; s.me.gx = 5; s.me.gy = 24.5; });
+  await D.waitForTimeout(800);
+  await D.evaluate(() => { const s = game.scene; s.boardVehicle('scooter', s.furnList.find(f => f.id === 'h-scooter')); });
+  await B.waitForTimeout(800);
+  await B.evaluate(() => { const s = game.scene; s.boardVehicle('scooter', s.furnList.find(f => f.id === 'h-scooter')); });
+  await B.waitForTimeout(500);
+  console.log('Bubu in spate:', await B.evaluate(() => game.scene.me.passenger));
+  await D.evaluate(() => game.scene.rideStart());
+  await D.waitForTimeout(5000);
+  console.log('pe drum: D', JSON.stringify(await pos(D)), ' B', JSON.stringify(await pos(B)));
+  await B.screenshot({ path: 'mpw_ride_B.png' });
+  await D.waitForFunction(() => !game.scene.ride, null, { timeout: 30000 }); await B.waitForTimeout(1500);
+  console.log('in sat: D', JSON.stringify(await pos(D)), ' B', JSON.stringify(await pos(B)));
+  // 2) Bubu se plimba prin sat, Dudu ia autobuzul singur spre oras; Bubu il vede plecand pe drum
+  await D.evaluate(() => { const s = game.scene; s.me.gx = 131.5; s.me.gy = 24.4; s.villageAction('v-bus', s.furnList.find(f => f.id === 'v-bus')); });
+  await D.waitForTimeout(400); await D.evaluate(() => [...document.querySelectorAll('.modal:not(.hidden) [data-ch]')][0]?.click());
+  await D.waitForTimeout(2500); console.log('autobuz: B vede pe Dudu', JSON.stringify((await pos(B)).pa), 'riding', await B.evaluate(() => [game.scene.partner.riding, game.scene.partner.rideKind]));
+  await D.waitForFunction(() => !game.scene.ride, null, { timeout: 30000 }); await B.waitForTimeout(1000);
+  console.log('Dudu la oras: B', JSON.stringify(await pos(B)));
+  // 3) Dudu intra in apartament: Bubu il vede "in apartament", nu desenat in lume
+  await D.evaluate(() => { const s = game.scene; s.w.stats.apartment = 1; s.cityAction('c-tower', s.furnList.find(f => f.id === 'c-towerdoor')); });
+  await D.waitForTimeout(4000); await B.waitForTimeout(6000);
+  console.log('Dudu in apartament: B vede', await B.evaluate(() => [game.scene.partnerArea(), game.scene.sameArea(), document.querySelector('.pmood')?.textContent]));
+  await D.evaluate(() => { const s = game.scene; s.cityAction('a-exit', s.furnList.find(f => f.id === 'a-door')); });
+  await D.waitForTimeout(4000); await B.waitForTimeout(6000);
+  console.log('Dudu iese: B vede', await B.evaluate(() => [game.scene.partnerArea(), game.scene.sameArea()]));
+  // 4) Bubu (in sat) ia autobuzul si il invita pe Dudu? nu: Dudu e la oras. Dudu vine cu autobuzul, apoi invitatie la autobuz inapoi
+  await D.evaluate(() => { const s = game.scene; s.me.gx = 210.5; s.me.gy = 26.6; s.cityAction('c-bus', s.furnList.find(f => f.id === 'c-bus')); });
+  await D.waitForTimeout(400); await D.evaluate(() => [...document.querySelectorAll('.modal:not(.hidden) [data-ch]')][0]?.click());
+  await D.waitForFunction(() => !game.scene.ride, null, { timeout: 30000 });
+  await D.evaluate(() => { const s = game.scene; s.me.gx = 131.5; s.me.gy = 24.4; }); await B.evaluate(() => { const s = game.scene; s.me.gx = 132.5; s.me.gy = 24.6; });
+  await D.waitForTimeout(1200);
+  await D.evaluate(() => { const s = game.scene; s.villageAction('v-bus', s.furnList.find(f => f.id === 'v-bus')); });
+  await D.waitForTimeout(400); await D.evaluate(() => [...document.querySelectorAll('.modal:not(.hidden) [data-ch]')][1]?.click());
+  await B.waitForTimeout(1500);
+  console.log('Bubu primeste:', await B.evaluate(() => document.querySelector('.modal:not(.hidden) h3')?.textContent));
+  await B.evaluate(() => [...document.querySelectorAll('.modal:not(.hidden) [data-ch]')][0]?.click());
+  await D.waitForTimeout(3000);
+  console.log('autobuz impreuna: D', JSON.stringify(await pos(D)), ' B', JSON.stringify(await pos(B)));
+  await B.screenshot({ path: 'mpw_bus_B.png' });
+  await D.waitForFunction(() => !game.scene.ride, null, { timeout: 30000 }); await B.waitForTimeout(2500);
+  console.log('la oras impreuna: D', JSON.stringify(await pos(D)), ' B', JSON.stringify(await pos(B)));
+  console.log(errs.slice(0, 12).join('\n') || 'no errors');
+  await b.close();
+})();

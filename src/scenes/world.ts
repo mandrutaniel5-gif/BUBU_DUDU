@@ -155,6 +155,16 @@ export class WorldScene implements Scene {
     return pawn;
   }
   pawnOf(id: CharId) { return this.me.id === id ? this.me : this.partner; }
+  /** (teste) mergi direct intr-o regiune a lumii (in joc nu exista teleportare: se merge pe drum) */
+  debugGo(region: string, company?: 'solo' | 'duo') {
+    const at: Record<string, { x: number; y: number }> = { home: { x: 6.5, y: 13.5 }, forest: { x: ORIGIN.forest.x + 4.5, y: ORIGIN.forest.y + 22.5 }, village: { x: ORIGIN.village.x + 2.5, y: ORIGIN.village.y + 13.2 }, city: { x: ORIGIN.city.x + 19.5, y: ORIGIN.city.y + 15.5 } };
+    if (region === 'apartment') { this.goArea('apartment', company); return; }
+    const p = at[region]; if (!p) return;
+    if (this.space !== 'world') this.switchArea('world');
+    this.stopActivity(this.me); this.me.path = []; this.me.gx = p.x; this.me.gy = p.y;
+    if (company === 'duo' && this.partner.control !== 'remote') { this.aiArea = 'world'; this.stopActivity(this.partner); this.partner.path = []; this.partner.gx = p.x + 0.8; this.partner.gy = p.y + 0.3; }
+    const c = iso(p.x, p.y, 30); this.cam.x = c.x; this.cam.y = c.y;
+  }
   /** (teste) obiectele de pe harta incarcata */
   get furnList() { return FURNITURE; }
 
@@ -1489,6 +1499,7 @@ export class WorldScene implements Scene {
     }, 1100);
   }
   fartJump() {
+    if (this.ride || this.me.passenger || this.me.board) { this.hud.toast('🛣️ Ești pe drum: întâi coboară 🙂'); return; }
     const c = this.w.chars[this.myId];
     if (c.fart < 25) { this.hud.toast('💨 Nu ai destule gaze... mănâncă ceva! 🫘'); this.me.actor.play('puppy'); return; }
     this.op({ k: 'need', who: this.myId, need: 'fart', delta: -25 });
@@ -1509,6 +1520,7 @@ export class WorldScene implements Scene {
 
   pairAction(id: string) {
     if (id === 'follow') { this.toggleFollow(); return; }
+    if (this.ride || this.me.passenger) { this.hud.toast('🛣️ Ești pe drum: întâi ajungeți 🙂'); this.hud.closeMenus(); return; }
     const pr = PAIRS.find(p => p.id === id)!;
     if (pr.only && pr.only !== this.myId) return;
     if (id === 'pinch') {
@@ -1844,7 +1856,9 @@ export class WorldScene implements Scene {
       if ((!d.riding && this.passengerGrace <= 0) || !this.sameArea()) {
         // soferul a oprit: cobori langa el
         p.passenger = false; this.hud.setRide(null);
-        const q = this.nav.standSpot(Math.floor(d.gx), Math.floor(d.gy), 1, 1, d.gx + 1, d.gy + 0.5);
+        // langa locul unde a coborat soferul (pozitia lui adevarata, nu cea inca in miscare pe ecran)
+        const T = d.control === 'remote' && d.remoteTarget ? { x: d.remoteTarget.gx, y: d.remoteTarget.gy } : { x: d.gx, y: d.gy };
+        const q = this.nav.standSpot(Math.floor(T.x), Math.floor(T.y), 1, 1, T.x + 1, T.y + 0.5);
         if (q && this.sameArea()) { p.gx = q.x; p.gy = q.y; }
       } else { p.gx = d.gx; p.gy = d.gy; p.actor.flip = d.actor.flip; p.actor.moving = false; return; }
     }
@@ -2088,7 +2102,7 @@ export class WorldScene implements Scene {
     const cs = [unIso(vx0, vy0), unIso(vx1, vy0), unIso(vx0, vy1), unIso(vx1, vy1)];
     const gx0 = Math.min(...cs.map(c => c.x)) - 2, gx1 = Math.max(...cs.map(c => c.x)) + 10, gy0 = Math.min(...cs.map(c => c.y)) - 2, gy1 = Math.max(...cs.map(c => c.y)) + 10;
     const seen = (x: number, y: number, m = 140) => { const q = iso(x, y); return q.x > vx0 - m && q.x < vx1 + m && q.y > vy0 - m && q.y < vy1 + m * 2.2; };
-    const visible = (globalThis as any).__noFurn ? [] : furnIn(gx0, gy0, gx1, gy1).filter(f => onScreen(f, vx0, vy0, vx1, vy1));
+    const visible = furnIn(gx0, gy0, gx1, gy1).filter(f => onScreen(f, vx0, vy0, vx1, vy1));
 
     // podeaua (pe bucati)
     const home = this.space === 'world';
@@ -2100,7 +2114,7 @@ export class WorldScene implements Scene {
       ctx.save(); const A = iso(2, 2), B = iso(14, 2), C = iso(14, 12), D = iso(2, 12);
       ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.lineTo(D.x, D.y); ctx.closePath(); ctx.clip();
       this.floorChunks.draw(ctx, vx0, vy0, vx1, vy1); ctx.restore();
-    } else { if (apt) drawAptBuilding(ctx, night); if (!(globalThis as any).__noFloor) this.floorChunks.draw(ctx, vx0, vy0, vx1, vy1); }
+    } else { if (apt) drawAptBuilding(ctx, night); this.floorChunks.draw(ctx, vx0, vy0, vx1, vy1); }
     const inHouse = (x0: number, y0: number, x1: number, y1: number) => !ch0 || (x0 >= 2 && y0 >= 2 && x1 <= 14.2 && y1 <= 12.3);
 
     const dep: Record<string, boolean> = {}; for (const id in this.w.nodes ?? {}) if (this.depleted(id)) dep[id] = true;

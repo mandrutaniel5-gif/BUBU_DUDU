@@ -25,16 +25,18 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 
 | Script | Ce testează |
 |---|---|
-| `mp2.cjs` | **Multiplayer cu 2 jucători**: vehiculul văzut corect de celălalt, autobuz „singur” (celălalt rămâne), invitație „împreună” (celălalt acceptă și vine), cinema în doi |
+| `mp_lume.cjs` | **Multiplayer cu 2 jucători în lumea mare**: scuterul cu partenerul în spate (telefoane diferite), autobuz singur (celălalt îl vede pe drum), apartamentul („în apartament”), invitația la autobuz și sosirea împreună |
+| `lume_drumuri.cjs` | Drumurile cu vehiculele: scuter acasă → sat (cu AI-ul în spate, rămâne parcat în sat), autobuz sat → oraș, ușa blocului, taxi oraș → acasă, tractorul la pădure și înapoi |
+| `lume_capitole.cjs` | Salvare veche din sat mutată corect în lume; poarta pădurii / podul / bariera spre oraș pe capitole; AI-ul „Vino cu mine” |
+| `lume_distante.cjs` | Cât durează pe jos casă → sat și sat → oraș |
+| `baterie_lume.cjs` | Procesorul în curte, sat, oraș și pe drum (de comparat cu versiunea veche) |
 | `presence.cjs` | „X a intrat în joc” apare o singură dată; o scurtă pierdere de semnal nu dă mesaje; ieșirea se anunță o dată |
 | `repro.cjs` | Pornirea ca pe telefon (încărcare → meniu → joc), salvare în sat, repornire, câteva minute de joc; numără erorile |
 | `errtest2.cjs` | Un obiect stricat nu mai oprește jocul; erorile ajung în Meniu → 📋 Erori; avertizare de versiune diferită |
-| `leak.cjs` | După ieșirea în meniu din oraș și revenire, obiectele casei nu apar în oraș |
 | `anim2.cjs` | Capturi: masa, roata mare (în doi / singur), călușei, moneda în fântână, restaurant și cinema singur, rutina de seară |
 | `table.cjs` | Stat la masă cu farfuria (captură de aproape) |
-| `cook_test.cjs` | Bucătăria: meniul de rețete, minijocul (oală / tigaie / cuptor), masa „Ce mâncăm?” |
+| `cook_test.cjs` | Bucătăria: meniul de rețete, minijocul (oală / tigaie / cuptor), masa „Ce mâncăm?” (de actualizat: atingerea ingredientelor) |
 | `apt2.cjs` | Blocul din oraș, scara (animația), apartamentul cu ușa, ieșirea |
-| `park.cjs` | Bicicleta/scuterul parcate la indicator; sosirea din sat / cu taxiul / de la pădure |
 | `battery3.cjs` | Consum: cadre pe secundă, cât e ocupat procesorul, cât se scrie în pagină și pe rețea |
 | `snd_test.cjs` | Sunetele: ambianța fiecărei zone, pașii, baia, sforăitul |
 | `energy.cjs` | Cât de repede obosești tăind copaci |

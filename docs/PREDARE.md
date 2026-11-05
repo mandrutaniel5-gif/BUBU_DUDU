@@ -61,7 +61,7 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | [`src/engine/sfx.ts`](../src/engine/sfx.ts) | Sunetele (înregistrări reale + sinteză de rezervă), buclele de ambianță |
 | [`src/engine/soundscape.ts`](../src/engine/soundscape.ts) | Ce se aude în fiecare zonă și la fiecare activitate |
 | [`src/engine/errors.ts`](../src/engine/errors.ts) | Jurnalul de erori: Meniu → 📋 Erori |
-| [`src/scenes/world.ts`](../src/scenes/world.ts) | **Inima jocului** (~2100 de rânduri): lumea, personajele, activitățile, rețeaua, salvarea, desenul |
+| [`src/scenes/world.ts`](../src/scenes/world.ts) | **Inima jocului** (~2400 de rânduri): lumea, personajele, activitățile, drumurile cu vehiculele (`startRide`), rețeaua, salvarea, desenul |
 | [`src/scenes/menu.ts`](../src/scenes/menu.ts) | Meniul (cine ești, cum jucați, codul casei, salvare în fișier, credite, erori, eco) |
 | [`src/scenes/townctl.ts`](../src/scenes/townctl.ts) | Logica satului și a orașului: joburi, cursuri, magazine, bancă, misiuni, ziua nouă |
 | [`src/game/state.ts`](../src/game/state.ts) | Starea lumii (`WorldState`), nevoile și cât de repede scad |
@@ -69,10 +69,15 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | [`src/game/economy.ts`](../src/game/economy.ts) | Inventarul, magazinele, prețurile (`PRICE`), obiectivele și capitolele |
 | [`src/game/food.ts`](../src/game/food.ts) | Rețetele (14) și ingredientele |
 | [`src/game/town.ts`](../src/game/town.ts) | Joburi, cursuri, săteni, bancă, apartament, mobilă |
-| [`src/world/map.ts`](../src/world/map.ts) | Harta casei și „zonele” (`AREAS`, `setArea`, `resetAreas`) |
-| [`src/world/village.ts`](../src/world/village.ts), [`city.ts`](../src/world/city.ts), [`forest.ts`](../src/world/forest.ts) | Satul, orașul (+ apartamentul), pădurea |
+| [`src/world/layout.ts`](../src/world/layout.ts) | **Harta lumii mari**: unde stă fiecare zonă (`ORIGIN`), regiunile, drumurile (`ROADS`, `MAIN_ROAD`), râul, lacul, podurile, opririle |
+| [`src/world/map.ts`](../src/world/map.ts) | Casa, curtea și asamblarea lumii (`AREAS.world`); podeaua precalculată (`floorAt`); interioarele (`setArea('apartment')`) |
+| [`src/world/country.ts`](../src/world/country.ts) | Câmpia: podeaua dintre zone, decorul generat (copaci, câmpuri, case, moara, lacul, podul, poarta pădurii, bariera), zidurile nevăzute, obstacolele pe capitole (`chapterBlocks`) |
+| [`src/world/village.ts`](../src/world/village.ts), [`city.ts`](../src/world/city.ts), [`forest.ts`](../src/world/forest.ts) | Satul, orașul (+ cartierele, apartamentul), pădurea, puse în lume cu offset |
+| [`src/world/nav.ts`](../src/world/nav.ts) | Navigarea (A* cu heap, obstacole indexate pe dale) |
+| [`src/world/floor.ts`](../src/world/floor.ts), [`cull.ts`](../src/world/cull.ts), [`sprites.ts`](../src/world/sprites.ts) | Desenul rapid: podeaua pe bucăți, doar obiectele de pe ecran, imagini gata desenate pentru obiectele care nu se mișcă |
+| [`src/ui/minimap.ts`](../src/ui/minimap.ts) | Miniharta (colțul din dreapta) și harta mare (de sus) |
 | [`src/world/furniture.ts`](../src/world/furniture.ts) | Desenul obiectelor și al pereților |
-| [`src/world/vehicles.ts`](../src/world/vehicles.ts) | Vehiculele, scenele de drum, scara blocului |
+| [`src/world/vehicles.ts`](../src/world/vehicles.ts) | Desenul vehiculelor (din lateral), scara blocului |
 | [`src/char/`](../src/char/) | Personajele: desen, poze, animații (`anims.ts`), efecte (`fx.ts`), haine |
 | [`src/minigames/`](../src/minigames/) | Minijocurile (pe fiecare îl găsești după nume în [`registry.ts`](../src/minigames/registry.ts)) |
 | [`src/ui/hud.ts`](../src/ui/hud.ts) | Interfața de deasupra jocului: bare, butoane, ferestre, magazine |
@@ -100,6 +105,7 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 - Bucătăria cu rețete românești.
 - Prețurile „cât de cât reale” (v1.2.5).
 - Bicicleta și scuterul cu urcat împreună.
+- Ideea lumii mari, legate, care crește prin voi (Pasul 2 e primul pas).
 - Să vadă **capturi și video** după fiecare schimbare. Testele cu doi jucători.
 
 **Nu îi place (de evitat):**
@@ -111,8 +117,8 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 - Sunete care nu se potrivesc personajelor: râsul de om matur, bășina prea „reală”.
 - Super-bășina: animația e slabă.
 - Să fie **tras după celălalt** fără să vrea (autobuz, cinema). S-a rezolvat cu invitații în v1.3.0.
-- **Hărțile care se încalecă**: de exemplu, veioza aprinsă acasă se vede în pădure, pentru că zonele folosesc aceeași scenă.
-- **Lumea prea mică** și drumul ciudat pădure → casă → sat → oraș.
+- **Hărțile care se încalecă** (rezolvat în v1.4.0: o singură lume, fiecare lucru la locul lui).
+- **Lumea prea mică** și drumul ciudat pădure → casă → sat → oraș (rezolvat în v1.4.0: lumea mare, fără teleportări).
 - „Vacanța” dintr-un meniu nu se simte reală.
 - **Condus liber ca în GTA**: vehiculele trebuie să fie **semi-automate** (vezi secțiunea 7).
 - Că, la un moment dat, **nu mai ai ce face**, și că la oraș trebuie să lași afacerile de la țară ca să te angajezi.
@@ -122,6 +128,7 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 
 - Bucla zilnică: nevoile (o zi întreagă de muncă, 2-3 mese pe zi), somnul doar noaptea, ceasul comun.
 - Capitolele 0-4, curtea cu grădina (8 culturi), pădurea, satul (joburi, misiuni, piață, florărie, tâmplărie), orașul (joburi, cursuri, bancă, apartament, mall), blocul cu scara.
+- **Lumea mare (v1.4.0):** casa → câmpurile → lacul cu Podul Mare → satul → pârâul → orașul, pădurea în spatele curții; pe jos casă → sat ~52 s; vehiculele merg singure pe drum (bicicletă, scuter, tractor, autobuz, taxi) și rămân parcate unde le lași; miniharta + harta mare; partenerul AI „Vino cu mine” și se întoarce singur acasă; salvările vechi se mută automat în lume.
 - Bucătăria (14 rețete, minijoc), masa „Ce mâncăm?” cu farfuria.
 - Sunetele (114, cu licențe), modul eco pentru baterie.
 - Multiplayer:
@@ -138,8 +145,9 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 - **Firebase-ul adevărat nu se poate testa automat de aici**, doar pe două telefoane.
 
 **Probleme știute / datorie tehnică:**
-- Zonele împart aceeași scenă și aceleași liste globale (`FURNITURE`, `WALLS`, `w.furn`). Din cauza asta apar „scurgeri”, ca veioza care se vede în pădure. **De rezolvat în Pasul 2**, cu regiuni separate.
-- Fișierul `world.ts` e prea mare și trebuie spart în module la lumea mare.
+- Fișierul `world.ts` e prea mare: de spart în module (drumurile, AI-ul, desenul).
+- Testul `cook_test.cjs` e depășit (atingerea ingredientelor); minijocul de gătit merge.
+- Orașul consumă puțin mai mult procesor decât înainte (~72% față de 70% în testul fără placă video); curtea și satul la fel ca înainte.
 - Secretele Android de release nu sunt puse. E în regulă: cheia de test fixă merge.
 
 ## 6. Istoric scurt (detalii: `git log` și [`LOGICA_JOCULUI.md`](LOGICA_JOCULUI.md))
@@ -154,6 +162,7 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | 1.3.0 | Multiplayer fără ciudățenii (invitații), animații noi (roata mare, cinema, masa, călușei, fântâna), rutina de seară variată |
 | 1.3.1 | Copia offline ștearsă în aplicație, jurnal de erori, avertizare de versiune |
 | 1.3.2 | **Pasul 1 gata:** rutina de seară simplă (A), cina clară (A), chicoteli și bășini de desen animat, super-bășina refăcută, taraba comună + inventar complet, clienți separați la florărie |
+| 1.4.0 | **Pasul 2: lumea mare** — o singură lume legată, vehiculele merg pe drum, harta și miniharta, satul și orașul mărite, câmpuri, lac, Podul Mare, partenerul AI te poate însoți |
 
 ## 7. Direcția (stabilită cu proprietarul)
 
@@ -188,10 +197,10 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
    - sunete potrivite (chicoteli, bășini de desen animat), super-bășina refăcută;
    - **taraba comună** + **inventar complet** (iei / pui produse, pregătiți marfa dinainte);
    - **clienți separați** la tarabă și la florărie.
-2. **Lumea mare:**
+2. **Lumea mare** ✅ (1.4.0):
    - regiuni cu adevărat separate (fără „scurgeri”), drumuri, harta și miniharta;
    - satul și orașul mărite, păstrând clădirile de acum.
-3. **Vehiculele semi-automate**, pe drumuri.
+3. **Vehiculele semi-automate**, pe drumuri. *Deja în 1.4.0: merg singure pe drum până la capăt (nu se conduc). De adăugat: ⏸ Oprește / ▶ Pornește / ↩ Întoarce, alegerea direcției la răscruci, destinația aleasă pe hartă.*
 4. **Capitolul Podul** + proiectele satului.
 5. **Ferma:** câmpuri, utilaje, animale.
 6. **Angajații.**
