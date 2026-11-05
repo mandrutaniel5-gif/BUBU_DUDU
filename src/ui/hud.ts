@@ -17,6 +17,8 @@ import { basePose } from '../char/pose';
 import { CROPS, seedKey, catCount, drawCropPlant, WET_MIN } from '../world/garden';
 import { CRITTER_NAMES } from '../world/forest';
 import type { NetStatus } from '../net/types';
+import { drawMini, drawFull, topMapImage, type MapMarks } from './minimap';
+import { ORIGIN, REGION_BY_ID } from '../world/layout';
 
 
 export class Hud {
@@ -54,7 +56,9 @@ export class Hud {
         </div>
       </div>
       <div class="pop emotes hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>Emote-uri & dansuri</h4><div class="grid">${emotes.map(a => `<button data-emote="${a.id}"><span>${a.icon}</span>${a.label}</button>`).join('')}</div></div>
-      <div class="pop pairs hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>Împreună 💞</h4><div class="grid">${PAIRS.filter(p => !p.only || p.only === s.myId).map(p => `<button data-pair="${p.id}"><span>${p.icon}</span>${p.label}</button>`).join('')}</div></div>
+      <div class="pop pairs hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>Împreună 💞</h4><div class="grid">${PAIRS.filter(p => !p.only || p.only === s.myId).map(p => `<button data-pair="${p.id}"><span>${p.icon}</span>${p.label}</button>`).join('')}<button data-pair="follow" class="pfollow"><span>🚶</span><i>Vino cu mine</i></button></div></div>
+      <canvas class="minimap" data-a="map" title="Harta"></canvas>
+      <div class="regionbanner hidden"><span class="ri"></span><b class="rn"></b></div>
       <div class="ridebar hidden"><span class="rt"></span><div class="rbtns"><button data-a="rgo" class="go">▶ Pornește</button><button data-a="rcall">📣 Cheamă</button><button data-a="roff">⬇ Coboară</button></div></div>
       <div class="buildbar hidden"><span class="bt"></span><button data-a="bok">✔ Pune</button><button data-a="bend">✖ Gata</button></div>
       <div class="toasts"></div>
@@ -81,6 +85,7 @@ export class Hud {
       if (a === 'bok') s.confirmBuild();
       if (a === 'scooter') s.toggleScooter();
       if (a === 'goals') this.openGoals();
+      if (a === 'map') this.openMap();
       if (a === 'inv') this.openInventory();
       if (a === 'bend') s.endBuild();
       if (a === 'menu') { s.save(); (window as any).game.go('menu'); }
@@ -96,7 +101,48 @@ export class Hud {
   /** scrie in pagina doar daca s-a schimbat (altfel telefonul redeseneaza meniul degeaba -> baterie) */
   private txt(el: Element | null, t: string) { const e = el as HTMLElement | null; if (e && e.dataset.t !== t) { e.dataset.t = t; e.textContent = t; } }
   private lastUpd = 0;
+  /** semnele de pe harta: tu, partenerul, vehiculele parcate */
+  mapMarks(): MapMarks {
+    const s = this.s, tower = { x: ORIGIN.city.x + 2.5, y: ORIGIN.city.y + 24 };
+    const me = s.space === 'apartment' ? tower : { x: s.me.gx, y: s.me.gy };
+    const ps = s.partnerSpace(), pa = ps === 'apartment' ? tower : { x: s.partner.gx, y: s.partner.gy };
+    const vehicles: MapMarks['vehicles'] = [];
+    for (const k of ['bike', 'scooter', 'tractor'] as const) {
+      if (k === 'tractor' ? s.chapter < 2 : !((s.w.stats[k] ?? 0) > 0)) continue;
+      if ((s.me.riding && s.me.rideKind === k) || (s.partner.riding && s.partner.rideKind === k)) continue;
+      const sp = s.parkSpot(k, s.vehAt(k)); vehicles.push({ x: sp.gx + 0.5, y: sp.gy + 0.5, icon: k === 'bike' ? '🚲' : k === 'scooter' ? '🛵' : '🚜' });
+    }
+    return { me: { ...me, name: s.me.actor.spec.name }, partner: { ...pa, name: s.partner.actor.spec.name }, vehicles, t: s.time };
+  }
+  private miniT = 0;
+  drawMinimap() {
+    const cv = this.root.querySelector('.minimap') as HTMLCanvasElement | null; if (!cv) return;
+    const show = this.s.chapter > 0;
+    if ((cv.style.display !== 'none') !== show) cv.style.display = show ? '' : 'none';
+    if (!show) return;
+    const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    const c = cv.getContext('2d')!; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawMini(c, W, H, this.mapMarks(), this.s.ride ? 1.4 : 2.2);
+  }
+  /** harta mare (toata lumea) */
+  openMap() {
+    const s = this.s;
+    const r = s.space === 'apartment' ? null : REGION_BY_ID[s.area];
+    const m = this.modal(`<h3>🗺️ Harta lumii</h3><p class="sub">${r ? `Ești ${WHERE[s.area]?.replace(' · ', '') ?? r.name}` : 'Ești în apartament (Blocul Lalelelor)'}</p><canvas class="bigmap"></canvas>`);
+    m.querySelector('.box')?.classList.add('mapbox');
+    const cv = m.querySelector('.bigmap') as HTMLCanvasElement;
+    const tick = () => {
+      if (m.classList.contains('hidden') || !cv.isConnected) return;
+      const W = cv.clientWidth, H = cv.clientHeight, dpr = Math.min(2, devicePixelRatio || 1);
+      if (W && H) { if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); } const c = cv.getContext('2d')!; c.setTransform(dpr, 0, 0, dpr, 0, 0); drawFull(c, W, H, this.mapMarks()); }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
   update() {
+    if ((this.miniT += 1) % 2 === 0) this.drawMinimap();
     // meniul se actualizeaza de ~8 ori pe secunda (nu la fiecare cadru)
     const now = performance.now(); if (now - this.lastUpd < 125) return; this.lastUpd = now;
     this.updateRide();
@@ -116,9 +162,12 @@ export class Hud {
     this.txt(this.root.querySelector('.clock .money'), `💰 ${w.money ?? 0} lei`);
     const rs = (this.root.querySelector('.clock .res') as HTMLElement); const R = w.res ?? {}; const seeds = Object.keys(CROPS).reduce((a, c) => a + (R[seedKey(c)] ?? 0), 0); const rt = `🪵${R.wood ?? 0} 🪨${R.stone ?? 0} 🥕${catCount(R, 'veg')} 🌸${catCount(R, 'flower')} 🍲${dishCount(R)} 💧${R.water ?? 0} 🌰${seeds} · 🔥${Math.round((w.furn.fire as number) ?? 0)}% 🎒`; this.txt(rs, rt);
     const pc = w.chars[s.partner.id];
-    this.txt(this.els['.pmood'], (s.sameArea() ? '' : ({ home: '🏡 acasă · ', forest: '🌲 la pădure · ', village: '🏘️ în sat · ', city: '🏙️ la oraș · ', apartment: '🔑 în apartament · ' } as Record<string, string>)[s.partnerArea()] ?? '') + moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : ''));
+    const far = !s.sameArea() || Math.hypot(s.partner.gx - s.me.gx, s.partner.gy - s.me.gy) > 14;
+    const where = !far ? '' : s.partner.riding && s.sameArea() ? '🛣️ pe drum · ' : (WHERE[s.partnerArea()] ?? '');
+    this.txt(this.els['.pmood'], where + moodText(s.partner.id, s.partner.actor.mood) + (pc.sick ? ` · ${SICK_INFO[pc.sick].icon} ${g(s.partner.id, 'bolnav', 'bolnavă')}` : ''));
     { const f = this.els['.fart .fill'] as HTMLElement, v = Math.round(c.fart) + '%'; if (f.dataset.v !== v) { f.dataset.v = v; f.style.height = v; } }
     this.els['[data-a="pairs"]'].classList.toggle('glow', s.nearPartner());
+    { const fb = this.root.querySelector('.pfollow') as HTMLElement | null; if (fb) { const show = s.partner.control !== 'remote'; if ((fb.style.display !== 'none') !== show) fb.style.display = show ? '' : 'none'; this.txt(fb.querySelector('i') as HTMLElement, s.partner.follow ? 'Rămâi aici' : 'Vino cu mine'); } }
     { const sc = this.root.querySelector('.act.scooter') as HTMLElement; if (sc.style.display !== 'none') sc.style.display = 'none'; } // vehiculele se folosesc de la poarta
     (this.root.querySelector('.act.scooter') as HTMLElement).classList.toggle('glow', !!s.me.riding);
     // butonul de actiune
@@ -444,8 +493,17 @@ export class Hud {
   }
 
   /** bara de plecare cu bicicleta / scuterul */
-  private rideMode: 'driver' | 'passenger' | null = null;
-  setRide(mode: 'driver' | 'passenger' | null) {
+  private rideMode: 'driver' | 'passenger' | 'riding' | null = null;
+  /** numele regiunii in care tocmai ai intrat (apare cateva secunde sus) */
+  private bannerT: ReturnType<typeof setTimeout> | null = null;
+  regionBanner(icon: string, name: string) {
+    const el = this.root.querySelector('.regionbanner') as HTMLElement; if (!el) return;
+    (el.querySelector('.ri') as HTMLElement).textContent = icon; (el.querySelector('.rn') as HTMLElement).textContent = name;
+    el.classList.remove('hidden', 'out'); void el.offsetWidth; el.classList.add('in');
+    if (this.bannerT) clearTimeout(this.bannerT);
+    this.bannerT = setTimeout(() => { el.classList.add('out'); el.classList.remove('in'); setTimeout(() => el.classList.add('hidden'), 600); }, 2600);
+  }
+  setRide(mode: 'driver' | 'passenger' | 'riding' | null) {
     this.rideMode = mode;
     const bar = this.root.querySelector('.ridebar') as HTMLElement;
     bar.classList.toggle('hidden', !mode); this.root.classList.toggle('riding', !!mode);
@@ -456,12 +514,17 @@ export class Hud {
     const s = this.s; if (!this.rideMode) return;
     if (this.rideMode === 'driver' && !s.me.board) { this.setRide(null); return; }
     if (this.rideMode === 'passenger' && !s.me.passenger) { this.setRide(null); return; }
+    if (this.rideMode === 'riding' && !s.ride) { this.setRide(null); return; }
     const bar = this.root.querySelector('.ridebar') as HTMLElement;
-    const pa = s.partner, nm = pa.actor.spec.name, veh = s.me.rideKind === 'bike' || pa.rideKind === 'bike' ? 'bike' : 'scooter';
-    const vname = veh === 'bike' ? 'bicicletă' : 'scuter', vic = veh === 'bike' ? '🚲' : '🛵';
-    const dest = s.area === 'home' ? 'în sat' : 'acasă';
+    const pa = s.partner, nm = pa.actor.spec.name, rk = s.ride?.kind ?? (s.me.passenger ? pa.rideKind : s.me.rideKind) ?? 'bike', veh = rk === 'bike' ? 'bike' : 'scooter';
+    const vname = veh === 'bike' ? 'bicicletă' : 'scuter', vic = VEH_ICON[rk] ?? '🛵';
+    const dest = s.vehAt(veh) === 'village' ? 'acasă' : 'în sat';
     let txt: string, go: string, call = '', show = true;
-    if (this.rideMode === 'passenger') { txt = `${vic} Stai în spate. Așteaptă să pornească ${nm}`; go = ''; }
+    if (this.rideMode === 'riding') {
+      const r = s.ride!; const left = Math.max(1, Math.ceil((r.len - r.s) / Math.max(4, r.v || 4)));
+      txt = `${vic} ${DEST_TXT[r.dest] ?? 'Pe drum'}${r.duo ? ` cu ${nm} 💕` : ''} · mai ai ~${left} s`; go = '';
+    }
+    else if (this.rideMode === 'passenger') { txt = pa.riding && !pa.board ? `${vic} Mergeți împreună 💕` : `${vic} Stai în spate. Așteaptă să pornească ${nm}`; go = ''; }
     else if (pa.passenger) { txt = `${vic} ${nm} a urcat în spate 💕`; go = `▶ Pornim ${dest}!`; }
     else if (pa.callBoard) { txt = `${vic} ${nm} vine să urce…`; go = `▶ Pornește singur${s.myId === 'bubu' ? 'ă' : ''}`; show = false; }
     else { txt = `${vic} Ești pe ${vname}. Mergi singur${s.myId === 'bubu' ? 'ă' : ''} ${dest} sau ${pa.id === 'bubu' ? 'o aștepți pe' : 'îl aștepți pe'} ${nm}?`; go = `▶ Pornește singur${s.myId === 'bubu' ? 'ă' : ''}`; call = `📣 ${pa.id === 'bubu' ? 'Cheam-o pe' : 'Cheamă-l pe'} ${nm}`; }
@@ -469,12 +532,18 @@ export class Hud {
     const key = txt + go + call + show;
     if (key === this.lastRide) return; this.lastRide = key;
     (bar.querySelector('.rt') as HTMLElement).textContent = txt;
-    const bg = bar.querySelector('[data-a="rgo"]') as HTMLElement, bc = bar.querySelector('[data-a="rcall"]') as HTMLElement;
+    const bg = bar.querySelector('[data-a="rgo"]') as HTMLElement, bc = bar.querySelector('[data-a="rcall"]') as HTMLElement, bo = bar.querySelector('[data-a="roff"]') as HTMLElement;
     bg.textContent = go; bg.style.display = go ? '' : 'none';
+    // in mers nu se coboara (vehiculul merge singur pana la capat)
+    bo.style.display = this.rideMode === 'riding' || (this.rideMode === 'passenger' && pa.riding && !pa.board) ? 'none' : '';
     bc.textContent = call; bc.style.display = call && show ? '' : 'none';
   }
 
   setMinigame(on: boolean) { this.root.classList.toggle('in-mini', on); if (on) this.els['.modal'].classList.add('hidden'); }
 }
 
+/** unde e partenerul (eticheta din coltul lui) */
+const WHERE: Record<string, string> = { home: '🏡 acasă · ', forest: '🌲 la pădure · ', woods: '🌲 în pădure · ', village: '🏘️ în sat · ', city: '🏙️ la oraș · ', lake: '🏞️ la lac · ', country: '🌾 pe câmp · ', apartment: '🔑 în apartament · ' };
+const VEH_ICON: Record<string, string> = { bike: '🚲', scooter: '🛵', tractor: '🚜', bus: '🚌', taxi: '🚕' };
+const DEST_TXT: Record<string, string> = { village: 'Spre sat', home: 'Spre casă', city: 'Spre oraș', forest: 'Spre pădure' };
 const esc = (t: string) => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));

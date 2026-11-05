@@ -126,7 +126,7 @@ export class MergeGame extends Panel {
     const slotWorld = [9.6, 8.3, 7.0][this.slotOf(n)];
     const sx = SLOT_X[this.slotOf(n)];
     if (n.state === 'leave') { const v = Math.max(0, Math.min(1, (n.x - slotWorld) / 6)); return { fx: sx + v * 0.9, k: 1 - Math.min(1, v * 2.2) }; }
-    const u = Math.max(0, Math.min(1, (n.x + 1) / (slotWorld + 1)));
+    const x0 = n.sx ?? -1, u = Math.max(0, Math.min(1, (n.x - x0) / (slotWorld - x0)));
     const kk = Math.max(0, (u - 0.55) / 0.45);
     return { fx: -0.25 + u * (sx + 0.25), k: n.state === 'wait' ? 1 : kk * kk * (3 - 2 * kk) };
   }

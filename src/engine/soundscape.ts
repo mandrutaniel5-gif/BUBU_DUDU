@@ -3,6 +3,7 @@
 import { Sfx, type LoopOpts } from './sfx';
 import { iso } from '../world/iso';
 import { floorAt, HOUSE, FURNITURE, type Floor } from '../world/map';
+import { ORIGIN } from '../world/layout';
 import { nightAmount } from '../game/state';
 import type { WorldScene, Pawn } from '../scenes/world';
 
@@ -63,9 +64,9 @@ const MINI_LOOPS: Record<string, [string, number, LoopOpts?][]> = {
 /** sunetul pasului dupa suprafata */
 function stepKind(f: Floor): string {
   switch (f) {
-    case 'wood': case 'pinkwood': return 'wood';
-    case 'tileblue': case 'checker': case 'asphalt': case 'sidewalk': case 'road': return 'stone';
-    case 'path': case 'dirt': case 'sand': return 'dirt';
+    case 'wood': case 'pinkwood': case 'bridge': return 'wood';
+    case 'tileblue': case 'checker': case 'asphalt': case 'sidewalk': case 'road': case 'cobble': return 'stone';
+    case 'path': case 'dirt': case 'sand': case 'field': return 'dirt';
     default: return 'grass';
   }
 }
@@ -139,8 +140,11 @@ export class Soundscape {
       // vehicule pe harta (bicicleta: pedalat, scuter: motor)
       if (p.riding && k > 0 && !s.travel) {
         const v = (p.actor.moving ? 1 : 0.45) * k;
-        if (p.rideKind === 'bike') L('ride-' + p.id, 'pedal_loop', p.actor.moving ? 0.35 * k : 0, { bus: 'sfx', pan: this.pan(p) });
-        else L('ride-' + p.id, 'engine_high', 0.28 * v, { bus: 'sfx', rate: p.actor.moving ? 1.05 : 0.7, pan: this.pan(p) });
+        const mine = p === me ? 1.4 : 1;
+        if (p.rideKind === 'bike') L('ride-' + p.id, 'pedal_loop', p.actor.moving ? 0.35 * k * mine : 0, { bus: 'sfx', pan: this.pan(p) });
+        else if (p.rideKind === 'tractor') L('ride-' + p.id, 'engine_slow', 0.4 * v * mine, { bus: 'sfx', rate: p.actor.moving ? 1 : 0.75, pan: this.pan(p) });
+        else if (p.rideKind === 'bus') L('ride-' + p.id, 'engine_slow', 0.36 * v * mine, { bus: 'sfx', rate: 0.78, pan: this.pan(p) });
+        else L('ride-' + p.id, 'engine_high', 0.28 * v * mine, { bus: 'sfx', rate: (p.actor.moving ? 1.05 : 0.7) * (p.rideKind === 'taxi' ? 0.85 : 1), pan: this.pan(p) });
       }
       // activitati: bucle + sunete din cand in cand
       const act = p.activity;
@@ -218,17 +222,31 @@ export class Soundscape {
       L('amb2', 'amb_night', 0.6 * night);
       L('amb3', 'amb_crickets', 0.3 * night);
       L('amb4', 'amb_wind', 0.14);
-      L('spot-lake', 'amb_lake', 0.55 * near(15, 8, 8, 2.5));
+      L('spot-lake', 'amb_lake', 0.55 * near(ORIGIN.forest.x + 15, ORIGIN.forest.y + 8, 8, 2.5));
     } else if (area === 'village') {
       L('amb1', 'amb_yard', 0.55 * day + 0.05);
       L('amb2', 'amb_night', 0.5 * night);
       L('amb3', 'amb_crickets', 0.35 * night);
       L('amb4', 'amb_wind', 0.08);
-      L('spot-fountain', 'fountain_loop', 0.5 * near(8.5, 14.5, 7, 1));
+      L('spot-fountain', 'fountain_loop', 0.5 * near(ORIGIN.village.x + 8.5, ORIGIN.village.y + 14.5, 7, 1));
     } else if (area === 'city') {
       L('amb1', 'amb_city', 0.62 - 0.22 * night);
       L('amb2', 'amb_crickets', 0.12 * night);
-      L('spot-fountain', 'fountain_loop', 0.5 * near(19, 18, 7, 1.5));
+      L('spot-fountain', 'fountain_loop', 0.5 * near(ORIGIN.city.x + 19, ORIGIN.city.y + 18, 7, 1.5));
+    } else if (area === 'lake') {
+      L('amb1', 'amb_yard', 0.45 * day + 0.05);
+      L('amb2', 'amb_lake', 0.5);
+      L('amb3', 'amb_crickets', 0.4 * night);
+      L('amb4', 'amb_wind', 0.1);
+    } else if (area === 'woods') {
+      L('amb1', 'amb_forest', 0.6 * day + 0.06);
+      L('amb2', 'amb_night', 0.5 * night);
+      L('amb4', 'amb_wind', 0.14);
+    } else if (area === 'country') {
+      L('amb1', 'amb_yard', 0.55 * day + 0.05);
+      L('amb2', 'amb_night', 0.45 * night);
+      L('amb3', 'amb_crickets', 0.4 * night);
+      L('amb4', 'amb_wind', 0.16);
     } else if (area === 'apartment') {
       L('amb1', 'amb_room', 0.5);
       L('amb2', 'amb_city', 0.2 - 0.06 * night, { lp: 900 });
@@ -245,7 +263,7 @@ export class Soundscape {
         if (area === 'village') {
           if (night > 0.6) { if (Math.random() < 0.6) this.spot(rx, ry, Math.random() < 0.7 ? 'owl' : 'dog', 0.35, 20); }
           else this.spot(rx, ry, pick(['chicken', 'chicken', 'duck', 'dog', 'sheep', 'horse', 'pig', 'cat', 'birds']), 0.45, 20);
-        } else if (area === 'forest') {
+        } else if (area === 'forest' || area === 'woods') {
           if (night > 0.6) this.spot(rx, ry, 'owl', 0.4, 20);
           else this.spot(rx, ry, pick(['birds', 'birds', 'leaves', 'wood_drop']), 0.4, 20);
         } else if (area === 'home' && !mini) {
@@ -256,6 +274,9 @@ export class Soundscape {
         } else if (area === 'city') {
           this.spot(rx, ry, pick(['car_start', 'car_door', 'bike_bell', 'bus_doors', night > 0.5 ? 'dog' : 'birds']), 0.4, 20);
           if (Math.random() < 0.12) Sfx.play('train', { vol: 0.25 });
+        } else if (area === 'country' || area === 'lake') {
+          if (night > 0.6) { if (Math.random() < 0.5) this.spot(rx, ry, 'owl', 0.3, 20); }
+          else this.spot(rx, ry, pick(area === 'lake' ? ['duck', 'birds', 'duck'] : ['birds', 'birds', 'sheep', 'horse', 'chicken']), 0.4, 20);
         } else if (area === 'apartment') {
           if (Math.random() < 0.3) Sfx.play('clock_tick', { vol: 0.2 });
         }

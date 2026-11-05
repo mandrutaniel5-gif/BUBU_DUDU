@@ -5,11 +5,16 @@ import { iso, isoBox, boxOf, shade, tilePath, type Pt } from './iso';
 import { heartPath } from '../char/draw';
 import { drawPOI, drawSign } from './poi';
 import { isOpen } from '../game/town';
+import { ORIGIN } from './layout';
+
+/** satul sta in lume la est de lac: coordonatele de mai jos sunt cele vechi (locale), plus OX/OY */
+const OX = ORIGIN.village.x, OY = ORIGIN.village.y;
 
 const O = '#4a2a22';
 const act = (id: string, label: string, icon: string) => ({ id, label, icon });
 
-function villageFloor(x: number, y: number): Floor {
+function villageFloor(wx: number, wy: number): Floor {
+  const x = wx - OX, y = wy - OY;
   if ((y === 12 || y === 13) || (x === 10 || x === 11)) return 'path';
   if (x >= 7 && x <= 14 && y >= 10 && y <= 15) return 'path';
   if (x >= 13 && y >= 16 && x <= 20 && y <= 25) return (x + y) % 7 === 0 ? 'sand' : 'grass';
@@ -44,17 +49,33 @@ for (const [x, y] of [[0, 4], [9, 3], [13, 2], [21, 4], [2, 25], [11, 25], [19, 
 for (const [x, y] of [[13, 19], [18, 23]]) F.push({ id: `v-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța', '🌅') });
 for (const [x, y] of [[4, 12], [14, 15], [9, 9], [20, 15]]) F.push({ id: `v-fl${x}-${y}`, type: 'flowers' as any, gx: x, gy: y, w: 1, d: 1, solid: false });
 
-AREAS.village = { floor: villageFloor, furniture: F, walls: [], spawn: { x: 2.5, y: 13.2 } };
+for (const b of BUILDINGS) { b.gx += OX; b.gy += OY; }
+for (const f of F) { f.gx += OX; f.gy += OY; }
+AREAS.village = { floor: villageFloor, furniture: F, walls: [], spawn: { x: OX + 2.5, y: OY + 13.2 } };
 
 /** puncte pe strazi pentru satenii care se plimba */
-export const VILLAGE_PATHS: Pt[] = [{ x: 1.5, y: 12.5 }, { x: 10.5, y: 12.5 }, { x: 20.5, y: 12.6 }, { x: 10.5, y: 3 }, { x: 10.5, y: 25 }, { x: 13, y: 14.5 }, { x: 7.5, y: 12.6 }, { x: 16, y: 12.5 }];
+export const VILLAGE_PATHS: Pt[] = [{ x: 1.5, y: 12.5 }, { x: 10.5, y: 12.5 }, { x: 20.5, y: 12.6 }, { x: 10.5, y: 3 }, { x: 10.5, y: 25 }, { x: 13, y: 14.5 }, { x: 7.5, y: 12.6 }, { x: 16, y: 12.5 }].map(p => ({ x: p.x + OX, y: p.y + OY }));
 
 // ------------------------------------------------------------------ desen
 function e(c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, fill: string, st = true, lw = 2) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fillStyle = fill; c.fill(); if (st) { c.strokeStyle = O; c.lineWidth = lw; c.stroke(); } }
 function quad(c: CanvasRenderingContext2D, pts: Pt[], fill: string, lw = 2) { c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)); c.closePath(); c.fillStyle = fill; c.fill(); c.strokeStyle = O; c.lineWidth = lw; c.stroke(); }
 
-function drawBuilding(c: CanvasRenderingContext2D, b: BuildingDef, t: number, night: number, extra: { open?: boolean }) {
+function drawBuilding(c: CanvasRenderingContext2D, b: BuildingDef, t: number, night: number, extra: { open?: boolean }, layer: '' | 'body' | 'live' = '') {
   const { gx, gy, w, d, h } = b;
+  if (layer === 'live') {
+    // doar ce se misca: acele ceasului si steagul primariei, semnul plutitor
+    if (b.tower) {
+      const cp = iso(gx + w / 2, gy + d / 2 + 0.6, h + 42);
+      const ang = t * 0.2; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(cp.x, cp.y); c.lineTo(cp.x + Math.cos(ang) * 7, cp.y + Math.sin(ang) * 7); c.moveTo(cp.x, cp.y); c.lineTo(cp.x + Math.cos(ang * 12) * 5, cp.y + Math.sin(ang * 12) * 5); c.stroke();
+      const fl = iso(gx + w / 2, gy + d / 2, h + 90); c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(fl.x, fl.y); c.lineTo(fl.x, fl.y - 18); c.stroke();
+      for (const [col, k] of [['#002b7f', 0], ['#fcd116', 1], ['#ce1126', 2]] as const) { c.fillStyle = col; c.fillRect(fl.x + k * 5, fl.y - 18 + Math.sin(t * 4 + k) * 1, 5, 8); }
+    }
+    const top = iso(gx + w / 2, gy + d / 2, h + (b.tower ? 120 : 58));
+    const hr = (globalThis as any).__hour ?? 12, open = isOpen(b.id, hr);
+    drawPOI(c, top.x, top.y, open ? b.action.icon : '🌙', t, open ? b.awning ?? b.roof : '#9aa0ae', extra.open === false);
+    return;
+  }
+  const body = layer === 'body';
   isoBox(c, gx, gy, w, d, h, { top: shade(b.wall, 0.95), left: b.wall, right: shade(b.wall, 0.88) });
   // un punct pe fata cu usa (u = 0..1 de-a lungul fetei, z = inaltimea)
   const P = (u: number, z: number) => b.front === 'y' ? iso(gx + u * w, gy + d, z) : iso(gx + w, gy + u * d, z);
@@ -100,18 +121,18 @@ function drawBuilding(c: CanvasRenderingContext2D, b: BuildingDef, t: number, ni
   if (b.tower) {
     isoBox(c, gx + w / 2 - 0.6, gy + d / 2 - 0.6, 1.2, 1.2, 40, { top: '#fff', left: '#dfe8f7', right: '#c8d4ea' }, h + 20);
     const cp = iso(gx + w / 2, gy + d / 2 + 0.6, h + 42); e(c, cp.x, cp.y, 10, 10, '#fff');
-    const ang = t * 0.2; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(cp.x, cp.y); c.lineTo(cp.x + Math.cos(ang) * 7, cp.y + Math.sin(ang) * 7); c.moveTo(cp.x, cp.y); c.lineTo(cp.x + Math.cos(ang * 12) * 5, cp.y + Math.sin(ang * 12) * 5); c.stroke();
+    if (!body) { const ang = t * 0.2; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(cp.x, cp.y); c.lineTo(cp.x + Math.cos(ang) * 7, cp.y + Math.sin(ang) * 7); c.moveTo(cp.x, cp.y); c.lineTo(cp.x + Math.cos(ang * 12) * 5, cp.y + Math.sin(ang * 12) * 5); c.stroke(); }
     const tip = iso(gx + w / 2, gy + d / 2, h + 90); quad(c, [iso(gx + w / 2 - 0.7, gy + d / 2 + 0.7, h + 60), iso(gx + w / 2 + 0.7, gy + d / 2 + 0.7, h + 60), tip], b.roof);
     quad(c, [iso(gx + w / 2 + 0.7, gy + d / 2 - 0.7, h + 60), iso(gx + w / 2 + 0.7, gy + d / 2 + 0.7, h + 60), tip], shade(b.roof, 0.8));
-    const fl = iso(gx + w / 2, gy + d / 2, h + 90); c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(fl.x, fl.y); c.lineTo(fl.x, fl.y - 18); c.stroke();
-    for (const [col, k] of [['#002b7f', 0], ['#fcd116', 1], ['#ce1126', 2]] as const) { c.fillStyle = col; c.fillRect(fl.x + k * 5, fl.y - 18 + Math.sin(t * 4 + k) * 1, 5, 8); }
+    if (!body) { const fl = iso(gx + w / 2, gy + d / 2, h + 90); c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(fl.x, fl.y); c.lineTo(fl.x, fl.y - 18); c.stroke();
+    for (const [col, k] of [['#002b7f', 0], ['#fcd116', 1], ['#ce1126', 2]] as const) { c.fillStyle = col; c.fillRect(fl.x + k * 5, fl.y - 18 + Math.sin(t * 4 + k) * 1, 5, 8); } }
   }
   // firma mare cu iconita + semnul plutitor de deasupra (se vad de departe)
   const sp = P(0.5, h - 10);
   drawSign(c, sp.x, sp.y, b.sign, b.action.icon, '#fff8ef', O, 11);
   const top = iso(gx + w / 2, gy + d / 2, h + (b.tower ? 120 : 58));
   const hr = (globalThis as any).__hour ?? 12, open = isOpen(b.id, hr);
-  drawPOI(c, top.x, top.y, open ? b.action.icon : '🌙', t, open ? b.awning ?? b.roof : '#9aa0ae', extra.open === false);
+  if (!body) drawPOI(c, top.x, top.y, open ? b.action.icon : '🌙', t, open ? b.awning ?? b.roof : '#9aa0ae', extra.open === false);
   if (extra.open === false) { const lp = P(0.5, 20); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = '#fff'; c.strokeStyle = '#e63946'; c.lineWidth = 3; c.textAlign = 'center'; c.fillStyle = '#e63946'; fillTextIcons(c, '🔒 de vânzare', lp.x, lp.y, 9, true); }
 }
 
@@ -120,7 +141,7 @@ export function drawVillageType(c: CanvasRenderingContext2D, f: Furn, t: number,
   switch (f.type as string) {
     case 'building': {
       const b = BUILDINGS.find(x => x.id === f.id); if (!b) return false;
-      drawBuilding(c, b, t, night, { open: f.id === 'v-florarie' ? extra.florarie : f.id === 'v-workshop' ? extra.workshop : undefined });
+      drawBuilding(c, b, t, night, { open: f.id === 'v-florarie' ? extra.florarie : f.id === 'v-workshop' ? extra.workshop : undefined }, (globalThis as any).__layer ?? '');
       return true;
     }
     case 'stalls': {

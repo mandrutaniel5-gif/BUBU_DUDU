@@ -1,6 +1,9 @@
 import { RESOURCE_NODES } from './build';
+import { WORLD, WORLD_W, WORLD_H, ORIGIN, CORE_W, CORE_H } from './layout';
 // Harta casei si a curtii.
-export type Floor = 'forest' | 'road' | 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand' | 'asphalt' | 'sidewalk' | 'void';
+export type Floor = 'forest' | 'road' | 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand' | 'asphalt' | 'sidewalk' | 'void' | 'bridge' | 'field' | 'meadow' | 'cobble';
+export const FLOORS: Floor[] = ['void', 'grass', 'forest', 'road', 'path', 'wood', 'pinkwood', 'tileblue', 'checker', 'dirt', 'water', 'sand', 'asphalt', 'sidewalk', 'bridge', 'field', 'meadow', 'cobble'];
+const FLOOR_ID: Record<string, number> = Object.fromEntries(FLOORS.map((f, i) => [f, i]));
 
 export interface Wall { x: number; y: number; dir: 'x' | 'y'; h: number; kind: 'back' | 'inner' | 'low'; window?: boolean; door?: boolean; color: string }
 
@@ -15,6 +18,8 @@ export interface Furn {
   id: string; type: FurnType; gx: number; gy: number; w: number; d: number;
   solid: boolean; action?: { id: string; label: string; icon: string };
   rot?: 0 | 1; color?: string;
+  /** decor: textul indicatorului, felul culturii etc. */
+  text?: string; kind?: string;
 }
 
 export const MAP_W = 22, MAP_H = 27;
@@ -22,11 +27,19 @@ export const MAP_W = 22, MAP_H = 27;
 export const YARD_H = 22, YARD_GATE = 5, ROAD_Y = 24.6;
 export const HOUSE = { x0: 2, y0: 2, x1: 13, y1: 11 };
 
-/** zona curenta (acasa / padure / ...) */
-export let AREA = 'home';
+/** harta incarcata acum: 'world' (lumea mare) sau un interior ('apartment') */
+export let AREA = 'world';
 let areaFloor: ((x: number, y: number) => Floor) | null = null;
-export function floorAt(x: number, y: number): Floor { return areaFloor ? areaFloor(x, y) : homeFloor(x, y); }
-function homeFloor(x: number, y: number): Floor {
+/** podeaua lumii, precalculata (o dala = un octet) */
+let grid: Uint8Array | null = null;
+export function floorAt(x: number, y: number): Floor {
+  if (areaFloor) return areaFloor(Math.floor(x), Math.floor(y));
+  const ix = Math.floor(x) - WORLD.x0, iy = Math.floor(y) - WORLD.y0;
+  if (ix < 0 || iy < 0 || ix >= WORLD_W || iy >= WORLD_H) return 'void';
+  if (!grid) return worldFloorRaw(Math.floor(x), Math.floor(y));
+  return FLOORS[grid[iy * WORLD_W + ix]];
+}
+export function homeFloor(x: number, y: number): Floor {
   if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return 'grass';
   if (y === 24 || y === 25) return 'road';
   if (y >= YARD_H) return x === YARD_GATE && y < 24 ? 'path' : 'grass';
@@ -113,6 +126,11 @@ export const FURNITURE: Furn[] = [
 
 /** dreptunghiuri de coliziune in grid */
 export interface Rect { x0: number; y0: number; x1: number; y1: number }
+/** poarta din spatele curtii (spre padure) */
+export const BACK_GATE = 19;
+/** marginile hartii incarcate */
+export function spaceBounds() { return AREA === 'world' ? { x0: WORLD.x0, y0: WORLD.y0, x1: WORLD.x1, y1: WORLD.y1 } : { x0: 0, y0: 0, x1: MAP_W, y1: MAP_H }; }
+/** obstacolele (fara apa: apa si golul le stie navigarea din podea) */
 export function colliders(): Rect[] {
   const R: Rect[] = [];
   const t = 0.08;
@@ -121,47 +139,80 @@ export function colliders(): Rect[] {
     else R.push({ x0: w.x - t, y0: w.y, x1: w.x + t, y1: w.y + 1 });
   }
   for (const f of FURNITURE) if (f.solid) {
-    const inset = f.type === 'tree' || f.type === 'bush' ? 0.25 : 0.04;
+    const inset = f.type === 'tree' || f.type === 'bush' || (f.type as string) === 'pine' ? 0.25 : 0.04;
     R.push({ x0: f.gx + inset, y0: f.gy + inset, x1: f.gx + f.w - inset, y1: f.gy + f.d - inset });
   }
-  for (let x = 0; x < MAP_W; x++) for (let y = 0; y < MAP_H; y++) if (floorAt(x, y) === 'water' || floorAt(x, y) === 'void') R.push({ x0: x, y0: y, x1: x + 1, y1: y + 1 });
-  // gardul curtii (cu portita)
-  if (AREA === 'home') for (let x = 0; x < MAP_W; x++) if (x !== YARD_GATE) R.push({ x0: x, y0: YARD_H - t, x1: x + 1, y1: YARD_H + t });
-  // marginile hartii
-  R.push({ x0: -1, y0: -1, x1: MAP_W + 1, y1: 0 }, { x0: -1, y0: MAP_H, x1: MAP_W + 1, y1: MAP_H + 1 });
-  R.push({ x0: -1, y0: -1, x1: 0, y1: MAP_H + 1 }, { x0: MAP_W, y0: -1, x1: MAP_W + 1, y1: MAP_H + 1 });
+  if (AREA === 'world') {
+    // gardul curtii pe toate laturile: portita din fata (spre drum) si poarta din spate (spre padure)
+    for (let x = 0; x < MAP_W; x++) {
+      if (x !== YARD_GATE) R.push({ x0: x, y0: YARD_H - t, x1: x + 1, y1: YARD_H + t });
+      if (x !== BACK_GATE) R.push({ x0: x, y0: -t, x1: x + 1, y1: t });
+    }
+    for (let y = 0; y < YARD_H; y++) { R.push({ x0: -t, y0: y, x1: t, y1: y + 1 }); R.push({ x0: MAP_W - t, y0: y, x1: MAP_W + t, y1: y + 1 }); }
+    R.push(...EXTRA_COLLIDERS);
+  }
+  const B = spaceBounds();
+  R.push({ x0: B.x0 - 1, y0: B.y0 - 1, x1: B.x1 + 1, y1: B.y0 }, { x0: B.x0 - 1, y0: B.y1, x1: B.x1 + 1, y1: B.y1 + 1 });
+  R.push({ x0: B.x0 - 1, y0: B.y0 - 1, x1: B.x0, y1: B.y1 + 1 }, { x0: B.x1, y0: B.y0 - 1, x1: B.x1 + 1, y1: B.y1 + 1 });
   return R;
 }
+/** ziduri nevazute ale lumii (marginea padurii, malurile...) puse de modulul campiei */
+export const EXTRA_COLLIDERS: Rect[] = [];
 
 // ------------------------------------------------------------------ zone
 export interface AreaDef { floor: (x: number, y: number) => Floor; furniture: Furn[]; walls: Wall[]; spawn: { x: number; y: number } }
 const HOME_FURN = [...FURNITURE];
 const HOME_WALLS = [...WALLS];
+/**
+ * Hartile: 'home' (casa si curtea), 'forest', 'village', 'city' (zonele vechi, puse in lume cu coordonate de lume),
+ * 'country' (campia dintre ele) si interioarele ('apartment'). Lumea ('world') le aduna pe toate.
+ */
 export const AREAS: Record<string, AreaDef> = {
   home: { floor: homeFloor, furniture: HOME_FURN, walls: HOME_WALLS, spawn: { x: 17.5, y: 16.5 } },
 };
-/** inlocuieste continutul listelor globale cu cel al zonei (pastreaza obiectele dinamice ale casei) */
-/** obiectele "curate" ale fiecarei zone (fara cele adaugate in joc: razoare, constructii, vehicule, mobila) */
-const BASE_FURN: Record<string, Furn[]> = {};
-/** zona incarcata acum pe harta */
-export const currentArea = () => AREA;
-/**
- * Reporneste hartile de la zero (la intrarea in joc / iesirea in meniu). Fara asta, daca iesi in meniu
- * cand esti in oras si revii, obiectele casei (razoare etc.) se lipeau de oras.
- */
-export function resetAreas() {
-  if (!BASE_FURN.home) BASE_FURN.home = AREA === 'home' ? [...FURNITURE] : [...HOME_FURN]; // prima data: totul e inca neatins
-  for (const [k, a] of Object.entries(AREAS)) { BASE_FURN[k] ??= [...a.furniture]; a.furniture = [...BASE_FURN[k]]; }
-  AREA = 'home'; areaFloor = null;
-  FURNITURE.splice(0, FURNITURE.length, ...AREAS.home.furniture);
-  WALLS.splice(0, WALLS.length, ...AREAS.home.walls);
+/** zonele vechi in lume, in ordinea in care isi dau podeaua */
+const CORES = ['forest', 'village', 'city'] as const;
+function inCore(x: number, y: number, o: { x: number; y: number }) { return x >= o.x && y >= o.y && x < o.x + CORE_W && y < o.y + CORE_H; }
+/** podeaua lumii, calculata (fara grila) */
+function worldFloorRaw(x: number, y: number): Floor {
+  if (x >= 0 && y >= 0 && x < MAP_W && y < MAP_H) return homeFloor(x, y);
+  for (const c of CORES) if (AREAS[c] && inCore(x, y, ORIGIN[c])) return AREAS[c].floor(x, y);
+  return AREAS.country ? AREAS.country.floor(x, y) : 'grass';
 }
+/** zona incarcata acum */
+export const currentArea = () => AREA;
+let built = false;
+/** aduna lumea mare din zonele ei (o data) */
+function buildWorld() {
+  const furn: Furn[] = [...HOME_FURN];
+  for (const c of [...CORES, 'country']) if (AREAS[c]) furn.push(...AREAS[c].furniture);
+  AREAS.world = { floor: worldFloorRaw, furniture: furn, walls: [...HOME_WALLS], spawn: { x: 6.5, y: 9.4 } };
+  grid = new Uint8Array(WORLD_W * WORLD_H);
+  for (let iy = 0; iy < WORLD_H; iy++) for (let ix = 0; ix < WORLD_W; ix++) grid[iy * WORLD_W + ix] = FLOOR_ID[worldFloorRaw(ix + WORLD.x0, iy + WORLD.y0)] ?? 1;
+  built = true;
+}
+/**
+ * Reporneste hartile de la zero (la intrarea in joc / iesirea in meniu): lumea curata (fara
+ * obiectele adaugate in joc: razoare, constructii, vehicule), incarcata pe harta.
+ */
+const BASE_FURN: Record<string, Furn[]> = {};
+export function resetAreas() {
+  if (!built) buildWorld();
+  for (const [k, a] of Object.entries(AREAS)) { BASE_FURN[k] ??= [...a.furniture]; a.furniture = [...BASE_FURN[k]]; }
+  AREA = 'world'; areaFloor = null;
+  FURNITURE.splice(0, FURNITURE.length, ...AREAS.world.furniture);
+  WALLS.splice(0, WALLS.length, ...AREAS.world.walls);
+}
+/** incarca harta: 'world' sau un interior (se pastreaza ce s-a schimbat pe harta de unde pleci) */
 export function setArea(name: string) {
+  if (!built) buildWorld();
+  if (!AREAS[name] || name === 'home' || (CORES as readonly string[]).includes(name) || name === 'country') name = 'world';
+  if (name === AREA) return;
   const cur = AREAS[AREA];
   if (cur) cur.furniture = [...FURNITURE];
   AREA = name;
   const a = AREAS[name];
-  areaFloor = name === 'home' ? null : a.floor;
+  areaFloor = name === 'world' ? null : a.floor;
   FURNITURE.splice(0, FURNITURE.length, ...a.furniture);
   WALLS.splice(0, WALLS.length, ...a.walls);
 }

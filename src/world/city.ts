@@ -6,11 +6,16 @@ import { iso, isoBox, shade, boxOf, type Pt } from './iso';
 import { heartPath } from '../char/draw';
 import { drawPOI, drawSign } from './poi';
 import { isOpen } from '../game/town';
+import { ORIGIN } from './layout';
+
+/** orasul sta in lume la capatul soselei: coordonatele de mai jos sunt cele vechi (locale), plus OX/OY */
+const OX = ORIGIN.city.x, OY = ORIGIN.city.y;
 
 const O = '#4a2a22';
 const act = (id: string, label: string, icon: string) => ({ id, label, icon });
 
-function cityFloor(x: number, y: number): Floor {
+function cityFloor(wx: number, wy: number): Floor {
+  const x = wx - OX, y = wy - OY;
   if (y === 12 || y === 13) return 'asphalt';
   if ((x === 10 || x === 11) && y >= 0) return 'asphalt';
   if (x >= 13 && y >= 20) return x === 17 || y === 23 ? 'path' : 'grass';  // parcul
@@ -49,44 +54,85 @@ for (const [x, y] of [[18, 21], [14, 24]]) F.push({ id: `c-bench${x}-${y}`, type
 for (const [x, y] of [[20, 23], [16, 25], [13, 21], [6, 25]]) F.push({ id: `c-fl${x}-${y}`, type: 'flowers' as any, gx: x, gy: y, w: 1, d: 1, solid: false });
 for (const [x, y] of [[13, 15], [20, 6]]) F.push({ id: `c-pot${x}-${y}`, type: 'pot' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 
-AREAS.city = { floor: cityFloor, furniture: F, walls: [], spawn: { x: 19.5, y: 15.5 } };
+for (const b of CITY_BUILDINGS) { b.gx += OX; b.gy += OY; }
+for (const f of F) { f.gx += OX; f.gy += OY; }
+
+// ------------------------------------------------------------------ cartierele orasului (in jurul centrului vechi)
+// blocuri, birouri si magazine de decor (coordonate de lume); gara si terenul de vanzare pentru mai tarziu
+const PAL: [string, string][] = [['#e8f1ff', '#5b7fbf'], ['#fff1d6', '#c0573e'], ['#ffe1ea', '#e5809a'], ['#e7f6e2', '#5aa35a'], ['#e8e0ff', '#6a5acd'], ['#d8e6f5', '#3f5f8f'], ['#f5ead6', '#c9a24a'], ['#fff6b8', '#c98e5f']];
+const DISTRICT: [number, number, number, number, number, number, ('x' | 'y')?, string?][] = [
+  // [gx, gy, w, d, inaltime, etaje, fata, copertina]
+  [187, 3, 4, 4, 150, 6], [193, 3, 5, 4, 110, 4, 'y', '#ff9ab8'],
+  [203, 3, 5, 4, 200, 8], [210, 3, 4, 4, 130, 5], [216, 3, 6, 4, 90, 3, 'y', '#7cc576'], [224, 3, 4, 4, 170, 7],
+  [203, -10, 5, 5, 220, 9], [211, -10, 4, 4, 140, 6], [218, -10, 5, 4, 110, 4], [225, -10, 4, 5, 160, 6],
+  [233, -10, 5, 5, 240, 10], [241, -10, 5, 4, 180, 7], [233, 3, 5, 5, 200, 8], [241, 3, 5, 5, 140, 5], [233, 14, 4, 5, 120, 5, 'x'], [240, 14, 5, 5, 160, 6],
+  [213, 14, 4, 4, 96, 3, 'y', '#ffb3c7'], [219, 14, 4, 4, 110, 4, 'y', '#7ab8ff'], [225, 14, 4, 4, 84, 3, 'y', '#ffd23f'],
+  [213, 27, 5, 4, 120, 5], [220, 27, 4, 4, 96, 3, 'y', '#c98e5f'], [213, 33, 4, 4, 140, 6], [220, 33, 5, 4, 104, 4],
+  [187, 40, 4, 5, 130, 5], [193, 40, 5, 5, 170, 7], [203, 40, 5, 5, 150, 6], [210, 40, 4, 5, 104, 4], [216, 40, 5, 5, 190, 8], [223, 40, 5, 5, 120, 5],
+  [233, 50, 5, 5, 130, 5], [241, 50, 5, 5, 170, 7],
+];
+DISTRICT.forEach(([gx, gy, w, d, h, floors, front, awning], i) => {
+  const [wall, trim] = PAL[i % PAL.length];
+  CITY_BUILDINGS.push({ id: 'cd-' + i, gx, gy, w, d, h, floors, front: front ?? 'y', wall, trim, sign: '', signCol: trim, awning, action: act('', '', '') });
+  F.push({ id: 'cd-' + i, type: 'cbuilding' as any, gx, gy, w, d, solid: true });
+});
+CITY_BUILDINGS.push({ id: 'c-gara', gx: 188, gy: 52, w: 9, d: 5, h: 70, floors: 2, front: 'y', wall: '#f5ead6', trim: '#a0703f', sign: 'Gara', signCol: '#a0703f', awning: '#c98e5f', action: act('c-gara', 'Gara orașului', '🚂') });
+F.push({ id: 'c-gara', type: 'cbuilding' as any, gx: 188, gy: 52, w: 9, d: 5, solid: true, action: act('c-gara', 'Gara orașului', '🚂') });
+// copaci, felinare si bancute in parcuri si pe strazi
+const crnd = (i: number) => { const v = Math.sin(i * 77.7 + 3.1) * 43758.5; return v - Math.floor(v); };
+for (let i = 0; i < 46; i++) { const park = i < 30 ? { x0: 205, y0: 52, x1: 227, y1: 63 } : { x0: 188, y0: -10, x1: 198, y1: -2 }; const x = Math.floor(park.x0 + crnd(i) * (park.x1 - park.x0)), y = Math.floor(park.y0 + crnd(i + 99) * (park.y1 - park.y0)); if (F.some(f => Math.abs(f.gx - x) < 1.5 && Math.abs(f.gy - y) < 1.5)) continue; F.push({ id: `cp-t${i}`, type: (i % 5 === 0 ? 'pine' : 'oak') as any, kind: i % 4 === 0 ? 'birch' : 'oak', gx: x, gy: y, w: 1, d: 1, solid: true }); }
+for (const [x, y] of [[210, 56], [218, 59], [192, -6], [214, 61]]) F.push({ id: `cp-b${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța din parc', '🌅') });
+F.push({ id: 'cp-fountain', type: 'cfountain' as any, gx: 215, gy: 55, w: 2, d: 2, solid: true, action: act('v-fountain', 'Aruncă o monedă', '🪙') });
+for (let x = 188; x < 250; x += 7) for (const yy of [-1, 2, 23, 26, 47, 50]) {
+  if ((x >= 189 && x <= 212 && yy > 11 && yy < 39) || (x >= 199 && x <= 202) || (x >= 229 && x <= 232)) continue;
+  if (F.some(f => x >= f.gx - 0.5 && x < f.gx + f.w + 0.5 && yy >= f.gy - 0.5 && yy < f.gy + f.d + 0.5)) continue;
+  F.push({ id: `cl-${x}-${yy}`, type: 'lamppost' as any, gx: x, gy: yy, w: 1, d: 1, solid: true });
+}
+F.push({ id: 'c-lot', type: 'roadsign' as any, gx: 234, gy: 27, w: 1, d: 1, solid: true, text: '🏗️ Teren de vânzare' });
+F.push({ id: 'c-lot2', type: 'roadsign' as any, gx: 199, gy: 51, w: 1, d: 1, solid: true, text: '🚂 Gara' });
+AREAS.city = { floor: cityFloor, furniture: F, walls: [], spawn: { x: OX + 19.5, y: OY + 15.5 } };
 
 /** puncte pe trotuare pentru orasenii care se plimba */
-export const CITY_PATHS: Pt[] = [{ x: 3, y: 11.5 }, { x: 8, y: 14.5 }, { x: 15, y: 11.5 }, { x: 19, y: 14.5 }, { x: 9.5, y: 4 }, { x: 12.5, y: 9 }, { x: 9.5, y: 20 }, { x: 12.5, y: 24 }, { x: 16, y: 22.5 }, { x: 19, y: 23.5 }];
+export const CITY_PATHS: Pt[] = [{ x: 3, y: 11.5 }, { x: 8, y: 14.5 }, { x: 15, y: 11.5 }, { x: 19, y: 14.5 }, { x: 9.5, y: 4 }, { x: 12.5, y: 9 }, { x: 9.5, y: 20 }, { x: 12.5, y: 24 }, { x: 16, y: 22.5 }, { x: 19, y: 23.5 }].map(p => ({ x: p.x + OX, y: p.y + OY }));
 
 // ------------------------------------------------------------------ masinile
 export interface Car { lane: 0 | 1 | 2 | 3; k: number; speed: number; col: string; kind: 'car' | 'taxi' | 'bus' }
 const CAR_COLS = ['#ff7aa2', '#7ab8ff', '#ffd23f', '#7cc576', '#ffffff', '#c9a0ff'];
+/** benzile (locale): bulevardul lung de la vest la est si cel de la nord la sud */
+const LANE_X = { from: -8, to: 62 }, LANE_Y = { from: -26, to: 50 };
 export function makeCars(): Car[] {
   const cars: Car[] = [];
-  for (let i = 0; i < 7; i++) cars.push({ lane: (i % 4) as Car['lane'], k: Math.random(), speed: 0.05 + Math.random() * 0.03, col: CAR_COLS[i % CAR_COLS.length], kind: i === 2 ? 'taxi' : i === 5 ? 'bus' : 'car' });
+  for (let i = 0; i < 12; i++) { const lane = (i % 4) as Car['lane']; const L = lane < 2 ? LANE_X.to - LANE_X.from : LANE_Y.to - LANE_Y.from; cars.push({ lane, k: Math.random(), speed: (1.3 + Math.random() * 0.8) / L, col: CAR_COLS[i % CAR_COLS.length], kind: i === 2 || i === 9 ? 'taxi' : i === 5 ? 'bus' : 'car' }); }
   return cars;
 }
-/** pozitia masinii pe banda (grid) + directie */
-export function carPos(c: Car): { x: number; y: number; dir: 'x' | 'y'; sgn: 1 | -1 } {
+/** pozitia masinii pe banda (grid local al orasului) + directie */
+function carLocal(c: Car): { x: number; y: number; dir: 'x' | 'y'; sgn: 1 | -1 } {
+  const LX = LANE_X.to - LANE_X.from, LY = LANE_Y.to - LANE_Y.from;
   switch (c.lane) {
-    case 0: return { x: -1 + c.k * 24, y: 12.5, dir: 'x', sgn: 1 };
-    case 1: return { x: 23 - c.k * 24, y: 13.5, dir: 'x', sgn: -1 };
-    case 2: return { x: 10.5, y: 28 - c.k * 30, dir: 'y', sgn: -1 };
-    default: return { x: 11.5, y: -2 + c.k * 30, dir: 'y', sgn: 1 };
+    case 0: return { x: LANE_X.from + c.k * LX, y: 12.5, dir: 'x', sgn: 1 };
+    case 1: return { x: LANE_X.to - c.k * LX, y: 13.5, dir: 'x', sgn: -1 };
+    case 2: return { x: 10.5, y: LANE_Y.to - c.k * LY, dir: 'y', sgn: -1 };
+    default: return { x: 11.5, y: LANE_Y.from + c.k * LY, dir: 'y', sgn: 1 };
   }
 }
+/** pozitia masinii in lume */
+export function carPos(c: Car): { x: number; y: number; dir: 'x' | 'y'; sgn: 1 | -1 } { const p = carLocal(c); return { ...p, x: p.x + OX, y: p.y + OY }; }
 /** masinile opresc la semafor cand e rosu pe directia lor */
 export function updateCars(cars: Car[], dt: number, t: number, who: { x: number; y: number }[]) {
   const greenX = (t % 16) < 8;
   for (const c of cars) {
-    const p = carPos(c);
-    const ahead = (d: number) => { const q = { x: p.x + (p.dir === 'x' ? d * p.sgn : 0), y: p.y + (p.dir === 'y' ? d * p.sgn : 0) }; return q; };
+    const p = carLocal(c), w0 = carPos(c);
     let stop = false;
     // semaforul: linia de oprire inainte de intersectie
     const pos = p.dir === 'x' ? p.x : p.y, stopAt = p.sgn > 0 ? 9.3 : (p.dir === 'x' ? 12.7 : 14.7);
     const red = p.dir === 'x' ? !greenX : greenX;
     if (red && (p.sgn > 0 ? pos < stopAt && pos > stopAt - 1.2 : pos > stopAt && pos < stopAt + 1.2)) stop = true;
     // pietonii (personajele) pe carosabil
-    const a = ahead(1.1);
+    const a = { x: w0.x + (p.dir === 'x' ? 1.1 * p.sgn : 0), y: w0.y + (p.dir === 'y' ? 1.1 * p.sgn : 0) };
     for (const w of who) if (Math.hypot(w.x - a.x, w.y - a.y) < 1.1) stop = true;
     // masina din fata
-    for (const o of cars) if (o !== c && o.lane === c.lane) { const d = (o.k - c.k + 1) % 1; if (d > 0 && d < 0.11) stop = true; }
+    const gap = 3 / (c.lane < 2 ? LANE_X.to - LANE_X.from : LANE_Y.to - LANE_Y.from);
+    for (const o of cars) if (o !== c && o.lane === c.lane) { const d = (o.k - c.k + 1) % 1; if (d > 0 && d < gap) stop = true; }
     if (!stop) c.k = (c.k + c.speed * dt) % 1;
   }
 }
@@ -122,8 +168,17 @@ export function drawCar(c: CanvasRenderingContext2D, car: Car, t: number) {
 function quad(c: CanvasRenderingContext2D, pts: Pt[], fill: string, lw = 2) { c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)); c.closePath(); c.fillStyle = fill; c.fill(); c.strokeStyle = O; c.lineWidth = lw; c.stroke(); }
 function e(c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, fill: string, st = true, lw = 2) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fillStyle = fill; c.fill(); if (st) { c.strokeStyle = O; c.lineWidth = lw; c.stroke(); } }
 
-function drawCityBuilding(c: CanvasRenderingContext2D, b: CityBuilding, t: number, night: number, owned: Record<string, boolean>) {
+function drawCityBuilding(c: CanvasRenderingContext2D, b: CityBuilding, t: number, night: number, owned: Record<string, boolean>, layer: '' | 'body' | 'live' = '') {
   const { gx, gy, w, d, h } = b;
+  const faceY0 = (u: number, z: number) => iso(gx + u * w, gy + d, z), P0 = b.front === 'y' ? faceY0 : (u: number, z: number) => iso(gx + w, gy + u * d, z);
+  if (layer === 'live') {
+    // doar ce se misca: semnul plutitor, luminitele cinematografului, inimioara de la fereastra
+    if (b.sign) { const hr = (globalThis as any).__hour ?? 12; const top = iso(gx + w / 2, gy + d / 2, h + 34); drawPOI(c, top.x, top.y, isOpen(b.id, hr) ? b.action.icon : '🌙', t, isOpen(b.id, hr) ? b.signCol : '#9aa0ae'); }
+    if (b.marquee) { const sp = P0(0.5, 58); c.font = '900 16px "Baloo 2", sans-serif'; const tw = c.measureText(b.sign).width + 18; for (let i = 0; i < 12; i++) { const on = Math.floor(t * 6 + i) % 2 === 0; c.fillStyle = on ? '#ffe680' : '#8a7a40'; c.beginPath(); c.arc(sp.x - tw / 2 + 4 + i * (tw - 8) / 11, sp.y - 13, 2.2, 0, 7); c.fill(); c.beginPath(); c.arc(sp.x - tw / 2 + 4 + i * (tw - 8) / 11, sp.y + 13, 2.2, 0, 7); c.fill(); } }
+    if (b.id === 'c-tower' && owned.apartment) { const fh = (h - 40) / Math.max(1, b.floors - 1); const p = faceY0(0.3, 40 + fh * 3 + fh * 0.45); heartPath(c, p.x, p.y, 6 + Math.sin(t * 3)); c.fillStyle = '#ff4d6d'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.5; c.stroke(); }
+    return;
+  }
+  const body = layer === 'body';
   isoBox(c, gx, gy, w, d, h, { top: shade(b.wall, 0.92), left: b.wall, right: shade(b.wall, 0.86) });
   const lit = night > 0.4;
   // ferestrele pe ambele fete vizibile
@@ -183,27 +238,27 @@ function drawCityBuilding(c: CanvasRenderingContext2D, b: CityBuilding, t: numbe
   isoBox(c, gx + w * 0.2, gy + d * 0.2, 0.8, 0.6, 10, { top: '#e6e6ee', left: '#c9ccd6', right: '#b0b4c0' }, h);
   if (b.floors > 4) { const tp = iso(gx + w * 0.7, gy + d * 0.35, h); c.fillStyle = '#c99a5a'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(tp.x - 9, tp.y - 30, 18, 22, 4); c.fill(); c.stroke(); c.beginPath(); c.moveTo(tp.x - 7, tp.y - 8); c.lineTo(tp.x - 7, tp.y); c.moveTo(tp.x + 7, tp.y - 8); c.lineTo(tp.x + 7, tp.y); c.stroke(); }
   // semnul plutitor deasupra institutiei
-  if (b.sign) { const hr = (globalThis as any).__hour ?? 12; const top = iso(gx + w / 2, gy + d / 2, h + 34); drawPOI(c, top.x, top.y, isOpen(b.id, hr) ? b.action.icon : '🌙', t, isOpen(b.id, hr) ? b.signCol : '#9aa0ae'); }
+  if (b.sign && !body) { const hr = (globalThis as any).__hour ?? 12; const top = iso(gx + w / 2, gy + d / 2, h + 34); drawPOI(c, top.x, top.y, isOpen(b.id, hr) ? b.action.icon : '🌙', t, isOpen(b.id, hr) ? b.signCol : '#9aa0ae'); }
   // firma
   if (b.sign && !b.marquee) { const sp = P(0.5, 46); drawSign(c, sp.x, sp.y, b.sign, b.action.icon, '#fff8ef', b.signCol, 12); }
   else if (b.sign) {
     const sp = P(0.5, b.marquee ? 58 : 46);
     c.font = `900 ${b.marquee ? 16 : 11}px "Baloo 2", sans-serif`; const tw = c.measureText(b.sign).width + 18;
     c.fillStyle = b.marquee ? '#2b1d40' : '#fff8ef'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(sp.x - tw / 2, sp.y - 11, tw, 22, 6); c.fill(); c.stroke();
-    if (b.marquee) for (let i = 0; i < 12; i++) { const on = Math.floor(t * 6 + i) % 2 === 0; c.fillStyle = on ? '#ffe680' : '#8a7a40'; c.beginPath(); c.arc(sp.x - tw / 2 + 4 + i * (tw - 8) / 11, sp.y - 13, 2.2, 0, 7); c.fill(); c.beginPath(); c.arc(sp.x - tw / 2 + 4 + i * (tw - 8) / 11, sp.y + 13, 2.2, 0, 7); c.fill(); }
+    if (b.marquee && !body) for (let i = 0; i < 12; i++) { const on = Math.floor(t * 6 + i) % 2 === 0; c.fillStyle = on ? '#ffe680' : '#8a7a40'; c.beginPath(); c.arc(sp.x - tw / 2 + 4 + i * (tw - 8) / 11, sp.y - 13, 2.2, 0, 7); c.fill(); c.beginPath(); c.arc(sp.x - tw / 2 + 4 + i * (tw - 8) / 11, sp.y + 13, 2.2, 0, 7); c.fill(); }
     c.fillStyle = b.marquee ? '#ffe680' : b.signCol; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(b.sign, sp.x, sp.y + 1); c.textBaseline = 'alphabetic';
   }
   // afisul filmului la cinema
   if (b.marquee) { const p = P(0.18, 64); c.fillStyle = '#ffb3c7'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(p.x - 10, p.y - 18, 20, 28, 3); c.fill(); c.stroke(); heartPath(c, p.x, p.y - 6, 5); c.fillStyle = '#e63946'; c.fill(); }
   // apartamentul vostru: inimioara la fereastra
-  if (b.id === 'c-tower' && owned.apartment) { const p = faceY(0.3, 40 + fh * 3 + fh * 0.45); heartPath(c, p.x, p.y, 6 + Math.sin(t * 3)); c.fillStyle = '#ff4d6d'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.5; c.stroke(); }
+  if (b.id === 'c-tower' && owned.apartment && !body) { const p = faceY(0.3, 40 + fh * 3 + fh * 0.45); heartPath(c, p.x, p.y, 6 + Math.sin(t * 3)); c.fillStyle = '#ff4d6d'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.5; c.stroke(); }
   if (b.id === 'c-tower' && !owned.apartment) { const p = P(0.5, 52); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = '#fff'; c.beginPath(); c.roundRect(p.x - 40, p.y - 8, 80, 16, 5); c.fill(); c.strokeStyle = '#e63946'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#e63946'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🔒 DE VÂNZARE', p.x, p.y + 0.5); c.textBaseline = 'alphabetic'; }
 }
 
 export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, night: number, owned: Record<string, boolean>): boolean {
   const { gx, gy } = f;
   switch (f.type as string) {
-    case 'cbuilding': { const b = CITY_BUILDINGS.find(x => x.id === f.id); if (!b) return false; drawCityBuilding(c, b, t, night, owned); return true; }
+    case 'cbuilding': { const b = CITY_BUILDINGS.find(x => x.id === f.id); if (!b) return false; drawCityBuilding(c, b, t, night, owned, (globalThis as any).__layer ?? ''); return true; }
     case 'towerdoor': { const p = iso(gx + 0.5, gy + 0.55, 0); c.fillStyle = '#c98e5f'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.ellipse(p.x, p.y, 13, 6, 0, 0, 7); c.fill(); c.stroke(); return true; }
     case 'icecart': {
       isoBox(c, gx + 0.1, gy + 0.25, 0.8, 0.5, 26, { top: '#fff', left: '#ffd6e4', right: '#ffb6c9' }, 6);

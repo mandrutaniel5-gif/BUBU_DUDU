@@ -58,7 +58,9 @@ export interface WorldState {
   gameMin?: number;                                     // ceasul jocului (minute de la inceput)
   grass?: Record<string, number>;                       // iarba inalta: 'x,y' -> inaltime 1..3
   town?: Record<string, unknown>;                       // sat/oras: cereri sateni, banca, mobila apartament
-  boards?: Record<string, string>;                      // taraba / florăria (comune): produsele de pe tejghea, codate „lant:nivel|…”
+  boards?: Record<string, string>;
+  veh?: Record<string, string>;                         // unde sunt parcate vehiculele: bike/scooter -> 'home' | 'village', tractor -> 'home' | 'forest'
+  worldV?: number;                                      // 2 = pozitiile sunt in coordonatele lumii mari                      // taraba / florăria (comune): produsele de pe tejghea, codate „lant:nivel|…”
 }
 
 const fullNeeds = (): Record<NeedKey, number> => ({ hunger: 70, energy: 100, warmth: 60, hygiene: 80, fun: 70, love: 75, health: 100 });
@@ -150,6 +152,7 @@ export function applyOp(w: WorldState, op: WorldOp) {
     case 'grassAll': w.grass = {}; break;
     case 'town': w.town ??= {}; w.town[op.key] = op.value; break;
     case 'board': w.boards ??= {}; w.boards[op.which] = op.enc; break;
+    case 'veh': w.veh ??= {}; w.veh[op.kind] = op.at; break;
     case 'log': w.log.push({ text: op.text, ts: op.ts }); if (w.log.length > 60) w.log.splice(0, w.log.length - 60); break;
   }
   w.ts = Date.now();

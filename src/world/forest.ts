@@ -3,11 +3,16 @@ import { AREAS, type Floor, type Furn } from './map';
 import { iso, isoBox, boxOf } from './iso';
 import { heartPath } from '../char/draw';
 import { drawTractorIso, drawParked } from './vehicles';
+import { ORIGIN } from './layout';
+
+/** padurea sta in lume la nord de casa: coordonatele de mai jos sunt cele vechi (locale), plus OX/OY */
+const OX = ORIGIN.forest.x, OY = ORIGIN.forest.y;
 
 const O = '#3a2a22';
 const act = (id: string, label: string, icon: string) => ({ id, label, icon });
 
-function forestFloor(x: number, y: number): Floor {
+function forestFloor(wx: number, wy: number): Floor {
+  const x = wx - OX, y = wy - OY;
   if (x >= 13 && x <= 17 && y >= 6 && y <= 10 && !(x === 13 && y === 6) && !(x === 17 && y === 10)) return 'water';
   if (x === 4 && y >= 14) return 'path';
   if (y >= 23) return 'path';
@@ -24,12 +29,11 @@ treeSpots.forEach(([x, y], i) => F.push({ id: 'f-tree' + i, type: (i % 3 ? 'pine
 ([[6, 8], [12, 4], [17, 12], [8, 16], [3, 21]] as [number, number][]).forEach(([x, y], i) => F.push({ id: 'f-berry' + i, type: 'berrybush' as any, gx: x, gy: y, w: 1, d: 1, solid: true, action: act('berries', 'Culege mure', '🫐') }));
 // lacul: podetul de pescuit
 F.push({ id: 'f-pier', type: 'pier' as any, gx: 15, gy: 11, w: 1, d: 1, solid: false, action: act('fish', 'Pescuiește', '🎣') });
-// tractorasul (intoarcere acasa)
-F.push({ id: 'f-tractor', type: 'tractor' as any, gx: 4, gy: 24, w: 2, d: 1, solid: true, action: act('gohome', 'Înapoi acasă cu tractorașul', '🚜') });
 F.push({ id: 'f-logs', type: 'logpile' as any, gx: 7, gy: 24, w: 1, d: 1, solid: true });
 void rnd;
+for (const f of F) { f.gx += OX; f.gy += OY; }
 
-AREAS.forest = { floor: forestFloor, furniture: F, walls: [], spawn: { x: 4.5, y: 22.5 } };
+AREAS.forest = { floor: forestFloor, furniture: F, walls: [], spawn: { x: OX + 4.5, y: OY + 22.5 } };
 
 // ------------------------------------------------------------------ desen
 function e(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, fill: string, st = true, lw = 2) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); ctx.fillStyle = fill; ctx.fill(); if (st) { ctx.strokeStyle = O; ctx.lineWidth = lw; ctx.stroke(); } }

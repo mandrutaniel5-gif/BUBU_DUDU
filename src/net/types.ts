@@ -1,7 +1,7 @@
 import type { CharId } from '../char/draw';
 
 /** Starea transmisa des (pozitie). */
-export interface PlayerState { who: CharId; gx: number; gy: number; flip: 1 | -1; back: boolean; moving: boolean; mood: string; ts: number; riding?: boolean; rideKind?: 'bike' | 'scooter'; passenger?: boolean; board?: boolean }
+export interface PlayerState { who: CharId; gx: number; gy: number; flip: 1 | -1; back: boolean; moving: boolean; mood: string; ts: number; riding?: boolean; rideKind?: 'bike' | 'scooter' | 'tractor' | 'bus' | 'taxi'; passenger?: boolean; board?: boolean }
 
 /** Evenimente discrete. */
 export type NetEvent =
@@ -42,7 +42,8 @@ export type WorldOp =
   | { k: 'plots'; all: unknown }
   | { k: 'town'; key: string; value: unknown }
   // tejgheaua tarabei / florariei, comuna (celulele codate intr-un text, ca Firebase sa nu piarda golurile)
-  | { k: 'board'; which: 'stall' | 'florist'; enc: string };
+  | { k: 'board'; which: 'stall' | 'florist'; enc: string }
+  | { k: 'veh'; kind: string; at: string };
 
 export type NetStatus = 'offline' | 'connecting' | 'online' | 'error';
 

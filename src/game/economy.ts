@@ -112,23 +112,23 @@ export const CHAPTERS: Chapter[] = [
     ],
   },
   {
-    id: 2, title: 'Capitolul 2 · Pădurea', done: '🚲 Cu bicicleta puteți merge în sat!',
+    id: 2, title: 'Capitolul 2 · Pădurea', done: '🌉 Sătenii au reparat Podul Mare! Pe jos sau cu bicicleta, satul vă așteaptă',
     intro: 'Dudu merge cu tractorașul la pădure, taie lemne și le vinde. Cu banii cumpărați online o bicicletă.',
     goals: [
-      { id: 'tractor', icon: '🚜', text: 'Prima tură la pădure cu tractorașul', hint: 'Tractorașul stă lângă magazie, în curte', done: w => st(w, 'forestTrips') > 0, reward: { money: 10 } },
+      { id: 'tractor', icon: '🚜', text: 'Prima tură la pădure cu tractorașul', hint: 'Tractorașul stă la poarta din spatele curții (spre pădure)', done: w => st(w, 'forestTrips') > 0, reward: { money: 10 } },
       { id: 'logs15', icon: '🪓', text: 'Taie 15 lemne în pădure', hint: 'Brazii și copacii din pădure', done: w => st(w, 'forestWood') >= 15, reward: { money: 15 } },
       { id: 'mush', icon: '🍄', text: 'Culege 6 ciuperci', hint: 'Caută-le pe sub copaci', done: w => st(w, 'mushroomTotal') >= 6, reward: { hearts: 5 } },
       { id: 'fish3', icon: '🎣', text: 'Prinde 3 pești la lac', hint: 'Podețul de la lacul din pădure', done: w => (st(w, 'fishCaught')) >= 3, reward: { money: 15 } },
       { id: 'friend', icon: '🦌', text: 'Împrietenește-te cu un animal din pădure', hint: 'Apropie-te încet și mângâie-l de 3 ori', done: w => st(w, 'petFriends') >= 1, reward: { hearts: 10 } },
-      { id: 'sellwood', icon: '💰', text: 'Vinde 15 lemne la cherestea', hint: 'Grămada de lemne de lângă tractoraș, acasă', done: w => st(w, 'woodSold') >= 15, reward: { money: 10 } },
+      { id: 'sellwood', icon: '💰', text: 'Vinde 15 lemne la cherestea', hint: 'Grămada de lemne din curte, lângă magazie', done: w => st(w, 'woodSold') >= 15, reward: { money: 10 } },
       { id: 'bike', icon: '🚲', text: 'Cumpărați o bicicletă', hint: `Laptopul din casă → Vehicule (${PRICE.bike} lei)`, done: w => st(w, 'bike') > 0, reward: { hearts: 15 } },
     ],
   },
   {
     id: 3, title: 'Capitolul 3 · Satul', done: '🏙️ Satul vă iubește! Luați autobuzul din sat spre oraș 🚌',
-    intro: 'Cu bicicleta sau scuterul ajungeți în sat: magazine, croitorie, parc, școală. Bubu își deschide o florărie, Dudu o tâmplărie!',
+    intro: 'Pe drum, peste Podul Mare, ajungeți în sat (pe jos sau cu bicicleta): magazine, croitorie, parc, școală. Bubu își deschide o florărie, Dudu o tâmplărie!',
     goals: [
-      { id: 'village1', icon: '🏘️', text: 'Prima vizită în sat', hint: 'Indicatorul „Spre sat” de lângă drum', done: w => st(w, 'villageTrips') > 0, reward: { money: 10 } },
+      { id: 'village1', icon: '🏘️', text: 'Prima vizită în sat', hint: 'Pe drum spre dreapta, peste Podul Mare (pe jos sau cu bicicleta)', done: w => st(w, 'villageTrips') > 0, reward: { money: 10 } },
       { id: 'clothes', icon: '🧵', text: 'Cumpără haine de la Croitorie', hint: 'Ie, vestă, salopetă, rochiță cu buline…', done: w => st(w, 'clothesBought') > 0, reward: { hearts: 5 } },
       { id: 'school', icon: '🏫', text: 'Mergi la o lecție la școală', hint: 'Școala satului', done: w => st(w, 'school') > 0, reward: { money: 10 } },
       { id: 'ferris', icon: '🎡', text: 'O tură romantică cu roata mare', hint: `Parcul din sat (${PRICE.ferris} lei)`, done: w => st(w, 'ferris') > 0, reward: { hearts: 10 } },

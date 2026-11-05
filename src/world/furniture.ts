@@ -1,11 +1,12 @@
 // Desenarea mobilei, peretilor si a podelei in stil izometric "sticker".
 import { iso, isoBox, boxOf, poly, tilePath, shade, TW, TH, type Pt } from './iso';
-import { floorAt, MAP_W, MAP_H, AREA, type Furn, type Wall } from './map';
+import { type Furn, type Wall } from './map';
 import { heartPath } from '../char/draw';
 import { drawBuildType } from './build';
 import { drawForestType } from './forest';
 import { drawVillageType } from './village';
 import { drawCityType } from './city';
+import { drawCountryType } from './country';
 
 const O = '#3a2a22';
 
@@ -25,6 +26,7 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
   if (drawVillageType(ctx, f, t, st.night ?? 0, (globalThis as any).__villageOwned ?? {})) return;
   if (drawCityType(ctx, f, t, st.night ?? 0, (globalThis as any).__villageOwned ?? {})) return;
   if (drawForestType(ctx, f, t, !!st.depleted?.[f.id])) return;
+  if (drawCountryType(ctx, f, t, st.night ?? 0)) return;
   if (drawBuildType(ctx, f, t, st.night ?? 0, !!st.depleted?.[f.id])) return;
   switch (f.type) {
     case 'bed': {
@@ -315,71 +317,6 @@ export function drawWall(ctx: CanvasRenderingContext2D, wl: Wall, t: number, nig
   const c0 = iso(x, y, h), c1 = wl.dir === 'x' ? iso(x + 1, y, h) : iso(x, y + 1, h);
   const c2 = wl.dir === 'x' ? iso(x + 1, y - th, h) : iso(x - th, y + 1, h), c3 = wl.dir === 'x' ? iso(x, y - th, h) : iso(x - th, y, h);
   poly(ctx, [c0, c1, c2, c3]); ctx.fillStyle = shade(base, 1.04); ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.stroke();
-}
-
-/** pre-randeaza podeaua (statica) intr-un canvas separat */
-export function renderFloor(): { canvas: HTMLCanvasElement; ox: number; oy: number } {
-  const pad = 40;
-  const minX = iso(0, MAP_H).x - pad, maxX = iso(MAP_W, 0).x + pad;
-  const minY = -pad, maxY = iso(MAP_W, MAP_H).y + pad;
-  const cv = document.createElement('canvas');
-  const S = 2; // rezolutie dubla
-  cv.width = (maxX - minX) * S; cv.height = (maxY - minY) * S;
-  const ctx = cv.getContext('2d')!;
-  ctx.scale(S, S); ctx.translate(-minX, -minY);
-  const rnd = (x: number, y: number) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
-  for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) {
-    const f = floorAt(x, y);
-    const r = rnd(x, y);
-    let col = '#9ad48a';
-    switch (f) {
-      case 'grass': col = r > 0.5 ? '#a6dc93' : '#9fd68c'; break;
-      case 'path': col = '#e9d8b8'; break;
-      case 'forest': col = r > 0.5 ? '#7cc47a' : '#74bd72'; break;
-      case 'road': col = (x % 2) ? '#cdb48f' : '#c9af89'; break;
-      case 'wood': col = (x + y) % 2 ? '#e8bf8e' : '#e3b886'; break;
-      case 'pinkwood': col = (x + y) % 2 ? '#f6cfc4' : '#f2c6ba'; break;
-      case 'tileblue': col = (x + y) % 2 ? '#d5eef9' : '#c4e6f5'; break;
-      case 'checker': col = (x + y) % 2 ? '#fff4e4' : '#ffd8c9'; break;
-      case 'dirt': col = '#a87a50'; break;
-      case 'water': col = '#7ec8f0'; break;
-      case 'sand': col = '#f4e2b5'; break;
-      case 'asphalt': col = '#8d8f9a'; break;
-      case 'sidewalk': col = (x + y) % 2 ? '#e6e2dc' : '#dedad3'; break;
-      case 'void': continue;
-    }
-    tilePath(ctx, x, y); ctx.fillStyle = col; ctx.fill();
-    ctx.strokeStyle = 'rgba(58,42,34,0.12)'; ctx.lineWidth = 1; ctx.stroke();
-    const c = iso(x + 0.5, y + 0.5);
-    if (f === 'grass' && r > 0.55) {
-      ctx.strokeStyle = '#7fbf6e'; ctx.lineWidth = 1.5;
-      for (let k = 0; k < 3; k++) { const px = c.x + (k - 1) * 5 + (r - 0.5) * 20, py = c.y + (r - 0.5) * 8; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px - 2, py - 6); ctx.moveTo(px, py); ctx.lineTo(px + 2, py - 5); ctx.stroke(); }
-    }
-    if (f === 'wood' || f === 'pinkwood') {
-      ctx.strokeStyle = 'rgba(120,70,40,0.18)'; ctx.lineWidth = 1;
-      for (let k = 1; k < 3; k++) { const p = iso(x + k / 3, y), q = iso(x + k / 3, y + 1); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
-    }
-    if (f === 'path') { ctx.fillStyle = '#d6c19a'; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.ellipse(c.x + (rnd(x + k, y) - 0.5) * 30, c.y + (rnd(x, y + k) - 0.5) * 12, 6, 3, 0, 0, 7); ctx.fill(); } }
-    if (f === 'sidewalk') { ctx.strokeStyle = 'rgba(120,110,100,0.18)'; ctx.lineWidth = 1; const p = iso(x + 0.5, y), q = iso(x + 0.5, y + 1), a2 = iso(x, y + 0.5), b2 = iso(x + 1, y + 0.5); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y); ctx.stroke(); }
-    if (f === 'asphalt') {
-      const inter = (x === 10 || x === 11) && (y === 12 || y === 13);
-      ctx.fillStyle = '#ffffff';
-      if (!inter && (y === 12 || y === 13) && y === 12) { for (const u of [0.15, 0.6]) { const a2 = iso(x + u, y + 0.97), b2 = iso(x + u + 0.25, y + 0.97), c2 = iso(x + u + 0.25, y + 1.03), d2 = iso(x + u, y + 1.03); ctx.beginPath(); ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.fill(); } }
-      if (!inter && x === 10 && !(y === 12 || y === 13)) { for (const u of [0.15, 0.6]) { const a2 = iso(x + 0.97, y + u), b2 = iso(x + 0.97, y + u + 0.25), c2 = iso(x + 1.03, y + u + 0.25), d2 = iso(x + 1.03, y + u); ctx.beginPath(); ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.fill(); } }
-      // trecerile de pietoni
-      const zebraX = (x === 9 || x === 12) && (y === 12 || y === 13), zebraY = (y === 11 || y === 14) && (x === 10 || x === 11);
-      if (zebraX) for (let k = 0; k < 4; k++) { const v = k * 0.25 + 0.04; const a2 = iso(x + 0.1, y + v), b2 = iso(x + 0.9, y + v), c2 = iso(x + 0.9, y + v + 0.14), d2 = iso(x + 0.1, y + v + 0.14); ctx.beginPath(); ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.fill(); }
-      if (zebraY) for (let k = 0; k < 4; k++) { const u = k * 0.25 + 0.04; const a2 = iso(x + u, y + 0.1), b2 = iso(x + u, y + 0.9), c2 = iso(x + u + 0.14, y + 0.9), d2 = iso(x + u + 0.14, y + 0.1); ctx.beginPath(); ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.fill(); }
-    }
-    if (f === 'water') { ctx.strokeStyle = '#ffffff88'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(c.x - 10, c.y); ctx.quadraticCurveTo(c.x - 5, c.y - 3, c.x, c.y); ctx.quadraticCurveTo(c.x + 5, c.y + 3, c.x + 10, c.y); ctx.stroke(); }
-  }
-  if (AREA !== 'home') return { canvas: cv, ox: minX, oy: minY };
-  // marginea lacului
-  ctx.strokeStyle = '#5aa9d6'; ctx.lineWidth = 3; tilePath(ctx, 0, 6, 2, 4); ctx.stroke();
-  for (const [u, v] of [[17.6, 17.5], [18.6, 18.7]]) { const p = iso(u, v); ctx.fillStyle = '#6cbf6c'; ctx.beginPath(); ctx.ellipse(p.x, p.y, 9, 4.5, 0, 0.3, Math.PI * 2 - 0.3); ctx.lineTo(p.x, p.y); ctx.fill(); }
-  // nuferi
-  for (const [u, v] of [[0.6, 7.2], [1.3, 8.6]]) { const p = iso(u, v); ctx.fillStyle = '#6cbf6c'; ctx.beginPath(); ctx.ellipse(p.x, p.y, 9, 4.5, 0, 0.3, Math.PI * 2 - 0.3); ctx.lineTo(p.x, p.y); ctx.fill(); ctx.fillStyle = '#ff9ab8'; ctx.beginPath(); ctx.arc(p.x + 2, p.y - 2, 3, 0, 7); ctx.fill(); }
-  return { canvas: cv, ox: minX, oy: minY };
 }
 
 export { TW, TH };
