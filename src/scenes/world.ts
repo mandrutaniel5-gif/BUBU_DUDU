@@ -324,7 +324,7 @@ export class WorldScene implements Scene {
     if (o.k === 'npcServe') { const n = this.npcs.find(x => x.id === o.id); if (n) { n.state = 'leave'; n.happy = true; n.actor?.play('love'); } return; }
     if (o.k === 'char') { if (o.who !== this.myId) Object.assign(this.w.chars[o.who], o.state as object); return; }
     applyOp(this.w, o);
-    if (o.k === 'place' || o.k === 'unplace') this.syncPlaced();
+    if (o.k === 'place' || o.k === 'unplace' || o.k === 'veh') this.syncPlaced(); // vehiculul mutat de partener: il vezi si tu la noul loc
     if (o.k === 'jar' && o.from !== this.myId) this.hud.toast('💌 Ai primit un bilețel în Borcanul cu iubire!');
   }
   private lastStateKey = ''; private lastStateAt = 0; private lastCharSync = ''; private lastCharAt = 0;
@@ -353,14 +353,14 @@ export class WorldScene implements Scene {
     const dyn = (id: string) => id === 'h-tractor' || id === 'h-wood' || id === 'h-bike' || id === 'h-scooter' || id === 'v-bike' || id === 'v-scooter' || id === 'f-tractor' || id.startsWith('p-') || id.startsWith('plot:');
     for (let i = FURNITURE.length - 1; i >= 0; i--) if (dyn(FURNITURE[i].id)) FURNITURE.splice(i, 1);
     // vehiculele stau unde le-ati lasat: acasa (la indicator) sau in sat (la intrare); tractorul la poarta din spate sau in padure
-    const riding = (k: string) => (this.me.riding && this.me.rideKind === k) || (this.partner.riding && this.partner.rideKind === k && this.sameArea());
+    // (cat timp cineva merge cu el, vehiculul parcat doar nu se deseneaza; vezi draw)
     for (const k of ['bike', 'scooter'] as const) {
-      if (!((this.w.stats[k] ?? 0) > 0) || riding(k)) continue;
+      if (!((this.w.stats[k] ?? 0) > 0)) continue;
       const at = this.vehAt(k), sp = this.parkSpot(k, at), v = at === 'village';
       FURNITURE.push({ id: (v ? 'v-' : 'h-') + k, type: (k === 'bike' ? 'parkedbike' : 'parkedscooter') as any, gx: sp.gx, gy: sp.gy, w: 1, d: 1, solid: false, action: { id: k === 'bike' ? 'tripbike' : 'tripscooter', label: v ? (k === 'bike' ? 'Acasă cu bicicleta' : 'Acasă cu scuterul') : (k === 'bike' ? 'În sat cu bicicleta' : 'În sat cu scuterul'), icon: k === 'bike' ? '🚲' : '🛵' } });
     }
     if (this.chapter >= 2) {
-      if (!riding('tractor')) { const at = this.vehAt('tractor'), sp = this.parkSpot('tractor', at); FURNITURE.push({ id: at === 'forest' ? 'f-tractor' : 'h-tractor', type: 'tractor' as any, gx: sp.gx, gy: sp.gy, w: 2, d: 1, solid: true, action: at === 'forest' ? { id: 'gohome', label: 'Înapoi acasă cu tractorașul', icon: '🚜' } : { id: 'forest', label: 'Spre pădure cu tractorașul', icon: '🚜' } }); }
+      { const at = this.vehAt('tractor'), sp = this.parkSpot('tractor', at); FURNITURE.push({ id: at === 'forest' ? 'f-tractor' : 'h-tractor', type: 'tractor' as any, gx: sp.gx, gy: sp.gy, w: 2, d: 1, solid: true, action: at === 'forest' ? { id: 'gohome', label: 'Înapoi acasă cu tractorașul', icon: '🚜' } : { id: 'forest', label: 'Spre pădure cu tractorașul', icon: '🚜' } }); }
       FURNITURE.push({ id: 'h-wood', type: 'logpile' as any, gx: 17, gy: 15, w: 1, d: 1, solid: true, action: { id: 'sellwood', label: 'Vinde lemne la cherestea', icon: '💰' } });
     }
     for (const key of Object.keys(this.w.plots ?? {})) { const [x, y] = key.split(',').map(Number); FURNITURE.push({ id: 'plot:' + key, type: 'soilplot', gx: x, gy: y, w: 1, d: 1, solid: false, action: { id: 'plot', label: 'Răzor', icon: '🌱' } }); }
@@ -566,6 +566,9 @@ export class WorldScene implements Scene {
   /** ce actiune se face cu un obiect (depinde de stare) */
   actionFor(f: Furn): { id: string; label: string; icon: string } | null {
     if (!f.action) return null;
+    // vehiculul cu care partenerul e pe drum: nu e aici de fapt (se vede doar dupa ce il parcheaza)
+    { const k = f.id === 'h-bike' || f.id === 'v-bike' ? 'bike' : f.id === 'h-scooter' || f.id === 'v-scooter' ? 'scooter' : f.id === 'h-tractor' || f.id === 'f-tractor' ? 'tractor' : '';
+      if (k && ((this.partner.riding && this.partner.rideKind === k && !this.partner.board && this.sameArea()) || (this.ride && this.ride.kind === k))) return null; }
     if (f.id === 'toilet' && this.w.furn.clogged) return { id: 'unclog', label: 'Desfundă toaleta!', icon: '🪠' };
     if (f.id === 'stand') {
       if (this.w.furn.standBroken) return { id: 'repairstand', label: 'Repară taraba (6 🪵)', icon: '🔨' };
@@ -2168,8 +2171,9 @@ export class WorldScene implements Scene {
     const items: D[] = [];
     const onBike = (this.me.riding && this.me.rideKind === 'bike') || (this.sameArea() && this.partner.riding && this.partner.rideKind === 'bike');
     const onScoot = (this.me.riding && this.me.rideKind === 'scooter') || (this.sameArea() && this.partner.riding && this.partner.rideKind === 'scooter');
+    const onTractor = (this.me.riding && this.me.rideKind === 'tractor') || (this.sameArea() && this.partner.riding && this.partner.rideKind === 'tractor');
     for (const f of visible) if (!this.isDecor(f)) {
-      if ((onBike && (f.id === 'h-bike' || f.id === 'v-bike')) || (onScoot && (f.id === 'h-scooter' || f.id === 'v-scooter'))) continue;
+      if ((onBike && (f.id === 'h-bike' || f.id === 'v-bike')) || (onScoot && (f.id === 'h-scooter' || f.id === 'v-scooter')) || (onTractor && (f.id === 'h-tractor' || f.id === 'f-tractor'))) continue;
       items.push({ x0: f.gx, y0: f.gy, x1: f.gx + f.w, y1: f.gy + f.d, draw: () => paint(f) });
     }
     for (const wl of WALLS) if (wl.kind !== 'back') {
