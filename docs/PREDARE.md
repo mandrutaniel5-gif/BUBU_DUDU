@@ -163,6 +163,7 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | 1.3.1 | Copia offline ștearsă în aplicație, jurnal de erori, avertizare de versiune |
 | 1.3.2 | **Pasul 1 gata:** rutina de seară simplă (A), cina clară (A), chicoteli și bășini de desen animat, super-bășina refăcută, taraba comună + inventar complet, clienți separați la florărie |
 | 1.4.0 | **Pasul 2: lumea mare** — o singură lume legată, vehiculele merg pe drum, harta și miniharta, satul și orașul mărite, câmpuri, lac, Podul Mare, partenerul AI te poate însoți |
+| 1.4.1 | Ferestrele (inventar, hartă, magazine) stau deasupra butoanelor de jos pe ecranele mici; mesajele se văd și peste ferestre |
 
 ## 7. Direcția (stabilită cu proprietarul)
 
