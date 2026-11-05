@@ -16,6 +16,15 @@
 | 2 Pădurea | pădure | lemne, ciuperci, pește → bicicleta (laptop → Vehicule) |
 | 3 Satul | sat | magazine, croitorie, florăria lui Bubu, tâmplăria lui Dudu, scuter |
 | 4 Orașul | oraș + apartament | autobuz, buticul elegant, cinema, restaurant, joburi, apartament |
+| 5 Ferma noastră | *(plan)* câmpuri, animale | parcele, utilaje, găini, vacă, oi, albine |
+| 6 Afacerea de familie | *(plan)* oraș + fermă | magazinul „Bubu & Dudu”, angajații, contractele, târgul |
+| 7 Casa cea mare | *(plan)* lângă lac | casa visurilor, animalul de companie |
+| 8 Excursia | *(plan)* gara → zonă nouă | trenul, munte sau mare |
+| 9 Cererea în căsătorie | *(plan)* locul ales | inelul, surpriza lui Dudu, „DA!” |
+| 10 Pregătirile de nuntă | *(plan)* sat + oraș | rochia, costumul, verighetele, invitații, nașii, tortul |
+| 11 Nunta noastră | *(plan)* biserica din sat + curtea | cununia, petrecerea, hora, genericul |
+
+Capitolele 5-11 sunt planul propus. Detaliile, rolurile lui Bubu și ale lui Dudu și ce e de întrebat proprietarul sunt în [`PREDARE.md`](PREDARE.md), secțiunea 7.
 
 ## Cum ajungi peste tot
 - **Bicicleta / scuterul:** stau parcate lângă poartă. Urci pe ele, iar partenerul urcă în spate din meniul 💞 „Împreună”. Apoi mergi la indicatorul „Spre sat”.
