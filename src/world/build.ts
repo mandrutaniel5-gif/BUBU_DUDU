@@ -1,5 +1,6 @@
 import { fillTextIcons } from '../ui/icons';
 // Constructie "gen Minecraft": resurse, catalog de obiecte, desenul lor.
+import { drawRoadSign } from './signs';
 import { iso, isoBox, boxOf, tilePath, type Pt } from './iso';
 import { heartPath } from '../char/draw';
 import { drawItem } from './items';
@@ -33,7 +34,7 @@ export const CATALOG: BuildItem[] = [
 /** noduri de resurse (copaci, pietre, flori salbatice) */
 export const RESOURCE_NODES: Furn[] = [
   { id: 'rock1', type: 'rock', gx: 14, gy: 6, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
-  { id: 'rock2', type: 'rock', gx: 0, gy: 3, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
+  { id: 'rock2', type: 'rock', gx: 10, gy: 17, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
   { id: 'rock3', type: 'rock', gx: 12, gy: 15, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
   { id: 'wild1', type: 'wildflower', gx: 4, gy: 15, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
   { id: 'wild2', type: 'wildflower', gx: 15, gy: 11, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
@@ -72,41 +73,56 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
       return true;
     }
     case 'signpost': {
-      isoBox(ctx, gx + 0.45, gy + 0.45, 0.1, 0.1, 50, boxOf('#a0703f'));
-      const p = iso(gx + 0.5, gy + 0.5, 46);
-      // sageata arata spre unde duce drumul (din curte, satul e la stanga, pe drum)
-      const dir = f.id === 'gateway' ? -1 : 1;
-      ctx.fillStyle = '#e7c08f'; ctx.strokeStyle = O; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(p.x - 30 * dir, p.y - 9); ctx.lineTo(p.x + 20 * dir, p.y - 9); ctx.lineTo(p.x + 31 * dir, p.y); ctx.lineTo(p.x + 20 * dir, p.y + 9); ctx.lineTo(p.x - 30 * dir, p.y + 9); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.font = '800 9px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(f.id === 'v-home' ? 'Spre casă 🏡' : f.id === 'a-exit' ? 'Ieșire' : 'Spre sat 🏘️', p.x + 2 * dir, p.y + 0.5); ctx.textBaseline = 'alphabetic';
+      // la poarta casei: satul e spre est (dreapta, pe drum); in sat: casa e spre vest
+      if (f.id === 'a-exit') { drawRoadSign(ctx, gx, gy, 'Ieșire', ''); return true; }
+      if (f.id === 'v-home') drawRoadSign(ctx, gx, gy, '🏡 Spre casă', 'W');
+      else drawRoadSign(ctx, gx, gy, '🏘️ Spre sat', 'E');
       return true;
     }
     case 'fireplace': {
+      // soba de teracota (placi crem, soclu si coronita de caramida); fara horn: fumul iese pe hornul casei
       const fuel = (globalThis as any).__fireFuel ?? 0;
-      isoBox(ctx, gx + 0.1, gy + 0.1, 0.8, 0.8, 40, { top: '#e8e2d8', left: '#c0573e', right: '#a84a35' });
-      for (let r = 0; r < 4; r++) { const a = iso(gx + 0.1, gy + 0.9, 6 + r * 9), b = iso(gx + 0.9, gy + 0.9, 6 + r * 9); ctx.strokeStyle = '#8e3d2b'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
-      // usita focului (pe fata stanga)
-      const c = iso(gx + 0.5, gy + 0.9, 16);
-      ctx.fillStyle = fuel > 0 ? '#ff8c42' : '#2a1a1a'; ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(c.x, c.y, 10, 8, 0, 0, 7); ctx.fill(); ctx.stroke();
-      if (fuel > 0) for (let i = 0; i < 3; i++) { const fh = 5 + Math.sin(t * 14 + i * 2) * 2 + fuel / 30; ctx.fillStyle = i === 1 ? '#ffd23f' : '#ff6b3d'; ctx.beginPath(); ctx.moveTo(c.x - 6 + i * 6 - 3, c.y + 5); ctx.quadraticCurveTo(c.x - 6 + i * 6, c.y + 5 - fh * 2, c.x - 6 + i * 6 + 3, c.y + 5); ctx.fill(); }
-      // hornul
-      isoBox(ctx, gx + 0.35, gy + 0.35, 0.3, 0.3, 46, boxOf('#8e8e99'), 40);
-      if (fuel > 0) for (let i = 0; i < 3; i++) { const k = (t * 0.5 + i / 3) % 1; const p = iso(gx + 0.5, gy + 0.5, 90 + k * 40); ctx.globalAlpha = 0.5 * (1 - k); ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.arc(p.x + k * 10, p.y, 5 + k * 8, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+      isoBox(ctx, gx + 0.1, gy + 0.1, 0.8, 0.8, 7, { top: '#c0573e', left: '#a84a35', right: '#8e3d2b' });
+      isoBox(ctx, gx + 0.15, gy + 0.15, 0.7, 0.7, 36, { top: '#f6ead8', left: '#f1dfc8', right: '#dcc3a6' }, 7);
+      ctx.strokeStyle = 'rgba(160,110,80,.55)'; ctx.lineWidth = 1;
+      for (let r = 1; r < 4; r++) { // rosturile dintre placi, pe ambele fete
+        const z = 7 + r * 9; let a = iso(gx + 0.15, gy + 0.85, z), b = iso(gx + 0.85, gy + 0.85, z); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+        a = iso(gx + 0.85, gy + 0.85, z); b = iso(gx + 0.85, gy + 0.15, z); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+      for (const u of [0.38, 0.62]) { let a = iso(gx + 0.15 + u * 0.7, gy + 0.85, 7), b = iso(gx + 0.15 + u * 0.7, gy + 0.85, 43); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); a = iso(gx + 0.85, gy + 0.15 + u * 0.7, 7); b = iso(gx + 0.85, gy + 0.15 + u * 0.7, 43); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+      // floricele pictate pe placi
+      for (const [u, z] of [[0.27, 34], [0.73, 16]]) { const q = iso(gx + 0.15 + u * 0.7, gy + 0.85, z); ctx.fillStyle = '#5b8fd6'; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.arc(q.x + Math.cos(k * 1.57) * 2.2, q.y + Math.sin(k * 1.57) * 2.2, 1.6, 0, 7); ctx.fill(); } }
+      isoBox(ctx, gx + 0.08, gy + 0.08, 0.84, 0.84, 5, { top: '#f9efe2', left: '#c0573e', right: '#a84a35' }, 43);
+      // usita focului (pe fata din fata)
+      const c = iso(gx + 0.5, gy + 0.85, 17);
+      ctx.fillStyle = '#5a5a66'; ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(c.x - 10, c.y - 9, 20, 16, 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = fuel > 0 ? '#ff8c42' : '#2a1a1a'; ctx.beginPath(); ctx.roundRect(c.x - 7, c.y - 6, 14, 10, 3); ctx.fill();
+      if (fuel > 0) for (let i = 0; i < 3; i++) { const fh = 3 + Math.sin(t * 14 + i * 2) * 1.5 + fuel / 50; ctx.fillStyle = i === 1 ? '#ffd23f' : '#ff6b3d'; ctx.beginPath(); ctx.moveTo(c.x - 7 + i * 4.5, c.y + 3); ctx.quadraticCurveTo(c.x - 5 + i * 4.5, c.y + 3 - fh * 2, c.x - 3 + i * 4.5, c.y + 3); ctx.fill(); }
       if (fuel > 0) { const g2 = ctx.createRadialGradient(c.x, c.y, 4, c.x, c.y, 120); g2.addColorStop(0, `rgba(255,150,60,${0.18 + night * 0.25})`); g2.addColorStop(1, 'rgba(255,150,60,0)'); ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(c.x, c.y, 120, 0, 7); ctx.fill(); }
-      // bara de combustibil
-      const p = iso(gx + 0.5, gy + 0.5, 96);
+      // bara de combustibil (jos, deasupra sobei)
+      const p = iso(gx + 0.5, gy + 0.5, 58);
       ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(p.x - 18, p.y - 4, 36, 7, 3); ctx.fill(); ctx.stroke();
       ctx.fillStyle = fuel > 25 ? '#ff6b3d' : '#e63946'; ctx.beginPath(); ctx.roundRect(p.x - 17, p.y - 3, 34 * Math.min(1, fuel / 100), 5, 2); ctx.fill();
       return true;
     }
-    case 'shed': {
-      isoBox(ctx, gx + 0.05, gy + 0.05, 0.9, 0.9, 40, { top: '#c98e5f', left: '#e7c08f', right: '#d9a273' });
-      const a = iso(gx + 0.05, gy + 0.05, 40), b = iso(gx + 0.95, gy + 0.05, 40), c2 = iso(gx + 0.95, gy + 0.95, 40), d2 = iso(gx + 0.05, gy + 0.95, 40), top = iso(gx + 0.5, gy + 0.5, 70);
-      for (const [p, q, col] of [[d2, c2, '#b5543c'], [b, c2, '#9e4330']] as const) { ctx.beginPath(); ctx.moveTo(top.x, top.y); ctx.lineTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.closePath(); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.stroke(); }
-      void a;
-      const dr = iso(gx + 0.5, gy + 0.95, 14); ctx.fillStyle = '#8a5d32'; ctx.strokeStyle = O; ctx.beginPath(); ctx.roundRect(dr.x - 7, dr.y - 14, 14, 24, 3); ctx.fill(); ctx.stroke();
-      // stiva de lemne langa magazie
-      for (let i = 0; i < 3; i++) { const p = iso(gx + 1.05, gy + 0.3 + i * 0.2, 4); ell(ctx, p, 5, 4, '#c98e5f'); ell(ctx, p, 2.5, 2, '#e7c08f', false); }
+    case 'shed': case 'mower': {
+      // masina de tuns iarba (cu cos pentru iarba si maner)
+      const wheel = (u: number, v: number) => { const q = iso(gx + u, gy + v, 4); ctx.fillStyle = '#2f2f38'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(q.x, q.y, 5, 5.5, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#c0c6cc'; ctx.beginPath(); ctx.arc(q.x, q.y, 1.8, 0, 7); ctx.fill(); };
+      const sh = iso(gx + 0.5, gy + 0.55, 0); ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.beginPath(); ctx.ellipse(sh.x, sh.y, 26, 11, 0, 0, 7); ctx.fill();
+      wheel(0.25, 0.25); wheel(0.75, 0.25);
+      // cosul de iarba (in spate, spre maner)
+      isoBox(ctx, gx + 0.28, gy + 0.08, 0.44, 0.22, 14, { top: '#9ccf7a', left: '#7fb35f', right: '#6b9e4e' }, 4);
+      // corpul rosu
+      isoBox(ctx, gx + 0.2, gy + 0.3, 0.6, 0.5, 9, { top: '#ff6b6b', left: '#e63946', right: '#c62f3b' }, 3);
+      // motorul
+      isoBox(ctx, gx + 0.38, gy + 0.44, 0.24, 0.22, 7, boxOf('#4a4f5c'), 12);
+      const cap = iso(gx + 0.5, gy + 0.55, 19); ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(cap.x, cap.y, 3.5, 2, 0, 0, 7); ctx.fill(); ctx.stroke();
+      wheel(0.25, 0.8); wheel(0.75, 0.8);
+      // manerul (doua bare care urca spre spate, cu prinzator)
+      const h0 = iso(gx + 0.28, gy + 0.3, 10), h1 = iso(gx + 0.72, gy + 0.3, 10), t0 = iso(gx + 0.28, gy - 0.12, 44), t1 = iso(gx + 0.72, gy - 0.12, 44);
+      ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(h0.x, h0.y); ctx.lineTo(t0.x, t0.y); ctx.moveTo(h1.x, h1.y); ctx.lineTo(t1.x, t1.y); ctx.moveTo(t0.x, t0.y); ctx.lineTo(t1.x, t1.y); ctx.stroke();
+      ctx.strokeStyle = '#c0c6cc'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(h0.x, h0.y); ctx.lineTo(t0.x, t0.y); ctx.moveTo(h1.x, h1.y); ctx.lineTo(t1.x, t1.y); ctx.stroke();
+      ctx.strokeStyle = '#2f2f38'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(t0.x, t0.y); ctx.lineTo(t1.x, t1.y); ctx.stroke(); ctx.lineCap = 'butt';
       return true;
     }
     case 'stand': {

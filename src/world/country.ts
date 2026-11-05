@@ -1,5 +1,6 @@
 // Campia dintre zone: drumurile, raul cu podul cel mare, lacul, campurile vecinilor, padurea din jur,
 // paraul dintre sat si oras. Totul e generat la fel pe ambele telefoane (aceeasi "samanta").
+import { drawRoadSign, type SignDir } from './signs';
 import { AREAS, EXTRA_COLLIDERS, MAP_W, MAP_H, type Floor, type Furn, type Rect } from './map';
 import { iso, isoBox, boxOf, shade, tilePath, type Pt } from './iso';
 import { heartPath } from '../char/draw';
@@ -180,16 +181,23 @@ F.push({ id: 'w-roadblock', type: 'roadblock' as any, gx: BROOK_BRIDGE.x1 - 2, g
 // poarta padurii
 F.push({ id: 'w-forestgate', type: 'forestgate' as any, gx: 18, gy: -8.6, w: 4, d: 0.2, solid: false, action: act('forestgate', 'Poarta pădurii', '🌲') });
 // --- indicatoarele
-const sign = (x: number, y: number, text: string) => put({ id: id('sign'), type: 'roadsign' as any, gx: x, gy: y, w: 1, d: 1, solid: true, text });
-sign(43, 22, '🏘️ Satul · 🏞️ Lacul');
-sign(23, 22, '🏡 Acasă');
-sign(98, 38, '🏘️ Satul');
-sign(61, 34, '🌉 Podul Mare');
-sign(110, 22, '🏘️ Bun venit în sat!');
-sign(147, 22, '🏙️ Orașul');
-sign(186, 22, '🏙️ Bun venit în oraș!');
-sign(17, -6, '🌲 Pădurea');
-sign(-11, 22, '🛖 Cătunul vecin');
+const sign = (x: number, y: number, text: string, dir: SignDir, welcome = false) => {
+  put({ id: id('sign'), type: 'roadsign' as any, gx: x, gy: y, w: 1, d: 1, solid: true, text, kind: welcome ? 'welcome' : dir });
+  // loc liber in jurul panoului (e lat): fara copaci care sa-l acopere
+  const ns = dir === 'N' || dir === 'S';
+  for (let i = -2; i <= 2; i++) for (let j = -1; j <= 1; j++) taken.add(ns ? `${x + j},${y + i}` : `${x + i},${y + j}`);
+};
+sign(41, 22, '🏘️ Satul · 🏞️ Lacul', 'E');
+sign(23, 22, '🏡 Acasă', 'W');
+sign(98, 34, '🏘️ Satul', 'N');
+sign(61, 34, '🌉 Podul Mare', 'E');
+sign(110, 22, '🏘️ Bun venit în sat!', '', true);
+sign(147, 22, '🏙️ Orașul', 'E');
+sign(154, 27, '🏘️ Satul · 🏡 Acasă', 'W');
+sign(186, 22, '🏙️ Bun venit în oraș!', '', true);
+sign(17, -6, '🌲 Pădurea', 'N');
+sign(22, -3, '🏡 Acasă', 'S');
+sign(-11, 22, '🛖 Cătunul vecin', 'W');
 // --- copaci pe marginea drumurilor si prin campie
 for (let x = 24; x < 186; x += 4 + Math.floor(R() * 3)) { tree(x, 22, R() < 0.3 ? 'birch' : 'oak'); tree(x + 1, 27, 'oak'); }
 for (let y = 27; y < 64; y += 4) { tree(42, y, 'oak'); tree(48, y + 1, 'birch'); }
@@ -436,11 +444,7 @@ export function drawCountryType(c: CanvasRenderingContext2D, f: Furn, t: number,
       return true;
     }
     case 'roadsign': {
-      isoBox(c, gx + 0.45, gy + 0.45, 0.1, 0.1, 56, boxOf('#a0703f'));
-      const p = iso(gx + 0.5, gy + 0.5, 52), text = f.text ?? '';
-      c.font = '800 10px "Baloo 2", sans-serif'; const tw = c.measureText(text).width + 30;
-      c.fillStyle = '#e7c08f'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(p.x - tw / 2, p.y - 10); c.lineTo(p.x + tw / 2, p.y - 10); c.lineTo(p.x + tw / 2 + 9, p.y); c.lineTo(p.x + tw / 2, p.y + 10); c.lineTo(p.x - tw / 2, p.y + 10); c.closePath(); c.fill(); c.stroke();
-      c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; fillTextIcons(c, text, p.x + 2, p.y + 0.5, 10); c.textBaseline = 'alphabetic';
+      drawRoadSign(c, gx, gy, f.text ?? '', f.kind === 'welcome' ? '' : (f.kind ?? '') as SignDir, f.kind === 'welcome');
       return true;
     }
   }

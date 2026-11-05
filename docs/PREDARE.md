@@ -57,11 +57,12 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | Unde | Ce e |
 |---|---|
 | [`src/main.ts`](../src/main.ts) | Pornirea: încărcare, scena de meniu sau joc, rotirea pe orizontală, ștergerea copiei offline din aplicație |
-| [`src/engine/game.ts`](../src/engine/game.ts) | Bucla jocului (30/60 cadre pe secundă, modul eco), canvasul, rotirea ecranului |
+| [`src/engine/game.ts`](../src/engine/game.ts) | Bucla jocului (30/60 cadre pe secundă, modul eco pornit implicit), canvasul (cel mult ~2,2 milioane de pixeli), **calitatea adaptivă** (scade rezoluția singură dacă nu ține ritmul; `bd-quality`), rotirea ecranului |
 | [`src/engine/sfx.ts`](../src/engine/sfx.ts) | Sunetele (înregistrări reale + sinteză de rezervă), buclele de ambianță |
 | [`src/engine/soundscape.ts`](../src/engine/soundscape.ts) | Ce se aude în fiecare zonă și la fiecare activitate |
 | [`src/engine/errors.ts`](../src/engine/errors.ts) | Jurnalul de erori: Meniu → 📋 Erori |
-| [`src/scenes/world.ts`](../src/scenes/world.ts) | **Inima jocului** (~2400 de rânduri): lumea, personajele, activitățile, drumurile cu vehiculele (`startRide`), rețeaua, salvarea, desenul |
+| [`src/scenes/world.ts`](../src/scenes/world.ts) | **Inima jocului** (~2100 de rânduri): lumea, personajele, activitățile, drumurile cu vehiculele (`startRide`), AI-ul partenerului, rețeaua, salvarea, butoanele de test (`devSkipChapter`, `setInfinite`) |
+| [`src/scenes/render.ts`](../src/scenes/render.ts) | **Desenul lumii** (scos din `world.ts` în 1.5.0): podeaua „coaptă” cu tot ce nu se mișcă, apoi doar personajele/vehiculele și bucățile de obiecte aflate în fața lor |
 | [`src/scenes/menu.ts`](../src/scenes/menu.ts) | Meniul (cine ești, cum jucați, codul casei, salvare în fișier, credite, erori, eco) |
 | [`src/scenes/townctl.ts`](../src/scenes/townctl.ts) | Logica satului și a orașului: joburi, cursuri, magazine, bancă, misiuni, ziua nouă |
 | [`src/game/state.ts`](../src/game/state.ts) | Starea lumii (`WorldState`), nevoile și cât de repede scad |
@@ -74,7 +75,8 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | [`src/world/country.ts`](../src/world/country.ts) | Câmpia: podeaua dintre zone, decorul generat (copaci, câmpuri, case, moara, lacul, podul, poarta pădurii, bariera), zidurile nevăzute, obstacolele pe capitole (`chapterBlocks`) |
 | [`src/world/village.ts`](../src/world/village.ts), [`city.ts`](../src/world/city.ts), [`forest.ts`](../src/world/forest.ts) | Satul, orașul (+ cartierele, apartamentul), pădurea, puse în lume cu offset |
 | [`src/world/nav.ts`](../src/world/nav.ts) | Navigarea (A* cu heap, obstacole indexate pe dale) |
-| [`src/world/floor.ts`](../src/world/floor.ts), [`cull.ts`](../src/world/cull.ts), [`sprites.ts`](../src/world/sprites.ts) | Desenul rapid: podeaua pe bucăți, doar obiectele de pe ecran, imagini gata desenate pentru obiectele care nu se mișcă |
+| [`src/world/floor.ts`](../src/world/floor.ts), [`cull.ts`](../src/world/cull.ts), [`sprites.ts`](../src/world/sprites.ts) | Desenul rapid: podeaua pe bucăți de 512×256 în care se „coc” și obiectele statice (copaci, case, mobilă, pereți), doar obiectele de pe ecran, imagini gata desenate |
+| [`src/world/signs.ts`](../src/world/signs.ts) | Indicatoarele de drum: panoul stă de-a lungul drumului, săgeata arată spre destinație (`E`/`W`/`N`/`S`) |
 | [`src/ui/minimap.ts`](../src/ui/minimap.ts) | Miniharta (colțul din dreapta) și harta mare (de sus) |
 | [`src/world/furniture.ts`](../src/world/furniture.ts) | Desenul obiectelor și al pereților |
 | [`src/world/vehicles.ts`](../src/world/vehicles.ts) | Desenul vehiculelor (din lateral), scara blocului |
@@ -145,9 +147,9 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 - **Firebase-ul adevărat nu se poate testa automat de aici**, doar pe două telefoane.
 
 **Probleme știute / datorie tehnică:**
-- Fișierul `world.ts` e prea mare: de spart în module (drumurile, AI-ul, desenul).
+- `world.ts` încă mare (~2100 de rânduri): desenul e deja separat în `render.ts`; drumurile și AI-ul se pot scoate și ele.
 - Testul `cook_test.cjs` e depășit (atingerea ingredientelor); minijocul de gătit merge.
-- Orașul consumă puțin mai mult procesor decât înainte (~72% față de 70% în testul fără placă video); curtea și satul la fel ca înainte.
+- Orașul e locul cel mai greu de desenat (mulți trecători, clădiri mari): ~25-30 ms pe cadru în testul fără placă video (era ~40), casa ~11 ms (era ~42). Pe laptop/telefon cu placă video e mai rapid; calitatea adaptivă scade rezoluția dacă tot nu ține ritmul.
 - Secretele Android de release nu sunt puse. E în regulă: cheia de test fixă merge.
 
 ## 6. Istoric scurt (detalii: `git log` și [`LOGICA_JOCULUI.md`](LOGICA_JOCULUI.md))
@@ -165,6 +167,7 @@ TypeScript + Canvas 2D, fără framework. Construit cu Vite.
 | 1.4.0 | **Pasul 2: lumea mare** — o singură lume legată, vehiculele merg pe drum, harta și miniharta, satul și orașul mărite, câmpuri, lac, Podul Mare, partenerul AI te poate însoți |
 | 1.4.1 | Ferestrele (inventar, hartă, magazine) stau deasupra butoanelor de jos pe ecranele mici; mesajele se văd și peste ferestre |
 | 1.4.2 | Multiplayer: vehiculul mutat de partener (scuterul în sat, tractorul în pădure) se vede corect și pe celălalt telefon |
+| 1.5.0 | **Viteză pe laptop** (lumea „coaptă” în podea, rezoluție adaptivă, eco implicit, placa video forțată în aplicația Windows); butoanele de test „Capitolul următor” și „Resurse infinite” (în fereastra cu obiective); soba fără horn (părea o lampă prin pat), laptopul lângă perete, copacul și piatra mutate din spatele casei, mașină de tuns iarba în loc de magazie; indicatoare orientate corect; bănci noi, pe care vă așezați amândoi; personajul prins într-un obstacol iese singur; **Dudu are rolul lui din Capitolul 1** (vinde lemne la cherestea cu 3 lei bucata, obiective marcate Dudu/Bubu); partenerul AI nu mai rămâne blocat dansând după un capitol nou |
 
 ## 7. Direcția (stabilită cu proprietarul)
 

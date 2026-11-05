@@ -88,7 +88,7 @@ function homeExtras(ctx: CanvasRenderingContext2D) {
 }
 
 /** bucatile de podea sunt dreptunghiuri pe ecran (nu se suprapun: fiecare pixel se deseneaza o data) */
-const CW = 512, CHH = 256, PAD = 2;
+const CW = 512, CHH = 256, PAD = 4;
 interface Chunk { cv: HTMLCanvasElement; used: number; ox: number; oy: number; w: number; h: number }
 /** bucatile de podea tinute minte */
 export class FloorChunks {
@@ -98,13 +98,15 @@ export class FloorChunks {
   private frame = 0;
   /** cate bucati tinem minte (memoria telefonului) */
   max = 28;
+  /** desenul "copt" peste podea: obiectele care nu se misca (copaci, case, campuri), o data pe bucata */
+  bake: ((ctx: CanvasRenderingContext2D, ox: number, oy: number, w: number, h: number) => void) | null = null;
   constructor(public scale = 2) {}
   /** cand se schimba harta (lume / apartament) sau calitatea */
   reset(scale?: number) { for (const c of this.chunks.values()) this.pool.push(c.cv); this.chunks.clear(); if (scale) this.scale = scale; this.space = AREA; }
   private render(i: number, j: number): Chunk {
     const ox = i * CW - PAD, oy = j * CHH - PAD, w = CW + PAD * 2, h = CHH + PAD * 2, S = this.scale;
     const cv = this.pool.pop() ?? document.createElement('canvas');
-    const W = Math.ceil(w * S), H = Math.ceil(h * S);
+    const W = Math.round(w * S), H = Math.round(h * S);
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     const ctx = cv.getContext('2d')!;
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H);
@@ -121,7 +123,12 @@ export class FloorChunks {
       drawTile(ctx, x, y);
     }
     if (AREA === 'world' && x0 < 22 && y0 < 27 && x1 >= 0 && y1 >= 0) homeExtras(ctx);
+    if (this.bake) { ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, w, h); ctx.clip(); try { this.bake(ctx, ox, oy, w, h); } finally { ctx.restore(); } }
     return { cv, used: this.frame, ox, oy, w, h };
+  }
+  /** uita bucatile care ating dreptunghiul (pixeli de lume): se redeseneaza cand se vad */
+  invalidate(B: { x0: number; y0: number; x1: number; y1: number }) {
+    for (const [k, c] of this.chunks) if (c.ox <= B.x1 && c.ox + c.w >= B.x0 && c.oy <= B.y1 && c.oy + c.h >= B.y0) { this.chunks.delete(k); this.pool.push(c.cv); }
   }
   /** deseneaza podeaua vazuta in dreptunghiul [vx0,vx1]x[vy0,vy1] (pixeli de lume) */
   draw(ctx: CanvasRenderingContext2D, vx0: number, vy0: number, vx1: number, vy1: number) {
@@ -133,7 +140,7 @@ export class FloorChunks {
       let ch = this.chunks.get(k);
       if (!ch) { ch = this.render(i, j); this.chunks.set(k, ch); }
       ch.used = this.frame;
-      ctx.drawImage(ch.cv, ch.ox, ch.oy, ch.w, ch.h);
+      ctx.drawImage(ch.cv, ch.ox, ch.oy, ch.cv.width / this.scale, ch.cv.height / this.scale);
     }
     // din timp: bucatile din jur (cel mult una pe cadru), ca sa nu apara goluri cand mergi repede
     let made = 0;

@@ -236,8 +236,13 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
       break;
     }
     case 'bench': {
-      isoBox(ctx, gx + 0.1, gy + 0.3, w - 0.2, 0.5, 14, boxOf('#d9a273'));
-      isoBox(ctx, gx + 0.1, gy + 0.15, w - 0.2, 0.15, 32, boxOf('#c98e5f'));
+      // banca de parc: picioare de fier, sezut din scanduri, spatar cu doua scanduri (in spate, -y)
+      const iron = boxOf('#4a4f5c');
+      for (const u of [0.18, w - 0.26]) { isoBox(ctx, gx + u, gy + 0.72, 0.08, 0.08, 12, iron); isoBox(ctx, gx + u, gy + 0.22, 0.08, 0.08, 40, iron); }
+      for (let i = 0; i < 3; i++) isoBox(ctx, gx + 0.08, gy + 0.26 + i * 0.19, w - 0.16, 0.16, 3, { top: i % 2 ? '#e7b98a' : '#efc697', left: '#c98e5f', right: '#b5794a' }, 11, 1.5);
+      for (const z of [22, 32]) isoBox(ctx, gx + 0.08, gy + 0.16, w - 0.16, 0.07, 7, { top: '#efc697', left: '#d9a273', right: '#b5794a' }, z, 1.5);
+      // cotierele de fier
+      for (const u of [0.14, w - 0.22]) isoBox(ctx, gx + u, gy + 0.24, 0.12, 0.56, 3, iron, 21, 1.5);
       break;
     }
     case 'mailbox': {

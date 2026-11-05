@@ -11,7 +11,7 @@ export type FurnType =
   | 'bed' | 'nightstand' | 'wardrobe' | 'toilet' | 'bathtub' | 'sink' | 'washer' | 'fridge' | 'stove'
   | 'counter' | 'table' | 'sofa' | 'tv' | 'plant' | 'bookshelf' | 'tree' | 'plot' | 'bench' | 'mailbox'
   | 'rug' | 'lamp' | 'flowers' | 'doormat' | 'bush'
-  | 'well' | 'soilplot' | 'laptop' | 'fireplace' | 'shed' | 'stand' | 'gateway' | 'signpost'
+  | 'well' | 'soilplot' | 'laptop' | 'fireplace' | 'shed' | 'mower' | 'stand' | 'gateway' | 'signpost'
   | 'rock' | 'wildflower' | 'stonepath' | 'heartstone' | 'fence' | 'pot' | 'lamppost' | 'sapling' | 'flowerbed' | 'swing' | 'snowman' | 'gazebo';
 
 export interface Furn {
@@ -103,7 +103,7 @@ export const FURNITURE: Furn[] = [
   { id: 'plantL', type: 'plant', gx: 2, gy: 11, w: 1, d: 1, solid: true, action: act('water_plant', 'Udă floarea', '🪴') },
   // curte
   { id: 'mat', type: 'doormat', gx: 5, gy: 12, w: 1, d: 1, solid: false },
-  { id: 'tree1', type: 'tree', gx: 0, gy: 1, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
+  { id: 'tree1', type: 'tree', gx: 17, gy: 9, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
   { id: 'tree2', type: 'tree', gx: 14, gy: 14, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
   { id: 'tree3', type: 'tree', gx: 1, gy: 13, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
   { id: 'tree4', type: 'tree', gx: 15, gy: 3, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
@@ -117,9 +117,9 @@ export const FURNITURE: Furn[] = [
   ...RESOURCE_NODES,
   // supravietuire si economie
   { id: 'well', type: 'well', gx: 12, gy: 13, w: 1, d: 1, solid: true, action: act('drawwater', 'Scoate apă din fântână', '🪣') },
-  { id: 'laptop', type: 'laptop', gx: 7, gy: 4, w: 1, d: 1, solid: true, action: act('online', 'Laptopul (magazin online)', '💻') },
+  { id: 'laptop', type: 'laptop', gx: 6, gy: 2, w: 1, d: 1, solid: true, action: act('online', 'Laptopul (magazin online)', '💻') },
   { id: 'fireplace', type: 'fireplace', gx: 7, gy: 7, w: 1, d: 1, solid: true, action: act('stove', 'Soba', '🔥') },
-  { id: 'shed', type: 'shed', gx: 16, gy: 13, w: 1, d: 1, solid: true, action: act('mow', 'Tunde iarba', '✂️') },
+  { id: 'shed', type: 'mower', gx: 16, gy: 13, w: 1, d: 1, solid: true, action: act('mow', 'Mașina de tuns iarba', '✂️') },
   { id: 'stand', type: 'stand', gx: 7, gy: 23, w: 2, d: 1, solid: true, action: act('stand', 'Taraba lui Bubu', '🧺') },
   { id: 'gateway', type: 'signpost', gx: 3, gy: 23, w: 1, d: 1, solid: true, action: act('village', 'Spre sat', '🏘️') },
 ];
@@ -149,6 +149,8 @@ export function colliders(): Rect[] {
       if (x !== BACK_GATE) R.push({ x0: x, y0: -t, x1: x + 1, y1: t });
     }
     for (let y = 0; y < YARD_H; y++) { R.push({ x0: -t, y0: y, x1: t, y1: y + 1 }); R.push({ x0: MAP_W - t, y0: y, x1: MAP_W + t, y1: y + 1 }); }
+    // fasiile inguste din spatele casei (acolo personajul s-ar ascunde dupa peretii inalti)
+    R.push({ x0: 0, y0: 0, x1: 14, y1: 2 }, { x0: 0, y0: 0, x1: 2, y1: 12 });
     R.push(...EXTRA_COLLIDERS);
   }
   const B = spaceBounds();
@@ -182,10 +184,13 @@ function worldFloorRaw(x: number, y: number): Floor {
 /** zona incarcata acum */
 export const currentArea = () => AREA;
 let built = false;
+/** lucrurile lumii care nu tin de casa (padure, sat, oras, campie): se pot "coace" in podea */
+const WORLD_STATIC = new Set<string>();
+export const isWorldStatic = (id: string) => WORLD_STATIC.has(id);
 /** aduna lumea mare din zonele ei (o data) */
 function buildWorld() {
   const furn: Furn[] = [...HOME_FURN];
-  for (const c of [...CORES, 'country']) if (AREAS[c]) furn.push(...AREAS[c].furniture);
+  for (const c of [...CORES, 'country']) if (AREAS[c]) { furn.push(...AREAS[c].furniture); for (const f of AREAS[c].furniture) WORLD_STATIC.add(f.id); }
   AREAS.world = { floor: worldFloorRaw, furniture: furn, walls: [...HOME_WALLS], spawn: { x: 6.5, y: 9.4 } };
   grid = new Uint8Array(WORLD_W * WORLD_H);
   for (let iy = 0; iy < WORLD_H; iy++) for (let ix = 0; ix < WORLD_W; ix++) grid[iy * WORLD_W + ix] = FLOOR_ID[worldFloorRaw(ix + WORLD.x0, iy + WORLD.y0)] ?? 1;

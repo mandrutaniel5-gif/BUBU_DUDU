@@ -347,10 +347,15 @@ export class Hud {
   }
   openGoals() {
     const w = this.s.w; const cur = currentGoal(w); const ch = chapterOf(w);
-    this.modal(`<h3>📜 ${ch.title}</h3>
+    const m = this.modal(`<h3>📜 ${ch.title}</h3>
       <p class="sub">${ch.intro} Aveți grijă să nu înghețați 🥶 și să aveți ce mânca 🍲.</p>
-      <ul class="goals">${ch.goals.map(g => { const done = !!w.stats['goal-' + g.id]; return `<li class="${done ? 'done' : g === cur ? 'cur' : ''}"><b>${done ? '✅' : g.icon} ${g.text}</b>${!done ? `<small>${g.hint}</small>` : ''}<i>${g.reward.money ? '+' + g.reward.money + ' lei ' : ''}${g.reward.hearts ? '+' + g.reward.hearts + '💗' : ''}</i></li>`; }).join('')}</ul>
-      <h4>🗺️ Povestea voastră</h4><p class="sub">${CHAPTERS.map(c => (c.id < ch.id ? '✅ ' : c.id === ch.id ? '👉 ' : '🔒 ') + c.title).join('<br>')}<br>🔒 Satul: florăria lui Bubu, afacerea lui Dudu, magazine, parc, școală<br>🔒 Orașul: mutarea la oraș 🏙️</p>`);
+      <div class="devrow"><button data-dev="skip">⏭️ Capitolul următor</button><button data-dev="inf" class="${this.s.infinite ? 'on' : ''}">♾️ Resurse infinite: ${this.s.infinite ? 'pornit' : 'oprit'}</button></div>
+      <p class="sub devnote">🧪 Pentru testare. Resursele infinite umplu mereu banii, materialele, ingredientele, semințele și soba (doar pe acest dispozitiv).</p>
+      <ul class="goals">${ch.goals.map(g => { const done = !!w.stats['goal-' + g.id]; return `<li class="${done ? 'done' : g === cur ? 'cur' : ''}"><b>${done ? '✅' : g.icon} ${g.text}${g.who ? ` <em class="who ${g.who}">${g.who === 'dudu' ? 'Dudu' : 'Bubu'}</em>` : ''}</b>${!done ? `<small>${g.hint}</small>` : ''}<i>${g.reward.money ? '+' + g.reward.money + ' lei ' : ''}${g.reward.hearts ? '+' + g.reward.hearts + '💗' : ''}</i></li>`; }).join('')}</ul>
+      <h4>🗺️ Povestea voastră</h4><p class="sub">${CHAPTERS.map(c => (c.id < ch.id ? '✅ ' : c.id === ch.id ? '👉 ' : '🔒 ') + c.title).join('<br>')}</p>
+`);
+    m.querySelector('[data-dev="skip"]')?.addEventListener('click', () => { this.closeModal(); this.s.devSkipChapter(); });
+    m.querySelector('[data-dev="inf"]')?.addEventListener('click', () => { this.s.setInfinite(!this.s.infinite); this.toast(this.s.infinite ? '♾️ Resurse infinite pornite' : 'Resurse infinite oprite'); this.openGoals(); });
   }
   /** alege samanta pentru un razor (cu desenul plantei) */
   openSeeds(seeds: string[], pick: (crop: string) => void) {

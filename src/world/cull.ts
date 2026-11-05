@@ -37,12 +37,18 @@ export function heightOf(f: Furn) {
   if (t === 'church') return 200;
   if (t === 'building' || t === 'ferris') return 260;
   if (t === 'windmill' || t === 'farmhouse' || t === 'barn') return 200;
-  if (t === 'tree' || t === 'pine' || t === 'bigtree') return 170;
+  if (t === 'tree' || t === 'pine' || t === 'bigtree' || t === 'lamppost' || t === 'nightstand' || t === 'lamp') return 170;
   return 130;
+}
+/** cat se intinde un obiect in lateral fata de locul lui (pixeli) */
+export function marginOf(f: Furn) { const t = f.type as string; return t === 'roadsign' || t === 'signpost' ? 130 : t === 'lamppost' || t === 'nightstand' || t === 'lamp' ? 124 : t === 'oak' || t === 'tree' || t === 'pine' ? 56 : 48; }
+/** dreptunghiul de pe ecran (pixeli de lume) in care se deseneaza obiectul */
+export function screenBox(f: Furn) {
+  const m = marginOf(f);
+  return { x0: iso(f.gx, f.gy + f.d).x - m, x1: iso(f.gx + f.w, f.gy).x + m, y0: iso(f.gx, f.gy).y - heightOf(f), y1: iso(f.gx + f.w, f.gy + f.d).y + 24 };
 }
 /** se vede obiectul in dreptunghiul de ecran (pixeli de lume)? */
 export function onScreen(f: Furn, vx0: number, vy0: number, vx1: number, vy1: number) {
-  const l = iso(f.gx, f.gy + f.d).x - 40, r = iso(f.gx + f.w, f.gy).x + 40;
-  const bottom = iso(f.gx + f.w, f.gy + f.d).y + 30, top = iso(f.gx, f.gy).y - heightOf(f);
-  return r >= vx0 && l <= vx1 && bottom >= vy0 && top <= vy1;
+  const b = screenBox(f);
+  return b.x1 >= vx0 && b.x0 <= vx1 && b.y1 >= vy0 && b.y0 <= vy1;
 }

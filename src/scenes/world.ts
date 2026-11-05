@@ -29,8 +29,8 @@ import { iconCanvas } from '../ui/icons';
 import { FURNITURE, WALLS, MAP_W, MAP_H, YARD_H, YARD_GATE, BACK_GATE, type Furn, type Wall, resetAreas, currentArea } from '../world/map';
 import { drawFurn, drawWall, drawYardFence, drawYardGate, type FurnState } from '../world/furniture';
 import { Nav } from '../world/nav';
-import { CATALOG, drawGhost, drawTallGrass, type BuildItem } from '../world/build';
-import { GOALS, CHAPTERS, chapterOf, PRICE } from '../game/economy';
+import { CATALOG, RES_INFO, drawGhost, drawTallGrass, type BuildItem } from '../world/build';
+import { GOALS, CHAPTERS, chapterOf, PRICE, INV_INFO } from '../game/economy';
 import { orderableChains, itemValue } from '../minigames/merge';
 import { drawItem, MAX_LVL } from '../world/items';
 import { CROPS, WET_MIN, plotStage, catCount, catPick, seedKey, drawPlotSoil, drawCropPlant, type Plot } from '../world/garden';
@@ -45,8 +45,9 @@ import type { NetAdapter, NetEvent, PlayerState, WorldOp } from '../net/types';
 import { Hud } from '../ui/hud';
 import { Settings } from '../game/settings';
 import { MINIGAMES } from '../minigames/registry';
+import { drawWorld } from './render';
 
-const ACTOR_SCALE = 0.62;
+export const ACTOR_SCALE = 0.62;
 const SPEED = 2.6; // dale / secunda
 
 export interface Pawn {
@@ -98,6 +99,14 @@ export class WorldScene implements Scene {
   floorChunks = new FloorChunks(2);
   /** imaginile obiectelor care nu se misca (desenate o data) */
   sprites = new SpriteCache();
+  /** starea lumii "coapte" in podea (noaptea, ce ati cumparat, podul): cand se schimba, se reface */
+  bakeKey = '';
+  /** ce era taiat / epuizat cand s-a copt podeaua */
+  bakedDep: Record<string, boolean> = {};
+  /** starea casei cand s-a copt podeaua */
+  homeKey = '';
+  /** creste la fiecare schimbare a obiectelor adaugate (razoare, constructii, vehicule) */
+  placedVersion = 0;
   w: WorldState = newWorld();
   me: Pawn; partner: Pawn;
   cam = { x: 0, y: 0, zoom: 1.4 };
@@ -140,7 +149,7 @@ export class WorldScene implements Scene {
   minigame: { id: string; obj: any } | null = null;
   private listeners: [EventTarget, string, any][] = [];
 
-  constructor(private game: Game, public net: NetAdapter, public myId: CharId) {
+  constructor(public game: Game, public net: NetAdapter, public myId: CharId) {
     { const m = Math.min(game.w, game.h); this.cam.zoom = m < 500 ? 0.95 : m < 800 ? 1.15 : 1.4; } // zoom potrivit ecranului (telefon / tableta / laptop)
     const other: CharId = myId === 'bubu' ? 'dudu' : 'bubu';
     this.me = this.makePawn(myId, 'me');
@@ -361,21 +370,23 @@ export class WorldScene implements Scene {
     }
     if (this.chapter >= 2) {
       { const at = this.vehAt('tractor'), sp = this.parkSpot('tractor', at); FURNITURE.push({ id: at === 'forest' ? 'f-tractor' : 'h-tractor', type: 'tractor' as any, gx: sp.gx, gy: sp.gy, w: 2, d: 1, solid: true, action: at === 'forest' ? { id: 'gohome', label: 'Înapoi acasă cu tractorașul', icon: '🚜' } : { id: 'forest', label: 'Spre pădure cu tractorașul', icon: '🚜' } }); }
-      FURNITURE.push({ id: 'h-wood', type: 'logpile' as any, gx: 17, gy: 15, w: 1, d: 1, solid: true, action: { id: 'sellwood', label: 'Vinde lemne la cherestea', icon: '💰' } });
     }
+    // gramada de lemne (cheresteaua le cumpara): treaba lui Dudu, inca din Capitolul 1
+    if (this.chapter >= 1) FURNITURE.push({ id: 'h-wood', type: 'logpile' as any, gx: 17, gy: 15, w: 1, d: 1, solid: true, action: { id: 'sellwood', label: 'Vinde lemne la cherestea', icon: '💰' } });
     for (const key of Object.keys(this.w.plots ?? {})) { const [x, y] = key.split(',').map(Number); FURNITURE.push({ id: 'plot:' + key, type: 'soilplot', gx: x, gy: y, w: 1, d: 1, solid: false, action: { id: 'plot', label: 'Răzor', icon: '🌱' } }); }
     for (const p of this.w.placed ?? []) {
       const it = CATALOG.find(c => c.type === p.type); if (!it) continue;
       FURNITURE.push({ id: 'p-' + p.uid, type: it.type as any, gx: p.gx, gy: p.gy, w: it.w, d: it.d, solid: it.solid, action: it.action });
     }
-    furnChanged();
+    furnChanged(); this.placedVersion++;
     this.nav = new Nav([...this.doorBlocks(), ...this.worldBlocks()]);
     this.navKey = this.blockKey();
   }
   /** cheia obstacolelor care depind de capitol (cand se schimba, refacem navigarea) */
   navKey = '';
   blockKey() { return `${this.chapter}|${this.bridgeFixed()}`; }
-  chunkScale() { return Math.max(1, Math.min(2, this.game.dpr * Math.max(1, this.cam.zoom))); }
+  /** rezolutia bucatilor de podea si a imaginilor (pasi de 0,25, ca pixelii sa se potriveasca exact) */
+  chunkScale() { return Math.round(Math.max(1, Math.min(2, this.game.dpr * Math.max(1, this.cam.zoom))) * 4) / 4; }
   depleted(id: string) { return (this.w.nodes?.[id] ?? 0) > Date.now(); }
   isDecor(f: Furn) { return !f.solid && ['soilplot', 'rug', 'plot', 'doormat', 'flowers', 'stonepath', 'heartstone', 'flowerbed', 'wildflower', 'lilypad', 'bridgegap'].includes(f.type as string); }
 
@@ -716,11 +727,23 @@ export class WorldScene implements Scene {
     if (ch.goals.every(g => this.w.stats['goal-' + g.id]) && this.chapter < CHAPTERS.length - 1) this.advanceChapter();
   }
   /** PROVIZORIU (pentru test): sari la capitolul urmator */
+  /** test (doar pe acest telefon): bani si materiale care nu se termina */
+  infinite = (() => { try { return localStorage.getItem('bd-infinite') === '1'; } catch { return false; } })();
+  private infT = 0;
+  setInfinite(on: boolean) { this.infinite = on; try { localStorage.setItem('bd-infinite', on ? '1' : '0'); } catch { /* fara stocare */ } if (on) this.topUp(); }
+  /** umple banii, materialele, ingredientele, semintele si soba (doar ce a scazut, ca sa nu trimitem mereu) */
+  topUp() {
+    const w = this.w, r = w.res ?? {};
+    if ((w.money ?? 0) < 50000) this.op({ k: 'money', delta: 99999 - (w.money ?? 0) });
+    const keys = new Set([...Object.keys(RES_INFO), ...Object.keys(INV_INFO), ...Object.keys(CROPS).map(seedKey), ...Object.keys(CROPS), 'hay', 'flour', 'egg', 'milk', 'cheese', 'meat', 'cornmeal', 'rice', 'lemon', 'veg', 'tulip', 'rose', 'sunflower', ...Object.keys(r)]);
+    for (const k of keys) { if (k.startsWith('dish_') || k.startsWith('prod_') || k === 'meals') continue; const v = r[k] ?? 0; if (v < 500) this.op({ k: 'res', res: k, delta: 999 - v }); }
+    if (((w.furn.fire as number) ?? 0) < 60) this.op({ k: 'furn', key: 'fire', value: 100 });
+  }
   devSkipChapter() {
     if (this.chapter >= CHAPTERS.length - 1) { this.hud.toast('Ești deja la ultimul capitol făcut'); return; }
     const ch = chapterOf(this.w);
-    for (const g of ch.goals) this.w.stats['goal-' + g.id] = 1;
-    if (this.chapter === 0) Object.assign(this.w.furn, { clogged: false, fridgeDirty: false, tubDirty: false, dishesDirty: false, tvBroken: false, fire: Math.max(40, (this.w.furn.fire as number) ?? 0) });
+    for (const g of ch.goals) if (!this.w.stats['goal-' + g.id]) this.op({ k: 'stat', key: 'goal-' + g.id, delta: 1 });
+    if (this.chapter === 0) { for (const k of ['clogged', 'fridgeDirty', 'tubDirty', 'dishesDirty', 'tvBroken']) if (this.w.furn[k]) this.op({ k: 'furn', key: k, value: false }); if (((this.w.furn.fire as number) ?? 0) < 40) this.op({ k: 'furn', key: 'fire', value: 40 }); }
     this.op({ k: 'res', res: 'wood', delta: 15 }); this.op({ k: 'money', delta: 60 });
     this.advanceChapter();
   }
@@ -823,20 +846,6 @@ export class WorldScene implements Scene {
     this.op({ k: 'money', delta: pay }); this.op({ k: 'stat', key: 'served', delta: 1 }); this.op({ k: 'hearts', delta: 1 });
     const served = this.w.stats.served ?? 0;
     if (served % 5 === 0) this.hud.toast(`🧺 ${served} clienți mulțumiți! Clienții vor cere produse tot mai mari ✨`);
-  }
-  drawNpc(ctx: CanvasRenderingContext2D, n: Npc) {
-    if (!n.actor) return;
-    n.actor.draw(ctx);
-    if (n.state === 'wait') {
-      const s = iso(n.x, n.y); const k = n.wants.length;
-      const bw = 18 + k * 28, by = s.y - 84 + Math.sin(this.time * 3 + n.x) * 2;
-      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.roundRect(s.x - bw / 2, by - 18, bw, 34, 10); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(s.x - 4, by + 16); ctx.lineTo(s.x, by + 23); ctx.lineTo(s.x + 4, by + 16); ctx.fill();
-      n.wants.forEach((c, i) => drawItem(ctx, c, s.x + (i - (k - 1) / 2) * 28, by - 1, 28, this.time));
-      const pk = Math.max(0, 1 - n.t / 120);
-      ctx.fillStyle = pk > 0.4 ? '#7cc576' : '#e63946'; ctx.fillRect(s.x - bw / 2 + 4, by + 12, (bw - 8) * pk, 3);
-    }
   }
 
   plotDone(pawn: Pawn, id: string) {
@@ -1004,20 +1013,6 @@ export class WorldScene implements Scene {
     this.op({ k: 'need', who: this.myId, need: 'fun', delta: 6 }); this.op({ k: 'need', who: this.myId, need: 'love', delta: 3 });
     if (!was && c.friend >= 1) { this.op({ k: 'stat', key: 'petFriends', delta: 1 }); this.hud.toast(`💕 ${CRITTER_NAMES[c.kind]} e prietenul tău acum! Te urmează prin pădure`); this.log(`${this.me.actor.spec.name} s-a împrietenit cu ${CRITTER_NAMES[c.kind].toLowerCase()} din pădure 🌲💕`); }
     else this.fx.text(p.x, p.y - 30, `${CRITTER_NAMES[c.kind]} ${c.friend >= 1 ? '💕' : 'se apropie…'}`, '#ff4d6d', 0.8);
-  }
-  drawTravel(ctx: CanvasRenderingContext2D, w: number, h: number) {
-    const t = this.travel!.t;
-    if (this.travel!.vehicle === 'door') {
-      // scara blocului: inchidem peste lume, urci / cobori pe scari, apoi se deschide zona noua
-      if (t < 0.35) { irisWipe(ctx, w, h, 1 - t / 0.35); return; }
-      if (t > 2.75) { irisWipe(ctx, w, h, (t - 2.75) / 0.35); return; }
-      const tr = this.travel!, down = tr.from === 'apartment';
-      const k = Math.max(0, Math.min(1, (t - 0.45) / 2.2));
-      drawStairsScene(ctx, w, h, k, this.time, nightAmount(this.w.minutes), down, this.me.actor.spec, this.w.chars[this.myId].outfit, tr.withPartner ? this.partner.actor.spec : undefined, this.w.chars[this.partner.id].outfit);
-      if (t < 0.6) irisWipe(ctx, w, h, (t - 0.35) / 0.25);
-      if (t > 2.5) irisWipe(ctx, w, h, 1 - (t - 2.5) / 0.25);
-      return;
-    }
   }
 
 
@@ -1397,6 +1392,11 @@ export class WorldScene implements Scene {
     else if (a.place === 'tub') { pawn.gx = f.gx + 0.6 + slot * 0.8; pawn.gy = f.gy + 0.5; pawn.z = 24; }
     else if (a.place === 'toilet') { pawn.gx = f.gx + 0.5; pawn.gy = f.gy + 0.6; pawn.z = 12; }
     else if (a.place === 'sofa') { pawn.gx = f.gx + 0.45; pawn.gy = f.gy + 0.6 + slot * 0.8; pawn.z = 10; }
+    else if (a.place === 'bench') {
+      // pe sezut, unul langa altul (pe foisor: pe banca din fata lui)
+      const gz = (f.type as string) === 'gazebo';
+      pawn.gx = f.gx + (f.w >= 2 ? 0.4 + slot * (f.w - 0.8) : 0.5); pawn.gy = gz ? f.gy + f.d - 0.3 : f.gy + 0.5; pawn.z = gz ? 6 : 13;
+    }
     else if (a.id === 'eat' && f.type === 'table') { pawn.gx = f.w >= 2 ? (slot ? f.gx + f.w - 0.3 : f.gx + 0.3) : f.gx + 0.5; pawn.gy = f.gy - 0.25; pawn.z = 0; pawn.actor.flip = slot ? -1 : 1; pawn.facingBack = false; }
     else { // in picioare, cu fata spre obiect
       const cx = f.gx + f.w / 2, cy = f.gy + f.d / 2;
@@ -1404,6 +1404,7 @@ export class WorldScene implements Scene {
       pawn.actor.flip = s.x >= 0 ? 1 : -1; pawn.facingBack = s.y < 0;
     }
     if (a.place === 'sofa') { pawn.actor.flip = -1; pawn.facingBack = true; }
+    if (a.place === 'bench') { const other = pawn === this.me ? this.partner : this.me; const both = other.activity?.a.place === 'bench' && other.activity.furn === f; pawn.actor.flip = both ? (slot ? -1 : 1) : -1; pawn.facingBack = false; if (both && other.actor.flip !== (slot ? 1 : -1)) other.actor.flip = slot ? 1 : -1; }
     if (a.place === 'bed' || a.place === 'tub' || a.place === 'toilet') { pawn.facingBack = false; pawn.actor.flip = 1; }
     pawn.actor.play(a.anim);
     this.snd.actStart(pawn, a.id);
@@ -1464,9 +1465,9 @@ export class WorldScene implements Scene {
     if (ctrl && a.id === 'chop' && this.area === 'forest') this.op({ k: 'stat', key: 'forestWood', delta: pawn.id === 'dudu' ? 3 : 2 });
     if (ctrl && a.id === 'sellwood') {
       const dayKey = 'woodSold-' + this.w.day, left = Math.max(0, PRICE.sawmillDay - (this.w.stats[dayKey] ?? 0));
-      const n = Math.min(left, Math.max(0, (this.w.res?.wood ?? 0) - 5)), lei = n * PRICE.sawmill;
+      const per = pawn.id === 'dudu' ? PRICE.sawmillDudu : PRICE.sawmill, n = Math.min(left, Math.max(0, (this.w.res?.wood ?? 0) - 5)), lei = n * per;
       if (!n && !left) this.hud.toast(`🪵 Cheresteaua a cumpărat azi destule lemne (${PRICE.sawmillDay}). Mai vino mâine!`);
-      if (n) { this.op({ k: 'res', res: 'wood', delta: -n }); this.op({ k: 'money', delta: lei }); this.op({ k: 'stat', key: 'woodSold', delta: n }); this.op({ k: 'stat', key: dayKey, delta: n }); this.hud.toast(`🪵 Ai vândut ${n} lemne la cherestea: +${lei} lei (${PRICE.sawmill} lei bucata, cel mult ${PRICE.sawmillDay} pe zi)`); this.log(`${pawn.actor.spec.name} a vândut ${n} lemne: +${n * 3} lei 💰`); }
+      if (n) { this.op({ k: 'res', res: 'wood', delta: -n }); this.op({ k: 'money', delta: lei }); this.op({ k: 'stat', key: 'woodSold', delta: n }); this.op({ k: 'stat', key: dayKey, delta: n }); if (pawn === this.me) this.hud.toast(`🪵 Ai vândut ${n} lemne la cherestea: +${lei} lei (${per} lei bucata${pawn.id === 'dudu' ? ', Dudu știe să negocieze 😎' : ''}; cel mult ${PRICE.sawmillDay} pe zi)`); this.log(`${pawn.actor.spec.name} a vândut ${n} lemne la cherestea: +${lei} lei 💰`); }
     }
     if (ctrl && (a.id === 'chop' || a.id === 'mine' || a.id === 'pick')) {
       const res = a.id === 'chop' ? 'wood' : a.id === 'mine' ? 'stone' : 'flower';
@@ -1794,6 +1795,8 @@ export class WorldScene implements Scene {
     this.updateNpcs(dt);
     this.updateMe(dt);
     this.updatePartner(dt);
+    this.unstick(dt);
+    if (this.infinite) { this.infT -= dt; if (this.infT <= 0) { this.infT = 3; this.topUp(); } }
     for (const p of [this.me, this.partner]) this.updateActivity(p, dt);
     this.snd.update(dt);
 
@@ -1835,8 +1838,10 @@ export class WorldScene implements Scene {
 
   private moveBy(p: Pawn, vx: number, vy: number, dt: number) {
     const nx = p.gx + vx * dt, ny = p.gy + vy * dt;
-    if (!this.nav.hits(nx, p.gy)) p.gx = nx;
-    if (!this.nav.hits(p.gx, ny)) p.gy = ny;
+    // prins intr-un obstacol (dupa pat, intr-un perete...): il lasam sa iasa, altfel ar ramane blocat
+    const stuck = this.nav.hits(p.gx, p.gy, 0.12);
+    if (stuck || !this.nav.hits(nx, p.gy)) p.gx = nx;
+    if (stuck || !this.nav.hits(p.gx, ny)) p.gy = ny;
     const s = iso(vx, vy);
     if (Math.abs(s.x) > 0.01) p.actor.flip = s.x > 0 ? 1 : -1;
     p.facingBack = s.y < -0.01;
@@ -1908,6 +1913,21 @@ export class WorldScene implements Scene {
     }
   }
 
+  private stuckT: Record<string, number> = {};
+  private aiAnimT = 0;
+  /** cine a ramas prins intr-un obstacol (dupa pat, intre mobile...) e scos singur pe cea mai apropiata dala libera */
+  private unstick(dt: number) {
+    for (const p of [this.me, this.partner]) {
+      if (p.control === 'remote' || (p === this.partner && !this.sameArea())) continue;
+      const busy = p.activity || p.riding || p.passenger || p.board || p.z > 0 || (p === this.me && (this.ride || this.travel || this.jump));
+      if (busy || !this.nav.hits(p.gx, p.gy, 0.12)) { this.stuckT[p.id] = 0; continue; }
+      this.stuckT[p.id] = (this.stuckT[p.id] ?? 0) + dt;
+      if (this.stuckT[p.id] < 0.8) continue;
+      this.stuckT[p.id] = 0;
+      const q = this.nav.freeSpot(p.gx, p.gy);
+      if (q) { p.gx = q.x; p.gy = q.y; p.path = []; if (p === this.me) this.sendCharSync(); }
+    }
+  }
   updatePartner(dt: number) {
     const p = this.partner;
     if (p.passenger && p.control !== 'remote') { if (!this.me.riding) p.passenger = false; else { p.gx = this.me.gx; p.gy = this.me.gy; p.actor.flip = this.me.actor.flip; p.actor.moving = false; return; } }
@@ -1936,7 +1956,12 @@ export class WorldScene implements Scene {
     }
     // ---- AI simplu: ce nevoie e cea mai mica -> mergi la obiectul potrivit
     if (p.fleeT && p.fleeT > 0 && !p.activity) { this.aiFlee(p, dt); return; }
-    if (p.activity || p.actor.busy && p.actor.anim.kind !== 'base') { p.actor.moving = false; return; }
+    // o bucurie (dans, ras...) care se repeta la nesfarsit nu trebuie sa-l tina pe loc: dupa cateva secunde se opreste
+    if (!p.activity && p.actor.busy && p.actor.anim.kind !== 'base') {
+      this.aiAnimT += dt;
+      if (this.aiAnimT > 4 && p.actor.anim.loop) { p.actor.stop(); this.aiAnimT = 0; } else { p.actor.moving = false; return; }
+    } else this.aiAnimT = 0;
+    if (p.activity) { p.actor.moving = false; return; }
     if (this.followPath(p, dt)) { p.actor.moving = true; return; }
     p.actor.moving = false;
     p.aiT -= dt;
@@ -1975,6 +2000,7 @@ export class WorldScene implements Scene {
       else if ((R.water ?? 0) < 2 && aiHome && Object.values(this.w.plots ?? {}).some(p => p.crop)) target = FURNITURE.find(f => f.id === 'well');
     }
     else if (p.id === 'dudu' && aiHome && Object.keys(this.w.grass ?? {}).length > 10 && Math.random() < 0.5) target = pick(['mow']);
+    else if (p.id === 'dudu' && aiHome && (R.wood ?? 0) >= 14 && (this.w.stats['woodSold-' + this.w.day] ?? 0) < PRICE.sawmillDay && Math.random() < 0.5) target = FURNITURE.find(f => f.id === 'h-wood');
     if (target) { this.goInteract(p, target); return; }
     if (low[1] < 55) {
       if (low[0] === 'hunger') target = pick(['snack', 'eat']);
@@ -2079,303 +2105,8 @@ export class WorldScene implements Scene {
     if (p.activity.t >= p.activity.a.dur) this.stopActivity(p, true);
   }
 
-  // ------------------------------------------------------------------ desen
-  draw(ctx: CanvasRenderingContext2D) {
-    if (!this.ready) { const { w, h } = this.game; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#c09a62'; ctx.font = '700 15px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Se încarcă salvarea…', w / 2, h / 2); return; }
-    const { w, h } = this.game;
-    const night = nightAmount(this.w.minutes);
-    const apt = this.space === 'apartment';
-    if (apt) {
-      // apartamentul = vedere de la etaj: cerul orasului cu blocuri in departare
-      const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, night > 0.5 ? '#1d2550' : '#9fd3f5'); bg.addColorStop(1, night > 0.5 ? '#4a3f75' : '#e8f4ff'); ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-      for (let i = 0; i < 26; i++) { const bw = 40 + ((i * 17) % 40), bx = i * (w / 22) - 30, bh = h * (0.2 + ((i * 37) % 50) / 100); ctx.fillStyle = night > 0.5 ? '#2f3a60' : ['#c9d8ee', '#b8c8e6', '#d6e2f2'][i % 3]; ctx.fillRect(bx, h - bh, bw, bh); ctx.fillStyle = night > 0.5 ? '#ffe68088' : '#ffffff88'; for (let yy = h - bh + 10; yy < h - 10; yy += 16) for (let xx = bx + 6; xx < bx + bw - 8; xx += 12) if (((xx * 3 + yy) | 0) % 5) ctx.fillRect(xx, yy, 5, 7); }
-    } else {
-      if (this.chapter === 0) { const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, night > 0.5 ? '#2b3a67' : '#ffd6e4'); bg.addColorStop(1, night > 0.5 ? '#4a3f75' : '#ffeacc'); ctx.fillStyle = bg; }
-      else ctx.fillStyle = night > 0.5 ? '#1f2540' : '#8fc98a';
-      ctx.fillRect(0, 0, w, h);
-    }
-    ctx.save();
-    ctx.translate(w / 2, h / 2);
-    if (this.shake > 0.3) ctx.translate((Math.random() - 0.5) * this.shake, (Math.random() - 0.5) * this.shake);
-    const Z = this.effZoom;
-    ctx.scale(Z, Z);
-    ctx.translate(-this.cam.x, -this.cam.y);
-    // ce se vede (pixeli de lume) si dalele din jur
-    const vx0 = this.cam.x - w / 2 / Z, vx1 = this.cam.x + w / 2 / Z, vy0 = this.cam.y - h / 2 / Z, vy1 = this.cam.y + h / 2 / Z;
-    const cs = [unIso(vx0, vy0), unIso(vx1, vy0), unIso(vx0, vy1), unIso(vx1, vy1)];
-    const gx0 = Math.min(...cs.map(c => c.x)) - 2, gx1 = Math.max(...cs.map(c => c.x)) + 10, gy0 = Math.min(...cs.map(c => c.y)) - 2, gy1 = Math.max(...cs.map(c => c.y)) + 10;
-    const seen = (x: number, y: number, m = 140) => { const q = iso(x, y); return q.x > vx0 - m && q.x < vx1 + m && q.y > vy0 - m && q.y < vy1 + m * 2.2; };
-    const visible = furnIn(gx0, gy0, gx1, gy1).filter(f => onScreen(f, vx0, vy0, vx1, vy1));
-
-    // podeaua (pe bucati)
-    const home = this.space === 'world';
-    const ch0 = this.chapter === 0 && home;
-    if (ch0) {
-      // Capitolul 0: doar casa, ca o casuta de papusi pe un soclu cu iarba (curtea nu se vede)
-      const c = iso(8, 7.2); ctx.fillStyle = 'rgba(120,80,100,0.14)'; ctx.beginPath(); ctx.ellipse(c.x, c.y + 70, 470, 150, 0, 0, 7); ctx.fill();
-      isoBox(ctx, 1.75, 1.75, 12.5, 10.75, 16, { top: '#a6dc93', left: '#b98a5e', right: '#a07450' }, -16);
-      ctx.save(); const A = iso(2, 2), B = iso(14, 2), C = iso(14, 12), D = iso(2, 12);
-      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.lineTo(D.x, D.y); ctx.closePath(); ctx.clip();
-      this.floorChunks.draw(ctx, vx0, vy0, vx1, vy1); ctx.restore();
-    } else { if (apt) drawAptBuilding(ctx, night); this.floorChunks.draw(ctx, vx0, vy0, vx1, vy1); }
-    const inHouse = (x0: number, y0: number, x1: number, y1: number) => !ch0 || (x0 >= 2 && y0 >= 2 && x1 <= 14.2 && y1 <= 12.3);
-
-    const dep: Record<string, boolean> = {}; for (const id in this.w.nodes ?? {}) if (this.depleted(id)) dep[id] = true;
-    const st: FurnState = { ...(this.w.furn as FurnState), night, depleted: dep };
-    // obiectele care nu se misca: din imaginea lor (desenata o data); restul, desenate viu
-    const SS = Math.max(1, Math.min(2, this.game.dpr * this.cam.zoom)), lit = night > 0.4, bf = this.bridgeFixed();
-    const paint = (f: Furn) => {
-      if (!cacheable(f)) { drawFurn(ctx, f, this.time, st); return; }
-      const t = f.type as string;
-      const key = f.id + (dep[f.id] ? '|d' : '') + ((t === 'farmhouse' || t === 'church' || t === 'cbuilding') && lit ? '|n' : '') + (t === 'bridgerail' || t === 'bridgegap' ? (bf ? '|f' : '|b') : '');
-      if (layered(f)) {
-        // corpul cladirii din imagine (depinde de ora: deschis / inchis, de noapte, de ce ati cumparat), apoi ce se misca
-        const own = (globalThis as any).__villageOwned ?? {};
-        const k2 = key + (isOpen(f.id, this.w.minutes / 60) ? '' : '|c') + (own.florarie ? 'F' : '') + (own.workshop ? 'W' : '') + (own.apartment ? 'A' : '');
-        const g = globalThis as any;
-        g.__layer = 'body'; try { this.sprites.draw(ctx, f, k2, SS, c => drawFurn(c, f, 0, st)); } finally { g.__layer = 'live'; }
-        try { drawFurn(ctx, f, this.time, st); } finally { g.__layer = ''; }
-        return;
-      }
-      this.sprites.draw(ctx, f, key, SS, c => drawFurn(c, f, 0, st));
-      if (t === 'farmhouse') houseSmoke(ctx, f, this.time);
-    };
-    // decoruri pe sol
-    for (const f of visible) if (this.isDecor(f) && inHouse(f.gx, f.gy, f.gx + f.w, f.gy + f.d)) { try { paint(f); } catch (e) { ErrorLog.add(e, 'desen decor'); } }
-    if (!ch0 && home) for (const [k, p] of Object.entries(this.w.plots ?? {})) { const [x, y] = k.split(',').map(Number); if (seen(x, y)) drawPlotSoil(ctx, x, y, p as Plot, this.w.gameMin ?? 0, this.time); }
-    if (!ch0 && home) for (const k in this.w.grass ?? {}) { const [x, y] = k.split(',').map(Number); if (seen(x, y)) drawTallGrass(ctx, x, y, this.w.grass![k], this.time); }
-    if (this.build?.item) drawGhost(ctx, this.build.item, this.build.gx, this.build.gy, this.canPlace(this.build.item, this.build.gx, this.build.gy) && this.canAfford(this.build.item), this.time);
-    // indicator obiect apropiat
-    const near = this.ride ? null : this.nearestFurn(this.me);
-    if (near && !this.me.activity) {
-      ctx.save(); ctx.globalAlpha = 0.5 + 0.3 * Math.sin(this.time * 5);
-      ctx.strokeStyle = '#ff4d6d'; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
-      const a = iso(near.gx, near.gy), b = iso(near.gx + near.w, near.gy), c = iso(near.gx + near.w, near.gy + near.d), d = iso(near.gx, near.gy + near.d);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath(); ctx.stroke();
-      ctx.restore();
-    }
-    // tinta pentru mers
-    if (this.me.path.length) {
-      const t = this.me.path[this.me.path.length - 1]; const p = iso(t.x, t.y);
-      ctx.strokeStyle = '#ff7aa2'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(p.x, p.y, 12 + Math.sin(this.time * 8) * 2, 6, 0, 0, 7); ctx.stroke();
-    }
-
-    // gardul curtii: laturile din spate (cu poarta spre padure)
-    if (!ch0 && home) { for (let x = 0; x < MAP_W; x++) if (x !== BACK_GATE) drawYardFence(ctx, x, 0, 'x'); for (let y = 0; y < YARD_H; y++) drawYardFence(ctx, 0, y, 'y'); }
-    // pereti din spate
-    if (ch0) for (const [dx, dy] of [[5.5, 12.05], [14.05, 9.5]]) { const p = iso(dx, dy, 22); this.drawLock(ctx, p.x, p.y); }
-    for (const wl of WALLS) if (wl.kind === 'back') drawWall(ctx, wl, this.time, night);
-
-    // sortare in adancime
-    type D = { x0: number; y0: number; x1: number; y1: number; draw: () => void; z?: number };
-    const items: D[] = [];
-    const onBike = (this.me.riding && this.me.rideKind === 'bike') || (this.sameArea() && this.partner.riding && this.partner.rideKind === 'bike');
-    const onScoot = (this.me.riding && this.me.rideKind === 'scooter') || (this.sameArea() && this.partner.riding && this.partner.rideKind === 'scooter');
-    const onTractor = (this.me.riding && this.me.rideKind === 'tractor') || (this.sameArea() && this.partner.riding && this.partner.rideKind === 'tractor');
-    for (const f of visible) if (!this.isDecor(f)) {
-      if ((onBike && (f.id === 'h-bike' || f.id === 'v-bike')) || (onScoot && (f.id === 'h-scooter' || f.id === 'v-scooter')) || (onTractor && (f.id === 'h-tractor' || f.id === 'f-tractor'))) continue;
-      items.push({ x0: f.gx, y0: f.gy, x1: f.gx + f.w, y1: f.gy + f.d, draw: () => paint(f) });
-    }
-    for (const wl of WALLS) if (wl.kind !== 'back') {
-      const r = wl.dir === 'x' ? { x0: wl.x, y0: wl.y - 0.05, x1: wl.x + 1, y1: wl.y } : { x0: wl.x - 0.05, y0: wl.y, x1: wl.x, y1: wl.y + 1 };
-      items.push({ ...r, draw: () => drawWall(ctx, wl as Wall, this.time, night) });
-    }
-    if (home && seen(10, 22, 400)) for (let x = 0; x < MAP_W; x++) {
-      if (x === YARD_GATE) items.push({ x0: x, y0: YARD_H - 0.02, x1: x + 1, y1: YARD_H, draw: () => drawYardGate(ctx, YARD_GATE, YARD_H) });
-      else items.push({ x0: x, y0: YARD_H - 0.02, x1: x + 1, y1: YARD_H, draw: () => drawYardFence(ctx, x, YARD_H, 'x') });
-    }
-    if (home && !ch0) items.push({ x0: BACK_GATE, y0: -0.02, x1: BACK_GATE + 1, y1: 0, draw: () => this.drawBackGate(ctx) });
-    if (home) for (const [k, p] of Object.entries(this.w.plots ?? {})) { if (!p.crop) continue; const [x, y] = k.split(',').map(Number); if (!seen(x, y)) continue; items.push({ x0: x + 0.3, y0: y + 0.3, x1: x + 0.7, y1: y + 0.7, draw: () => drawCropPlant(ctx, x, y, p as Plot, this.w.gameMin ?? 0, this.time) }); }
-    if (home) for (const car of this.cars) { const cp = carPos(car); if (!seen(cp.x, cp.y)) continue; items.push({ x0: cp.x - 0.5, y0: cp.y - 0.3, x1: cp.x + 0.5, y1: cp.y + 0.3, draw: () => drawCar(ctx, car, this.time) }); }
-    if (home) for (const v of this.walkers) { if (!seen(v.x, v.y)) continue; items.push({ x0: v.x - 0.2, y0: v.y - 0.2, x1: v.x + 0.2, y1: v.y + 0.2, draw: () => {
-      v.a.draw(ctx);
-      // numele sateanului (cand esti aproape) + inimioare de prietenie
-      if (v.name && Math.hypot(v.x - this.me.gx, v.y - this.me.gy) < 5) {
-        const q = iso(v.x, v.y); const fr = Math.min(5, Math.floor((this.w.stats['friend-' + v.vid] ?? 0) / 2));
-        ctx.font = '800 10.5px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.fillStyle = '#7a3a5a';
-        const lb = v.name + (fr ? ' ' + '💗'.repeat(fr) : ''); ctx.strokeText(lb, q.x, q.y + 14); ctx.fillText(lb, q.x, q.y + 14);
-        const hasQ = (this.w.town?.quests as any[] | undefined)?.some(x => x.who === v.vid && !x.done && x.day === this.w.day);
-        if (hasQ) { const by = q.y - 92 * ACTOR_SCALE * 0.92 - 18 + Math.sin(this.time * 4) * 2; ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = '#4a2a22'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q.x, by, 9, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#4a2a22'; ctx.font = '900 13px "Baloo 2", sans-serif'; ctx.textBaseline = 'middle'; ctx.fillText('!', q.x, by + 1); ctx.textBaseline = 'alphabetic'; }
-      }
-    } }); }
-    if (home) for (const c of this.critters) { if (!seen(c.x, c.y)) continue; items.push({ x0: c.x - 0.2, y0: c.y - 0.2, x1: c.x + 0.2, y1: c.y + 0.2, draw: () => { const q = iso(c.x, c.y); drawCritter(ctx, c, q.x, q.y, this.time); } }); }
-    if (home) for (const n of this.npcs) { if (!seen(n.x, n.y)) continue; items.push({ x0: n.x - 0.2, y0: n.y - 0.2, x1: n.x + 0.2, y1: n.y + 0.2, draw: () => this.drawNpc(ctx, n) }); }
-    for (const p of [this.me, this.partner]) {
-      if (p === this.partner && !this.sameArea()) continue;
-      if (!seen(p.gx, p.gy, 260)) continue;
-      // la masa: farfuria cu mancarea aleasa, pe masa, in fata personajului (se goleste pe masura ce mananca)
-      if (p.activity?.a.id === 'eat' && p.activity.furn?.type === 'table') { const f = p.activity.furn, act = p.activity; items.push({ x0: f.gx, y0: f.gy, x1: f.gx + f.w, y1: f.gy + f.d + 0.002, draw: () => this.drawPlate(ctx, p.gx, f.gy + 0.36, act) }); }
-      const inside = p.activity?.a.place;
-      if ((inside === 'bed' || inside === 'tub' || inside === 'toilet' || inside === 'sofa' || inside === 'ride') && p.activity!.furn) {
-        // desenat imediat dupa obiectul pe care sta
-        const f = p.activity!.furn;
-        const eps = inside === 'sofa' ? 0.01 : 0.001;
-        items.push({ x0: f.gx + f.w - eps, y0: f.gy + f.d - eps, x1: f.gx + f.w, y1: f.gy + f.d, draw: () => this.drawPawn(ctx, p) });
-      } else items.push({ x0: p.gx - 0.2, y0: p.gy - 0.2, x1: p.gx + 0.2, y1: p.gy + 0.2, draw: () => this.drawPawn(ctx, p) });
-    }
-    items.sort((a, b) => {
-      if (a.x1 <= b.x0 + 1e-6 && !(b.x1 <= a.x0 + 1e-6)) { if (a.y0 < b.y1) return -1; }
-      if (b.x1 <= a.x0 + 1e-6 && !(a.x1 <= b.x0 + 1e-6)) { if (b.y0 < a.y1) return 1; }
-      if (a.y1 <= b.y0 + 1e-6) return -1;
-      if (b.y1 <= a.y0 + 1e-6) return 1;
-      return (a.x0 + a.x1 + a.y0 + a.y1) - (b.x0 + b.x1 + b.y0 + b.y1);
-    });
-    for (const it of items) if (inHouse(it.x0, it.y0, it.x1, it.y1)) { ctx.save(); try { it.draw(); } catch (e) { ErrorLog.add(e, 'desen obiect'); } ctx.restore(); }
-    for (const fg of this.fogs) {
-      const k = fg.t / 4, q = iso(fg.x, fg.y, 20 + k * 30);
-      for (let i = 0; i < 7; i++) { const a = i * 0.9 + fg.t * 0.3, r = 30 + k * 110 + (i % 3) * 14; ctx.fillStyle = `rgba(160,210,90,${0.32 * (1 - k)})`; ctx.beginPath(); ctx.ellipse(q.x + Math.cos(a) * r * 0.55, q.y + Math.sin(a) * r * 0.22 - i * 3, r * 0.5, r * 0.28, 0, 0, 7); ctx.fill(); }
-    }
-    // moneda aruncata: arc deasupra, apoi stropi si cercuri pe apa
-    for (const fl of this.flings) {
-      const k = Math.min(1, fl.t / fl.dur), gx = fl.x0 + (fl.x1 - fl.x0) * k, gy = fl.y0 + (fl.y1 - fl.y0) * k;
-      if (k < 1) { const q = iso(gx, gy, 50 + (fl.z1 - 50) * k + Math.sin(k * Math.PI) * 70); ctx.save(); ctx.translate(q.x, q.y); ctx.scale(Math.cos(fl.t * 18), 1); ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = '#a07a2a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore(); }
-      else {
-        const r = fl.t - fl.dur, q = iso(fl.x1, fl.y1, fl.z1);
-        if (r < 0.05) { this.fx.burst('drop', q.x, q.y, 8, 2.4, 90, { grav: 300, max: 0.5, color: '#bde7ff' }); this.fx.hearts(q.x, q.y - 20, 2); }
-        for (let i = 0; i < 3; i++) { const rr = r - i * 0.25; if (rr <= 0) continue; ctx.strokeStyle = `rgba(255,255,255,${Math.max(0, 0.8 - rr * 0.7)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(q.x, q.y, 6 + rr * 26, 3 + rr * 13, 0, 0, 7); ctx.stroke(); }
-      }
-    }
-
-    // gardul curtii: laturile din fata
-    if (!ch0 && home) for (let y = 0; y < YARD_H; y++) drawYardFence(ctx, MAP_W, y, 'y');
-
-    this.fx.draw(ctx);
-    this.sprites.endFrame();
-
-    // noaptea
-    ctx.restore();
-    if (night > 0) {
-      ctx.fillStyle = `rgba(25,25,70,${0.42 * night})`; ctx.fillRect(0, 0, w, h);
-      if (this.w.furn.lampOn) {
-        ctx.save(); ctx.globalCompositeOperation = 'lighter';
-        ctx.translate(w / 2, h / 2); ctx.scale(this.effZoom, this.effZoom); ctx.translate(-this.cam.x, -this.cam.y);
-        const p = this.space === 'apartment' ? iso(6.5, 3.5, 40) : iso(5.5, 2.5, 40);
-        const g = ctx.createRadialGradient(p.x, p.y, 4, p.x, p.y, 160); g.addColorStop(0, `rgba(255,200,120,${0.35 * night})`); g.addColorStop(1, 'rgba(255,200,120,0)');
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 160, 0, 7); ctx.fill();
-        ctx.restore();
-      }
-    }
-    // frig: chenar inghetat cand iti e frig
-    const wm = this.w.chars[this.myId].needs.warmth ?? 60;
-    if (wm < 30) { const k = (30 - wm) / 30; const gr = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.7); gr.addColorStop(0, 'rgba(180,220,255,0)'); gr.addColorStop(1, `rgba(200,235,255,${0.55 * k})`); ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h); }
-    // joystick
-    // indiciu pentru joystick (doar pe ecrane tactile)
-    if (!this.joy.active && !this.minigame && !this.travel && matchMedia('(pointer: coarse)').matches) {
-      const jx = Math.min(130, w * 0.16), jy = h - Math.min(120, h * 0.24);
-      ctx.globalAlpha = 0.35; ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(jx, jy, 46, 0, 7); ctx.stroke();
-      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(jx, jy, 20, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
-    }
-    if (this.joy.active) {
-      ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(this.joy.sx, this.joy.sy, 50, 0, 7); ctx.stroke();
-      const jx = this.joy.x - this.joy.sx, jy = this.joy.y - this.joy.sy, l = Math.hypot(jx, jy), k = l > 50 ? 50 / l : 1;
-      ctx.fillStyle = '#ff7aa2cc'; ctx.beginPath(); ctx.arc(this.joy.sx + jx * k, this.joy.sy + jy * k, 22, 0, 7); ctx.fill();
-    }
-    // somnul: ecran intunecat, ceasul si cat mai e pana dimineata
-    if (this.me.activity?.a.id === 'sleep' && this.me.activity.t >= 0 && !this.minigame) this.drawSleepOverlay(ctx, w, h);
-    if (this.morningT > 0) {
-      const k = Math.min(1, this.morningT / 0.6);
-      ctx.save(); ctx.globalAlpha = Math.min(1, k); const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(255,214,165,0.85)'); g.addColorStop(1, 'rgba(255,241,214,0.0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      ctx.font = '900 38px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 7; ctx.strokeStyle = '#fff'; ctx.fillStyle = '#e07a2f';
-      ctx.strokeText('Bună dimineața!', w / 2, h * 0.3); ctx.fillText('Bună dimineața!', w / 2, h * 0.3);
-      ctx.font = '800 20px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.strokeText(`Ziua ${this.w.day} · ${clockText(this.w.minutes)}`, w / 2, h * 0.3 + 36); ctx.fillText(`Ziua ${this.w.day} · ${clockText(this.w.minutes)}`, w / 2, h * 0.3 + 36);
-      ctx.restore();
-    }
-    if (this.minigame) {
-      // minijocurile sunt gandite pentru minim ~460 px inaltime: pe ecrane scunde (telefon pe lat) le scalam proportional
-      const k = this.miniScale();
-      ctx.save(); ctx.scale(k, k); this.minigame.obj.draw(ctx, w / k, h / k); ctx.restore();
-    }
-    if (this.travel) this.drawTravel(ctx, w, h);
-  }
-
-  drawSleepOverlay(ctx: CanvasRenderingContext2D, w: number, h: number) {
-    ctx.save();
-    ctx.fillStyle = 'rgba(20,18,50,0.45)'; ctx.fillRect(0, 0, w, h);
-    const nap = (this.w.chars[this.myId] as any).napStart != null;
-    const fast = this.timeMult > 1;
-    const left = nap ? Math.max(0, 180 - ((this.w.gameMin ?? 0) - (this.w.chars[this.myId] as any).napStart)) : ((7 * 60 - this.w.minutes) + 1440) % 1440;
-    const cx = w / 2, cy = h * 0.2;
-    ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(cx - 170, cy - 46, 340, 112, 22); ctx.fill(); ctx.stroke();
-    ctx.textAlign = 'center'; ctx.fillStyle = '#3a2a22';
-    ctx.font = '900 30px "Baloo 2", sans-serif'; ctx.fillText(`${clockText(this.w.minutes)}${fast ? '  ⏩' : ''}`, cx, cy - 8);
-    ctx.font = '800 15px "Baloo 2", sans-serif';
-    ctx.fillText(nap ? `Pui de somn · energie ${Math.round(this.w.chars[this.myId].needs.energy)}%` : `Dormiți… vă treziți la 07:00 (mai sunt ${Math.floor(left / 60)}h ${Math.round(left % 60)}m)`, cx, cy + 20);
-    ctx.font = '700 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a';
-    const pa = this.partner.actor.spec.name;
-    ctx.fillText(fast ? 'Noaptea trece repede pentru că dormiți amândoi 💤' : this.partner.activity?.a.id === 'sleep' ? '' : `Timpul trece normal până se culcă și ${pa}`, cx, cy + 44);
-    ctx.restore();
-  }
-  /** poarta din spatele curtii (spre padure), mereu deschisa */
-  drawBackGate(ctx: CanvasRenderingContext2D) { drawYardGate(ctx, BACK_GATE, 0); }
-  drawLock(ctx: CanvasRenderingContext2D, x: number, y: number) {
-    ctx.save(); ctx.translate(x, y + Math.sin(this.time * 2) * 2);
-    ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, -8, 6, Math.PI, 0); ctx.stroke();
-    ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.roundRect(-9, -8, 18, 14, 4); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#3a2a22'; ctx.beginPath(); ctx.arc(0, -2, 2, 0, 7); ctx.fill();
-    ctx.restore();
-  }
-  /** farfuria de la masa: mancarea aleasa (iconita ei), aburi la cele calde, se termina pe masura ce mananci */
-  drawPlate(ctx: CanvasRenderingContext2D, gx: number, gy: number, act: { a: Activity; t: number }) {
-    const c = iso(gx, gy, 27.5), left = Math.max(0, 1 - act.t / Math.max(1, act.a.dur));
-    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#4a2a22'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(c.x, c.y, 15, 7, 0, 0, 7); ctx.fill(); ctx.stroke();
-    ctx.strokeStyle = '#e8d8cc'; ctx.beginPath(); ctx.ellipse(c.x, c.y, 10, 4.5, 0, 0, 7); ctx.stroke();
-    const key: string = (act.a as any).dish ?? 'meals';
-    const icon = RECIPE[key.replace(/^dish_/, '')]?.icon ?? READY_MEAL.icon;
-    if (left > 0.05) { const ic = iconCanvas(icon, 64); if (ic) { const sz = 22 * (0.45 + 0.55 * left); ctx.drawImage(ic, c.x - sz / 2, c.y - sz * 0.8, sz, sz); } }
-    if (['🍲', '🥣', '🍵', '🫓', '🥘', '🍠'].includes(icon) && left > 0.2) for (let i = 0; i < 2; i++) { const k = (this.time * 0.8 + i * 0.5) % 1; ctx.strokeStyle = `rgba(255,255,255,${0.7 * (1 - k)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(c.x - 4 + i * 8, c.y - 12 - k * 14); ctx.quadraticCurveTo(c.x + i * 8, c.y - 18 - k * 14, c.x - 4 + i * 8, c.y - 24 - k * 14); ctx.stroke(); }
-    // furculita
-    ctx.strokeStyle = '#9aa4ad'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(c.x + 17, c.y - 2); ctx.lineTo(c.x + 22, c.y + 4); ctx.stroke();
-  }
-  drawPawn(ctx: CanvasRenderingContext2D, p: Pawn) {
-    if (p.passenger && this.sameArea()) return; // il deseneaza soferul
-    if (p.riding) {
-      const s = iso(p.gx, p.gy, 0); const other = p === this.me ? this.partner : this.me;
-      ctx.save(); ctx.translate(s.x, s.y + 2); ctx.scale(p.actor.flip, 1);
-      const bump = p.actor.moving ? Math.abs(Math.sin(this.time * 14)) * -1.2 : 0;
-      const opt = { rot: p.actor.moving ? this.time * 18 : 0, bump, driver: p.actor.spec, passenger: other.passenger && this.sameArea() ? other.actor.spec : undefined };
-      // praful din spatele rotilor cand merge repede pe drum
-      if (p.actor.moving && p.rideKind !== 'bike') for (let i = 0; i < 4; i++) { const q = (this.time * 1.6 + i / 4) % 1; ctx.globalAlpha = 0.35 * (1 - q); ctx.fillStyle = '#e6d3b0'; ctx.beginPath(); ctx.arc(-30 - q * 60, 2 - q * 10, 4 + q * 9, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
-      if (p.rideKind === 'bike') drawTandemSide(ctx, 0, 0, 0.5, this.time, opt);
-      else if (p.rideKind === 'tractor') drawTractorSide(ctx, 0, 0, 0.42, this.time, { ...opt, logs: Math.min(9, Math.floor((this.w.res?.wood ?? 0) / 2)), trailer: true });
-      else if (p.rideKind === 'bus') drawBusSide(ctx, 0, 0, 0.38, this.time, opt);
-      else if (p.rideKind === 'taxi') drawTaxiSide(ctx, 0, 0, 0.46, this.time, opt);
-      else drawScooterSide(ctx, 0, 0, 0.58, this.time, opt);
-      ctx.restore();
-    } else {
-      const atTable = p.activity?.a.id === 'eat' && p.activity.furn?.type === 'table';
-      if (atTable) { isoBox(ctx, p.gx - 0.26, p.gy - 0.34, 0.52, 0.1, 44, boxOf('#a0703f')); isoBox(ctx, p.gx - 0.26, p.gy - 0.26, 0.52, 0.46, 14, boxOf('#c98e5f')); }
-      p.actor.draw(ctx);
-    }
-    if (p.activity?.a.place === 'sofa') { // spatarul canapelei acopera spatele personajului
-      const f = p.activity.furn;
-      isoBox(ctx, f.gx + 0.72, f.gy + 0.22, 0.22, f.d - 0.44, 30, boxOf('#83b9f0'));
-    }
-    // eticheta cu numele + starea
-    const s = iso(p.gx, p.gy, p.z);
-    const c = this.w.chars[p.id];
-    ctx.font = '800 11px "Baloo 2", sans-serif'; ctx.textAlign = 'center';
-    const label = `${p.actor.spec.name}${c.sick ? ' ' + SICK_INFO[c.sick].icon : ''}${p.control === 'ai' ? ' 🤖' : ''}`;
-    if (p.activity?.a.place !== 'bed' && p.activity?.a.place !== 'tub') {
-      ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.fillStyle = p === this.me ? '#ff4d6d' : '#3a2a22'; fillTextIcons(ctx, label, s.x, s.y + 14, 11, true);
-    }
-    // balonasul cu cererea bolnavului
-    if (c.sick && c.request && REQUESTS[c.request]) {
-      const by = s.y - (p.activity?.a.place === 'bed' ? 50 : 98) * ACTOR_SCALE - 26 + Math.sin(this.time * 3) * 3;
-      const bx = s.x + 22;
-      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.roundRect(bx - 16, by - 16, 32, 28, 10); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(bx - 8, by + 12); ctx.lineTo(bx - 14, by + 20); ctx.lineTo(bx - 2, by + 12); ctx.fill();
-      ctx.font = '18px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; fillTextIcons(ctx, REQUESTS[c.request].icon, bx, by - 2, 16); ctx.textBaseline = 'alphabetic';
-    }
-    // bara de progres a activitatii
-    if (p.activity && p.activity.t >= 0) {
-      const k = Math.min(1, p.activity.t / p.activity.a.dur);
-      const y = s.y - 78 * ACTOR_SCALE - (p.activity.a.place === 'bed' || p.activity.a.place === 'tub' ? -10 : 18);
-      ctx.fillStyle = '#ffffffcc'; ctx.beginPath(); ctx.roundRect(s.x - 22, y, 44, 7, 4); ctx.fill();
-      ctx.fillStyle = '#ff7aa2'; ctx.beginPath(); ctx.roundRect(s.x - 22, y, 44 * k, 7, 4); ctx.fill();
-      ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(s.x - 22, y, 44, 7, 4); ctx.stroke();
-    }
-  }
+  // ------------------------------------------------------------------ desen (in render.ts)
+  draw(ctx: CanvasRenderingContext2D) { drawWorld(this, ctx); }
 }
 
 export { NEEDS, NEED_INFO, TW, TH };

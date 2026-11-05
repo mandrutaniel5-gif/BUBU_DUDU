@@ -6,7 +6,7 @@ export interface Activity {
   anim: string;
   dur: number;                                  // secunde reale
   needs: Partial<Record<NeedKey, number>>;      // la final
-  place?: 'bed' | 'tub' | 'toilet' | 'sofa' | 'stand' | 'ride';
+  place?: 'bed' | 'tub' | 'toilet' | 'sofa' | 'stand' | 'ride' | 'bench';
   furnFlag?: [string, unknown, unknown];        // [cheie, la start, la final]
   text: string;                                 // mesaj la final
   minigame?: string;                            // id minijoc (daca exista)
@@ -28,7 +28,7 @@ export const ACTIVITIES: Record<string, Activity> = {
   read: { id: 'read', anim: 'act_read', dur: 6, needs: { fun: 15, energy: 1 }, text: 'O carte frumoasă 📚' },
   water_plant: { id: 'water_plant', anim: 'act_water', dur: 3, needs: { fun: 6 }, text: 'Floarea e fericită 🪴' },
   garden: { id: 'garden', anim: 'act_garden', dur: 6, needs: { fun: 12, hygiene: -8 }, text: 'Grădina crește! 🌱' },
-  bench: { id: 'bench', anim: 'act_sit', dur: 6, needs: { fun: 8, love: 6, energy: 4 }, text: 'Ce apus frumos 🌅' },
+  bench: { id: 'bench', anim: 'act_sit', place: 'bench', dur: 6, needs: { fun: 8, love: 6, energy: 4 }, text: 'Ce apus frumos 🌅' },
   pinch: { id: 'pinch', anim: 'act_plunge', dur: 1, needs: { fun: 10, energy: 4 }, text: 'Liniște 🤫', minigame: 'snore' },
   chop: { id: 'chop', anim: 'act_scrub', dur: 4, needs: { fun: 6, energy: -1 }, text: 'Lemne! 🪵', minigame: 'chop' },
   mine: { id: 'mine', anim: 'act_scrub', dur: 4, needs: { fun: 6, energy: -1 }, text: 'Piatră! 🪨', minigame: 'mine' },

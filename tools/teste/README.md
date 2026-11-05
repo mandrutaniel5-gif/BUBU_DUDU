@@ -25,6 +25,7 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 
 | Script | Ce testează |
 |---|---|
+| `v15.cjs` | 1.5.0: butoanele de test (capitolul următor, resurse infinite), Dudu vinde lemne din Capitolul 1, ieșirea de sub pat, fâșia din spatele casei blocată, banca (amândoi pe șezut, apoi liberi) |
 | `mp_lume.cjs` | **Multiplayer cu 2 jucători în lumea mare**: scuterul cu partenerul în spate (telefoane diferite), autobuz singur (celălalt îl vede pe drum), apartamentul („în apartament”), invitația la autobuz și sosirea împreună |
 | `mp_vehicule.cjs` | Vehiculul mutat de unul se vede la noul loc și pe telefonul celuilalt (scuterul în sat, tractorul în pădure); nu apare de două ori cât timp e pe drum |
 | `lume_drumuri.cjs` | Drumurile cu vehiculele: scuter acasă → sat (cu AI-ul în spate, rămâne parcat în sat), autobuz sat → oraș, ușa blocului, taxi oraș → acasă, tractorul la pădure și înapoi |

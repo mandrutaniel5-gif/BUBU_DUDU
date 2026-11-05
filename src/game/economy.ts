@@ -24,7 +24,7 @@ export const INV_INFO: Record<string, { icon: string; label: string }> = {
 export const PRICE = {
   bike: 350, scooter: 800, bus: 8, taxi: 70, cinema: 35, resto: 70, ice: 10, carousel: 8, ferris: 15,
   consultVillage: 35, consultCity: 50, florarie: 450, workshop: 450, workshopWood: 20,
-  sawmill: 2, sawmillDay: 15,      // cheresteaua: 2 lei lemnul, cel mult 15 lemne pe zi
+  sawmill: 2, sawmillDudu: 3, sawmillDay: 15, // cheresteaua: 2 lei lemnul (Dudu negociaza: 3), cel mult 15 lemne pe zi
   marketFull: 10,                  // la piata: dupa 10 bucati din acelasi lucru intr-o zi, pretul scade la jumatate; dupa 20, nu mai cumpara
 };
 type ShopItem = { id: string; label: string; icon: string; price: number; give: Record<string, number> };
@@ -74,6 +74,8 @@ export interface Goal {
   done: (w: WorldState) => boolean;
   reward: { money?: number; hearts?: number };
   hint: string;
+  /** cine se ocupa de obicei (doar o eticheta: o poate face oricare) */
+  who?: 'bubu' | 'dudu';
   cost?: { money?: number; wood?: number; stone?: number }; // obiective care se "cumpara"
 }
 
@@ -98,17 +100,18 @@ export const CHAPTERS: Chapter[] = [
   },
   {
     id: 1, title: 'Capitolul 1 · Curtea', done: '🚜 Dudu a primit un tractoraș! Pădurea vă așteaptă',
-    intro: 'Curtea e sălbatică. Faceți ordine, strângeți resurse și câștigați primii bani la tarabă.',
+    intro: 'Curtea e sălbatică. Dudu e omul curții: taie lemne, tunde iarba, repară taraba și vinde lemne la cherestea. Bubu are grija grădinii, a florilor și a tarabei.',
     goals: [
-      { id: 'mow', icon: '✂️', text: 'Tunde iarba din curte', hint: 'Magazia din curte → mașina de tuns', done: w => st(w, 'mowed') >= 1, reward: { money: 10 } },
-      { id: 'wood5', icon: '🪓', text: 'Taie 8 lemne de foc', hint: 'Copacii din curte — Dudu e cel mai bun tăietor', done: w => st(w, 'woodTotal') >= 8, reward: { money: 10 } },
-      { id: 'flowers', icon: '🌸', text: 'Culege 6 flori', hint: 'Flori sălbatice în curte și lângă drum', done: w => st(w, 'flowerTotal') >= 6, reward: { money: 5 } },
+      { id: 'mow', icon: '✂️', text: 'Tunde iarba din curte', hint: 'Mașina de tuns iarba, în curte, lângă fântână', done: w => st(w, 'mowed') >= 1, reward: { money: 10 }, who: 'dudu' },
+      { id: 'wood5', icon: '🪓', text: 'Taie 8 lemne de foc', hint: 'Copacii din curte — Dudu e cel mai bun tăietor (3 lemne o dată)', done: w => st(w, 'woodTotal') >= 8, reward: { money: 10 }, who: 'dudu' },
+      { id: 'sell6', icon: '💰', text: 'Vinde 6 lemne la cherestea', hint: 'Grămada de lemne de lângă mașina de tuns — Dudu negociază 3 lei pe lemn (păstrați 5 pentru sobă)', done: w => st(w, 'woodSold') >= 6, reward: { money: 10 }, who: 'dudu' },
+      { id: 'flowers', icon: '🌸', text: 'Culege 6 flori', hint: 'Flori sălbatice în curte și lângă drum', done: w => st(w, 'flowerTotal') >= 6, reward: { money: 5 }, who: 'bubu' },
       { id: 'well', icon: '🪣', text: 'Scoate apă din fântână', hint: 'Fântâna de lângă grădină', done: w => st(w, 'waterDrawn') >= 1, reward: { hearts: 3 } },
-      { id: 'plant3', icon: '🌱', text: 'Plantează 3 răzoare', hint: 'Atinge un răzor gol din grădină și alege semințele', done: w => st(w, 'planted') >= 3, reward: { money: 5 } },
+      { id: 'plant3', icon: '🌱', text: 'Plantează 3 răzoare', hint: 'Atinge un răzor gol din grădină și alege semințele', done: w => st(w, 'planted') >= 3, reward: { money: 5 }, who: 'bubu' },
       { id: 'harvest3', icon: '🧺', text: 'Culege 3 recolte', hint: 'Udă plantele 💧 și așteaptă să crească', done: w => st(w, 'harvested') >= 3, reward: { money: 15, hearts: 5 } },
-      { id: 'stand', icon: '🔨', text: 'Repară taraba și deschide-o', hint: 'Taraba de lângă drum e stricată — ai nevoie de 6 lemne 🪵', done: w => st(w, 'standRepaired') > 0 && st(w, 'standOpened') > 0, reward: { hearts: 5 } },
-      { id: 'serve3', icon: '🧺', text: 'Servește 3 clienți la tarabă', hint: 'Taraba de lângă drum (ieși pe portiță)', done: w => st(w, 'served') >= 3, reward: { money: 20 } },
-      { id: 'money100', icon: '💰', text: 'Strânge 100 de lei', hint: 'Taraba, vânzarea în sat', done: w => (w.money ?? 0) >= 100, reward: { hearts: 10 } },
+      { id: 'stand', icon: '🔨', text: 'Repară taraba și deschide-o', hint: 'Taraba de lângă drum e stricată — ai nevoie de 6 lemne 🪵', done: w => st(w, 'standRepaired') > 0 && st(w, 'standOpened') > 0, reward: { hearts: 5 }, who: 'dudu' },
+      { id: 'serve3', icon: '🧺', text: 'Servește 3 clienți la tarabă', hint: 'Taraba de lângă drum (ieși pe portiță)', done: w => st(w, 'served') >= 3, reward: { money: 20 }, who: 'bubu' },
+      { id: 'money100', icon: '💰', text: 'Strânge 100 de lei', hint: 'Taraba lui Bubu și lemnele vândute de Dudu', done: w => (w.money ?? 0) >= 100, reward: { hearts: 10 } },
     ],
   },
   {
@@ -120,7 +123,7 @@ export const CHAPTERS: Chapter[] = [
       { id: 'mush', icon: '🍄', text: 'Culege 6 ciuperci', hint: 'Caută-le pe sub copaci', done: w => st(w, 'mushroomTotal') >= 6, reward: { hearts: 5 } },
       { id: 'fish3', icon: '🎣', text: 'Prinde 3 pești la lac', hint: 'Podețul de la lacul din pădure', done: w => (st(w, 'fishCaught')) >= 3, reward: { money: 15 } },
       { id: 'friend', icon: '🦌', text: 'Împrietenește-te cu un animal din pădure', hint: 'Apropie-te încet și mângâie-l de 3 ori', done: w => st(w, 'petFriends') >= 1, reward: { hearts: 10 } },
-      { id: 'sellwood', icon: '💰', text: 'Vinde 15 lemne la cherestea', hint: 'Grămada de lemne din curte, lângă magazie', done: w => st(w, 'woodSold') >= 15, reward: { money: 10 } },
+      { id: 'sellwood', icon: '💰', text: 'Vinde 15 lemne la cherestea', hint: 'Grămada de lemne din curte, lângă mașina de tuns', done: w => st(w, 'woodSold') >= 15, reward: { money: 10 } },
       { id: 'bike', icon: '🚲', text: 'Cumpărați o bicicletă', hint: `Laptopul din casă → Vehicule (${PRICE.bike} lei)`, done: w => st(w, 'bike') > 0, reward: { hearts: 15 } },
     ],
   },

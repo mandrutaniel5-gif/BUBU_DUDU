@@ -114,6 +114,25 @@ export class Nav {
     }
     return null;
   }
+  /** cea mai apropiata dala libera (fara sa treaca prin pereti): pentru cine a ramas prins intr-un obstacol */
+  freeSpot(gx: number, gy: number, maxR = 8): { x: number; y: number } | null {
+    const sx = Math.floor(gx), sy = Math.floor(gy), seen = new Set<number>([this.idx(sx, sy)]);
+    let q: [number, number][] = [[sx, sy]];
+    for (let r = 0; r <= maxR && q.length; r++) {
+      const nq: [number, number][] = []; let best: { x: number; y: number } | null = null, bd = Infinity;
+      for (const [x, y] of q) {
+        if (!this.isBlocked(x, y) && !this.hits(x + 0.5, y + 0.5)) { const d = Math.hypot(x + 0.5 - gx, y + 0.5 - gy); if (d < bd) { bd = d; best = { x: x + 0.5, y: y + 0.5 }; } }
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy, k = this.idx(nx, ny);
+          if (k < 0 || seen.has(k) || this.edgeBlocked(x, y, nx, ny)) continue;
+          seen.add(k); nq.push([nx, ny]);
+        }
+      }
+      if (best) return best;
+      q = nq;
+    }
+    return null;
+  }
   /** cea mai apropiata dala libera langa un obiect */
   standSpot(fx: number, fy: number, fw: number, fd: number, nearX: number, nearY: number) {
     let best: { x: number; y: number } | null = null; let bd = Infinity;

@@ -12,7 +12,7 @@
 | Capitol | Unde | Ce deblochează |
 |---|---|---|
 | 0 Căsuța | casa | treburile din casă → se deschide curtea |
-| 1 Curtea | curte + tarabă | grădină, fântână, taraba → tractorașul |
+| 1 Curtea | curte + tarabă | grădină, fântână, taraba (Bubu), lemnele la cherestea și mașina de tuns (Dudu) → tractorașul |
 | 2 Pădurea | pădure | lemne, ciuperci, pește → bicicleta (laptop → Vehicule) |
 | 3 Satul | sat | magazine, croitorie, florăria lui Bubu, tâmplăria lui Dudu, scuter |
 | 4 Orașul | oraș + apartament | autobuz, buticul elegant, cinema, restaurant, joburi, apartament |
@@ -91,7 +91,7 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 
 - Toate prețurile importante sunt în `PRICE` (`src/game/economy.ts`): bicicletă 350, scuter 800, autobuz 8/persoană, taxi 70, cinema 35, restaurant 70, înghețată 10, călușei 8, roata mare 15, consult 35 (sat) / 50 (oraș), florăria și tâmplăria câte 450 lei (+20 lemne la tâmplărie).
 - Mâncarea, semințele, ingredientele, hainele, mobila de la mall, cursurile și farmacia sunt de ~1,7 ori mai scumpe. Apartamentul: 5000 lei sau 1000 avans + 20 rate × 220; întreținere 30 lei/zi.
-- Lemnele nu mai fac averi: un copac dă 2 lemne (Dudu 3) și crește la loc în 4 minute; cheresteaua plătește 2 lei lemnul, cel mult 15 lemne pe zi; la piață lemnul, piatra și fânul se vând cu 1 leu.
+- Lemnele nu mai fac averi: un copac dă 2 lemne (Dudu 3) și crește la loc în 4 minute; cheresteaua plătește 2 lei lemnul (3 lei când vinde Dudu, din v1.5.0), cel mult 15 lemne pe zi; la piață lemnul, piatra și fânul se vând cu 1 leu.
 - Piața se „saturează”: după 10 bucăți din același lucru într-o zi prețul scade la jumătate, după 20 nu mai cumpără până a doua zi.
 - Tâmplăria: fără limită pe zi (ca taraba și florăria); lemnul e limitat de copaci (2–3 pe copac, cresc la loc în 4 minute).
 - Taraba: prețul depinde din ce e făcut produsul și de nivel (x2,3 la fiecare unire): lămâie 9, limonadă 19, bubble tea 43, cocktail 98; făină 9 … tort 225; flori 4 … coroniță 194; morcov 5 … oala cu ciorbă 113.
@@ -149,4 +149,16 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - **Câmpia:** câmpurile vecinilor (grâu, porumb, floarea-soarelui, varză, lavandă), ferma familiei Popescu cu hambar, fân și oi, morile de vânt, livada Mariei, lacul cu rațe, papură, nuferi, debarcader de pescuit și foișor, hanul „La Răscruce”, vaci.
 - **Salvările vechi** se mută singure în lume (o singură dată, `worldV = 2`): cine era în sat apare în același loc din sat, iar vehiculul rămâne acolo.
 - **Baterie:** podeaua se desenează pe bucăți care nu se suprapun, doar obiectele de pe ecran, iar copacii, casele, câmpurile, gardurile se desenează o dată ca imagine și apoi doar se lipesc.
+
+## Laptop mai rapid și reparații (v1.5.0)
+
+- **Desenul:** tot ce nu se mișcă (copaci, case, mobilă, pereții casei, gardurile) se desenează o singură dată în bucățile de podea. La fiecare cadru se desenează doar personajele, vehiculele, animalele și, peste ele, bucățile de obiecte aflate în fața lor. Codul e în `src/scenes/render.ts`.
+- **Rezoluția:** canvasul are cel mult ~2,2 milioane de pixeli; dacă jocul nu ține ritmul, calitatea scade singură în pași (cel mult până la 60%). Modul eco (30 de cadre pe secundă când stai) e pornit implicit. Aplicația de Windows cere placa video chiar dacă driverul e pe lista neagră a Chromium.
+- **Teste:** în fereastra cu obiective (📜) sunt „⏭️ Capitolul următor” și „♾️ Resurse infinite”. Resursele infinite țin banii la 99.999, materialele, ingredientele și semințele la 999 și soba plină. Se pornesc doar pe dispozitivul pe care le apeși.
+- **Rolurile din Capitolul 1:** Dudu e omul curții: taie lemne (3 o dată), tunde iarba, repară taraba și vinde lemne la cherestea (grămada de lângă mașina de tuns, 3 lei bucata). Bubu are grija grădinii, a florilor și a tarabei. Obiectivele au eticheta Dudu / Bubu; o poate face oricare. Obiectiv nou: „Vinde 6 lemne la cherestea”. Dudu condus de AI vinde și el lemnele când are peste 14.
+- **Casa:** soba e de teracotă, fără horn (hornul gri cu bara albă părea o lampă înfiptă în pat); laptopul stă lângă peretele din spate (era în ușa dintre dormitor și baie); copacul și piatra din spatele casei s-au mutat în curte, iar fâșiile din spatele casei sunt închise (personajul se ascundea după pereții înalți); în locul magaziei e o mașină de tuns iarba.
+- **Băncile:** banca are picioare, scânduri și spătar; vă așezați amândoi pe șezut, față în față; la foișor stați pe banca din față.
+- **Indicatoarele:** panoul stă de-a lungul drumului, cu săgeata spre destinație: casa e spre vest, satul și orașul spre est, pădurea spre nord.
+- **Blocat:** cine rămâne prins într-un obstacol (după pat, între mobile) poate ieși mergând, iar după o secundă e scos singur pe cea mai apropiată dală liberă.
+- **Partenerul AI:** după o bucurie care se repetă (dansul de la capitol nou), se oprește după 4 secunde și își vede de treabă (înainte rămânea blocat).
 
