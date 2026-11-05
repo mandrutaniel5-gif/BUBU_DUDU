@@ -238,36 +238,80 @@ Legendă: ✅ gata (nu se mai face o dată) · 🟡 făcut pe jumătate (scrie c
 - ✅ **1.6.0:** casele cu parolă, bicicleta vizibilă la partener, sunetul pe iPhone, Game Mode, florăria, cheresteaua, satul și orașul refăcute, miniharta nouă.
 - ⬜ **De verificat de proprietar:** Firebase-ul adevărat cu două telefoane (casa nouă + intrarea partenerului), Game Mode și sunetul pe iPhone (din aici nu se poate testa: nu avem Mac / iPhone).
 
-### 7.4 Capitolele până la nuntă
+### 7.4 Viziunea, exact cum a stabilit-o proprietarul (4 noiembrie 2026)
 
-Fiecare capitol are:
-- 7-10 obiective, cu **rol pentru Bubu și rol pentru Dudu**;
-- un text de final (`done`) și ce deblochează;
-- **o animație mare, bine lucrată, la final**;
-- teste cu doi jucători.
+Proprietarul a ales să **îmbine toate cele trei direcții** propuse. Cuvintele lui: „le îmbinăm pe toate și atunci avem o lume mare pe care o creștem, ne facem ferme pe câmpuri, câmpuri de agricultură, angajăm oameni, cumpărăm utilaje… trebuie totuși să ținem capitolele, să reparăm podul care face legătura dintre sat și casa noastră… semi-automate, nu GTA… orașul devine și el la un moment dat important”.
 
-Capitolele se adaugă în `CHAPTERS` din [`src/game/economy.ts`](../src/game/economy.ts), în continuare de la `id: 5`. Textul de final al Capitolului 4 („V-ați mutat la oraș! Povestea continuă…”) se schimbă, pentru că povestea nu se mută la oraș pentru totdeauna: **afacerile de la țară rămân** (proprietarului nu-i place să le lase pentru un job la oraș).
+**1. Lumea mare și legată** (✅ făcută în 1.4.0):
+- casa și curtea, cu **câmpuri** în jur, cumpărate bucată cu bucată; pădurea în spate;
+- **râul cu podul rupt** între casă și sat;
+- satul peste râu, de câteva ori mai mare; drumul mare spre oraș; orașul pe cartiere;
+- **locuri noi care se deschid pe hartă**: un pod reparat duce la o fermă nouă, un drum nou duce la lacul de munte. **Fără vacanțe dintr-un meniu**: proprietarul a zis clar că nu se simt reale.
 
-Ce e mai jos e **planul propus**. Detaliile personale (vezi 7.4.1) se confirmă cu proprietarul înainte de capitolele 9-11.
+**2. Povestea: satul care renaște prin voi:**
+- la început **satul e pe moarte**: case părăsite, podul rupt, școala închisă, tinerii plecați la oraș;
+- voi îl readuceți la viață prin **proiecte** (bani + lemn, piatră, recolte, produse), la panoul de la Primărie: podul, brutăria, școala, iluminatul, parcul, gara;
+- după fiecare proiect se **vede pe hartă**: se mută săteni noi, apar case, magazine și evenimente; satul devine treptat un orășel;
+- orașul e vecinul mare (vindeți marfa, lucruri rare, slujbe), dar **inima jocului rămâne acasă**.
 
-| Cap. | Titlu | Bubu | Dudu | Deblochează / final |
-|---|---|---|---|---|
-| 0-4 | ✅ Căsuța, Curtea, Pădurea, Satul, Orașul | | | gata |
-| 5 | **Ferma noastră** ⬜ | albinele (miere), găinile (ouă), grădina mare, brânza din laptele vacii | parcelele de câmp: arat, semănat și recoltat cu tractorul și utilaje cumpărate; vaca și oile; fânul | produsele merg în rețete și pe tarabă; finalul: prima recoltă mare, cu sătenii la seceriș |
-| 6 | **Afacerea de familie** ⬜ | magazinul „Bubu & Dudu” din oraș (flori, prăjituri, produse de la fermă), vitrina | angajații de la fermă și de la tâmplărie, duba de livrări, contractele cu restaurantele | angajații lucrează și când sunteți la oraș; raport de seară; finalul: târgul orașului, cu standul vostru |
-| 7 | **Casa cea mare** ⬜ | planul camerelor, culorile, decorul, grădina de flori | construcția (lemne, piatră, cherestea, meșteri din sat), mobila de la tâmplărie | casa visurilor lângă lac sau casa voastră mărită (camere noi, verandă); un animal de companie (pisică sau cățel); Primăria are deja butonul „Casa cea mare — în curând” |
-| 8 | **Excursia** ⬜ | bagajele, pozele, suvenirurile | biletele de tren de la gară, traseul | **o zonă nouă, reală** (munte sau mare), cu trenul de la gara orașului (`c-gara` spune acum „mai târziu în poveste”). Nu o „vacanță” dintr-un meniu: proprietarului nu-i place asta |
-| 9 | **Cererea în căsătorie** ⬜ | ziua ei obișnuită și invitația la „o plimbare”; pregătirile lui Dudu **nu se văd** pe ecranul lui Bubu (nici în obiective, nici pe hartă) | inelul de la bijutierul din oraș, alegerea locului, decorul surpriză (lumânări, petale, muzică), emoțiile | **animația cererii**: Dudu în genunchi, cutiuța, „Vrei să fii soția mea?”, Bubu spune DA, pupic, artificii. Se joacă la amândoi deodată |
-| 10 | **Pregătirile de nuntă** ⬜ | rochia de mireasă (croitoria satului + buticul elegant), buchetul din florăria ei, tortul | costumul, verighetele, lăutarii, cortul și mesele din curte | invitațiile (sătenii cu care v-ați împrietenit vin la nuntă), nașii, bugetul strâns din afaceri, lista de bifat |
-| 11 | **Nunta noastră** ⬜ | mireasa: intrarea cu buchetul, dansul mirilor, aruncatul buchetului | mirele: o așteaptă la altar, toastul, o „răscumpără” la furatul miresei | **ziua nunții**: cununia la biserica din sat (`w-church` există deja), ieșirea cu petale, poza de grup, petrecerea (hora, dansul mirilor, tortul, aruncatul buchetului, „furatul miresei”), artificii; la final, genericul cu momentele voastre din jurnal; apoi jocul continuă („Proaspăt căsătoriți”, luna de miere) |
+**3. Viața bogată, adăugată treptat:**
+- **animale de fermă:** găini (ouă), vacă (lapte, brânză), oi (lână pentru croitorie), stupi (miere);
+- **anotimpuri:**
+  - primăvara cu flori; vara cu lacul și înotul; toamna cu culesul;
+  - iarna cu zăpadă, sanie, om de zăpadă, Crăciun;
+  - culturile se schimbă după anotimp;
+- **evenimente:** târgul lunar, nunta unui sătean, furtuna (reparați acoperișul), vizita bunicilor, ziua lui Bubu și a lui Dudu;
+- **prietenii cu sătenii:** fiecare are povestea lui pe 5 trepte (cereri, cadouri, secrete);
+- **albume de colectat:** pești, flori, rețete, haine (cu recompensă);
+- **afacerile cresc**, nu le lași: ferma, taraba, florăria și tâmplăria se măresc, cu angajați, utilaje și clienți din oraș.
 
-#### 7.4.1 De întrebat proprietarul (înainte de capitolele 9-11)
+**Vehiculele, semi-automate, nu GTA:**
+- mergi doar pe drumuri; alegi destinația pe hartă, iar vehiculul merge singur;
+- butoanele ▶ Pornește / ⏸ Oprește / ↩ Întoarce; la răscruci alegi direcția cu săgeți;
+- bicicleta și scuterul rămân necesare: pe jos casă → sat ~1 minut, cu bicicleta de 3 ori mai repede, cu scuterul de 5 ori;
+- bicicleta are coș (marfă la piață); tractorul trage remorca;
+- utilajele agricole merg singure pe rânduri, cu aceleași butoane.
 
-Sunt detalii personale. Întreabă-l pe proprietar și pune-le doar în joc, nu în documentație (repo-ul se poate vedea de alții).
-- data nunții reale (poate apărea în joc);
-- locul cererii (dacă există unul real), culorile, melodia;
-- cum arată rochia și costumul;
-- numele nașilor și ale prietenilor care să apară ca săteni.
+**Ferma:**
+- cumperi parcele de câmp;
+- lucrul pe câmp: **ari** cu plugul, **semeni** cu semănătoarea, **uzi** cu cisterna, **recoltezi** cu combina;
+- produsele animalelor și ale câmpului merg în rețete și pe tarabă.
+
+**Angajații** (ideea proprietarului):
+- angajezi săteni pentru: câmp, animale, tarabă, florărie, lemne, condusul utilajelor. Exemple: grădinar (udă, recoltează, replantează), tăietor de lemne, vânzător la tarabă (ia un procent), florăreasă, culegător de flori și fructe de pădure;
+- salariu pe zi; mai buni sau mai slabi; pricepere care crește; mulțumiți dacă îi plătești la timp, pleacă dacă nu;
+- **seara primești un raport**, de exemplu: „Azi: Ina a vândut 12 produse, +86 lei. Salarii −40 lei”;
+- lucrează și când sunteți la oraș, ca să nu lăsați afacerile de la țară.
+
+**Orașul devine important:**
+- magazinul vostru **„Bubu & Dudu”**, cu produsele de la fermă;
+- contracte cu restaurantele din oraș, aprovizionate cu camionul;
+- mai târziu vă extindeți și organizați **târgul orașului**.
+
+#### Capitolele stabilite (9), ținute și continuate
+
+| # | Capitol | Stare | În cod azi / ce lipsește |
+|---|---|---|---|
+| 1 | **Casa** | ✅ | `CHAPTERS` id 0 (Căsuța) |
+| 2 | **Curtea** | ✅ | id 1 (Curtea); Dudu are rolul lui din 1.5.0 |
+| 3 | **Pădurea** | ✅ | id 2 (Pădurea, tractorașul) |
+| 4 | **Podul** | ⬜ | azi podul îl repară sătenii singuri la finalul capitolului de pădure. Trebuie să devină un capitol: aduceți lemne din pădure, piatră și bani; reparați podul care leagă casa de sat |
+| 5 | **Satul renaște** | 🟡 | id 3 (Satul) are magazine, croitorie, școală, parc, florăria lui Bubu, tâmplăria lui Dudu. Lipsesc: satul „pe moarte” la început, panoul de proiecte, sătenii noi, casele și evenimentele care apar după fiecare proiect |
+| 6 | **Ferma** | ⬜ | parcele, utilaje, animale (vezi mai sus); angajații încep aici |
+| 7 | **Drumul spre oraș** | 🟡 | id 4 (Orașul): autobuz, joburi, diplome, apartament, mall; bariera spre oraș se deschide aici. Trebuie legat de afacerile de la țară, nu „lași tot și te angajezi” |
+| 8 | **Afacerea din oraș** | ⬜ | magazinul „Bubu & Dudu”, contractele cu restaurantele, camionul, târgul orașului |
+| 9 | **Nunta** | ⬜ | ideile propuse atunci: cererea în căsătorie (inelul), rochia și costumul, locul (biserica din sat, `w-church` există, sau restaurantul), **invitații sunt sătenii** cu care v-ați împrietenit, petrecerea cu un minijoc de dans |
+
+După capitole, **anotimpurile și sărbătorile** merg pe toată durata jocului.
+
+**Atenție la numerotare:** capitolul e salvat în `w.stats.chapter`. Dacă se inserează Podul și Ferma între cele de azi, salvările vechi se mută (migrare). Cine e deja în sat are podul reparat; nimeni nu pierde progres.
+
+Alte idei propuse atunci, care se potrivesc viziunii (**neconfirmate încă**, întreabă-l pe proprietar):
+- casa visurilor (etaj, cameră nouă, grădină mare, seră);
+- un animăluț (cățel sau pisică: îl hrănești, îl plimbi, îi dai jucării);
+- afacerea voastră ca o cafenea sau patiserie.
+
+Pentru nuntă, detaliile personale (data, locul cererii, rochia, nașii) se întreabă la proprietar. Se pun doar în joc, nu în documentație: repo-ul e public.
 
 ### 7.5 Sisteme pentru tot jocul
 
@@ -337,24 +381,22 @@ Sunt detalii personale. Întreabă-l pe proprietar și pune-le doar în joc, nu 
 - ⬜ Firebase-ul adevărat se testează doar pe două telefoane, nu automat.
 - ⬜ GitHub Actions: `actions/upload-artifact@v4` avertizează că folosește Node 20; de urmărit o versiune nouă.
 
-### 7.8 Ordinea de lucru
+### 7.8 Ordinea de lucru (stabilită cu proprietarul)
 
 Câte o versiune pentru fiecare pas, **testată înainte** (vezi secțiunea 8):
-1. ✅ Reparații (1.3.2).
-2. ✅ Lumea mare (1.4.0-1.4.2).
-3. ✅ Viteză pe laptop + reparații vizuale + rolul lui Dudu în Capitolul 1 (1.5.0).
-4. 🟡 **Butonul ⏭ la vedere** ✅ (1.6.0) + ⬜ tunsul ierbii cu mașina împinsă (7.6).
-4b. ✅ 1.6.0: case cu parolă, iPhone, florăria, cheresteaua, satul și orașul refăcute, miniharta.
-5. ⬜ Rolurile lui Bubu și ale lui Dudu în toate capitolele 0-4 (etichete și câștig propriu pentru fiecare) + Podul pentru jocurile noi.
-6. ⬜ Vehiculele: ⏸ / ▶ / ↩, răscruci, destinația pe hartă.
-7. ⬜ Capitolul 5 · Ferma noastră.
-8. ⬜ Capitolul 6 · Afacerea de familie (angajații, magazinul, contractele).
-9. ⬜ Capitolul 7 · Casa cea mare.
-10. ⬜ Anotimpurile și sărbătorile.
-11. ⬜ Capitolul 8 · Excursia (trenul și zona nouă).
-12. ⬜ Capitolul 9 · Cererea în căsătorie (după întrebările din 7.4.1).
-13. ⬜ Capitolul 10 · Pregătirile de nuntă.
-14. ⬜ Capitolul 11 · Nunta noastră, cu genericul.
+1. ✅ **Reparații** (1.3.2): rutina de seară A, cina A, sunete potrivite, super-bășina, taraba comună + inventarul, clienți separați.
+2. ✅ **Lumea mare** (1.4.0-1.4.2): o singură lume legată, drumuri, harta și miniharta, satul și orașul mărite.
+   - ✅ (1.5.0) viteză pe laptop, reparații vizuale, rolul lui Dudu în Capitolul 1.
+   - ✅ (1.6.0) butonul ⏭ la vedere; case cu parolă, iPhone, florăria, cheresteaua, satul și orașul refăcute, miniharta.
+   - ⬜ tunsul ierbii cu mașina împinsă (7.6).
+3. 🟡 **Vehiculele semi-automate:** merg singure pe drum; lipsesc ▶ / ⏸ / ↩, săgețile la răscruci, destinația pe hartă, coșul bicicletei, remorca tractorului.
+4. ⬜ **Capitolul Podul** + proiectele satului (**Satul renaște**).
+5. ⬜ **Ferma:** câmpuri, utilaje, animale.
+6. ⬜ **Angajații.**
+7. ⬜ **Orașul important:** magazinul vostru, contractele, târgul.
+8. ⬜ **Nunta, anotimpurile, evenimentele** (plus prieteniile pe 5 trepte și albumele).
+
+În fiecare pas: **roluri pentru Bubu și pentru Dudu** și **animații bine lucrate** (7.6).
 
 ## 8. Reguli de lucru
 
