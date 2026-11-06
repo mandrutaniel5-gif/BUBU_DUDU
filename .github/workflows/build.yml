@@ -82,7 +82,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       # Google Play cere din 31 aug 2026 Android 16 (API 36): doar aplicatia de Android merge pe Capacitor 8 (iOS ramane pe 6)
-      - run: npm i --no-save @capacitor/cli@8.6.0 @capacitor/core@8.6.0 @capacitor/android@8.6.0
+      - run: npm i --no-save --legacy-peer-deps @capacitor/cli@8.6.0 @capacitor/core@8.6.0 @capacitor/android@8.6.0
       - run: npx cap add android
       - run: npx cap sync android
       - name: Versiunea aplicatiei (din package.json; Play cere un numar mai mare la fiecare incarcare)
