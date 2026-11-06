@@ -625,5 +625,60 @@ def({
   tick(f, t, _p, dt) { if (every(t, dt, 0.45)) f.burst('drop', 20, -6, 3, 1.4, 50, { grav: 180, max: 0.5, color: '#8b5e34' }); },
 });
 
+// ---- mobila din apartament
+def({
+  id: 'act_piano', label: 'Cântă la pian', icon: '🎹', who: 'both', kind: 'base', dur: 9, loop: true,
+  pose(P, t, p) {
+    // pe taburet, cu spatele la noi; mainile alearga pe clape, capul si fundul se leagana pe ritm
+    P.back = true; P.legL = P.legR = 5; P.sy = 0.94; P.dy = 2;
+    P.armL = 1.25 + Math.max(0, Math.sin(t * 9)) * 0.35; P.armR = 1.25 + Math.max(0, Math.sin(t * 9 + 1.9)) * 0.35;
+    P.headRot = wave(t, 0.5, 0.09); P.hip = wave(t, 1, 1.6); P.rot = wave(t, 0.5, 0.03);
+    if (p > 0.82) { P.armL = P.armR = 1.7; P.dy = -Math.abs(Math.sin(t * 10)) * 2; }
+  },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.34)) f.emit('note', (Math.random() - 0.5) * 50, -95, { vx: (Math.random() - 0.5) * 40, vy: -45, max: 1.5, color: ['#7a5cff', '#ff5c8a', '#2ec4b6', '#ff9f1c'][Math.floor(Math.random() * 4)] }); },
+  events: [[0.84, f => { f.hearts(0, -100, 3); f.text(0, -118, 'Ta-daa! 🎶', '#7a5cff', 0.85); }]],
+});
+def({
+  id: 'act_fishwatch', label: 'Privește peștișorii', icon: '🐟', who: 'both', kind: 'base', dur: 7, loop: true,
+  pose(P, t, p) {
+    // cu fata la acvariu: presara mancare, apoi se apleaca si urmareste pestii cu ochii, bate usor in geam
+    P.back = true;
+    if (p < 0.28) { const k = seg(p, 0, 0.28); P.armR = 2.2 + Math.sin(t * 16) * 0.12; P.rot = 0.03; P.headRot = -0.06 + k * 0.04; }
+    else if (p < 0.55) { P.rot = 0.09; P.sy = 0.97; P.headDy = 2; P.headRot = wave(t, 0.6, 0.12); P.armL = P.armR = 0.3; }
+    else if (p < 0.68) { P.rot = 0.1; P.armR = 1.5 + Math.max(0, Math.sin(t * 18)) * 0.25; P.headRot = 0.05; }
+    else { P.rot = 0.07; P.headRot = wave(t, 0.5, 0.14); P.dy = p > 0.86 ? -Math.abs(Math.sin(t * 9)) * 3 : 0; P.armL = P.armR = 0.5; }
+  },
+  tick(f, t, p, dt) { if (p > 0.3 && every(t, dt, 1.1, 0.4)) f.emit('heart', (Math.random() - 0.5) * 30, -100, { vy: -30, max: 1.4, size: 0.7 }); },
+  events: [[0.56, f => f.text(0, -112, 'Cioc-cioc 🐟', '#2ec4b6', 0.8)], [0.86, f => f.text(0, -112, 'Ce dulci sunt! 💕', '#ff5c8a', 0.8)]],
+});
+def({
+  id: 'act_coffee', label: 'Face o cafea', icon: '☕', who: 'both', kind: 'base', dur: 7, loop: true,
+  pose(P, t, p) {
+    // apasa butoanele, asteapta sa curga (bataie din picior), ia ceasca, miroase, sorbitura, „Ahh!”
+    if (p < 0.18) { P.armR = 1.5 + (Math.sin(t * 14) > 0.6 ? 0.25 : 0); P.eyes = 'happy'; P.mouth = 'w'; }
+    else if (p < 0.5) { P.armL = P.armR = 0.2; P.legR = Math.max(0, Math.sin(t * 12)) * 3; P.headRot = wave(t, 0.8, 0.08); P.eyes = 'happy'; P.mouth = 'smile'; }
+    else {
+      const k = ease(seg(p, 0.5, 0.6));
+      P.propR = 'cup'; P.propRotR = 0.3; P.armR = lerp(0.6, 2.4, k);
+      const sip = p > 0.66 && p < 0.84 && Math.sin(t * 7) > 0;
+      P.mouth = p > 0.86 ? 'open' : sip ? 'kiss' : 'w'; P.eyes = p > 0.6 && p < 0.66 ? 'closed' : 'happy'; P.blush = 1.1;
+      if (p > 0.86) { P.dy = -Math.abs(Math.sin(t * 9)) * 4; P.eyes = 'star'; }
+    }
+  },
+  tick(f, t, p, dt) { if (p > 0.55 && p < 0.86 && every(t, dt, 0.3)) f.emit('steam', 22, -78, { vx: 4, vy: -26, max: 0.9, size: 0.5 }); },
+  events: [[0.6, f => f.text(0, -112, 'Mmm… ce miros! ☕', '#8d5a3a', 0.8)], [0.87, f => { f.text(0, -112, 'Ahh! ⚡', '#ff9f1c', 0.9); f.burst('sparkle', 0, -70, 8, 1, 60); }]],
+});
+def({
+  id: 'act_game', label: 'Joacă pe consolă', icon: '🎮', who: 'both', kind: 'base', dur: 9, loop: true,
+  pose(P, t, p) {
+    // pe canapea, cu spatele: maneta in maini, se apleaca dupa personaj, sare de bucurie
+    P.back = true; P.legL = P.legR = 5; P.sy = 0.94; P.dy = 2;
+    P.propR = 'pad'; P.propRotR = 2.8; P.armL = P.armR = 1.05 + Math.sin(t * 16) * 0.06;
+    P.rot = Math.sin(t * 1.7) * 0.12; P.headRot = Math.sin(t * 1.7) * 0.1;
+    if ((p > 0.42 && p < 0.5) || p > 0.86) { P.dy = -Math.abs(Math.sin(t * 12)) * 5; P.armL = P.armR = 2.3; }
+  },
+  events: [[0.43, f => f.text(0, -112, 'Nivelul 2! ⭐', '#7a5cff', 0.8)], [0.87, f => { f.text(0, -112, 'Am câștigat! 🏆', '#ff9f1c', 0.9); f.burst('star', 0, -90, 6, 1, 70); }]],
+});
+
 export const ANIMS: Record<string, Anim> = Object.fromEntries(A.map(a => [a.id, a]));
 export const ANIM_LIST = A;

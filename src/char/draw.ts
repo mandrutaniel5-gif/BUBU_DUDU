@@ -521,6 +521,21 @@ export function drawProp(ctx: CanvasRenderingContext2D, prop: PropType, O: strin
       ctx.fillStyle = '#ffe1ea'; ctx.beginPath(); ctx.roundRect(-16, 0, 32, 22, 9); ctx.fill(); ctx.stroke();
       heartPath(ctx, 0, 12, 5); ctx.fillStyle = '#ff7aa2'; ctx.fill();
       break;
+    case 'cup':
+      // ceasca de cafea alba cu inimioara, toarta si cafea la gura
+      ctx.save(); ctx.rotate(Math.PI);
+      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(-8, -2, 16, 16, 4); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(10, 6, 4.5, -1.3, 1.3); ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.fillStyle = '#7a4a26'; ell(ctx, 0, -1.5, 7, 2.2); ctx.fill();
+      heartPath(ctx, 0, 8, 3.2); ctx.fillStyle = '#ff7aa2'; ctx.fill();
+      ctx.restore();
+      break;
+    case 'pad':
+      // maneta de consola: corp gri, butoane colorate
+      ctx.fillStyle = '#5a6a8a'; ctx.beginPath(); ctx.roundRect(-14, -6, 28, 12, 6); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#ff5d8f'; ctx.beginPath(); ctx.arc(6, -1, 2, 0, 7); ctx.fill(); ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(9.5, 2, 2, 0, 7); ctx.fill();
+      ctx.fillStyle = '#2b2b33'; ctx.fillRect(-9, -1, 6, 2); ctx.fillRect(-7, -3, 2, 6);
+      break;
     case 'none': break;
   }
 }

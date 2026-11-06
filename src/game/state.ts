@@ -73,7 +73,7 @@ export function newWorld(): WorldState {
       bubu: { needs: fullNeeds(), sick: null, fart: 30, gx: 6.5, gy: 8.4 },
       dudu: { needs: fullNeeds(), sick: null, fart: 50, gx: 7.3, gy: 9.0 },
     },
-    furn: { lampOn: false, tvOn: false, clogged: false, bathFoam: 0.2, cooking: false, crops: [0, 0, 0, 0, 0, 0] },
+    furn: { lampOn: false, tvOn: false, aptTvOn: false, aptGame: false, aptPiano: false, aptFish: false, aptCoffee: false, clogged: false, bathFoam: 0.2, cooking: false, crops: [0, 0, 0, 0, 0, 0] },
     jar: [], log: [], stats: {}, res: { wood: 3, stone: 2, flower: 4, seeds: 3, veg: 1, meals: 2, flour: 0, lemon: 0 }, placed: [], nodes: {}, money: 20, grass: {},
   };
 }

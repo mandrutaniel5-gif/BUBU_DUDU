@@ -19,13 +19,13 @@ function rhombDecal(ctx: CanvasRenderingContext2D, gx: number, gy: number, w: nu
   tilePath(ctx, gx, gy, w, d, z); ctx.fillStyle = fill; ctx.fill();
 }
 
-export interface FurnState { depleted?: Record<string, boolean>; tvBroken?: boolean; tubDirty?: boolean; fridgeDirty?: boolean; dishesDirty?: boolean; lampOn?: boolean; tvOn?: boolean; clogged?: boolean; bathFoam?: number; cooking?: boolean; crops?: number[]; night?: number; }
+export interface FurnState { depleted?: Record<string, boolean>; tvBroken?: boolean; tubDirty?: boolean; fridgeDirty?: boolean; dishesDirty?: boolean; lampOn?: boolean; tvOn?: boolean; clogged?: boolean; bathFoam?: number; cooking?: boolean; crops?: number[]; night?: number; aptPiano?: boolean; aptFish?: boolean; aptCoffee?: boolean; aptGame?: boolean; aptTvOn?: boolean; }
 
 export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: FurnState) {
   const { gx, gy, w, d } = f;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   if (drawVillageType(ctx, f, t, st.night ?? 0, (globalThis as any).__villageOwned ?? {})) return;
-  if (drawCityType(ctx, f, t, st.night ?? 0, (globalThis as any).__villageOwned ?? {})) return;
+  if (drawCityType(ctx, f, t, st.night ?? 0, (globalThis as any).__villageOwned ?? {}, st as Record<string, unknown>)) return;
   if (drawForestType(ctx, f, t, !!st.depleted?.[f.id])) return;
   if (drawStoryType(ctx, f, t)) return;
   if (drawCountryType(ctx, f, t, st.night ?? 0)) return;
@@ -196,9 +196,25 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
         ctx.fillStyle = '#555'; ctx.fill(); ctx.save(); ctx.clip();
         for (let i = 0; i < 40; i++) { const v = Math.floor(Math.random() * 255); ctx.fillStyle = `rgb(${v},${v},${v})`; const q = iso(x + 0.01, gy + 0.3 + Math.random() * (d - 0.6), 30 + Math.random() * 32); ctx.fillRect(q.x - 2, q.y - 1, 4, 3); }
         ctx.restore();
-      } else if (st.tvOn) {
-        const hue = (t * 40) % 360; ctx.fillStyle = `hsl(${hue},70%,72%)`; ctx.fill();
-        const m = iso(x + 0.01, gy + d / 2, 46); heartPath(ctx, m.x, m.y + 4, 6 + Math.sin(t * 6) * 1.5); ctx.fillStyle = '#fff'; ctx.fill();
+      } else if (st.tvOn || st.aptGame) {
+        // un desen animat (sau jocul de pe consola): cer, dealuri care curg, un personaj care topaie
+        const P = (u: number, h: number) => iso(x + 0.01, gy + 0.3 + u * (d - 0.6), 30 + h * 32);
+        ctx.save(); ctx.clip();
+        const game = !!st.aptGame;
+        ctx.fillStyle = game ? '#1b1b3a' : '#9ad8ff'; ctx.fill();
+        if (game) {
+          for (let i = 0; i < 8; i++) { const q = P(((i * 0.37 + t * 0.05) % 1), 0.55 + (i * 0.29) % 0.4); ctx.fillStyle = '#ffffffaa'; ctx.fillRect(q.x, q.y, 1.5, 1.5); }
+          for (let i = -1; i < 6; i++) { const u = i * 0.22 - ((t * 0.4) % 0.22); const a = P(u, 0), b = P(u + 0.2, 0), c2 = P(u + 0.2, 0.18 + (i % 3) * 0.06), e3 = P(u, 0.18 + (i % 3) * 0.06); poly(ctx, [a, b, c2, e3]); ctx.fillStyle = i % 2 ? '#3ac46a' : '#2ea85a'; ctx.fill(); }
+          for (let i = 0; i < 3; i++) { const u = ((i * 0.4 - t * 0.4) % 1 + 1) % 1; const q = P(u, 0.55); ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(q.x, q.y, 2.2, 0, 7); ctx.fill(); }
+          const jump = Math.abs(Math.sin(t * 3.2)); const h = P(0.3, 0.3 + jump * 0.35); ctx.fillStyle = '#ff5d8f'; ctx.fillRect(h.x - 3, h.y - 6, 6, 6); ctx.fillStyle = '#fff'; ctx.fillRect(h.x + 0.5, h.y - 5, 1.5, 1.5);
+        } else {
+          const sun = P(0.8, 0.75); ctx.fillStyle = '#ffe066'; ctx.beginPath(); ctx.arc(sun.x, sun.y, 4.5, 0, 7); ctx.fill();
+          for (let i = 0; i < 2; i++) { const u = ((i * 0.55 + t * 0.06) % 1.2) - 0.1; const q = P(u, 0.62 + i * 0.12); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(q.x, q.y, 3, 0, 7); ctx.arc(q.x + 4, q.y + 1, 2.5, 0, 7); ctx.arc(q.x - 4, q.y + 1, 2.4, 0, 7); ctx.fill(); }
+          for (let i = -1; i < 5; i++) { const u = i * 0.3 + ((t * 0.12) % 0.3); const c0 = P(u + 0.15, 0.28 + (i % 2) * 0.08); ctx.fillStyle = i % 2 ? '#7cc576' : '#6bb35a'; ctx.beginPath(); ctx.ellipse(c0.x, c0.y + 6, 13, 9, 0, 0, 7); ctx.fill(); }
+          const b0 = Math.abs(Math.sin(t * 4)); const hq = P(0.45, 0.22 + b0 * 0.3); heartPath(ctx, hq.x, hq.y, 4.5); ctx.fillStyle = '#ff4d6d'; ctx.fill();
+          ctx.fillStyle = '#2b2b33'; ctx.fillRect(hq.x - 2, hq.y - 3, 1, 1.4); ctx.fillRect(hq.x + 1, hq.y - 3, 1, 1.4);
+        }
+        ctx.restore();
       } else { ctx.fillStyle = '#3b4250'; ctx.fill(); const gl = iso(x + 0.01, gy + 0.6, 56); ctx.fillStyle = '#ffffff33'; ctx.fillRect(gl.x - 4, gl.y - 2, 10, 4); }
       break;
     }
@@ -270,6 +286,65 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
   }
 }
 
+/** peretii apartamentului: lambriu alb cu casete, brau auriu, tapet cu model fin, cornisa aurie, ferestre mari spre oras */
+function drawLuxWall(ctx: CanvasRenderingContext2D, wl: Wall, pts: { x: number; y: number }[], a: { x: number; y: number }, b: { x: number; y: number }, t: number, night: number) {
+  const base = wl.color, h = wl.h;
+  const P = (u: number, z: number) => ({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u - z });
+  ctx.save(); poly(ctx, pts); ctx.clip();
+  // tapetul de sus: romburi fine cu un punct auriu
+  ctx.strokeStyle = shade(base, 0.9); ctx.lineWidth = 0.8;
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+    const u = (i + 0.5) / 4, z = 44 + j * 12 + (i % 2) * 6; const c = P(u, z);
+    ctx.beginPath(); ctx.moveTo(c.x, c.y - 4); ctx.lineTo(c.x + 3, c.y); ctx.lineTo(c.x, c.y + 4); ctx.lineTo(c.x - 3, c.y); ctx.closePath(); ctx.stroke();
+    ctx.fillStyle = '#d9b968'; ctx.beginPath(); ctx.arc(c.x, c.y, 0.9, 0, 7); ctx.fill();
+  }
+  // lambriul de jos, alb, cu doua casete
+  poly(ctx, [P(0, 0), P(1, 0), P(1, 36), P(0, 36)]); ctx.fillStyle = '#fbf8f3'; ctx.fill();
+  ctx.strokeStyle = '#e2d8ca'; ctx.lineWidth = 1.2;
+  for (const [u0, u1] of [[0.08, 0.46], [0.54, 0.92]]) { poly(ctx, [P(u0, 10), P(u1, 10), P(u1, 30), P(u0, 30)]); ctx.stroke(); }
+  // plinta si braul auriu
+  poly(ctx, [P(0, 0), P(1, 0), P(1, 6), P(0, 6)]); ctx.fillStyle = '#e8e0d4'; ctx.fill();
+  ctx.strokeStyle = '#c9a24a'; ctx.lineWidth = 2; let g0 = P(0, 36), g1 = P(1, 36); ctx.beginPath(); ctx.moveTo(g0.x, g0.y); ctx.lineTo(g1.x, g1.y); ctx.stroke();
+  // cornisa sus
+  poly(ctx, [P(0, h - 6), P(1, h - 6), P(1, h), P(0, h)]); ctx.fillStyle = '#fbf8f3'; ctx.fill();
+  ctx.lineWidth = 1.5; g0 = P(0, h - 6); g1 = P(1, h - 6); ctx.beginPath(); ctx.moveTo(g0.x, g0.y); ctx.lineTo(g1.x, g1.y); ctx.stroke();
+  ctx.restore();
+  if (wl.window) {
+    // fereastra mare, de la brau pana sub cornisa: orasul (blocuri, ferestre aprinse noaptea), rama aurie, draperii grele
+    const u0 = 0.1, u1 = 0.9, z0 = 14, z1 = h - 10;
+    const win = [P(u0, z0), P(u1, z0), P(u1, z1), P(u0, z1)];
+    ctx.save(); poly(ctx, win); ctx.clip();
+    const sky = ctx.createLinearGradient(0, P(0.5, z1).y, 0, P(0.5, z0).y);
+    if (night > 0.5) { sky.addColorStop(0, '#1d2550'); sky.addColorStop(1, '#4a3a7a'); } else { sky.addColorStop(0, '#9fd8ff'); sky.addColorStop(1, '#e8f6ff'); }
+    poly(ctx, win); ctx.fillStyle = sky; ctx.fill();
+    const seed = wl.x * 7 + wl.y * 13;
+    for (let i = 0; i < 6; i++) {
+      const uu = u0 + (i + 0.1) * (u1 - u0) / 6, bw = (u1 - u0) / 6 * 0.86, bh = 18 + ((seed + i * 5) % 7) * 6;
+      const q = [P(uu, z0), P(uu + bw, z0), P(uu + bw, z0 + bh), P(uu, z0 + bh)];
+      poly(ctx, q); ctx.fillStyle = night > 0.5 ? '#2a2f55' : ['#b8c8e0', '#c9d6ea', '#a9bcd8'][i % 3]; ctx.fill();
+      for (let r = 0; r < Math.floor(bh / 7); r++) for (let k = 0; k < 2; k++) {
+        const lit = night > 0.5 ? ((seed + i * 3 + r * 7 + k) % 3 !== 0) : false;
+        const wp = P(uu + bw * (0.25 + k * 0.4), z0 + 4 + r * 7);
+        ctx.fillStyle = lit ? '#ffe28a' : night > 0.5 ? '#3a4070' : '#ffffffaa'; ctx.fillRect(wp.x - 1, wp.y - 2, 2, 2.5);
+      }
+    }
+    if (night > 0.5) { const m = P(0.75, z1 - 10); ctx.fillStyle = '#fff6c8'; ctx.beginPath(); ctx.arc(m.x, m.y, 4, 0, 7); ctx.fill(); }
+    else { const cl = P(0.3 + Math.sin(t * 0.08 + seed) * 0.08, z1 - 12); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cl.x, cl.y, 4, 0, 7); ctx.arc(cl.x + 5, cl.y - 2, 5, 0, 7); ctx.arc(cl.x + 10, cl.y, 4, 0, 7); ctx.fill(); }
+    // reflexie pe geam
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 3; const r0 = P(u0 + 0.12, z0 + 6), r1 = P(u0 + 0.28, z1 - 6); ctx.beginPath(); ctx.moveTo(r0.x, r0.y); ctx.lineTo(r1.x, r1.y); ctx.stroke();
+    ctx.restore();
+    poly(ctx, win); ctx.strokeStyle = '#c9a24a'; ctx.lineWidth = 3.5; ctx.stroke(); ctx.strokeStyle = O; ctx.lineWidth = 1.2; ctx.stroke();
+    const m1 = P(0.5, z0), m2 = P(0.5, z1); ctx.strokeStyle = '#c9a24a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(m1.x, m1.y); ctx.lineTo(m2.x, m2.y); ctx.stroke();
+    // galeria si draperiile de catifea
+    const ga = P(0.02, z1 + 4), gb = P(0.98, z1 + 4); ctx.strokeStyle = '#a07a2a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(ga.x, ga.y); ctx.lineTo(gb.x, gb.y); ctx.stroke();
+    for (const [u, s] of [[u0 - 0.02, 1], [u1 + 0.02, -1]] as [number, number][]) {
+      const top = P(u, z1 + 3), mid = P(u + s * 0.07, (z0 + z1) / 2), bot = P(u, z0 - 6);
+      ctx.fillStyle = '#b5476a'; ctx.strokeStyle = shade('#b5476a', 0.7); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(top.x - 4, top.y); ctx.quadraticCurveTo(mid.x, mid.y, bot.x - 4, bot.y); ctx.lineTo(bot.x + 4, bot.y); ctx.quadraticCurveTo(mid.x + 6 * s, mid.y, top.x + 4, top.y); ctx.closePath(); ctx.fill(); ctx.stroke();
+      const tie = P(u + s * 0.04, (z0 + z1) / 2 - 4); ctx.fillStyle = '#d4af37'; ctx.beginPath(); ctx.ellipse(tie.x, tie.y, 4, 1.8, 0, 0, 7); ctx.fill();
+    }
+  }
+}
 export function drawWall(ctx: CanvasRenderingContext2D, wl: Wall, t: number, night: number) {
   const { x, y, h } = wl;
   const a = iso(x, y, 0), b = wl.dir === 'x' ? iso(x + 1, y, 0) : iso(x, y + 1, 0);
@@ -278,6 +353,8 @@ export function drawWall(ctx: CanvasRenderingContext2D, wl: Wall, t: number, nig
   const fill = wl.dir === 'x' ? shade(base, 0.93) : base;
   poly(ctx, pts); ctx.fillStyle = fill; ctx.fill();
   if (wl.kind === 'back') {
+    if (wl.lux) drawLuxWall(ctx, wl, pts, a, b, t, night);
+    else {
     // tapet: buline / inimioare
     ctx.save(); poly(ctx, pts); ctx.clip();
     ctx.fillStyle = shade(base, 0.86);
@@ -304,6 +381,7 @@ export function drawWall(ctx: CanvasRenderingContext2D, wl: Wall, t: number, nig
       ctx.fillStyle = '#ffb6c9';
       for (const u of [u0, u1]) { const q = P(u, z1 + 4), r = P(u, z0 - 4); ctx.beginPath(); ctx.ellipse((q.x + r.x) / 2, (q.y + r.y) / 2, 4, (r.y - q.y) / 2 + 2, 0, 0, 7); ctx.fill(); }
     }
+    }
     if (wl.door) {
       // usa de la intrare (apartament): toc, usa de lemn, vizor, clanta, numarul
       const P = (u: number, z: number) => ({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u - z });
@@ -317,6 +395,13 @@ export function drawWall(ctx: CanvasRenderingContext2D, wl: Wall, t: number, nig
       // lumina de pe scara se vede pe sub usa
       const l0 = P(0.22, 1), l1 = P(0.78, 1); ctx.strokeStyle = night > 0.4 ? '#ffe680' : '#fff4c0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(l0.x, l0.y); ctx.lineTo(l1.x, l1.y); ctx.stroke();
     }
+  }
+  if (wl.lux && wl.kind !== 'back') {
+    // pereti interiori din apartament: lambriu cu casete si un brau auriu sus
+    const P = (u: number, z: number) => ({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u - z });
+    ctx.strokeStyle = shade(base, 0.82); ctx.lineWidth = 1.2;
+    if (h > 14) for (const [u0, u1] of [[0.1, 0.45], [0.55, 0.9]]) { poly(ctx, [P(u0, 5), P(u1, 5), P(u1, h - 7), P(u0, h - 7)]); ctx.stroke(); }
+    ctx.strokeStyle = '#c9a24a'; ctx.lineWidth = 1.6; const g0 = P(0, h - 2.5), g1 = P(1, h - 2.5); ctx.beginPath(); ctx.moveTo(g0.x, g0.y); ctx.lineTo(g1.x, g1.y); ctx.stroke();
   }
   poly(ctx, pts); ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.stroke();
   // capacul peretelui (grosime)

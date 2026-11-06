@@ -6,7 +6,7 @@ export interface Activity {
   anim: string;
   dur: number;                                  // secunde reale
   needs: Partial<Record<NeedKey, number>>;      // la final
-  place?: 'bed' | 'tub' | 'toilet' | 'sofa' | 'stand' | 'ride' | 'bench';
+  place?: 'bed' | 'tub' | 'toilet' | 'sofa' | 'stand' | 'ride' | 'bench' | 'piano';
   furnFlag?: [string, unknown, unknown];        // [cheie, la start, la final]
   text: string;                                 // mesaj la final
   minigame?: string;                            // id minijoc (daca exista)
@@ -56,5 +56,10 @@ export const ACTIVITIES: Record<string, Activity> = {
   repairstand: { id: 'repairstand', anim: 'act_scrub', dur: 3, needs: { fun: 6, energy: -1.5 }, text: 'Bang-bang 🔨' },
   openstand: { id: 'openstand', anim: 'wave', dur: 0.8, needs: { fun: 2 }, text: 'Deschis! 🧺' },
   carousel: { id: 'carousel', anim: 'act_sit', dur: 8, needs: { fun: 25, love: 3 }, place: 'ride', text: 'Uiiii! 🎠' },
+  // mobila din apartament (de la mall): activitati adevarate, cu animatie pe obiect
+  piano: { id: 'piano', anim: 'act_piano', dur: 9, needs: { fun: 14, love: 2 }, place: 'piano', furnFlag: ['aptPiano', true, false], text: 'Ce melodie frumoasă! 🎹' },
+  aquarium: { id: 'aquarium', anim: 'act_fishwatch', dur: 7, needs: { fun: 10, love: 2, energy: 2 }, furnFlag: ['aptFish', true, false], text: 'Peștișorii au mâncat 🐟' },
+  coffee: { id: 'coffee', anim: 'act_coffee', dur: 7, needs: { energy: 18, fun: 4 }, furnFlag: ['aptCoffee', true, false], text: 'Cafeluța e gata! ☕' },
+  console: { id: 'console', anim: 'act_game', dur: 9, needs: { fun: 22, energy: -5 }, place: 'sofa', furnFlag: ['aptGame', true, false], text: 'Ce meci! 🎮' },
   read_mail: { id: 'read_mail', anim: 'love', dur: 2.6, needs: { love: 8 }, text: 'Un bilețel de dragoste 💌' },
 };

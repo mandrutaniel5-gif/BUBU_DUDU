@@ -1,11 +1,11 @@
 import { RESOURCE_NODES } from './build';
 import { WORLD, WORLD_W, WORLD_H, ORIGIN, CORE_W, CORE_H } from './layout';
 // Harta casei si a curtii.
-export type Floor = 'forest' | 'road' | 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand' | 'asphalt' | 'sidewalk' | 'void' | 'bridge' | 'field' | 'meadow' | 'cobble';
-export const FLOORS: Floor[] = ['void', 'grass', 'forest', 'road', 'path', 'wood', 'pinkwood', 'tileblue', 'checker', 'dirt', 'water', 'sand', 'asphalt', 'sidewalk', 'bridge', 'field', 'meadow', 'cobble'];
+export type Floor = 'forest' | 'road' | 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand' | 'asphalt' | 'sidewalk' | 'void' | 'bridge' | 'field' | 'meadow' | 'cobble' | 'parquet' | 'marble' | 'marblecheck' | 'carpet';
+export const FLOORS: Floor[] = ['void', 'grass', 'forest', 'road', 'path', 'wood', 'pinkwood', 'tileblue', 'checker', 'dirt', 'water', 'sand', 'asphalt', 'sidewalk', 'bridge', 'field', 'meadow', 'cobble', 'parquet', 'marble', 'marblecheck', 'carpet'];
 const FLOOR_ID: Record<string, number> = Object.fromEntries(FLOORS.map((f, i) => [f, i]));
 
-export interface Wall { x: number; y: number; dir: 'x' | 'y'; h: number; kind: 'back' | 'inner' | 'low'; window?: boolean; door?: boolean; color: string }
+export interface Wall { x: number; y: number; dir: 'x' | 'y'; h: number; kind: 'back' | 'inner' | 'low'; window?: boolean; door?: boolean; color: string; lux?: boolean }
 
 export type FurnType =
   | 'bed' | 'nightstand' | 'wardrobe' | 'toilet' | 'bathtub' | 'sink' | 'washer' | 'fridge' | 'stove'

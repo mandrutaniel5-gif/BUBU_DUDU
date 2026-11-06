@@ -296,7 +296,7 @@ function drawCityBuilding(c: CanvasRenderingContext2D, b: CityBuilding, t: numbe
   if (b.id === 'c-tower' && !owned.apartment) { const p = P(0.5, 52); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = '#fff'; c.beginPath(); c.roundRect(p.x - 40, p.y - 8, 80, 16, 5); c.fill(); c.strokeStyle = '#e63946'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#e63946'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🔒 DE VÂNZARE', p.x, p.y + 0.5); c.textBaseline = 'alphabetic'; }
 }
 
-export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, night: number, owned: Record<string, boolean>): boolean {
+export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, night: number, owned: Record<string, boolean>, st: Record<string, unknown> = {}): boolean {
   const { gx, gy } = f;
   switch (f.type as string) {
     case 'cbuilding': { const b = CITY_BUILDINGS.find(x => x.id === f.id); if (!b) return false; drawCityBuilding(c, b, t, night, owned, (globalThis as any).__layer ?? ''); return true; }
@@ -331,30 +331,92 @@ export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, ni
     }
     // ---- mobila din mall (in apartament)
     case 'aquarium': {
-      isoBox(c, gx + 0.1, gy + 0.2, 0.8, 0.6, 20, boxOf('#8a5d32'));
-      isoBox(c, gx + 0.12, gy + 0.22, 0.76, 0.56, 30, { top: '#bfe8ffcc', left: '#7ec8f0cc', right: '#5aa8d8cc' }, 20);
-      const p = iso(gx + 0.5, gy + 0.8, 34);
-      for (let i = 0; i < 3; i++) { const fx = p.x - 14 + ((t * 12 + i * 11) % 30), fy = p.y - 6 + i * 6 + Math.sin(t * 3 + i) * 2; c.fillStyle = ['#ff8c3a', '#ffd23f', '#ff5d8f'][i]; c.beginPath(); c.ellipse(fx, fy, 4, 2.5, 0, 0, 7); c.fill(); c.beginPath(); c.moveTo(fx - 4, fy); c.lineTo(fx - 7, fy - 2.5); c.lineTo(fx - 7, fy + 2.5); c.fill(); }
-      for (let i = 0; i < 3; i++) { const k = (t * 0.7 + i / 3) % 1; c.fillStyle = 'rgba(255,255,255,.8)'; c.beginPath(); c.arc(p.x + 10, p.y + 6 - k * 22, 1.5 + k, 0, 7); c.fill(); }
+      // dulapior de lemn + bazin de sticla; cand cineva se uita, primesc mancare si vin la geam
+      const feed = !!st.aptFish;
+      isoBox(c, gx + 0.1, gy + 0.15, 0.7, 0.7, 20, boxOf('#8a5d32'));
+      isoBox(c, gx + 0.12, gy + 0.17, 0.66, 0.66, 2, boxOf('#e0c08a'), 20);
+      // apa (fundul, pietricele, alga), apoi pestii, apoi sticla
+      isoBox(c, gx + 0.14, gy + 0.19, 0.62, 0.62, 30, { top: '#bfe8ff99', left: '#7ec8f066', right: '#5aa8d866' }, 22);
+      for (let i = 0; i < 5; i++) { const q = iso(gx + 0.25 + (i % 3) * 0.2, gy + 0.3 + Math.floor(i / 3) * 0.3, 23); c.fillStyle = ['#f4a261', '#e9c46a', '#cdb4db', '#f4a261', '#a8dadc'][i]; c.beginPath(); c.ellipse(q.x, q.y, 3, 1.8, 0, 0, 7); c.fill(); }
+      { const q = iso(gx + 0.3, gy + 0.35, 22); c.strokeStyle = '#3f9d5a'; c.lineWidth = 2.5; for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(q.x + k * 4, q.y); c.quadraticCurveTo(q.x + k * 4 + Math.sin(t * 2 + k) * 4, q.y - 12, q.x + k * 4 + Math.sin(t * 2.4 + k) * 3, q.y - 22 - k * 3); c.stroke(); } }
+      const front = iso(gx + 0.76, gy + 0.5, 38);
+      for (let i = 0; i < 4; i++) {
+        // inoata dus-intors pe lungime; la mancare urca spre suprafata, in fata (spre cel care se uita)
+        const ph = t * (0.5 + i * 0.13) + i * 1.7, u = 0.5 + 0.38 * Math.sin(ph), dir = Math.cos(ph) >= 0 ? 1 : -1;
+        let q = iso(gx + 0.45 + (i % 2) * 0.15, gy + 0.2 + u * 0.6, 27 + i * 3 + Math.sin(t * 3 + i) * 1.5);
+        if (feed) { const k = 0.75; const fq = { x: front.x - 4 + i * 3 + Math.sin(t * 6 + i) * 2, y: front.y - 2 + Math.cos(t * 5 + i) * 2 }; q = { x: q.x + (fq.x - q.x) * k, y: q.y + (fq.y - q.y) * k }; }
+        const fx = q.x, fy = q.y, dx = feed ? -1 : dir;
+        c.fillStyle = ['#ff8c3a', '#ffd23f', '#ff5d8f', '#7ad7ff'][i]; c.strokeStyle = '#00000033'; c.lineWidth = 0.8;
+        c.beginPath(); c.ellipse(fx, fy, 4.2, 2.6, 0, 0, 7); c.fill(); c.stroke();
+        const wag = Math.sin(t * 14 + i) * 1.2;
+        c.beginPath(); c.moveTo(fx - 4 * dx, fy); c.lineTo(fx - 7.5 * dx, fy - 2.6 + wag); c.lineTo(fx - 7.5 * dx, fy + 2.6 + wag); c.closePath(); c.fill();
+        c.fillStyle = '#2b2b33'; c.beginPath(); c.arc(fx + 2.2 * dx, fy - 0.6, 0.8, 0, 7); c.fill();
+      }
+      if (feed) for (let i = 0; i < 7; i++) { const k = (t * 0.6 + i / 7) % 1; const q = iso(gx + 0.3 + (i * 0.37) % 0.45, gy + 0.3 + (i * 0.53) % 0.45, 52 - k * 24); c.fillStyle = ['#c97b3a', '#e0a05a', '#a5662a'][i % 3]; c.fillRect(q.x - 1, q.y - 1, 2.2, 2.2); }
+      for (let i = 0; i < (feed ? 6 : 3); i++) { const k = (t * 0.7 + i / (feed ? 6 : 3)) % 1; const q = iso(gx + 0.62, gy + 0.3 + (i % 2) * 0.3, 24 + k * 26); c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 1; c.beginPath(); c.arc(q.x, q.y, 1.3 + k * 1.3, 0, 7); c.stroke(); }
+      // sticla: rama de sus si un luciu
+      isoBox(c, gx + 0.12, gy + 0.17, 0.66, 0.66, 2, { top: '#5a3b22', left: '#4a2f1a', right: '#3f2816' }, 52);
+      { const a1 = iso(gx + 0.78, gy + 0.25, 26), a2 = iso(gx + 0.78, gy + 0.4, 48); c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 2; c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(a2.x, a2.y); c.stroke(); }
       return true;
     }
     case 'piano': {
-      isoBox(c, gx + 0.1, gy + 0.15, 0.8, 0.7, 40, { top: '#3a3a44', left: '#2b2b33', right: '#22222a' });
-      const a = iso(gx + 0.12, gy + 0.85, 30), b2 = iso(gx + 0.88, gy + 0.85, 30);
-      c.fillStyle = '#fff'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b2.x, b2.y); c.lineTo(b2.x, b2.y + 7); c.lineTo(a.x, a.y + 7); c.closePath(); c.fill(); c.stroke();
-      for (let i = 1; i < 8; i++) { const q = iso(gx + 0.12 + i * 0.095, gy + 0.85, 30); c.fillStyle = '#2b2b33'; c.fillRect(q.x - 1, q.y, 2.5, 4); }
+      // pianina neagra lucioasa pe primul rand (cu fata spre +y), taburet capitonat pe al doilea
+      const on = !!st.aptPiano;
+      isoBox(c, gx + 0.1, gy + 0.08, 1.8, 0.55, 58, { top: '#3a3a44', left: '#26262e', right: '#1d1d24' });
+      isoBox(c, gx + 0.06, gy + 0.04, 1.88, 0.62, 4, { top: '#4a4a56', left: '#30303a', right: '#26262e' }, 58);
+      // suportul de note cu partitura
+      { const a = iso(gx + 0.55, gy + 0.6, 62), b = iso(gx + 1.45, gy + 0.6, 62), cc = iso(gx + 1.45, gy + 0.52, 80), d = iso(gx + 0.55, gy + 0.52, 80); c.fillStyle = '#fffaf0'; c.strokeStyle = O; c.lineWidth = 1.2; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.lineTo(cc.x, cc.y); c.lineTo(d.x, d.y); c.closePath(); c.fill(); c.stroke();
+        c.strokeStyle = '#9a8a7a'; c.lineWidth = 0.7; for (let k = 1; k < 4; k++) { const l0 = iso(gx + 0.6, gy + 0.6 - k * 0.02, 62 + k * 4.5), l1 = iso(gx + 1.4, gy + 0.6 - k * 0.02, 62 + k * 4.5); c.beginPath(); c.moveTo(l0.x, l0.y); c.lineTo(l1.x, l1.y); c.stroke(); }
+        const h = iso(gx + 1, gy + 0.56, 72); heartPath(c, h.x, h.y, 3); c.fillStyle = '#ff7aa2'; c.fill(); }
+      // claviatura iesita in fata
+      isoBox(c, gx + 0.14, gy + 0.63, 1.72, 0.2, 4, { top: '#26262e', left: '#1d1d24', right: '#16161c' }, 30);
+      { const n = 22;
+        for (let i = 0; i < n; i++) {
+          const u0 = gx + 0.18 + i * (1.64 / n), u1 = u0 + 1.64 / n - 0.008;
+          const pressed = on && Math.sin(t * 9 + i * 2.3) > 0.82;
+          const z = pressed ? 33 : 34.2;
+          const a = iso(u0, gy + 0.66, z), b = iso(u1, gy + 0.66, z), cc = iso(u1, gy + 0.82, z), d = iso(u0, gy + 0.82, z);
+          c.fillStyle = pressed ? '#ffd6e4' : '#ffffff'; c.strokeStyle = '#8a8a96'; c.lineWidth = 0.6; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.lineTo(cc.x, cc.y); c.lineTo(d.x, d.y); c.closePath(); c.fill(); c.stroke();
+          if (i % 7 !== 2 && i % 7 !== 6 && i < n - 1) { const q0 = iso(u1 - 0.012, gy + 0.66, 35), q1 = iso(u1 + 0.012, gy + 0.75, 35); c.fillStyle = '#16161c'; c.fillRect(Math.min(q0.x, q1.x), Math.min(q0.y, q1.y), Math.abs(q1.x - q0.x) + 2, Math.abs(q1.y - q0.y) + 1.5); }
+        } }
+      // picioarele claviaturii si pedalele
+      for (const u of [0.18, 1.78]) isoBox(c, gx + u, gy + 0.7, 0.06, 0.08, 30, boxOf('#1d1d24'));
+      { const p = iso(gx + 1, gy + 0.66, 2); c.fillStyle = '#d4af37'; for (const k of [-6, 0, 6]) { c.beginPath(); c.ellipse(p.x + k, p.y, 2.4, 1.2, 0, 0, 7); c.fill(); } }
+      // taburetul
+      for (const [u, v] of [[0.5, 1.15], [1.42, 1.15], [0.5, 1.6], [1.42, 1.6]]) isoBox(c, gx + u, gy + v, 0.07, 0.07, 14, boxOf('#26262e'));
+      isoBox(c, gx + 0.45, gy + 1.1, 1.1, 0.6, 5, { top: '#c0405e', left: '#9a2f48', right: '#82283d' }, 14);
+      { const p = iso(gx + 1, gy + 1.4, 19.5); c.fillStyle = '#ffffff55'; for (const k of [-10, 0, 10]) { c.beginPath(); c.arc(p.x + k, p.y, 1.2, 0, 7); c.fill(); } }
       return true;
     }
     case 'console': {
+      const on = !!st.aptGame;
       isoBox(c, gx + 0.15, gy + 0.3, 0.7, 0.4, 8, boxOf('#5a6a8a'));
-      const p = iso(gx + 0.5, gy + 0.5, 12); c.fillStyle = '#ff5d8f'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(p.x - 9, p.y - 5, 18, 8, 4); c.fill(); c.stroke();
-      c.fillStyle = '#7ab8ff'; c.beginPath(); c.roundRect(p.x + 12, p.y - 2, 14, 7, 3); c.fill(); c.stroke();
+      const p = iso(gx + 0.5, gy + 0.5, 12); c.fillStyle = '#2b2b33'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(p.x - 11, p.y - 5, 22, 8, 3); c.fill(); c.stroke();
+      c.fillStyle = on ? (Math.sin(t * 8) > 0 ? '#4dff7a' : '#2ec45a') : '#7a7a86'; c.beginPath(); c.arc(p.x + 7, p.y - 1, 1.5, 0, 7); c.fill();
+      if (!on) { c.fillStyle = '#ff5d8f'; c.beginPath(); c.roundRect(p.x - 18, p.y + 2, 12, 6, 3); c.fill(); c.stroke(); c.fillStyle = '#7ab8ff'; c.beginPath(); c.roundRect(p.x + 8, p.y + 3, 12, 6, 3); c.fill(); c.stroke(); }
       return true;
     }
     case 'coffeemachine': {
-      isoBox(c, gx + 0.25, gy + 0.25, 0.5, 0.5, 24, { top: '#c9ccd6', left: '#9aa0ae', right: '#8a90a0' }, 24);
-      const p = iso(gx + 0.5, gy + 0.75, 30); c.fillStyle = '#fff'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(p.x - 4, p.y, 8, 7, 2); c.fill(); c.stroke();
-      for (let i = 0; i < 2; i++) { const k = (t * 0.8 + i / 2) % 1; c.globalAlpha = 1 - k; c.strokeStyle = '#c9b8b0'; c.beginPath(); c.moveTo(p.x, p.y - 2 - k * 14); c.quadraticCurveTo(p.x + 4, p.y - 6 - k * 14, p.x, p.y - 10 - k * 14); c.stroke(); c.globalAlpha = 1; }
+      // dulap de bucatarie (ca blatul de langa) si espressorul pe el
+      const on = !!st.aptCoffee;
+      isoBox(c, gx + 0.08, gy + 0.08, 0.84, 0.84, 32, { top: '#f6e7d3', left: '#d9a273', right: '#c48b5c' });
+      { const a = iso(gx + 0.92, gy + 0.3, 16), b = iso(gx + 0.92, gy + 0.7, 16); c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(a.x, a.y - 8); c.lineTo(a.x, a.y + 4); c.stroke(); c.beginPath(); c.moveTo(b.x, b.y - 8); c.lineTo(b.x, b.y + 4); c.stroke(); }
+      isoBox(c, gx + 0.3, gy + 0.25, 0.45, 0.5, 6, { top: '#9aa0ae', left: '#7a8090', right: '#6a7080' }, 32);
+      isoBox(c, gx + 0.3, gy + 0.25, 0.2, 0.5, 26, { top: '#c9ccd6', left: '#9aa0ae', right: '#8a90a0' }, 38);
+      isoBox(c, gx + 0.3, gy + 0.25, 0.45, 0.5, 8, { top: '#d8dbe3', left: '#a8aebc', right: '#989eac' }, 64);
+      // gura de cafea, ceasca, butonul aprins
+      const sp = iso(gx + 0.62, gy + 0.5, 56);
+      c.fillStyle = '#3a3a44'; c.beginPath(); c.roundRect(sp.x - 4, sp.y - 2, 8, 4, 1.5); c.fill();
+      const cup = iso(gx + 0.62, gy + 0.5, 40);
+      c.fillStyle = '#fff'; c.strokeStyle = O; c.lineWidth = 1.3; c.beginPath(); c.roundRect(cup.x - 5, cup.y - 7, 10, 8, 2.5); c.fill(); c.stroke();
+      c.beginPath(); c.arc(cup.x + 6, cup.y - 3, 2.6, -1.2, 1.2); c.stroke();
+      if (on) {
+        const fill = (t * 0.35) % 1;
+        c.strokeStyle = '#6b3e1f'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(sp.x - 1, sp.y + 2); c.lineTo(sp.x - 1, cup.y - 6); c.moveTo(sp.x + 1.5, sp.y + 2); c.lineTo(sp.x + 1.5, cup.y - 6); c.stroke();
+        c.fillStyle = '#7a4a26'; c.fillRect(cup.x - 4, cup.y - 6 + 6 * (1 - fill) * 0.4, 8, 1.6);
+        for (let i = 0; i < 3; i++) { const k = (t * 0.9 + i / 3) % 1; c.globalAlpha = 1 - k; c.strokeStyle = '#ffffff'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(cup.x - 2 + i * 2, cup.y - 9 - k * 16); c.quadraticCurveTo(cup.x + 2 + i * 2, cup.y - 13 - k * 16, cup.x - 2 + i * 2, cup.y - 17 - k * 16); c.stroke(); c.globalAlpha = 1; }
+      }
+      const led = iso(gx + 0.32, gy + 0.36, 60); c.fillStyle = on ? (Math.sin(t * 10) > 0 ? '#4dff7a' : '#ffd23f') : '#ff5d8f'; c.beginPath(); c.arc(led.x, led.y, 1.6, 0, 7); c.fill();
       return true;
     }
     case 'painting': {
@@ -390,20 +452,22 @@ export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, ni
 // ------------------------------------------------------------------ apartamentul (interior)
 function aptFloor(x: number, y: number): Floor {
   if (x < 3 || y < 3 || x > 16 || y > 13) return 'void' as Floor;
-  if (x >= 12 && y <= 7) return 'tileblue';     // baia
-  if (x >= 12) return 'checker';                // bucataria
-  if (y <= 7) return 'pinkwood';                // dormitorul
-  return 'wood';                                 // livingul
+  if (x >= 12 && y <= 7) return 'marble';       // baia: marmura alba
+  if (x >= 12) return 'marblecheck';            // bucataria: marmura alba si neagra in carouri
+  if (y <= 7) return 'carpet';                  // dormitorul: mocheta pufoasa
+  return 'parquet';                              // livingul: parchet
 }
 const AW = '#f3e6ff', AW2 = '#e8f4ff';
 function aptWalls(): Wall[] {
   const W: Wall[] = [];
-  for (let x = 3; x <= 16; x++) W.push({ x, y: 3, dir: 'x', h: 92, kind: 'back', window: x === 5 || x === 9 || x === 14, color: x >= 12 ? AW2 : AW });
-  for (let y = 3; y <= 13; y++) W.push({ x: 3, y, dir: 'y', h: 92, kind: 'back', window: y === 5, door: y === 12, color: y <= 7 ? AW : '#fff4dc' });
-  for (let y = 3; y <= 7; y++) if (y !== 6) W.push({ x: 12, y, dir: 'y', h: 26, kind: 'inner', color: '#eadcf5' });
-  for (let x = 3; x <= 11; x++) if (x !== 9) W.push({ x, y: 8, dir: 'x', h: 26, kind: 'inner', color: '#eadcf5' });
-  for (let x = 3; x <= 16; x++) W.push({ x, y: 14, dir: 'x', h: 10, kind: 'low', color: '#e0d0ea' });
-  for (let y = 3; y <= 13; y++) W.push({ x: 17, y, dir: 'y', h: 10, kind: 'low', color: '#e0d0ea' });
+  for (let x = 3; x <= 16; x++) W.push({ x, y: 3, dir: 'x', h: 92, kind: 'back', window: x === 5 || x === 9 || x === 14, color: x >= 12 ? AW2 : AW, lux: true });
+  for (let y = 3; y <= 13; y++) W.push({ x: 3, y, dir: 'y', h: 92, kind: 'back', window: y === 5, door: y === 12, color: y <= 7 ? AW : '#fff4dc', lux: true });
+  for (let y = 3; y <= 7; y++) if (y !== 6) W.push({ x: 12, y, dir: 'y', h: 26, kind: 'inner', color: '#eadcf5', lux: true });
+  for (let x = 3; x <= 11; x++) if (x !== 9) W.push({ x, y: 8, dir: 'x', h: 26, kind: 'inner', color: '#eadcf5', lux: true });
+  // peretele dintre baie si bucatarie, cu usa la x = 14
+  for (let x = 12; x <= 16; x++) if (x !== 14) W.push({ x, y: 8, dir: 'x', h: 26, kind: 'inner', color: '#e3f0fa', lux: true });
+  for (let x = 3; x <= 16; x++) W.push({ x, y: 14, dir: 'x', h: 10, kind: 'low', color: '#e0d0ea', lux: true });
+  for (let y = 3; y <= 13; y++) W.push({ x: 17, y, dir: 'y', h: 10, kind: 'low', color: '#e0d0ea', lux: true });
   return W;
 }
 const AF: Furn[] = [

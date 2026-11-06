@@ -137,10 +137,10 @@ export const bankOf = (w: WorldState): Bank => ({ savings: 0, loanLeft: 0, late:
 // ------------------------------------------------------------------ mall: mobila pentru apartament
 export interface DecorDef { id: string; label: string; icon: string; price: number; type: string; gx: number; gy: number; w: number; d: number; action?: { id: string; label: string; icon: string }; desc: string }
 export const DECOR: DecorDef[] = [
-  { id: 'aquarium', label: 'Acvariu cu peștișori', icon: '🐟', price: 300, type: 'aquarium', gx: 6, gy: 13, w: 1, d: 1, action: { id: 'a-aquarium', label: 'Privește peștișorii', icon: '🐟' }, desc: 'Relaxare: +distracție' },
-  { id: 'piano', label: 'Pian', icon: '🎹', price: 1100, type: 'piano', gx: 11, gy: 4, w: 1, d: 1, action: { id: 'a-piano', label: 'Cântă la pian', icon: '🎹' }, desc: 'Cântați împreună: +iubire, +distracție' },
-  { id: 'console', label: 'Consolă de jocuri', icon: '🎮', price: 480, type: 'console', gx: 4, gy: 10, w: 1, d: 1, action: { id: 'a-console', label: 'Joacă pe consolă', icon: '🎮' }, desc: 'Jocuri video în doi: +distracție mare' },
-  { id: 'coffee', label: 'Espressor', icon: '☕', price: 260, type: 'coffeemachine', gx: 16, gy: 12, w: 1, d: 1, action: { id: 'a-coffee', label: 'Fă o cafea', icon: '☕' }, desc: 'O cafea pe zi: +energie' },
+  { id: 'aquarium', label: 'Acvariu cu peștișori', icon: '🐟', price: 300, type: 'aquarium', gx: 3, gy: 9, w: 1, d: 1, action: { id: 'aquarium', label: 'Privește peștișorii', icon: '🐟' }, desc: 'Relaxare: +distracție' },
+  { id: 'piano', label: 'Pian', icon: '🎹', price: 1100, type: 'piano', gx: 10, gy: 4, w: 2, d: 2, action: { id: 'piano', label: 'Cântă la pian', icon: '🎹' }, desc: 'Cântați împreună: +iubire, +distracție' },
+  { id: 'console', label: 'Consolă de jocuri', icon: '🎮', price: 480, type: 'console', gx: 4, gy: 10, w: 1, d: 1, action: { id: 'console', label: 'Joacă pe consolă', icon: '🎮' }, desc: 'Jocuri video în doi: +distracție mare' },
+  { id: 'coffee', label: 'Espressor', icon: '☕', price: 260, type: 'coffeemachine', gx: 16, gy: 12, w: 1, d: 1, action: { id: 'coffee', label: 'Fă o cafea', icon: '☕' }, desc: 'O cafea pe zi: +energie' },
   { id: 'painting', label: 'Tablou cu inimioare', icon: '🖼️', price: 150, type: 'painting', gx: 7, gy: 8, w: 1, d: 1, desc: 'Decor: casa e mai frumoasă' },
   { id: 'bigplant', label: 'Plantă mare', icon: '🪴', price: 100, type: 'bigplant', gx: 11, gy: 13, w: 1, d: 1, action: { id: 'water_plant', label: 'Udă planta', icon: '🪴' }, desc: 'Decor viu' },
   { id: 'lamp', label: 'Lampă de podea', icon: '💡', price: 140, type: 'floorlamp', gx: 9, gy: 13, w: 1, d: 1, desc: 'Lumină caldă seara' },

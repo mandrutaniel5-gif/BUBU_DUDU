@@ -44,6 +44,10 @@ export const ACT_SOUNDS: Record<string, ActSound> = {
   fixtv: { every: [['metal_hit', 'hammer'], 1.2, 0.5] },
   unclog: { every: ['squelch', 0.9, 0.6], end: 'flush' },
   fish: { start: 'whoosh' },
+  piano: { every: ['piano', 0.34, 0.7], end: 'chimes' },
+  aquarium: { start: 'pour', every: ['bubble', 1.3, 0.5] },
+  coffee: { start: 'click', loop: ['machine_loop', 0.25], every: ['bubble', 1.6, 0.3], end: 'gulp' },
+  console: { start: 'switch', every: ['gamebeep', 0.7, 0.5], end: 'good' },
   carousel: { start: 'chimes', every: [['chimes', 'whoosh'], 2.2, 0.3] },
 };
 

@@ -96,7 +96,17 @@ function noiseHit(dur: number, freq: number, vol: number, type: BiquadFilterType
   n.connect(f).connect(g).connect(a.destination); n.start(t);
 }
 
+// pianul: o melodie simpla de leagan, nota cu nota (fiecare apel = urmatoarea nota), cu acord dedesubt
+const MELODY = [523, 523, 784, 784, 880, 880, 784, 0, 698, 698, 659, 659, 587, 587, 523, 0, 784, 784, 698, 698, 659, 659, 587, 0];
+let melI = 0;
+function pianoNote() {
+  const f = MELODY[melI++ % MELODY.length]; if (!f) return;
+  tone('triangle', f, f * 0.998, 0.7, 0.18); tone('sine', f * 2, f * 2, 0.35, 0.05);
+  if (melI % 4 === 1) tone('sine', f / 2, f / 2, 1.1, 0.08);
+}
 const SOUNDS: Record<string, () => void> = {
+  piano: pianoNote,
+  gamebeep: () => { const n = [660, 880, 990, 1320][Math.floor(Math.random() * 4)]; tone('square', n, n, 0.07, 0.06); tone('square', n * 1.5, n * 1.5, 0.07, 0.05, 0.08); },
   fart: () => fart(0.45, 0.5),
   bigfart: () => fart(0.9, 0.65),
   bonk: () => { tone('square', 520, 140, 0.18, 0.25); tone('sine', 1500, 900, 0.4, 0.15, 0.02); },

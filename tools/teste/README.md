@@ -39,6 +39,7 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 | `cherestea.cjs` | 1.6.0: cheresteaua pe drum, cântarul (preț × lemne, 5 rămân pentru sobă), gaterul, comenzile, stiva din curte nu mai vinde |
 | `ajutoare.cjs` | 1.8.0: bolovanii din pădure (Dudu +3, se refac), prețul lui Dudu la cherestea, „Angajează ajutoare” peste cherestea, ziua angajaților (tăietor → spărgător → culegător → căruțaș), buchetele ieftine la florărie |
 | `casa_cap0.cjs` | 1.8.2: în Capitolul 0 mizeria se mișcă și casa se redesenează curată după ce repari (toaleta, cada, frigiderul, vasele, lampa) |
+| `apartament.cjs` | 1.8.4: pianul, acvariul, espressorul, consola și televizorul din apartament sunt activități animate; o cafea pe zi; perete cu ușă între baie și bucătărie |
 | `adancime_casa.cjs` | 1.8.3: Dudu plimbat prin toată casa (pas 0,3): obiectele care se acoperă au mereu aceeași ordine (fără pâlpâit) și Dudu e de partea bună a fiecărui perete și a fiecărei mobile |
 | `sat_oras.cjs` | 1.6.0: în sat și în oraș se ajunge pe jos la fiecare clădire / obiect cu acțiune; nimic solid nu se suprapune |
 | `miniharta.cjs` | 1.6.0: miniharta mică și mărită nu acoperă nimic (telefon, telefon mic, tabletă, laptop) |

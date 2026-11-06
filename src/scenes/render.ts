@@ -113,6 +113,8 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
   const baking = home && !ch0;
   const dep: Record<string, boolean> = {}; for (const id in scene.w.nodes ?? {}) if (scene.depleted(id)) dep[id] = true;
   const st: FurnState = { ...(scene.w.furn as FurnState), night, depleted: dep };
+  // apartamentul are televizorul lui (nou, nu se strica odata cu cel de acasa); consola il foloseste ca ecran
+  if (scene.space === 'apartment') { st.tvBroken = false; st.tvOn = !!st.aptTvOn || !!st.aptGame; }
   const lit2 = (night > 0.4 ? 1 : 0) + (night > 0.5 ? 1 : 0), bakeNight = lit2 === 0 ? 0 : lit2 === 1 ? 0.45 : 0.9;
   const stBake: FurnState = { ...st, night: bakeNight };
   const bf = scene.bridgeFixed(), own = (globalThis as any).__villageOwned ?? {};
@@ -433,7 +435,7 @@ export function bakeable(f: Furn) {
 /** acum se misca / se schimba de la un cadru la altul (televizorul pornit, aragazul care gateste...): desenat viu peste */
 function liveNow(scene: WorldScene, f: Furn, st: FurnState) {
   const t = f.type as string;
-  if (t === 'tv' && (st.tvOn || st.tvBroken)) return true; // si „puricii” televizorului stricat se misca
+  if (t === 'tv' && (st.tvOn || st.tvBroken || st.aptGame)) return true; // si „puricii” televizorului stricat se misca
   if (t === 'stove' && st.cooking) return true;
   // mizeria se misca (aburii care miros): vie, nu „poza”
   if ((t === 'toilet' && st.clogged) || (t === 'bathtub' && st.tubDirty) || (t === 'fridge' && st.fridgeDirty) || (t === 'counter' && st.dishesDirty)) return true;

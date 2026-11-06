@@ -644,7 +644,7 @@ export class WorldScene implements Scene {
     }
     if (f.id === 'fridge' && this.w.furn.fridgeDirty) return { id: 'cleanfridge', label: 'Curăță frigiderul', icon: '🧽' };
     if (f.id === 'tub' && this.w.furn.tubDirty) return { id: 'scrubtub', label: 'Spală cada', icon: '🧽' };
-    if (f.id === 'tv' && this.w.furn.tvBroken) return { id: 'fixtv', label: 'Repară televizorul', icon: '🔧' };
+    if (f.id === 'tv' && this.w.furn.tvBroken && this.space !== 'apartment') return { id: 'fixtv', label: 'Repară televizorul', icon: '🔧' };
     if (f.id === 'fireplace') return ((this.w.furn.fire as number) ?? 0) > 0 ? { id: 'addwood', label: 'Pune lemne pe foc', icon: '🪵' } : { id: 'lightfire', label: 'Aprinde focul!', icon: '🔥' };
     if (f.id === 'ns1') return { id: 'lamp', label: this.w.furn.lampOn ? 'Stinge lampa' : 'Aprinde lampa', icon: '💡' };
     if (f.id === 'mail') return { id: 'mail', label: 'Borcanul cu iubire', icon: '💌' };
@@ -673,7 +673,7 @@ export class WorldScene implements Scene {
     if (act.id.startsWith('st-')) { if (pawn === this.me) Story.action(this, act.id, f); return; }
     if (act.id.startsWith('v-visit-') && pawn === this.me) { const vid = act.id.slice(8); this.me.actor.play('wave'); Sfx.play('doorbell', { vol: 0.6 }); TownUI.openVillager(this, vid); return; }
     if (act.id.startsWith('v-') && pawn === this.me) { this.villageAction(act.id, f); return; }
-    if ((act.id.startsWith('c-') || act.id === 'a-exit') && pawn === this.me) { this.cityAction(act.id, f); return; }
+    if ((act.id.startsWith('c-') || act.id.startsWith('a-')) && pawn === this.me) { this.cityAction(act.id, f); return; }
     if (act.id === 'growing') return;
     if (act.id === 'plant' && !pawn.pendingCrop) {
       const seeds = Object.keys(CROPS).filter(c => (this.w.res?.[seedKey(c)] ?? 0) > 0);
@@ -689,6 +689,8 @@ export class WorldScene implements Scene {
       else eat(bestDish(this.w.res ?? {})?.key ?? 'meals');
       return;
     }
+    if (act.id === 'coffee' && pawn === this.me && (this.w.stats[`coffee-${pawn.id}-${this.w.day}`] ?? 0) > 0) { this.hud.toast('☕ Ai băut deja cafeaua de azi. Mâine încă una!'); return; }
+    if (act.id === 'console' && pawn === this.me && this.w.chars[pawn.id].needs.energy < 10) { this.hud.toast('😴 Prea obosit' + (pawn.id === 'bubu' ? 'ă' : '') + ' pentru jocuri'); return; }
     const a = ACTIVITIES[act.id]; if (!a) return;
     if (act.id === 'sleep') { const why = this.canSleep(pawn.id); if (why) { if (pawn === this.me) { this.hud.toast(why); Sfx.play('bad'); } return; } (this.w.chars[pawn.id] as any).napStart = (this.w.minutes / 60 >= 6 && this.w.minutes / 60 < 20) ? (this.w.gameMin ?? 0) : null; }
     const need = this.missing(act.id);
@@ -1527,6 +1529,9 @@ export class WorldScene implements Scene {
     else if (a.place === 'tub') { pawn.gx = f.gx + 0.6 + slot * 0.8; pawn.gy = f.gy + 0.5; pawn.z = 24; }
     else if (a.place === 'toilet') { pawn.gx = f.gx + 0.5; pawn.gy = f.gy + 0.6; pawn.z = 12; }
     else if (a.place === 'sofa') { pawn.gx = f.gx + 0.45; pawn.gy = f.gy + 0.6 + slot * 0.8; pawn.z = 10; }
+    else if (a.place === 'piano') { const other = pawn === this.me ? this.partner : this.me; const duo = other.activity?.a.id === 'piano'; pawn.gx = f.gx + (duo ? 0.62 + slot * 0.76 : 1); pawn.gy = f.gy + 1.42; pawn.z = 18; if (duo && other.gx !== f.gx + 0.62 + (1 - slot) * 0.76) other.gx = f.gx + 0.62 + (1 - slot) * 0.76; }
+    else if (a.id === 'aquarium') { pawn.gx = f.gx + 1.35; pawn.gy = f.gy + 0.3 + slot * 0.45; }
+    else if (a.id === 'coffee') { pawn.gx = f.gx - 0.4; pawn.gy = f.gy + 0.5; }
     else if (a.place === 'bench') {
       // pe sezut, unul langa altul (pe foisor: pe banca din fata lui)
       const gz = (f.type as string) === 'gazebo';
@@ -1539,20 +1544,30 @@ export class WorldScene implements Scene {
       pawn.actor.flip = s.x >= 0 ? 1 : -1; pawn.facingBack = s.y < 0;
     }
     if (a.place === 'sofa') { pawn.actor.flip = -1; pawn.facingBack = true; }
+    if (a.place === 'piano') { pawn.actor.flip = 1; pawn.facingBack = true; }
+    if (a.id === 'aquarium') { pawn.actor.flip = -1; pawn.facingBack = true; }
+    if (a.id === 'coffee') { pawn.actor.flip = 1; pawn.facingBack = false; }
     if (a.place === 'bench') { const other = pawn === this.me ? this.partner : this.me; const both = other.activity?.a.place === 'bench' && other.activity.furn === f; pawn.actor.flip = both ? (slot ? -1 : 1) : -1; pawn.facingBack = false; if (both && other.actor.flip !== (slot ? 1 : -1)) other.actor.flip = slot ? 1 : -1; }
     if (a.place === 'bed' || a.place === 'tub' || a.place === 'toilet') { pawn.facingBack = false; pawn.actor.flip = 1; }
     pawn.actor.play(a.anim);
     this.snd.actStart(pawn, a.id);
     if (fromNet) return;
-    if (a.furnFlag) this.op({ k: 'furn', key: a.furnFlag[0], value: a.furnFlag[1] });
+    if (a.furnFlag) this.op({ k: 'furn', key: this.flagKey(pawn, a.furnFlag[0]), value: a.furnFlag[1] });
     this.net.sendEvent({ t: 'act', who: pawn.id, act: a.id, furn: f.id });
+    // partenerul (AI) vine si el: la pian cantati in doi, la consola jucati in doi, la acvariu va uitati amandoi
+    if (pawn === this.me && this.partner.control !== 'remote' && !this.partner.activity && this.sameArea() && ['piano', 'console'].includes(a.id)) { const fid = a.place === 'sofa' ? f.id : f.id; setTimeout(() => { if (this.me.activity?.a.id === a.id && !this.partner.activity) this.goTo(a.id === 'console' ? (FURNITURE.find(x => x.type === ('console' as any))?.id ?? fid) : fid, 'partner'); }, 600); }
   }
 
+  /** televizorul din apartament nu e cel de acasa: are steagul lui */
+  flagKey(pawn: Pawn, key: string) {
+    const sp = pawn === this.me ? this.space : this.partnerSpace();
+    return key === 'tvOn' && sp === 'apartment' ? 'aptTvOn' : key;
+  }
   stopActivity(pawn: Pawn, completed = false) {
     const act = pawn.activity; if (!act) return;
     pawn.activity = null; pawn.actor.stop();
     if (pawn.control !== 'remote') this.net.sendEvent({ t: 'act', who: pawn.id, act: null });
-    if (act.a.furnFlag) this.op({ k: 'furn', key: act.a.furnFlag[0], value: act.a.furnFlag[2] });
+    if (act.a.furnFlag) { const k = this.flagKey(pawn, act.a.furnFlag[0]), other = pawn === this.me ? this.partner : this.me; if (!(other.activity?.a.furnFlag?.[0] === act.a.furnFlag[0] && this.flagKey(other, act.a.furnFlag[0]) === k)) this.op({ k: 'furn', key: k, value: act.a.furnFlag[2] }); }
     // coboara de pe obiect
     if (act.furn && (pawn.z > 0 || this.nav.hits(pawn.gx, pawn.gy))) {
       const s = this.nav.standSpot(act.furn.gx, act.furn.gy, act.furn.w, act.furn.d, pawn.gx + 0.5, pawn.gy + 1);
@@ -1571,6 +1586,16 @@ export class WorldScene implements Scene {
     this.fx.text(pos.x, pos.y, a.text, '#ff4d6d', 0.6);
     if (pawn === this.me) { this.op({ k: 'hearts', delta: 2 }); Sfx.play('good'); }
     if (ctrl) this.economyOnComplete(pawn, a);
+    if (ctrl && a.id === 'coffee') this.op({ k: 'stat', key: `coffee-${pawn.id}-${this.w.day}`, delta: 1 });
+    if (ctrl && a.id === 'piano') this.op({ k: 'stat', key: 'pianoPlays', delta: 1 });
+    if (pawn === this.me && (a.id === 'piano' || a.id === 'console' || a.id === 'aquarium')) {
+      const other = this.partner, together = this.sameArea() && Math.hypot(other.gx - pawn.gx, other.gy - pawn.gy) < 3.5;
+      if (together) {
+        const love = a.id === 'piano' ? 12 : 5;
+        this.op({ k: 'need', who: pawn.id, need: 'love', delta: love }); if (other.control !== 'remote') this.op({ k: 'need', who: other.id, need: 'love', delta: love });
+        this.hud.toast(a.id === 'piano' ? '🎹 Un cântec pentru doi 💕' : a.id === 'console' ? '🎮 Meci în doi! Ce distracție 😄' : '🐟 V-ați uitat amândoi la peștișori 💕');
+      }
+    }
     // urmari amuzante
     if (a.id === 'toilet' && ctrl) {
       const chance = pawn.id === 'dudu' ? 0.55 : 0.2;

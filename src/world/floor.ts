@@ -11,6 +11,7 @@ const COL: Partial<Record<Floor, [string, string]>> = {
   road: ['#cdb48f', '#c9af89'], wood: ['#e8bf8e', '#e3b886'], pinkwood: ['#f6cfc4', '#f2c6ba'], tileblue: ['#d5eef9', '#c4e6f5'],
   checker: ['#fff4e4', '#ffd8c9'], dirt: ['#a87a50', '#a87a50'], water: ['#7ec8f0', '#7ec8f0'], sand: ['#f4e2b5', '#efdcad'],
   asphalt: ['#8d8f9a', '#8d8f9a'], sidewalk: ['#e6e2dc', '#dedad3'], bridge: ['#c98e5f', '#c48a5a'], field: ['#b98a5c', '#b3845a'], cobble: ['#ddd0b8', '#d6c8ae'],
+  parquet: ['#c98f5c', '#c48a57'], marble: ['#f7f4ef', '#f3efe9'], marblecheck: ['#f7f4ef', '#4a4550'], carpet: ['#e9d9f2', '#e9d9f2'],
 };
 const quad4 = (ctx: CanvasRenderingContext2D, pts: { x: number; y: number }[]) => { ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath(); ctx.fill(); };
 const isA = (x: number, y: number) => floorAt(x, y) === 'asphalt';
@@ -36,6 +37,41 @@ export function drawTile(ctx: CanvasRenderingContext2D, x: number, y: number) {
   if (f === 'wood' || f === 'pinkwood') {
     ctx.strokeStyle = 'rgba(120,70,40,0.18)'; ctx.lineWidth = 1;
     for (let k = 1; k < 3; k++) { const p = iso(x + k / 3, y), q = iso(x + k / 3, y + 1); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
+  }
+  if (f === 'parquet') {
+    // parchet: lamele de 1/4 de dala, decalate pe jumatate de la un rand la altul, in nuante calde diferite
+    const tones = ['#c98f5c', '#d39a66', '#bf8452', '#cc9460'];
+    for (let k = 0; k < 4; k++) {
+      const v0 = k * 0.25, v1 = v0 + 0.25, col = tones[(k + 2 + x + y * 3) % 4];
+      ctx.fillStyle = col;
+      quad4(ctx, k % 2 ? [iso(x, y + v0), iso(x + 0.5, y + v0), iso(x + 0.5, y + v1), iso(x, y + v1)] : [iso(x + 0.5, y + v0), iso(x + 1, y + v0), iso(x + 1, y + v1), iso(x + 0.5, y + v1)]);
+    }
+    ctx.strokeStyle = 'rgba(90,50,25,0.3)'; ctx.lineWidth = 0.8; ctx.beginPath();
+    for (let k = 0; k <= 4; k++) { const v = k * 0.25, p = iso(x, y + v), q = iso(x + 1, y + v); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); }
+    for (let k = 0; k < 4; k++) { const v0 = k * 0.25, v1 = v0 + 0.25; const m0 = iso(x + 0.5, y + v0), m1 = iso(x + 0.5, y + v1); ctx.moveTo(m0.x, m0.y); ctx.lineTo(m1.x, m1.y); const s0 = iso(x + (k % 2 ? 0.25 : 0.75), y + v0), s1 = iso(x + (k % 2 ? 0.25 : 0.75), y + v1); ctx.moveTo(s0.x, s0.y); ctx.lineTo(s1.x, s1.y); }
+    ctx.stroke();
+    // luciu de lac
+    ctx.fillStyle = 'rgba(255,255,255,0.10)'; ctx.beginPath(); ctx.ellipse(c.x - 4, c.y - 2, 12, 3, -0.3, 0, 7); ctx.fill();
+  }
+  if (f === 'marble' || f === 'marblecheck') {
+    // marmura: vinisoare fine gri, iar in carouri piatra neagra cu vine aurii
+    const dark = f === 'marblecheck' && (x + y) % 2 === 1;
+    // o singura vina lunga si moale pe dala (pe unele dale deloc), ca sa para piatra, nu zgarieturi
+    if (rnd(x * 3, y * 5) > 0.35) {
+      const u0 = 0.1 + rnd(x, y) * 0.3, v0 = 0.1 + rnd(y, x) * 0.2, u1 = 0.6 + rnd(x + 1, y) * 0.3, v1 = 0.6 + rnd(x, y + 1) * 0.3;
+      const a = iso(x + u0, y + v0), b = iso(x + u1, y + v1), m = iso(x + (u0 + u1) / 2 + 0.15, y + (v0 + v1) / 2 - 0.15);
+      ctx.strokeStyle = dark ? 'rgba(212,175,55,0.38)' : 'rgba(170,170,185,0.28)'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(m.x, m.y, b.x, b.y); ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.beginPath(); ctx.ellipse(c.x - 6, c.y - 2, 10, 2.5, -0.35, 0, 7); ctx.fill();
+    // rost auriu subtire
+    tilePath(ctx, x, y); ctx.strokeStyle = 'rgba(201,162,74,0.45)'; ctx.lineWidth = 0.8; ctx.stroke();
+  }
+  if (f === 'carpet') {
+    // mocheta pufoasa cu model discret de romburi
+    ctx.fillStyle = 'rgba(200,170,225,0.55)';
+    quad4(ctx, [iso(x + 0.5, y + 0.2), iso(x + 0.8, y + 0.5), iso(x + 0.5, y + 0.8), iso(x + 0.2, y + 0.5)]);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(c.x, c.y, 1.6, 0, 7); ctx.fill();
   }
   if (f === 'bridge') {
     // scanduri de-a curmezisul (podul merge de-a lungul lui x)
