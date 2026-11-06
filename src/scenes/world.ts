@@ -1556,7 +1556,7 @@ export class WorldScene implements Scene {
     else if (a.place === 'tub') { pawn.gx = f.gx + 0.6 + slot * 0.8; pawn.gy = f.gy + 0.5; pawn.z = 24; }
     else if (a.place === 'toilet') { pawn.gx = f.gx + 0.5; pawn.gy = f.gy + 0.6; pawn.z = 12; }
     else if (a.place === 'sofa') { pawn.gx = f.gx + 0.45; pawn.gy = f.gy + 0.6 + slot * 0.8; pawn.z = 10; }
-    else if (a.place === 'piano') { const other = pawn === this.me ? this.partner : this.me; const duo = other.activity?.a.id === 'piano'; pawn.gx = f.gx + (duo ? 0.62 + slot * 0.76 : 1); pawn.gy = f.gy + 1.42; pawn.z = 18; if (duo && other.gx !== f.gx + 0.62 + (1 - slot) * 0.76) other.gx = f.gx + 0.62 + (1 - slot) * 0.76; }
+    else if (a.place === 'piano') { const other = pawn === this.me ? this.partner : this.me; const duo = other.activity?.a.id === 'piano'; pawn.gx = f.gx + (duo ? 0.45 + slot * 1.1 : 1); pawn.gy = f.gy + 1.42; pawn.z = 18; if (duo) other.gx = f.gx + 0.45 + (1 - slot) * 1.1; }
     else if (a.id === 'aquarium') { pawn.gx = f.gx + 1.35; pawn.gy = f.gy + 0.3 + slot * 0.45; }
     else if (a.id === 'coffee') { pawn.gx = f.gx + 0.5; pawn.gy = f.gy + 1.4; }
     else if (a.place === 'bench') {

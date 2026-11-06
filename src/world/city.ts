@@ -383,9 +383,9 @@ export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, ni
       for (const u of [0.18, 1.78]) isoBox(c, gx + u, gy + 0.7, 0.06, 0.08, 30, boxOf('#1d1d24'));
       { const p = iso(gx + 1, gy + 0.66, 2); c.fillStyle = '#d4af37'; for (const k of [-6, 0, 6]) { c.beginPath(); c.ellipse(p.x + k, p.y, 2.4, 1.2, 0, 0, 7); c.fill(); } }
       // taburetul
-      for (const [u, v] of [[0.5, 1.15], [1.42, 1.15], [0.5, 1.6], [1.42, 1.6]]) isoBox(c, gx + u, gy + v, 0.07, 0.07, 14, boxOf('#26262e'));
-      isoBox(c, gx + 0.45, gy + 1.1, 1.1, 0.6, 5, { top: '#c0405e', left: '#9a2f48', right: '#82283d' }, 14);
-      { const p = iso(gx + 1, gy + 1.4, 19.5); c.fillStyle = '#ffffff55'; for (const k of [-10, 0, 10]) { c.beginPath(); c.arc(p.x + k, p.y, 1.2, 0, 7); c.fill(); } }
+      for (const [u, v] of [[0.22, 1.15], [1.7, 1.15], [0.22, 1.6], [1.7, 1.6]]) isoBox(c, gx + u, gy + v, 0.07, 0.07, 14, boxOf('#26262e'));
+      isoBox(c, gx + 0.15, gy + 1.1, 1.7, 0.6, 5, { top: '#c0405e', left: '#9a2f48', right: '#82283d' }, 14);
+      { const p = iso(gx + 1, gy + 1.4, 19.5); c.fillStyle = '#ffffff55'; for (const k of [-20, -10, 0, 10, 20]) { c.beginPath(); c.arc(p.x + k, p.y, 1.2, 0, 7); c.fill(); } }
       return true;
     }
     case 'console': {
