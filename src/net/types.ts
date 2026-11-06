@@ -33,6 +33,7 @@ export type WorldOp =
   | { k: 'res'; res: string; delta: number }
   | { k: 'place'; uid: string; type: string; gx: number; gy: number }
   | { k: 'unplace'; uid: string }
+  | { k: 'yard'; id: string; at: { gx: number; gy: number } | 0 }
   | { k: 'node'; id: string; until: number }
   | { k: 'money'; delta: number }
   | { k: 'stat'; key: string; delta: number }

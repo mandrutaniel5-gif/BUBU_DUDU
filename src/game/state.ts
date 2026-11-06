@@ -53,6 +53,7 @@ export interface WorldState {
   stats: Record<string, number>;
   res?: Record<string, number>;                         // lemn, piatra, flori
   placed?: { uid: string; type: string; gx: number; gy: number }[]; // constructii
+  yard?: Record<string, { gx: number; gy: number } | 0>; // curtea aranjata: obiecte mutate (unde) sau scoase (0)
   nodes?: Record<string, number>;                       // resurse epuizate pana la (ms)
   money?: number;                                       // lei
   plots?: Record<string, { crop: string | null; prog: number; wetUntil: number; fert: number }>; // gradina
@@ -74,7 +75,7 @@ export function newWorld(): WorldState {
       dudu: { needs: fullNeeds(), sick: null, fart: 50, gx: 7.3, gy: 9.0 },
     },
     furn: { lampOn: false, tvOn: false, aptTvOn: false, aptGame: false, aptPiano: false, aptFish: false, aptCoffee: false, clogged: false, bathFoam: 0.2, cooking: false, crops: [0, 0, 0, 0, 0, 0] },
-    jar: [], log: [], stats: {}, res: { wood: 3, stone: 2, flower: 4, seeds: 3, veg: 1, meals: 2, flour: 0, lemon: 0 }, placed: [], nodes: {}, money: 20, grass: {},
+    jar: [], log: [], stats: {}, res: { wood: 3, stone: 2, flower: 4, seeds: 3, veg: 1, meals: 2, flour: 0, lemon: 0 }, placed: [], yard: {}, nodes: {}, money: 20, grass: {},
   };
 }
 
@@ -146,6 +147,7 @@ export function applyOp(w: WorldState, op: WorldOp) {
     case 'res': { w.res ??= {}; w.res[op.res] = Math.max(0, (w.res[op.res] ?? 0) + op.delta); break; }
     case 'place': { w.placed ??= []; if (!w.placed.some(p => p.uid === op.uid)) w.placed.push({ uid: op.uid, type: op.type, gx: op.gx, gy: op.gy }); break; }
     case 'unplace': { w.placed = (w.placed ?? []).filter(p => p.uid !== op.uid); break; }
+    case 'yard': { w.yard ??= {}; w.yard[op.id] = op.at; break; }
     case 'node': { w.nodes ??= {}; w.nodes[op.id] = op.until; break; }
     case 'money': w.money = Math.max(0, (w.money ?? 0) + op.delta); break;
     case 'stat': w.stats[op.key] = (w.stats[op.key] ?? 0) + op.delta; break;

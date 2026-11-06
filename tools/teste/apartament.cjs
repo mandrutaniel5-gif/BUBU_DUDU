@@ -1,5 +1,5 @@
 // Apartamentul: pianul, acvariul, espressorul si consola sunt activitati adevarate (mergi la obiect, animatie, efect);
-// televizorul nu se strica odata cu cel de acasa; perete plin intre baie si bucatarie, bucataria in linie pe el
+// televizorul nu se strica odata cu cel de acasa; perete plin intre baie si bucatarie; frigiderul in colt langa espressor
 const { chromium } = require('playwright');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? '  ' + x : ''));
@@ -45,7 +45,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   const wall = await E(() => { const n = game.scene.nav; return [12, 13, 14, 15, 16].map(x => n.edgeBlocked(x, 7, x, 8)); });
   ok('perete plin intre baie si bucatarie', wall.every(Boolean), JSON.stringify(wall));
   const row = await E(() => ['fridge', 'counter', 'stove', 'd-coffee'].map(id => { const f = game.scene.furnList.find(x => x.id === id); return f ? [f.gx, f.gy] : null; }));
-  ok('bucataria in linie pe peretele din spate (y = 8)', row.every(r => r && r[1] === 8) && new Set(row.map(r => r[0])).size === 4, JSON.stringify(row));
+  ok('frigiderul in colt (16,8), langa el espressorul pe perete (15,8), cu fata spre camera; aragazul si blatul unde erau', JSON.stringify(row) === JSON.stringify([[16, 8], [16, 11], [16, 10], [15, 8]]), JSON.stringify(row));
   // in baie se ajunge din dormitor, la bucatarie din living
   const reach = await E(() => { const s = game.scene; return { baie: s.nav.path ? !!s.nav.path(6, 10, 14, 5)?.length : null, bucatarie: s.nav.path ? !!s.nav.path(6, 10, 14, 10)?.length : null }; });
   console.log('drumuri: ' + JSON.stringify(reach));

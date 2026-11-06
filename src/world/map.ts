@@ -68,7 +68,7 @@ function wallsBuild(): Wall[] {
   for (let y = 2; y <= 5; y++) if (y !== 4) W.push({ x: 8, y, dir: 'y', h: 26, kind: 'inner', color: WALL_IN });
   for (let y = 6; y <= 11; y++) if (y !== 8) W.push({ x: 8, y, dir: 'y', h: 26, kind: 'inner', color: WALL_IN });
   for (let x = 2; x <= 7; x++) if (x !== 4) W.push({ x, y: 7, dir: 'x', h: 26, kind: 'inner', color: WALL_IN });
-  for (let x = 8; x <= 13; x++) if (x !== 10) W.push({ x, y: 6, dir: 'x', h: 26, kind: 'inner', color: WALL_IN });
+  for (let x = 8; x <= 13; x++) W.push({ x, y: 6, dir: 'x', h: 26, kind: 'inner', color: WALL_IN }); // plin: in baie intri din dormitor
   // marginile din fata (plinte joase, cu usi)
   for (let x = 2; x <= 13; x++) if (x !== 5) W.push({ x, y: 12, dir: 'x', h: 10, kind: 'low', color: WALL_LOW });
   for (let y = 2; y <= 11; y++) if (y !== 9) W.push({ x: 14, y, dir: 'y', h: 10, kind: 'low', color: WALL_LOW });
@@ -91,10 +91,10 @@ export const FURNITURE: Furn[] = [
   { id: 'sink', type: 'sink', gx: 13, gy: 4, w: 1, d: 1, solid: true, action: act('teeth', 'Spălat pe dinți', '🪥') },
   { id: 'washer', type: 'washer', gx: 13, gy: 2, w: 1, d: 1, solid: true, action: act('laundry', 'Rufe', '🧺') },
   // bucatarie
-  // in linie, lipite de peretele din spate al bucatariei (y = 6), cu usile spre camera; usa spre baie e la x = 10
-  { id: 'fridge', type: 'fridge', gx: 11, gy: 6, w: 1, d: 1, solid: true, action: act('snack', 'Frigiderul', '🧊') },
-  { id: 'stove', type: 'stove', gx: 12, gy: 6, w: 1, d: 1, solid: true, action: act('cook', 'Gătește', '🍳') },
-  { id: 'counter', type: 'counter', gx: 13, gy: 6, w: 1, d: 1, solid: true, action: act('dishes', 'Spălat vase', '🍽️') },
+  // frigiderul in coltul bucatariei; aragazul si blatul cu vasele pe peretele din dreapta
+  { id: 'fridge', type: 'fridge', gx: 13, gy: 6, w: 1, d: 1, solid: true, action: act('snack', 'Frigiderul', '🧊') },
+  { id: 'stove', type: 'stove', gx: 13, gy: 8, w: 1, d: 1, solid: true, action: act('cook', 'Gătește', '🍳') },
+  { id: 'counter', type: 'counter', gx: 13, gy: 9, w: 1, d: 1, solid: true, action: act('dishes', 'Spălat vase', '🍽️') },
   { id: 'table', type: 'table', gx: 10, gy: 9, w: 2, d: 1, solid: true, action: act('eat', 'Masa', '🍰') },
   // sufragerie
   { id: 'rugL', type: 'rug', gx: 3, gy: 8, w: 3, d: 3, solid: false, color: '#c9e4ff' },
@@ -117,7 +117,7 @@ export const FURNITURE: Furn[] = [
   { id: 'bush2', type: 'bush', gx: 8, gy: 15, w: 1, d: 1, solid: true },
   ...RESOURCE_NODES,
   // supravietuire si economie
-  { id: 'well', type: 'well', gx: 12, gy: 13, w: 1, d: 1, solid: true, action: act('drawwater', 'Scoate apă din fântână', '🪣') },
+  { id: 'well', type: 'well', gx: 14, gy: 14, w: 1, d: 1, solid: true, action: act('drawwater', 'Scoate apă din fântână', '🪣') },
   { id: 'laptop', type: 'laptop', gx: 6, gy: 2, w: 1, d: 1, solid: true, action: act('online', 'Laptopul (magazin online)', '💻') },
   { id: 'fireplace', type: 'fireplace', gx: 7, gy: 7, w: 1, d: 1, solid: true, action: act('stove', 'Soba', '🔥') },
   { id: 'shed', type: 'mower', gx: 16, gy: 13, w: 1, d: 1, solid: true, action: act('mow', 'Mașina de tuns iarba', '✂️') },
@@ -125,6 +125,11 @@ export const FURNITURE: Furn[] = [
   { id: 'gateway', type: 'signpost', gx: 3, gy: 23, w: 1, d: 1, solid: true, action: act('village', 'Spre sat', '🏘️') },
 ];
 
+/** ce se poate muta in curte (copaci, pietre, tufe, flori, banca, cutia postala, fantana, masina de tuns) si ce se poate scoate */
+const YARD_TYPES = new Set(['tree', 'rock', 'bush', 'flowers', 'wildflower', 'bench', 'mailbox', 'well', 'mower']);
+export const YARD_REMOVABLE = new Set(['tree', 'rock', 'bush', 'flowers', 'wildflower']);
+export const YARD_ITEMS: Furn[] = FURNITURE.filter(f => YARD_TYPES.has(f.type as string) && f.gy < YARD_H && !(f.gx >= 2 && f.gx <= 13 && f.gy >= 2 && f.gy <= 11));
+export const YARD_ORIG = new Map(YARD_ITEMS.map(f => [f.id, { gx: f.gx, gy: f.gy }]));
 /** dreptunghiuri de coliziune in grid */
 export interface Rect { x0: number; y0: number; x1: number; y1: number }
 /** poarta din spatele curtii (spre padure) */

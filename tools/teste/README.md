@@ -42,6 +42,7 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 | `apartament.cjs` | 1.8.4: pianul, acvariul, espressorul, consola și televizorul din apartament sunt activități animate; o cafea pe zi; perete cu ușă între baie și bucătărie |
 | `adancime_lume.cjs` | 1.8.5: Dudu e pus în jurul fiecărui obiect de pe toată harta; obiectul e desenat în fața lui doar când chiar e în față; niciun obiect pus peste altul |
 | `aglomerare.cjs [prag]` | 1.8.5: obiecte vecine desenate singure și comparate pixel cu pixel: cât din cel din spate e acoperit de cel din față (copac peste fântână, piatră ascunsă etc.) |
+| `curte.cjs` | 1.8.6: muți / scoți copaci și pietre din curte, nu se poate în casă, rămâne salvat; fără stiva de lemne; fântâna departe de răzoare |
 | `adancime_casa.cjs` | 1.8.3: Dudu plimbat prin toată casa (pas 0,3): obiectele care se acoperă au mereu aceeași ordine (fără pâlpâit) și Dudu e de partea bună a fiecărui perete și a fiecărei mobile |
 | `sat_oras.cjs` | 1.6.0: în sat și în oraș se ajunge pe jos la fiecare clădire / obiect cu acțiune; nimic solid nu se suprapune |
 | `miniharta.cjs` | 1.6.0: miniharta mică și mărită nu acoperă nimic (telefon, telefon mic, tabletă, laptop) |

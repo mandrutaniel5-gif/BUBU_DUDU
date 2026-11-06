@@ -654,7 +654,7 @@ def({
 def({
   id: 'act_coffee', label: 'Face o cafea', icon: '☕', who: 'both', kind: 'base', dur: 7, loop: true,
   pose(P, t, p) {
-    // cu spatele: apasa butoanele, asteapta sa curga (bataie din picior); apoi se intoarce spre noi cu ceasca: miroase, sorbitura, „Ahh!”
+    // cu fata la espressor (spatele la noi): apasa butoanele, asteapta sa curga; apoi se intoarce spre noi cu ceasca: miroase, sorbitura, „Ahh!”
     if (p < 0.18) { P.back = true; P.armR = 1.5 + (Math.sin(t * 14) > 0.6 ? 0.25 : 0); P.eyes = 'happy'; P.mouth = 'w'; }
     else if (p < 0.5) { P.back = true; P.armL = P.armR = 0.2; P.legR = Math.max(0, Math.sin(t * 12)) * 3; P.headRot = wave(t, 0.8, 0.08); P.eyes = 'happy'; P.mouth = 'smile'; }
     else {

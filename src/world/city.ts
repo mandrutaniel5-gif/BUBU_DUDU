@@ -397,26 +397,28 @@ export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, ni
       return true;
     }
     case 'coffeemachine': {
-      // dulap de bucatarie (ca blatul de langa) si espressorul pe el
+      // dulap de bucatarie lipit de perete (in spatele lui, spre -y) si espressorul pe el, cu fata spre camera (+y)
       const on = !!st.aptCoffee;
       isoBox(c, gx + 0.08, gy + 0.08, 0.84, 0.84, 32, { top: '#f6e7d3', left: '#d9a273', right: '#c48b5c' });
-      { const a = iso(gx + 0.42, gy + 0.92, 16), b = iso(gx + 0.58, gy + 0.92, 16), m0 = iso(gx + 0.5, gy + 0.92, 3), m1 = iso(gx + 0.5, gy + 0.92, 29); c.strokeStyle = shade('#d9a273', 0.75); c.lineWidth = 1.2; c.beginPath(); c.moveTo(m0.x, m0.y); c.lineTo(m1.x, m1.y); c.stroke(); c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(a.x, a.y - 5); c.lineTo(a.x, a.y + 3); c.moveTo(b.x, b.y - 5); c.lineTo(b.x, b.y + 3); c.stroke(); }
-      isoBox(c, gx + 0.3, gy + 0.25, 0.45, 0.5, 6, { top: '#9aa0ae', left: '#7a8090', right: '#6a7080' }, 32);
-      isoBox(c, gx + 0.3, gy + 0.25, 0.2, 0.5, 26, { top: '#c9ccd6', left: '#9aa0ae', right: '#8a90a0' }, 38);
-      isoBox(c, gx + 0.3, gy + 0.25, 0.45, 0.5, 8, { top: '#d8dbe3', left: '#a8aebc', right: '#989eac' }, 64);
-      // gura de cafea, ceasca, butonul aprins
-      const sp = iso(gx + 0.62, gy + 0.5, 56);
+      { const m0 = iso(gx + 0.5, gy + 0.92, 3), m1 = iso(gx + 0.5, gy + 0.92, 29); c.strokeStyle = shade('#d9a273', 0.75); c.lineWidth = 1.2; c.beginPath(); c.moveTo(m0.x, m0.y); c.lineTo(m1.x, m1.y); c.stroke();
+        const a = iso(gx + 0.42, gy + 0.92, 16), b = iso(gx + 0.58, gy + 0.92, 16); c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(a.x, a.y - 5); c.lineTo(a.x, a.y + 3); c.moveTo(b.x, b.y - 5); c.lineTo(b.x, b.y + 3); c.stroke(); }
+      // talpa, turnul din spate (lipit de perete), capacul
+      isoBox(c, gx + 0.25, gy + 0.25, 0.5, 0.45, 6, { top: '#9aa0ae', left: '#7a8090', right: '#6a7080' }, 32);
+      isoBox(c, gx + 0.25, gy + 0.25, 0.5, 0.2, 26, { top: '#c9ccd6', left: '#9aa0ae', right: '#8a90a0' }, 38);
+      isoBox(c, gx + 0.25, gy + 0.25, 0.5, 0.45, 8, { top: '#d8dbe3', left: '#a8aebc', right: '#989eac' }, 64);
+      // gura de cafea si ceasca, in fata (spre camera)
+      const sp = iso(gx + 0.5, gy + 0.62, 56);
       c.fillStyle = '#3a3a44'; c.beginPath(); c.roundRect(sp.x - 4, sp.y - 2, 8, 4, 1.5); c.fill();
-      const cup = iso(gx + 0.62, gy + 0.5, 40);
+      const cup = iso(gx + 0.5, gy + 0.62, 40);
       c.fillStyle = '#fff'; c.strokeStyle = O; c.lineWidth = 1.3; c.beginPath(); c.roundRect(cup.x - 5, cup.y - 7, 10, 8, 2.5); c.fill(); c.stroke();
-      c.beginPath(); c.arc(cup.x + 6, cup.y - 3, 2.6, -1.2, 1.2); c.stroke();
+      c.beginPath(); c.arc(cup.x - 6, cup.y - 3, 2.6, Math.PI - 1.2, Math.PI + 1.2); c.stroke();
       if (on) {
-        const fill = (t * 0.35) % 1;
         c.strokeStyle = '#6b3e1f'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(sp.x - 1, sp.y + 2); c.lineTo(sp.x - 1, cup.y - 6); c.moveTo(sp.x + 1.5, sp.y + 2); c.lineTo(sp.x + 1.5, cup.y - 6); c.stroke();
-        c.fillStyle = '#7a4a26'; c.fillRect(cup.x - 4, cup.y - 6 + 6 * (1 - fill) * 0.4, 8, 1.6);
         for (let i = 0; i < 3; i++) { const k = (t * 0.9 + i / 3) % 1; c.globalAlpha = 1 - k; c.strokeStyle = '#ffffff'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(cup.x - 2 + i * 2, cup.y - 9 - k * 16); c.quadraticCurveTo(cup.x + 2 + i * 2, cup.y - 13 - k * 16, cup.x - 2 + i * 2, cup.y - 17 - k * 16); c.stroke(); c.globalAlpha = 1; }
       }
-      const led = iso(gx + 0.32, gy + 0.36, 60); c.fillStyle = on ? (Math.sin(t * 10) > 0 ? '#4dff7a' : '#ffd23f') : '#ff5d8f'; c.beginPath(); c.arc(led.x, led.y, 1.6, 0, 7); c.fill();
+      // butoanele de pe fata turnului
+      const led = iso(gx + 0.36, gy + 0.46, 58); c.fillStyle = on ? (Math.sin(t * 10) > 0 ? '#4dff7a' : '#ffd23f') : '#ff5d8f'; c.beginPath(); c.arc(led.x, led.y, 1.6, 0, 7); c.fill();
+      const bt = iso(gx + 0.64, gy + 0.46, 58); c.fillStyle = '#3a3a44'; c.beginPath(); c.arc(bt.x, bt.y, 1.6, 0, 7); c.fill();
       return true;
     }
     case 'painting': {
@@ -480,11 +482,10 @@ const AF: Furn[] = [
   { id: 'tub', type: 'bathtub', gx: 14, gy: 3, w: 2, d: 1, solid: true, action: act('bath', 'Baie cu spumă', '🛁') },
   { id: 'sink', type: 'sink', gx: 16, gy: 5, w: 1, d: 1, solid: true, action: act('teeth', 'Spălat pe dinți', '🪥') },
   { id: 'washer', type: 'washer', gx: 16, gy: 3, w: 1, d: 1, solid: true, action: act('laundry', 'Rufe', '🧺') },
-  // bucataria: in linie pe peretele dinspre baie (y = 8), cu fata spre camera: frigider, blat, aragaz, (espressorul pe dulapul lui)
-  { id: 'fridge', type: 'fridge', gx: 12, gy: 8, w: 1, d: 1, solid: true, action: act('snack', 'Frigiderul', '🧊') },
-  { id: 'counter', type: 'counter', gx: 13, gy: 8, w: 1, d: 1, solid: true, action: act('dishes', 'Spălat vase', '🍽️') },
-  { id: 'stove', type: 'stove', gx: 14, gy: 8, w: 1, d: 1, solid: true, action: act('cook', 'Gătește', '🍳') },
-  { id: 'a-plantK', type: 'plant', gx: 16, gy: 8, w: 1, d: 1, solid: true, action: act('water_plant', 'Udă floarea', '🪴') },
+  // bucataria: frigiderul in colt, langa el espressorul (de la mall), apoi aragazul si blatul cu vasele
+  { id: 'fridge', type: 'fridge', gx: 16, gy: 8, w: 1, d: 1, solid: true, action: act('snack', 'Frigiderul', '🧊') },
+  { id: 'stove', type: 'stove', gx: 16, gy: 10, w: 1, d: 1, solid: true, action: act('cook', 'Gătește', '🍳') },
+  { id: 'counter', type: 'counter', gx: 16, gy: 11, w: 1, d: 1, solid: true, action: act('dishes', 'Spălat vase', '🍽️') },
   { id: 'table', type: 'table', gx: 13, gy: 11, w: 2, d: 1, solid: true, action: act('eat', 'Masa', '🍰') },
   { id: 'a-rugL', type: 'rug', gx: 5, gy: 9, w: 4, d: 3, solid: false, color: '#ffd6e4' },
   { id: 'sofa', type: 'sofa', gx: 8, gy: 10, w: 1, d: 2, solid: true, action: act('cuddle', 'Canapeaua', '🛋️') },

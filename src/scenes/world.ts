@@ -27,7 +27,7 @@ import { g } from '../game/gender';
 import type { Scene, Game } from '../engine/game';
 import { iso, unIso, screenDirToGrid, isoBox, boxOf, TW, TH } from '../world/iso';
 import { iconCanvas } from '../ui/icons';
-import { FURNITURE, WALLS, MAP_W, MAP_H, YARD_H, YARD_GATE, BACK_GATE, type Furn, type Wall, resetAreas, currentArea } from '../world/map';
+import { FURNITURE, WALLS, MAP_W, MAP_H, YARD_H, YARD_GATE, BACK_GATE, type Furn, type Wall, resetAreas, currentArea, YARD_ITEMS, YARD_ORIG, YARD_REMOVABLE } from '../world/map';
 import { drawFurn, drawWall, drawYardFence, drawYardGate, type FurnState } from '../world/furniture';
 import { Nav } from '../world/nav';
 import { CATALOG, RES_INFO, drawGhost, drawTallGrass, type BuildItem } from '../world/build';
@@ -148,7 +148,7 @@ export class WorldScene implements Scene {
   critters: Critter[] = [];
   timeMult = 1;
   npcs: Npc[] = []; npcSpawnT = 6;
-  build: { item: BuildItem | null; gx: number; gy: number; remove: boolean } | null = null;
+  build: { item: BuildItem | null; gx: number; gy: number; remove: boolean; moving?: Furn | null } | null = null;
   snoring = false; snoreT = 3;
   snd = new Soundscape(this);
   /** lucruri aruncate (moneda in fantana): zboara in arc, apoi cercuri pe apa */
@@ -373,7 +373,7 @@ export class WorldScene implements Scene {
     applyOp(this.w, o);
     // vehiculul mutat de partener: il vezi si tu la noul loc. La fel cand partenerul CUMPARA bicicleta / scuterul
     // (inainte se vedea abia cand urca pe ea) sau cand se schimba capitolul / podul (tractorul, gramada de lemne)
-    if (o.k === 'place' || o.k === 'unplace' || o.k === 'veh' || (o.k === 'stat' && PLACED_STATS.has(o.key))) this.syncPlaced();
+    if (o.k === 'place' || o.k === 'unplace' || o.k === 'yard' || o.k === 'veh' || (o.k === 'stat' && PLACED_STATS.has(o.key))) this.syncPlaced();
     if (o.k === 'jar' && o.from !== this.myId) this.hud.toast('💌 Ai primit un bilețel în Borcanul cu iubire!');
   }
   private lastStateKey = ''; private lastStateAt = 0; private lastCharSync = ''; private lastCharAt = 0;
@@ -412,9 +412,10 @@ export class WorldScene implements Scene {
     if (this.chapter >= 2) {
       { const at = this.vehAt('tractor'), sp = this.parkSpot('tractor', at); FURNITURE.push({ id: at === 'forest' ? 'f-tractor' : 'h-tractor', type: 'tractor' as any, gx: sp.gx, gy: sp.gy, w: 2, d: 1, solid: true, action: at === 'forest' ? { id: 'gohome', label: 'Înapoi acasă cu tractorașul', icon: '🚜' } : { id: 'forest', label: 'Spre pădure cu tractorașul', icon: '🚜' } }); }
     }
-    // gramada de lemne (cheresteaua le cumpara): treaba lui Dudu, inca din Capitolul 1
-    // stiva de lemne din curte (doar arata cate aveti; se vand la cheresteaua de pe drum)
-    if (this.chapter >= 1) FURNITURE.push({ id: 'h-wood', type: 'logpile' as any, gx: 17, gy: 15, w: 1, d: 1, solid: true, action: { id: 'woodpile', label: 'Stiva de lemne', icon: '🪵' } });
+    // curtea aranjata de voi: copacii, pietrele, tufele, florile, banca, fantana... mutate sau scoase (w.yard)
+    { const yard = this.w.yard ?? {};
+      for (const f of YARD_ITEMS) { const i = FURNITURE.indexOf(f); if (i >= 0) FURNITURE.splice(i, 1); }
+      for (const f of YARD_ITEMS) { const at = yard[f.id]; if (at === 0) continue; const o = YARD_ORIG.get(f.id)!; f.gx = at ? at.gx : o.gx; f.gy = at ? at.gy : o.gy; FURNITURE.push(f); } }
     Story.place(this, f => FURNITURE.push(f));
     for (const key of Object.keys(this.w.plots ?? {})) { const [x, y] = key.split(',').map(Number); FURNITURE.push({ id: 'plot:' + key, type: 'soilplot', gx: x, gy: y, w: 1, d: 1, solid: false, action: { id: 'plot', label: 'Răzor', icon: '🌱' } }); }
     for (const p of this.w.placed ?? []) {
@@ -453,16 +454,42 @@ export class WorldScene implements Scene {
   buildTap(gx: number, gy: number) {
     const b = this.build!; const tx = Math.floor(gx), ty = Math.floor(gy);
     if (b.remove) {
-      const f = FURNITURE.find(f => f.id.startsWith('p-') && tx >= f.gx && tx < f.gx + f.w && ty >= f.gy && ty < f.gy + f.d);
-      if (!f) { this.hud.toast('Atinge un obiect construit de voi'); return; }
-      const it = CATALOG.find(c => c.type === f.type);
-      if (it) for (const [r, n] of Object.entries(it.cost)) this.op({ k: 'res', res: r, delta: Math.floor((n ?? 0) / 2) });
-      this.op({ k: 'unplace', uid: f.id.slice(2) }); Sfx.play('wood_drop');
+      // al doilea pas al mutarii: locul nou
+      if (b.moving) { this.moveTo(b.moving, tx, ty); return; }
+      const f = FURNITURE.find(f => (f.id.startsWith('p-') || YARD_ITEMS.includes(f)) && tx >= f.gx && tx < f.gx + f.w && ty >= f.gy && ty < f.gy + f.d);
+      if (!f) { this.hud.toast('Atinge un obiect din curte sau construit de voi'); return; }
+      const built = f.id.startsWith('p-'), it = built ? CATALOG.find(c => c.type === f.type) : null;
+      const gone = !built && YARD_REMOVABLE.has(f.type as string);
+      const loot = f.type === 'tree' ? { res: 'wood', n: 4, txt: '+4 🪵' } : f.type === 'rock' ? { res: 'stone', n: 3, txt: '+3 🪨' } : null;
+      const opts: [string, string, () => void][] = [['✋', 'Mută', () => { b.moving = f; this.hud.setBuild(b); this.hud.toast('✋ Atinge locul nou'); }]];
+      if (built) opts.push(['🧹', 'Strânge (primești ½ înapoi)', () => { if (it) for (const [r, n] of Object.entries(it.cost)) this.op({ k: 'res', res: r, delta: Math.floor((n ?? 0) / 2) }); this.op({ k: 'unplace', uid: f.id.slice(2) }); Sfx.play('wood_drop'); }]);
+      else if (gone) opts.push(['🗑️', `Scoate${loot ? ` (${loot.txt})` : ''}`, () => {
+        if (loot) this.op({ k: 'res', res: loot.res, delta: loot.n });
+        this.op({ k: 'yard', id: f.id, at: 0 }); Sfx.play(f.type === 'rock' ? 'mine' : f.type === 'tree' ? 'chop' : 'leaves');
+        const p = iso(f.gx + 0.5, f.gy + 0.5, 40); this.fx.burst('puff', p.x, p.y, 8, 6.28, 60, { max: 0.7 }); if (loot) this.fx.text(p.x, p.y - 20, loot.txt, '#2ec4b6', 0.9);
+      }]);
+      this.choice(`${f.action?.icon ?? '🌿'} ${f.action?.label ?? (f.type === 'bush' ? 'Tufa' : 'Florile')}`, 'Ce faci cu el?', opts);
       return;
     }
     if (!b.item) return;
     if (tx !== b.gx || ty !== b.gy) { b.gx = tx; b.gy = ty; Sfx.play('click'); return; }
     this.confirmBuild();
+  }
+  /** muta un obiect din curte (sau o constructie de-a voastra) pe dala aleasa */
+  moveTo(f: Furn, tx: number, ty: number) {
+    const b = this.build!;
+    const inHouse = (x: number, y: number) => x >= 2 && x <= 13 && y >= 2 && y <= 11;
+    for (let x = tx; x < tx + f.w; x++) for (let y = ty; y < ty + f.d; y++) {
+      const bad = x < 0 || y < 0 || x >= MAP_W || y >= YARD_H || inHouse(x, y)
+        || FURNITURE.some(o => o !== f && (o.solid || o.type === 'soilplot' || o.type === ('flowers' as any) || o.type === ('wildflower' as any)) && x >= o.gx && x < o.gx + o.w && y >= o.gy && y < o.gy + o.d)
+        || Object.keys(this.w.plots ?? {}).includes(`${x},${y}`)
+        || [this.me, this.partner].some(p => Math.floor(p.gx) === x && Math.floor(p.gy) === y);
+      if (bad) { this.hud.toast('Nu încape aici ✖ (doar în curte, pe un loc liber)'); Sfx.play('bad'); return; }
+    }
+    if (f.id.startsWith('p-')) { const uid = f.id.slice(2); this.op({ k: 'unplace', uid }); this.op({ k: 'place', uid, type: f.type, gx: tx, gy: ty }); }
+    else this.op({ k: 'yard', id: f.id, at: { gx: tx, gy: ty } });
+    b.moving = null; this.hud.setBuild(b);
+    const p = iso(tx + f.w / 2, ty + f.d / 2, 30); this.fx.burst('star', p.x, p.y, 8, 6.28, 100, { max: 0.7 }); Sfx.play('pop');
   }
   confirmBuild() {
     const b = this.build; if (!b?.item) return;

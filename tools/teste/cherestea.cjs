@@ -33,8 +33,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   ok('comenzile zilei', ord.every(o => o.done ? o.paid > 0 : o.paid === 0), JSON.stringify(ord));
   await sleep(600); await p.screenshot({ path: 'saw_orders.png' });
   await p.evaluate(() => game.scene.minigame.obj.abort()); await sleep(2500);
-  // stiva din curte nu mai vinde
-  const pile = await p.evaluate(async () => { const s = game.scene; const m = s.w.money; const t = []; const T = s.hud.toast.bind(s.hud); s.hud.toast = x => { t.push(x); T(x); }; s.me.gx = 17.5; s.me.gy = 16.6; s.goTo('h-wood'); await new Promise(r => setTimeout(r, 2500)); return { lei: s.w.money - m, t }; });
-  ok('stiva din curte doar arata lemnele', pile.lei === 0 && pile.t.some(x => x.includes('Cheresteaua')), JSON.stringify(pile));
+  // stiva din curte a fost scoasa (1.8.6)
+  ok('nu mai e stiva de lemne in curte', await p.evaluate(() => !game.scene.furnList.some(f => f.id === 'h-wood')));
   console.log(errs.join('\n') || 'no errors'); await b.close();
 })();

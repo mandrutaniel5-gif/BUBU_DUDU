@@ -365,9 +365,9 @@ export class Hud {
     const s = this.s; const r = s.w.res ?? {};
     const cost = (it: BuildItem) => Object.entries(it.cost).map(([k, n]) => `${RES_INFO[k as Res].icon}${n}`).join(' ');
     const m = this.modal(`<h3>🔨 Construim împreună</h3>
-      <p class="sub">Ai ${(Object.keys(RES_INFO) as Res[]).map(k => `${RES_INFO[k].icon} ${r[k] ?? 0}`).join(' · ')}. Strânge din curte: copaci 🪓, pietre ⛏️, flori 🌸.</p>
+      <p class="sub">Ai ${(Object.keys(RES_INFO) as Res[]).map(k => `${RES_INFO[k].icon} ${r[k] ?? 0}`).join(' · ')}. Strânge din curte: copaci 🪓, pietre ⛏️, flori 🌸. Curtea o aranjezi cum vrei: muți sau scoți copacii și pietrele.</p>
       <div class="shop">${CATALOG.map(it => `<button data-b="${it.type}" class="${s.canAfford(it) ? '' : 'poor'}"><span>${it.icon}</span><b>${it.label}${it.coop ? ' 💞' : ''}</b><small>${cost(it)}</small></button>`).join('')}
-      <button data-b="__remove"><span>🧹</span><b>Mută / Strânge</b><small>primești ½ înapoi</small></button></div>`);
+      <button data-b="__remove"><span>🧹</span><b>Aranjează curtea</b><small>mută sau scoate copaci, pietre, ce ai construit</small></button></div>`);
     m.querySelectorAll('[data-b]').forEach(b => b.addEventListener('click', () => {
       const t = (b as HTMLElement).dataset.b!;
       this.closeModal();
@@ -375,11 +375,11 @@ export class Hud {
       else s.startBuild(CATALOG.find(c => c.type === t)!);
     }));
   }
-  setBuild(b: { item: BuildItem | null; remove: boolean } | null) {
+  setBuild(b: { item: BuildItem | null; remove: boolean; moving?: { action?: { label: string } } | null } | null) {
     const bar = this.root.querySelector('.buildbar') as HTMLElement;
     bar.classList.toggle('hidden', !b);
     this.root.classList.toggle('building', !!b);
-    if (b) (bar.querySelector('.bt') as HTMLElement).textContent = b.remove ? '🧹 Atinge un obiect ca să-l strângi' : `${b.item!.icon} ${b.item!.label}: atinge locul, apoi ✔`;
+    if (b) (bar.querySelector('.bt') as HTMLElement).textContent = b.moving ? `✋ Atinge locul nou pentru ${b.moving.action?.label?.toLowerCase() ?? 'obiect'}` : b.remove ? '🧹 Atinge un copac, o piatră sau ce ai construit: îl muți sau îl scoți' : `${b.item!.icon} ${b.item!.label}: atinge locul, apoi ✔`;
     (bar.querySelector('[data-a="bok"]') as HTMLElement).classList.toggle('hidden', !!b?.remove);
   }
 
