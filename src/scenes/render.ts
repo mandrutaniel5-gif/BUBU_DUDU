@@ -399,7 +399,9 @@ export function drawPawn(scene: WorldScene, ctx: CanvasRenderingContext2D, p: Pa
   const c = scene.w.chars[p.id];
   ctx.font = '800 11px "Baloo 2", sans-serif'; ctx.textAlign = 'center';
   const label = `${p.actor.spec.name}${c.sick ? ' ' + SICK_INFO[c.sick].icon : ''}${p.control === 'ai' ? ' 🤖' : ''}`;
-  if (p.activity?.a.place !== 'bed' && p.activity?.a.place !== 'tub') {
+  // modul filmare (doar pentru trailer, din scriptul de filmare): fara nume si bare deasupra personajelor
+  const cine = !!(globalThis as any).__cinema;
+  if (!cine && p.activity?.a.place !== 'bed' && p.activity?.a.place !== 'tub') {
     ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.fillStyle = p === scene.me ? '#ff4d6d' : '#3a2a22'; fillTextIcons(ctx, label, s.x, s.y + 14, 11, true);
   }
   // balonasul cu cererea bolnavului
@@ -412,7 +414,7 @@ export function drawPawn(scene: WorldScene, ctx: CanvasRenderingContext2D, p: Pa
     ctx.font = '18px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; fillTextIcons(ctx, REQUESTS[c.request].icon, bx, by - 2, 16); ctx.textBaseline = 'alphabetic';
   }
   // bara de progres a activitatii
-  if (p.activity && p.activity.t >= 0) {
+  if (!cine && p.activity && p.activity.t >= 0) {
     const k = Math.min(1, p.activity.t / p.activity.a.dur);
     const y = s.y - 78 * ACTOR_SCALE - (p.activity.a.place === 'bed' || p.activity.a.place === 'tub' ? -10 : 18);
     ctx.fillStyle = '#ffffffcc'; ctx.beginPath(); ctx.roundRect(s.x - 22, y, 44, 7, 4); ctx.fill();

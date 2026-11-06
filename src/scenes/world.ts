@@ -2007,7 +2007,8 @@ export class WorldScene implements Scene {
 
     // camera urmareste jucatorul; pe drum se uita putin inainte si se departeaza, ca sa vezi lumea
     const r = this.ride, look = r ? pointAt(r.path, Math.min(r.len, r.s + 2.5 + r.v * 0.4)) : null;
-    const target = look ? iso(look.x, look.y, 30) : iso(this.me.gx, this.me.gy, 30);
+    const camAt = (globalThis as any).__camAt as { x: number; y: number } | undefined; // doar la filmarea trailerului
+    const target = camAt ? iso(camAt.x, camAt.y, 30) : look ? iso(look.x, look.y, 30) : iso(this.me.gx, this.me.gy, 30);
     const ck = Math.min(1, dt * (r ? 5 : 4));
     this.cam.x += (target.x - this.cam.x) * ck;
     this.cam.y += (target.y - this.cam.y) * ck;

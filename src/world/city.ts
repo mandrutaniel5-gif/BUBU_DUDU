@@ -521,5 +521,5 @@ export function drawAptBuilding(c: CanvasRenderingContext2D, night: number) {
     }
   }
   // firma blocului pe colt
-  const p = faceY(0.08, -40); drawSign(c, p.x + 30, p.y, 'Blocul Lalelelor · et. 4', '🏙️', '#fff8ef', trim, 10);
+  const p = faceY(0.08, -40); if (!(globalThis as any).__cinema) drawSign(c, p.x + 30, p.y, 'Blocul Lalelelor · et. 4', '🏙️', '#fff8ef', trim, 10);
 }
