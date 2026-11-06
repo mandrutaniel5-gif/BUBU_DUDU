@@ -199,12 +199,12 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
       if ((f.type as string) === 'farmhouse') overlays.push(() => houseSmoke(ctx, f, scene.time));
       continue;
     }
-    items.push({ x0: f.gx, y0: f.gy, x1: f.gx + f.w, y1: f.gy + f.d, box: screenBox(f), draw: () => paint(f), k: f.type });
+    items.push({ x0: f.gx, y0: f.gy, x1: f.gx + f.w, y1: f.gy + f.d, box: screenBox(f), draw: () => paint(f), k: f.type, id: f.id });
   }
   if (!baking) {
     for (const wl of WALLS) if (wl.kind !== 'back') {
       const r = wl.dir === 'x' ? { x0: wl.x, y0: wl.y - 0.05, x1: wl.x + 1, y1: wl.y } : { x0: wl.x - 0.05, y0: wl.y, x1: wl.x, y1: wl.y + 1 };
-      items.push({ ...r, draw: () => drawWall(ctx, wl as Wall, scene.time, night), k: 'perete' });
+      items.push({ ...r, draw: () => drawWall(ctx, wl as Wall, scene.time, night), k: 'perete', id: `w:${wl.x},${wl.y},${wl.dir}` });
     }
     if (home && !ch0 && seen(10, 22, 400)) for (let x = 0; x < MAP_W; x++) {
       if (x === YARD_GATE) items.push({ x0: x, y0: YARD_H - 0.02, x1: x + 1, y1: YARD_H, draw: () => drawYardGate(ctx, YARD_GATE, YARD_H) });
@@ -237,8 +237,8 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
       // desenat imediat dupa obiectul pe care sta
       const f = p.activity!.furn;
       const eps = inside === 'sofa' ? 0.01 : 0.001;
-      items.push({ x0: f.gx + f.w - eps, y0: f.gy + f.d - eps, x1: f.gx + f.w, y1: f.gy + f.d, box: personBox(p.gx, p.gy, pb.mx, pb.h), draw: () => drawPawn(scene, ctx, p) });
-    } else items.push({ x0: p.gx - 0.2, y0: p.gy - 0.2, x1: p.gx + 0.2, y1: p.gy + 0.2, ...pb, draw: () => drawPawn(scene, ctx, p) });
+      items.push({ x0: f.gx + f.w - eps, y0: f.gy + f.d - eps, x1: f.gx + f.w, y1: f.gy + f.d, box: personBox(p.gx, p.gy, pb.mx, pb.h), draw: () => drawPawn(scene, ctx, p), id: 'p:' + p.id });
+    } else items.push({ x0: p.gx - 0.2, y0: p.gy - 0.2, x1: p.gx + 0.2, y1: p.gy + 0.2, ...pb, draw: () => drawPawn(scene, ctx, p), id: 'p:' + p.id });
   }
   if (baking) {
     // ce e "copt" si sta IN FATA celor vii se redeseneaza peste ei, doar in jurul lor (cele din spate sunt deja in podea)
@@ -247,7 +247,7 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
     const assigned = new Map<StaticEntry, Box[]>();
     for (const d of dyn) {
       const R0 = d.box ?? itemBox(d), R = { x0: R0.x0 - 4, y0: R0.y0 - 4, x1: R0.x1 + 4, y1: R0.y1 + 4 };
-      for (const e of statics) if (overlap(R, e.box) && isoLess(d, e) < 0) { let L = assigned.get(e); if (!L) assigned.set(e, L = []); L.push(R); }
+      for (const e of statics) if (overlap(R, e.box) && isoCmp(d, e) < 0) { let L = assigned.get(e); if (!L) assigned.set(e, L = []); L.push(R); }
     }
     if (PF) { (globalThis as any).__big = { dyn: dyn.length, occ: assigned.size, rects: [...assigned.values()].reduce((a, l) => a + l.length, 0) }; }
     for (const [e, rs] of assigned) {
@@ -418,7 +418,7 @@ export function drawPawn(scene: WorldScene, ctx: CanvasRenderingContext2D, p: Pa
 }
 
 // ------------------------------------------------------------------ lumea "coapta"
-interface DItem { x0: number; y0: number; x1: number; y1: number; draw: () => void; box?: Box; mx?: number; h?: number; k?: string }
+interface DItem { x0: number; y0: number; x1: number; y1: number; draw: () => void; box?: Box; mx?: number; h?: number; k?: string; id?: string }
 interface Box { x0: number; y0: number; x1: number; y1: number }
 /** un lucru care nu se misca, "copt" in podea */
 interface StaticEntry { key: string; x0: number; y0: number; x1: number; y1: number; box: Box; flat?: boolean; paint: (c: CanvasRenderingContext2D, st: FurnState, night: number) => void }
@@ -433,7 +433,7 @@ export function bakeable(f: Furn) {
 /** acum se misca / se schimba de la un cadru la altul (televizorul pornit, aragazul care gateste...): desenat viu peste */
 function liveNow(scene: WorldScene, f: Furn, st: FurnState) {
   const t = f.type as string;
-  if (t === 'tv' && st.tvOn) return true;
+  if (t === 'tv' && (st.tvOn || st.tvBroken)) return true; // si „puricii” televizorului stricat se misca
   if (t === 'stove' && st.cooking) return true;
   // mizeria se misca (aburii care miros): vie, nu „poza”
   if ((t === 'toilet' && st.clogged) || (t === 'bathtub' && st.tubDirty) || (t === 'fridge' && st.fridgeDirty) || (t === 'counter' && st.dishesDirty)) return true;
@@ -468,17 +468,55 @@ function mergeLocal(rs: Box[], within: Box): Box[] {
   }
   return out;
 }
-function isoLess(a: { x0: number; y0: number; x1: number; y1: number }, b: { x0: number; y0: number; x1: number; y1: number }) {
-  if (a.x1 <= b.x0 + 1e-6 && !(b.x1 <= a.x0 + 1e-6)) { if (a.y0 < b.y1) return -1; }
-  if (b.x1 <= a.x0 + 1e-6 && !(a.x1 <= b.x0 + 1e-6)) { if (b.y0 < a.y1) return 1; }
-  if (a.y1 <= b.y0 + 1e-6) return -1;
-  if (b.y1 <= a.y0 + 1e-6) return 1;
+/**
+ * Cine e in spate (a inaintea lui b: -1). Peretii subtiri se compara cu PARTEA din care e celalalt (centrul lui),
+ * altfel, langa un perete, Bubu / patul / masina de spalat sareau cand in fata, cand in spate.
+ */
+const thinX = (a: Box) => a.x1 - a.x0 <= 0.06, thinY = (a: Box) => a.y1 - a.y0 <= 0.06;
+function isoCmp(a: Box, b: Box): number {
+  const E = 1e-6;
+  const ovY = a.y0 < b.y1 - E && b.y0 < a.y1 - E, ovX = a.x0 < b.x1 - E && b.x0 < a.x1 - E;
+  // perete pe y (linia x = w.x1): celalalt e in fata daca centrul lui e la dreapta liniei; la fel pe x
+  const midIn = (v0: number, v1: number, w0: number, w1: number) => { const c = (v0 + v1) / 2; return c > w0 && c < w1; };
+  if (thinX(a) && !thinX(b) && ovY && midIn(b.y0, b.y1, a.y0, a.y1)) return (b.x0 + b.x1) / 2 >= a.x1 - 1e-3 ? -1 : 1;
+  if (thinX(b) && !thinX(a) && ovY && midIn(a.y0, a.y1, b.y0, b.y1)) return (a.x0 + a.x1) / 2 >= b.x1 - 1e-3 ? 1 : -1;
+  if (thinY(a) && !thinY(b) && ovX && midIn(b.x0, b.x1, a.x0, a.x1)) return (b.y0 + b.y1) / 2 >= a.y1 - 1e-3 ? -1 : 1;
+  if (thinY(b) && !thinY(a) && ovX && midIn(a.x0, a.x1, b.x0, b.x1)) return (a.y0 + a.y1) / 2 >= b.y1 - 1e-3 ? 1 : -1;
+  const ax = a.x1 <= b.x0 + E, bx = b.x1 <= a.x0 + E, ay = a.y1 <= b.y0 + E, by = b.y1 <= a.y0 + E;
+  // despartite pe diagonala (unul mai la stanga, celalalt mai la dreapta): nu se acopera, nu impunem nimic
+  if ((ax && by) || (bx && ay)) return 0;
+  if (ax || ay) return -1;
+  if (bx || by) return 1;
   return (a.x0 + a.x1 + a.y0 + a.y1) - (b.x0 + b.x1 + b.y0 + b.y1);
 }
+/**
+ * Ordinea de desen: doar obiectele care se ating pe ecran se compara intre ele, apoi o ordine topologica.
+ * (Un simplu sort cu o comparatie care nu e tranzitiva dadea alta ordine la fiecare pas: obiectele „palpaiau”.)
+ */
+function depthSort<T extends Box>(items: T[], boxOf: (t: T) => Box): T[] {
+  const base = items.slice().sort((a, b) => (a.x0 + a.x1 + a.y0 + a.y1) - (b.x0 + b.x1 + b.y0 + b.y1));
+  const n = base.length; if (n < 2) return base;
+  const B = base.map(boxOf), indeg = new Int32Array(n), adj: number[][] = Array.from({ length: n }, () => []);
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    if (!overlap(B[i], B[j])) continue;
+    const c = isoCmp(base[i], base[j]);
+    if (c < 0) { adj[i].push(j); indeg[j]++; } else if (c > 0) { adj[j].push(i); indeg[i]++; }
+  }
+  const out: T[] = [], done = new Uint8Array(n);
+  for (let k = 0; k < n; k++) {
+    let pick = -1;
+    for (let i = 0; i < n; i++) if (!done[i] && indeg[i] === 0) { pick = i; break; }
+    if (pick < 0) for (let i = 0; i < n; i++) if (!done[i]) { pick = i; break; } // un cerc (rar): il rupem in ordinea de baza
+    done[pick] = 1; out.push(base[pick]);
+    for (const j of adj[pick]) indeg[j]--;
+  }
+  return out;
+}
 function drawSorted(ctx: CanvasRenderingContext2D, items: DItem[], inHouse: (x0: number, y0: number, x1: number, y1: number) => boolean) {
-  items.sort(isoLess);
+  const sorted = depthSort(items, it => it.box ?? itemBox(it));
+  { const g = globalThis as any; if (g.__orderLog) g.__order = sorted.filter(it => it.id && inHouse(it.x0, it.y0, it.x1, it.y1)).map(it => ({ id: it.id, x0: it.x0, y0: it.y0, x1: it.x1, y1: it.y1, b: it.box ?? itemBox(it) })); }
   const PF = (globalThis as any).__prof as Record<string, number> | undefined, fl = PF && (globalThis as any).__flushItems;
-  for (const it of items) if (inHouse(it.x0, it.y0, it.x1, it.y1)) {
+  for (const it of sorted) if (inHouse(it.x0, it.y0, it.x1, it.y1)) {
     const t0 = fl ? performance.now() : 0;
     ctx.save(); try { it.draw(); } catch (e) { ErrorLog.add(e, 'desen obiect'); } ctx.restore();
     if (fl) { ctx.getImageData(0, 0, 1, 1); const k = 'o:' + (it.k ?? '?'); PF![k] = (PF![k] ?? 0) + performance.now() - t0; }
@@ -523,6 +561,6 @@ function bakeChunk(scene: WorldScene, c: CanvasRenderingContext2D, ox: number, o
   const gx0 = Math.min(...cs.map(q => q.x)) - 2, gx1 = Math.max(...cs.map(q => q.x)) + 2, gy0 = Math.min(...cs.map(q => q.y)) - 2, gy1 = Math.max(...cs.map(q => q.y)) + 2;
   const list = staticEntriesIn(scene, gx0, gy0, gx1, gy1, ox, oy, ox + w, oy + h);
   for (const e of list) if (e.flat) { c.save(); try { e.paint(c, st, night); } catch (err) { ErrorLog.add(err, 'copt decor'); } c.restore(); }
-  const solid = list.filter(e => !e.flat).sort(isoLess);
+  const solid = depthSort(list.filter(e => !e.flat), e => e.box);
   for (const e of solid) { c.save(); try { e.paint(c, st, night); } catch (err) { ErrorLog.add(err, 'copt obiect'); } c.restore(); }
 }
