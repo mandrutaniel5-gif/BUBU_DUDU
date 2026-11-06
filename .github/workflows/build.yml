@@ -1,4 +1,4 @@
-# Build-uri automate: Web (PWA + fisier unic), Windows (.exe), Android (.apk semnat), iOS (.ipa nesemnat).
+# Build-uri automate: Web (PWA + fisier unic), Windows (.exe), Android (.apk pentru testeri + .aab pentru Google Play), iOS (.ipa nesemnat).
 # Ruleaza la fiecare push pe main si manual (Actions -> Build -> Run workflow).
 # La un tag v* (ex. v1.0.0) fisierele sunt puse si intr-un Release.
 name: Build
@@ -78,11 +78,18 @@ jobs:
       - uses: actions/setup-node@v5
         with: { node-version: 22, cache: npm }
       - uses: actions/setup-java@v5
-        with: { distribution: temurin, java-version: 17 }
+        with: { distribution: temurin, java-version: 21 }
       - run: npm ci
       - run: npm run build
+      # Google Play cere din 31 aug 2026 Android 16 (API 36): doar aplicatia de Android merge pe Capacitor 8 (iOS ramane pe 6)
+      - run: npm i --no-save @capacitor/cli@8.6.0 @capacitor/core@8.6.0 @capacitor/android@8.6.0
       - run: npx cap add android
       - run: npx cap sync android
+      - name: Versiunea aplicatiei (din package.json; Play cere un numar mai mare la fiecare incarcare)
+        run: |
+          V=$(node -p "require('./package.json').version"); IFS=. read -r A B C <<< "$V"; CODE=$((A * 10000 + B * 100 + C))
+          sed -i -E "s/versionCode [0-9]+/versionCode $CODE/; s/versionName \"[^\"]*\"/versionName \"$V\"/" android/app/build.gradle
+          grep -E "versionCode|versionName|targetSdk|compileSdk" android/app/build.gradle android/variables.gradle || true
       - name: Doar pe orizontala
         run: sed -i 's/<activity/<activity android:screenOrientation="sensorLandscape"/' android/app/src/main/AndroidManifest.xml
       - name: Pictograma aplicatiei
@@ -99,7 +106,7 @@ jobs:
         run: |
           if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then echo "::warning::Lipseste secretul ANDROID_KEYSTORE_BASE64 - APK-ul va fi semnat doar cu cheia de debug"; exit 0; fi
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/release.jks
-      - name: Build APK
+      - name: Build APK (testeri) si AAB (Google Play)
         working-directory: android
         env:
           KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -108,24 +115,27 @@ jobs:
           set -eo pipefail
           exec > >(tee /tmp/b.log) 2>&1
           trap 'sleep 1; echo "::error::$(tail -c 1500 /tmp/b.log | tr "\n" " ")"' ERR
-          echo "ANDROID_HOME=$ANDROID_HOME"
           chmod +x gradlew
+          # APK-ul pentru testeri: mereu cu aceeasi cheie de test, ca versiunile noi sa se instaleze PESTE cea veche (lumile raman)
+          mkdir -p ~/.android && cp ../ci/debug.keystore ~/.android/debug.keystore
+          ./gradlew assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk ../BubuDudu.apk
+          # AAB-ul pentru Google Play: semnat cu cheia de incarcare (din Secrets); fara cheie nu se poate urca in Play
           if [ -f app/release.jks ]; then
-            ./gradlew assembleRelease \
+            ./gradlew bundleRelease \
               -Pandroid.injected.signing.store.file=$PWD/app/release.jks \
               -Pandroid.injected.signing.store.password="$KS_PASS" \
               -Pandroid.injected.signing.key.alias="${KS_ALIAS:-bubududu}" \
               -Pandroid.injected.signing.key.password="$KS_PASS"
-            cp app/build/outputs/apk/release/app-release.apk ../BubuDudu.apk
+            cp app/build/outputs/bundle/release/app-release.aab ../BubuDudu.aab
           else
-            # aceeasi cheie de test la fiecare build: versiunile noi se instaleaza PESTE cea veche, fara dezinstalare (lumile raman)
-            mkdir -p ~/.android && cp ../ci/debug.keystore ~/.android/debug.keystore
-            ./gradlew assembleDebug
-            cp app/build/outputs/apk/debug/app-debug.apk ../BubuDudu.apk
+            echo "::warning::Lipseste cheia de incarcare (ANDROID_KEYSTORE_BASE64): fara AAB pentru Google Play"
           fi
           rm -f app/release.jks
       - uses: actions/upload-artifact@v4
         with: { name: android-apk, path: BubuDudu.apk }
+      - uses: actions/upload-artifact@v4
+        with: { name: android-aab, path: BubuDudu.aab, if-no-files-found: ignore }
 
   ios:
     runs-on: macos-latest
@@ -167,6 +177,7 @@ jobs:
           V=${{ steps.v.outputs.version }}
           mkdir -p up
           cp art/android-apk/BubuDudu.apk up/BubuDudu-$V-android.apk
+          if [ -f art/android-aab/BubuDudu.aab ]; then cp art/android-aab/BubuDudu.aab up/BubuDudu-$V-google-play.aab; fi
           if [ -f art/ios-ipa/BubuDudu-unsigned.ipa ]; then cp art/ios-ipa/BubuDudu-unsigned.ipa up/BubuDudu-$V-ios-unsigned.ipa; else echo "::warning::iOS nu s-a construit de data asta (lipsa server Mac la GitHub)"; fi
           cp art/BubuDudu-joc-html/BubuDudu-joc.html up/BubuDudu-$V-web.html
           cp art/windows-exe/*.exe up/
@@ -182,7 +193,7 @@ jobs:
           body: |
             🐼🐻 Bubu & Dudu ${{ steps.v.outputs.version }}
             - Windows: BubuDudu-Setup (instalare) sau BubuDudu-Portable (fără instalare)
-            - Android: BubuDudu-…-android.apk
+            - Android: BubuDudu-…-android.apk (testeri) · BubuDudu-…-google-play.aab (pentru Google Play Console)
             - iOS: …-ios-unsigned.ipa (se instalează cu AltStore / Sideloadly)
             - Browser: …-web.html (un singur fișier, merge offline)
           files: up/*
@@ -199,7 +210,7 @@ jobs:
           body: |
             🐼🐻 Bubu & Dudu ${{ steps.v.outputs.version }}
             - Windows: BubuDudu-Setup (instalare) sau BubuDudu-Portable (fără instalare)
-            - Android: BubuDudu-…-android.apk
+            - Android: BubuDudu-…-android.apk (testeri) · BubuDudu-…-google-play.aab (pentru Google Play Console)
             - iOS: …-ios-unsigned.ipa (se instalează cu AltStore / Sideloadly)
             - Browser: …-web.html (un singur fișier, merge offline)
           files: up/*
