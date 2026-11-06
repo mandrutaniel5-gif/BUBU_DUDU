@@ -68,10 +68,10 @@ function wallsBuild(): Wall[] {
   for (let y = 2; y <= 5; y++) if (y !== 4) W.push({ x: 8, y, dir: 'y', h: 26, kind: 'inner', color: WALL_IN });
   for (let y = 6; y <= 11; y++) if (y !== 8) W.push({ x: 8, y, dir: 'y', h: 26, kind: 'inner', color: WALL_IN });
   for (let x = 2; x <= 7; x++) if (x !== 4) W.push({ x, y: 7, dir: 'x', h: 26, kind: 'inner', color: WALL_IN });
-  for (let x = 8; x <= 13; x++) W.push({ x, y: 6, dir: 'x', h: 26, kind: 'inner', color: WALL_IN }); // plin: in baie intri din dormitor
+  for (let x = 8; x <= 13; x++) if (x !== 10) W.push({ x, y: 6, dir: 'x', h: 26, kind: 'inner', color: WALL_IN }); // usa de la baie, din bucatarie
   // marginile din fata (plinte joase, cu usi)
   for (let x = 2; x <= 13; x++) if (x !== 5) W.push({ x, y: 12, dir: 'x', h: 10, kind: 'low', color: WALL_LOW });
-  for (let y = 2; y <= 11; y++) if (y !== 9) W.push({ x: 14, y, dir: 'y', h: 10, kind: 'low', color: WALL_LOW });
+  for (let y = 2; y <= 11; y++) W.push({ x: 14, y, dir: 'y', h: 10, kind: 'low', color: WALL_LOW }); // fara usa langa blatul cu vase
   return W;
 }
 export const WALLS = wallsBuild();
