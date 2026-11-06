@@ -25,6 +25,9 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 
 | Script | Ce testează |
 |---|---|
+| `audit_interfata.cjs` | **Audit vizual al interfeței**, pe 5 ecrane (telefon, telefon mic, tabletă, laptop, telefon ținut vertical): elementele de bază nu se suprapun; ~30 de ferestre (obiective, inventar, hartă, albume, laptop, Primărie, proiecte, angajați, fermă, parcelă, magazin, contracte, sătean, bancă, garderobă, bucătărie, raportul…) nu ies din ecran, nu sunt tăiate, nu au butoane suprapuse, nimic nu stă peste ele; două lucruri deschise deodată (meniu + fereastră, minijoc + raport, bara de drum + harta) |
+| `audit_lume.cjs` | **Audit al lumii** (toate cele ~4000 de obiecte, cu ferma și magazinul): obiecte solide suprapuse, decor pe drum sau în apă, lucruri cu acțiune ascunse în spatele copacilor / clădirilor, locuri unde nu se ajunge pe jos |
+| `audit_meniuri.cjs` | Meniurile 😊 / 💞 (în ecran, deasupra minihartii), ferestrele din meniul de start, capturi din minijocuri pe telefonul mic |
 | `poveste.cjs` | 1.7.0, **jucat cap-coadă**: bicicleta spre cherestea (⏸, parcarea), Podul (scena), Satul renaște (clădiri închise, 6 proiecte), Ferma (parcelă, plug, semănătoare, cisternă, combină, animale, brânză), angajații și raportul, magazinul din oraș, contractul cu camionul, cererea, nunta |
 | `mp_sincronizare.cjs` | 1.7.0, **2 jucători**: telefonul cu lumea veche primește lumea nouă (toaleta nu mai „revine” înfundată); salvarea fără schimbări nu mai mută ora |
 | `case_parola.cjs` | 1.6.0: casa nouă cu parolă (parola scurtă e refuzată), același cod + parolă = aceeași casă, alta parolă = altă cameră, online cere casă cu parolă |

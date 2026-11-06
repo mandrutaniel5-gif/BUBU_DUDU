@@ -113,7 +113,7 @@ FIELDS.forEach((fl, i) => {
   put({ id: i < 4 ? `parcel-${i + 1}` : id('crop'), type: 'cropfield' as any, kind: fl.crop, ...(i < 4 ? { action: act('st-parcel', 'Parcela de câmp', '🟫') } : {}), gx: fl.x0, gy: fl.y0, w: fl.x1 - fl.x0, d: fl.y1 - fl.y0, solid: true });
   put({ id: id('fence'), type: 'fenceline' as any, gx: fl.x0 - 0.5, gy: fl.y0 - 0.55, w: fl.x1 - fl.x0 + 1, d: 0.1, solid: true });
 });
-put({ id: id('scare'), type: 'scarecrow' as any, gx: 22, gy: 32, w: 1, d: 1, solid: true });
+put({ id: id('scare'), type: 'scarecrow' as any, gx: 28, gy: 32, w: 1, d: 1, solid: true }); // intre parcele, nu pe ele
 put({ id: id('scare'), type: 'scarecrow' as any, gx: 86, gy: 44, w: 1, d: 1, solid: true });
 // --- ferma vecinilor (vest): casa, hambarul, fanul, oile la pascut
 const NEIGHBOR_HOUSES: Furn[] = [];
@@ -121,7 +121,7 @@ export const COUNTRY_HOUSES = HOUSES;
 HOUSES.push(
   { id: 'w-house-pop', gx: -9, gy: 12, w: 4, d: 3, h: 50, front: 'x', wall: '#fff1d6', roof: '#c0573e', name: 'Familia Popescu' },
   { id: 'w-house-ion', gx: 32, gy: 15, w: 3, d: 3, h: 46, front: 'y', wall: '#e8f1ff', roof: '#5b7fbf', name: 'Bunicul Ion' },
-  { id: 'w-house-mar', gx: 86, gy: 40, w: 3, d: 3, h: 46, front: 'y', wall: '#ffe1ea', roof: '#e5809a', name: 'Livada Mariei' },
+  { id: 'w-house-mar', gx: 87, gy: 49, w: 3, d: 3, h: 46, front: 'y', wall: '#ffe1ea', roof: '#e5809a', name: 'Livada Mariei' }, // langa livada, nu peste gardurile campurilor
   { id: 'w-house-gr', gx: 165, gy: 18, w: 4, d: 3, h: 50, front: 'y', wall: '#fff6b8', roof: '#8a5d32', name: 'Han „La Răscruce”' },
 );
 for (const h of COUNTRY_HOUSES) if (!h.id.startsWith('vh-')) NEIGHBOR_HOUSES.push(put({ id: h.id, type: 'farmhouse' as any, gx: h.gx, gy: h.gy, w: h.w, d: h.d, solid: true }));
@@ -133,8 +133,8 @@ put({ id: id('logs'), type: 'logstack' as any, gx: 32, gy: 19, w: 1, d: 2, solid
 for (const [x, y] of [[-5, 5], [-4, 7], [-11, 9]]) put({ id: id('hay'), type: 'haystack' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 put({ id: id('fence'), type: 'fenceline' as any, gx: -11.5, gy: 38.5, w: 9, d: 0.1, solid: true });
 put({ id: id('fence'), type: 'fenceline' as any, gx: -11.5, gy: 46.5, w: 9, d: 0.1, solid: true });
-put({ id: id('fence'), type: 'fenceline' as any, gx: -11.6, gy: 38.5, w: 0.1, d: 8, solid: true });
-put({ id: id('fence'), type: 'fenceline' as any, gx: -2.6, gy: 38.5, w: 0.1, d: 8, solid: true });
+put({ id: id('fence'), type: 'fenceline' as any, gx: -11.6, gy: 38.7, w: 0.1, d: 7.6, solid: true });
+put({ id: id('fence'), type: 'fenceline' as any, gx: -2.6, gy: 38.7, w: 0.1, d: 7.6, solid: true });
 for (let i = 0; i < 5; i++) F.push({ id: id('sheep'), type: 'sheep' as any, gx: -10 + i * 1.6, gy: 40 + (i % 2) * 2.4, w: 1, d: 1, solid: false });
 for (let i = 0; i < 3; i++) F.push({ id: id('cow'), type: 'cow' as any, gx: 162 + i * 3, gy: 40 + (i % 2) * 2, w: 1, d: 1, solid: false });
 put({ id: id('mill'), type: 'windmill' as any, gx: 34, gy: 42, w: 2, d: 2, solid: true });

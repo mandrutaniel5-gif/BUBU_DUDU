@@ -267,7 +267,7 @@ export class SawmillGame extends Panel {
     // gramada ta de lemne (stanga), cantarul, Nea Vasile, tu
     const pileX = W * 0.1, pileY = gy + H * 0.02, wood = this.res('wood') - (this.carrying ? this.carrying.done + this.fly.length : 0);
     for (let i = 0; i < Math.min(15, wood); i++) { const r = Math.floor(i / 5), k = i % 5; const x = pileX + k * 14 + r * 7 - 30, y = pileY - r * 11; ctx.fillStyle = i < KEEP_WOOD ? '#8a5d32' : '#a0703f'; ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, y, 8, 7, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#e7c08f'; ctx.beginPath(); ctx.ellipse(x, y, 4, 3.4, 0, 0, 7); ctx.fill(); }
-    ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = O; fillTextIcons(ctx, `🪵 ${nWood(this.res('wood'))} · 📏 ${nPlanks(this.res('plank'))}`, pileX + 4, pileY + 22, 12);
+    ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = O; { const t = `🪵 ${nWood(this.res('wood'))} · 📏 ${nPlanks(this.res('plank'))}`; const tw = ctx.measureText(t).width + 28; fillTextIcons(ctx, t, Math.max(tw / 2 + 6, pileX + 4), pileY + 22, 12); }
     // cantarul: platforma, stalpul cu cadranul, acul
     const scX = W * 0.36, scY = gy + H * 0.02;
     ctx.fillStyle = '#9aa5ad'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(scX - 50, scY - 8, 100, 16, 4); ctx.fill(); ctx.stroke();
@@ -279,13 +279,13 @@ export class SawmillGame extends Panel {
     // lemnele in zbor (din bratele tale pe cantar)
     const hx = W * 0.2, hy = gy + H * 0.04, sc = Math.min(1.5, H / 330);
     for (const f of this.fly) { const u = Math.min(1, f.t), x = hx + (scX - 20 - hx) * u, y = hy - 110 * sc + (scY - 20 - (hy - 110 * sc)) * u - Math.sin(u * Math.PI) * 40; ctx.save(); ctx.translate(x, y); ctx.rotate(u * 4); ctx.fillStyle = '#a0703f'; ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-16, -6, 32, 12, 6); ctx.fill(); ctx.stroke(); ctx.restore(); }
-    this.vasile.scale = sc; this.vasile.x = W * 0.48; this.vasile.y = gy + H * 0.05; this.vasile.draw(ctx);
+    this.vasile.scale = sc; this.vasile.x = W * 0.36 + 60 + 40 * sc; this.vasile.y = gy + H * 0.05; this.vasile.draw(ctx);
     this.hero.scale = sc; this.hero.x = hx; this.hero.y = hy; this.hero.flip = 1; this.hero.draw(ctx);
     if (this.carrying && this.carrying.done + this.fly.length < this.carrying.n) { ctx.save(); ctx.translate(hx, hy - 118 * sc); ctx.fillStyle = '#a0703f'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(-26, -8, 52, 16, 8); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#e7c08f'; ctx.beginPath(); ctx.ellipse(26, 0, 5, 8, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore(); }
     // ce spune Nea Vasile
     if (this.bubble && this.bubble.life > 0 && this.bubble.t) {
       const t = this.bubble.t; ctx.font = '700 13px "Baloo 2", sans-serif'; const tw = Math.min(W * 0.5, ctx.measureText(t).width + 24);
-      const x = Math.min(W - tw / 2 - 10, W * 0.48), y = this.vasile.y - 128 * sc;
+      const x = Math.min(W - tw / 2 - 10, this.vasile.x), y = this.vasile.y - 128 * sc;
       ctx.globalAlpha = Math.min(1, this.bubble.life * 2); ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(x - tw / 2, y - 16, tw, 30, 12); ctx.fill(); ctx.stroke();
       ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; fillTextIcons(ctx, t, x, y, 13); ctx.globalAlpha = 1;
     }

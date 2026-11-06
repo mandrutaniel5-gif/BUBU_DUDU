@@ -128,15 +128,18 @@ export function drawFull(c: CanvasRenderingContext2D, W: number, H: number, m: M
   { c.font = '800 11px "Baloo 2", sans-serif'; c.fillStyle = '#4a2a22'; c.textAlign = 'left'; c.textBaseline = 'top'; c.fillText('↑ Nord (pădurea)', ox + 6, oy + 4); }
   // numele regiunilor
   c.textAlign = 'center'; c.textBaseline = 'middle';
-  const labels: [string, string, number, number][] = [['🏡', 'Acasă', 7, -3], ['🌲', 'Pădurea', 19, -24], ['🏞️', 'Lacul', 70, 18], ['🌉', 'Podul Mare', 66, 37], ['🏘️', 'Satul', 121, 14], ['🏙️', 'Orașul', 214, 30], ['🌾', 'Câmpurile', 18, 32], ['🪚', 'Cheresteaua', 29, 14]];
+  const labels: [string, string, number, number][] = [['🏡', 'Acasă', 4, 6], ['🌲', 'Pădurea', 19, -24], ['🏞️', 'Lacul', 70, 18], ['🌉', 'Podul Mare', 66, 44], ['🏘️', 'Satul', 121, 14], ['🏙️', 'Orașul', 214, 30], ['🌾', 'Câmpurile', 20, 41], ['🪚', 'Cheresteaua', 36, 16]];
   for (const [ic, name, x, y] of labels) {
     const q = P(x, y); c.font = '800 12px "Baloo 2", sans-serif'; const tw = c.measureText(name).width + 30;
     c.fillStyle = '#fffaf5ee'; c.strokeStyle = '#4a2a22'; c.lineWidth = 2; c.beginPath(); c.roundRect(q.x - tw / 2, q.y - 11, tw, 22, 11); c.fill(); c.stroke();
     const cv = iconCanvas(ic, 48); if (cv) c.drawImage(cv, q.x - tw / 2 + 4, q.y - 8, 16, 16);
     c.fillStyle = '#4a2a22'; c.fillText(name, q.x + 9, q.y + 1);
   }
-  for (const v of m.vehicles) { const q = P(v.x, v.y), ic = iconCanvas(v.icon, 48); if (ic) c.drawImage(ic, q.x - 9, q.y - 9, 18, 18); }
-  if (m.partner) { const q = P(m.partner.x, m.partner.y); dot(c, q.x, q.y, '#3a2a22', 5); c.font = '800 11px "Baloo 2", sans-serif'; c.fillStyle = '#3a2a22'; c.fillText(m.partner.name, q.x, q.y + 14); }
-  const q = P(m.me.x, m.me.y); dot(c, q.x, q.y, '#ff4d6d', 6, 3 + Math.sin(m.t * 5) * 2); c.font = '900 12px "Baloo 2", sans-serif'; c.fillStyle = '#ff4d6d'; c.fillText(m.me.name, q.x, q.y - 15);
+  for (const v of m.vehicles) { const q = P(v.x, v.y), ic = iconCanvas(v.icon, 48); if (ic) c.drawImage(ic, q.x + 4, q.y - 16, 14, 14); }
+  // impreuna (aproape unul de altul): un singur nume, ca sa nu se incalece
+  const together = !!m.partner && Math.hypot(m.partner.x - m.me.x, m.partner.y - m.me.y) < 6;
+  const label = (t: string, x: number, y: number, col: string) => { c.font = '900 12px "Baloo 2", sans-serif'; c.lineWidth = 3; c.strokeStyle = '#fff'; c.strokeText(t, x, y); c.fillStyle = col; c.fillText(t, x, y); };
+  if (m.partner) { const q = P(m.partner.x, m.partner.y); dot(c, q.x, q.y, '#3a2a22', 5); if (!together) label(m.partner.name, q.x, q.y + 15, '#3a2a22'); }
+  const q = P(m.me.x, m.me.y); dot(c, q.x, q.y, '#ff4d6d', 6, 3 + Math.sin(m.t * 5) * 2); label(together ? `${m.me.name} & ${m.partner!.name}` : m.me.name, q.x, q.y - 15, '#ff4d6d');
   void REGIONS; void regionAt;
 }

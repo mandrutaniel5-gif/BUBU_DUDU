@@ -122,7 +122,7 @@ F.push({ id: 'c-lot2', type: 'roadsign' as any, gx: 199, gy: 41, w: 1, d: 1, sol
 const crnd = (i: number) => { const v = Math.sin(i * 77.7 + 3.1) * 43758.5; return v - Math.floor(v); };
 for (let i = 0; i < 60; i++) { const park = i < 32 ? { x0: 203, y0: 55, x1: 227, y1: 63 } : { x0: 187, y0: -11, x1: 225, y1: -3 }; const x = Math.floor(park.x0 + crnd(i) * (park.x1 - park.x0)), y = Math.floor(park.y0 + crnd(i + 99) * (park.y1 - park.y0)); if (busy(x, y, 1)) continue; F.push({ id: `cp-t${i}`, type: (i % 5 === 0 ? 'pine' : 'oak') as any, kind: i % 4 === 0 ? 'birch' : 'oak', gx: x, gy: y, w: 1, d: 1, solid: true }); }
 F.push({ id: 'cp-fountain', type: 'cfountain' as any, gx: 214, gy: 58, w: 2, d: 2, solid: true, action: act('v-fountain', 'Aruncă o monedă', '🪙') });
-for (const [x, y] of [[209, 57], [219, 60], [195, -6], [212, -5]]) if (!busy(x, y, 0) && !busy(x + 1, y, 0)) F.push({ id: `cp-b${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța din parc', '🌅') });
+for (const [x, y] of [[209, 57], [219, 60], [195, -6]]) if (!busy(x, y, 0) && !busy(x + 1, y, 0) && !busy(x + 1, y + 1, 0) && !busy(x + 2, y + 1, 0)) F.push({ id: `cp-b${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța din parc', '🌅') });
 // copaci pe trotuarele late din spatele cladirilor de pe bulevard
 for (const [x, y] of [[188, 14], [192, 14], [196, 14], [212, 14], [216, 14], [233, 13], [238, 13], [190, 41], [205, 41], [212, 41], [222, 41], [233, 41], [240, 41]]) if (!busy(x, y, 0)) F.push({ id: `c-tree${x}-${y}`, type: 'tree' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 AREAS.city = { floor: cityFloorW, furniture: F, walls: [], spawn: { x: 209.5, y: 27.5 } };

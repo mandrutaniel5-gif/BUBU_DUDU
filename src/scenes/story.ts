@@ -493,7 +493,7 @@ export function daily(s: S) {
   }
   const se = seasonOf(day);
   const card = [`${se.icon} ${se.name}, ziua ${dayOfSeason(day)}`, ...ev.map(e => `${e.icon} ${e.name}: ${e.text}`), ...lines, ...todo(s)];
-  s.hud.showLog(card);
+  s.hud.showLog(card, '☀️ Bună dimineața!');
 }
 /** ce e de facut azi pentru fiecare (ca sa nu ramaneti fara treaba) */
 function todo(s: S): string[] {

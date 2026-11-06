@@ -253,11 +253,14 @@ export class Hud {
   togglePairs(force?: boolean) { this.els['.emotes'].classList.add('hidden'); if (force) this.els['.pairs'].classList.remove('hidden'); else this.els['.pairs'].classList.toggle('hidden'); }
   closeMenus() { this.els['.emotes'].classList.add('hidden'); this.els['.pairs'].classList.add('hidden'); }
 
-  modal(html: string) { const m = this.els['.modal']; m.innerHTML = `<div class="box"><button class="xclose" data-close aria-label="Închide">✕</button>${html}<button class="close" data-close>Închide</button></div>`; m.classList.remove('hidden'); return m; }
+  modal(html: string) { this.closeMenus(); const m = this.els['.modal']; m.innerHTML = `<div class="box"><button class="xclose" data-close aria-label="Închide">✕</button>${html}<button class="close" data-close>Închide</button></div>`; m.classList.remove('hidden'); return m; }
   closeModal() { this.els['.modal'].classList.add('hidden'); }
 
-  showLog(items: string[]) {
-    this.modal(`<h3>💭 Cât ai lipsit…</h3><ul class="log">${items.slice(-12).map(i => `<li>${esc(i)}</li>`).join('')}</ul>`);
+  /** ferestrele care vin singure (raportul, capitolul nou) asteapta sa termini minijocul: nu apar peste el */
+  whenFree(fn: () => void) { const m = this.s.minigame; if (m && m.id !== 'cutscene') { setTimeout(() => this.whenFree(fn), 800); return; } fn(); }
+  showLog(items: string[], title = '💭 Cât ai lipsit…') {
+    if (this.s.minigame && this.s.minigame.id !== 'cutscene') { this.whenFree(() => this.showLog(items, title)); return; }
+    this.modal(`<h3>${title}</h3><ul class="log">${items.slice(-12).map(i => `<li>${esc(i)}</li>`).join('')}</ul>`);
   }
 
   openJar() {
@@ -439,6 +442,7 @@ export class Hud {
   }
 
   showChapter(doneText?: string) {
+    if (this.s.minigame && this.s.minigame.id !== 'cutscene') { this.whenFree(() => this.showChapter(doneText)); return; }
     const ch = chapterOf(this.s.w);
     this.modal(`${doneText ? `<h3>${doneText}</h3>` : ''}<h3>📖 ${ch.title}</h3><p>${ch.intro}</p><ul class="goals">${ch.goals.map(g => `<li><b>${g.icon} ${g.text}</b><small>${g.hint}</small></li>`).join('')}</ul>`);
     this.refreshGoal();

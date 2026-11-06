@@ -261,7 +261,7 @@ html.h500 .toast { font-size:12px; padding:3px 10px; border-width:2.5px; border-
 .hud.in-mini .minimap { display:none !important; }
 .modal .box.mapbox { width:min(900px, calc(var(--gw, 100vw) - 24px)); max-width:none; }
 .modal .bigmap { width:100%; height:min(62vh, 460px); display:block; border:3px solid var(--ink); border-radius:14px; background:#8fc98a; }
-.regionbanner { position:absolute; left:50%; top:76px; transform:translate(-50%, -8px); display:flex; align-items:center; gap:8px; padding:6px 18px 6px 12px; background:#fffaf5ee; border:3px solid var(--ink); border-radius:999px; box-shadow:0 3px 0 var(--ink); font-size:18px; pointer-events:none; opacity:0; transition:opacity .5s, transform .5s; z-index:4; }
+.regionbanner { position:absolute; left:50%; top:96px; transform:translate(-50%, -8px); display:flex; align-items:center; gap:8px; padding:6px 18px 6px 12px; background:#fffaf5ee; border:3px solid var(--ink); border-radius:999px; box-shadow:0 3px 0 var(--ink); font-size:18px; pointer-events:none; opacity:0; transition:opacity .5s, transform .5s; z-index:4; }
 .regionbanner.in { opacity:1; transform:translate(-50%, 0); }
 .regionbanner.out { opacity:0; transform:translate(-50%, -8px); }
 .regionbanner .ri { font-size:22px; } .regionbanner .rn { font-weight:900; letter-spacing:.3px; }
@@ -367,3 +367,10 @@ ul.goals.give li button[disabled] { opacity:.45; }
 .album { display:flex; flex-wrap:wrap; gap:5px; margin:2px 0 6px; } .album span { border:2px dashed #c9b8ae; border-radius:10px; padding:1px 8px; font-size:12px; color:#9a8a80; } .album span.got { border-style:solid; border-color:var(--ink); background:#e9fbe6; color:var(--ink); font-weight:700; }
 
 .hud.in-scene .toasts, .hud.in-scene .regionbanner, .hud.in-scene .modal { display:none !important; }
+/* meniurile 😊 / 💞: deasupra minihartii si mereu in ecran (nu ies peste marginea de sus) */
+.hud .pop { z-index:7; }
+html.h500 .pop { max-height:calc(var(--gh, 100vh) - 132px) !important; }
+.pop { max-height:min(52vh, calc(var(--gh, 100vh) - 172px)); }
+
+/* in minijocuri mesajele stau sus, nu peste lazile / butoanele de jos */
+.hud.in-mini .toasts { top:52px !important; bottom:auto !important; }
