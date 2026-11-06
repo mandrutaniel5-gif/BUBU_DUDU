@@ -31,7 +31,7 @@ import { drawFurn, drawWall, drawYardFence, drawYardGate, type FurnState } from 
 import { Nav } from '../world/nav';
 import { CATALOG, RES_INFO, drawGhost, drawTallGrass, type BuildItem } from '../world/build';
 import { GOALS, CHAPTERS, chapterOf, PRICE, INV_INFO } from '../game/economy';
-import { orderableChains, itemValue } from '../minigames/merge';
+import { orderableChains, itemValue, FLORIST_PAY } from '../minigames/merge';
 import { DESTS, DEST_BY_ID } from '../world/layout';
 import { CITY_CHAPTER, BRIDGE_CHAPTER, WEDDING_CHAPTER } from '../game/economy';
 import * as Story from './story';
@@ -846,7 +846,7 @@ export class WorldScene implements Scene {
       const l = Math.floor(Math.random() ** 1.6 * (maxL + 1));
       wants.push(`${ch}:${Math.min(maxL, florist ? Math.max(1, l) : l)}`); // la florarie se cer buchete, nu fire
     }
-    (florist ? this.florNpcs : this.npcs).push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), kind: kinds[Math.floor(Math.random() * kinds.length)], x: florist ? -1 : -12, sx: florist ? -1 : -12, y: ROAD_Y, tx: 0, state: 'come', wants, pay: wants.reduce((s, c) => s + itemValue(c), 1), t: 0 });
+    (florist ? this.florNpcs : this.npcs).push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), kind: kinds[Math.floor(Math.random() * kinds.length)], x: florist ? -1 : -12, sx: florist ? -1 : -12, y: ROAD_Y, tx: 0, state: 'come', wants, pay: florist ? FLORIST_PAY(wants.reduce((s, c) => s + itemValue(c), 1)) : wants.reduce((s, c) => s + itemValue(c), 1), t: 0 });
   }
   updateNpcs(dt: number) {
     const host = this.isHost;
@@ -862,7 +862,7 @@ export class WorldScene implements Scene {
     const flor = this.storeMode === 'florarie' && this.minigame?.id === 'merge';
     if (flor) {
       this.florSpawnT -= dt;
-      if (this.florSpawnT <= 0 && this.florNpcs.filter(n => n.state !== 'leave').length < 3) { this.florSpawnT = 14 + Math.random() * 14; this.spawnNpc(true); }
+      if (this.florSpawnT <= 0 && this.florNpcs.filter(n => n.state !== 'leave').length < 3) { this.florSpawnT = 9 + Math.random() * 9; this.spawnNpc(true); }
       this.stepNpcs(this.florNpcs, dt, true);
       this.florNpcs = this.florNpcs.filter(n => n.x < 24);
     } else if (this.florNpcs.length) this.florNpcs = [];
@@ -1605,7 +1605,7 @@ export class WorldScene implements Scene {
     }
     if (ctrl && (a.id === 'chop' || a.id === 'mine' || a.id === 'pick')) {
       const res = a.id === 'chop' ? 'wood' : a.id === 'mine' ? 'stone' : 'flower';
-      const n = a.id === 'chop' ? (pawn.id === 'dudu' ? 3 : 2) : 2;
+      const n = a.id === 'pick' ? 2 : (pawn.id === 'dudu' ? 3 : 2);
       this.op({ k: 'res', res, delta: n });
       const f = pawn.lastFurn; if (f) this.op({ k: 'node', id: f, until: Date.now() + (a.id === 'pick' ? 60 : a.id === 'chop' ? 240 : 150) * 1000 });
       const p = iso(pawn.gx, pawn.gy, 80); this.fx.text(p.x, p.y - 14, `+${n} ${res === 'wood' ? '🪵' : res === 'stone' ? '🪨' : '🌸'}`, '#2ec4b6', 1);
@@ -2277,10 +2277,10 @@ export class WorldScene implements Scene {
   /** angajatii se vad pe la locul lor de munca (acasa, la ferma, la taraba) */
   syncWalkers() {
     this.walkers = this.walkers.filter(v => !v.emp);
-    const spots: Record<string, Pt[]> = { garden: [{ x: 10, y: 15 }, { x: 12, y: 13.5 }], animals: [{ x: 27, y: 10 }, { x: 33, y: 11 }], stall: [{ x: 8.5, y: 23.3 }, { x: 9.5, y: 23.3 }], florist: [{ x: 124.5, y: 29 }, { x: 124.5, y: 31 }], wood: [{ x: 15, y: 16 }, { x: 18, y: 17 }], tractor: [{ x: 18, y: -2 }, { x: 20, y: 28 }], shop: [{ x: 233, y: 38.5 }, { x: 236, y: 38.5 }] };
+    const spots: Record<string, Pt[]> = { garden: [{ x: 10, y: 15 }, { x: 12, y: 13.5 }], animals: [{ x: 27, y: 10 }, { x: 33, y: 11 }], stall: [{ x: 8.5, y: 23.3 }, { x: 9.5, y: 23.3 }], florist: [{ x: 124.5, y: 29 }, { x: 124.5, y: 31 }], wood: [{ x: 15, y: 16 }, { x: 18, y: 17 }], tractor: [{ x: 18, y: -2 }, { x: 20, y: 28 }], shop: [{ x: 233, y: 38.5 }, { x: 236, y: 38.5 }], stone: [{ x: 16.5, y: -22.5 }, { x: 21, y: -24 }], carter: [{ x: 20, y: 19 }, { x: 25, y: 22 }], joiner: [{ x: 123.5, y: 33 }, { x: 123.5, y: 35 }], picker: [{ x: 11, y: 17 }, { x: 13, y: 18.5 }] };
     Story.staffOf(this).forEach((e, i) => {
       const P = spots[e.role] ?? spots.garden, kinds = Object.keys(NPC_SPECS), a = new Actor('bubu', this.fx, NPC_SPECS[kinds[(i * 3 + e.name.length) % kinds.length]]); a.scale = ACTOR_SCALE * 0.92;
-      a.outfit = { head: e.role === 'tractor' || e.role === 'garden' ? 'palarie' : 'none', face: 'none', neck: 'none', body: e.role === 'shop' || e.role === 'florist' ? 'rochita' : 'salopeta' } as any;
+      a.outfit = { head: e.role === 'tractor' || e.role === 'garden' ? 'palarie' : 'none', face: 'none', neck: 'none', body: e.role === 'shop' || e.role === 'florist' || e.role === 'picker' ? 'rochita' : 'salopeta' } as any;
       this.walkers.push({ a, x: P[0].x, y: P[0].y, tx: P[0].x, ty: P[0].y, t: Math.random() * 3, greetT: 0, region: 'village', name: e.name, emp: true, paths: P } as any);
     });
   }

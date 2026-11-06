@@ -27,6 +27,8 @@ treeSpots.forEach(([x, y], i) => F.push({ id: 'f-tree' + i, type: (i % 3 ? 'pine
 // ciuperci si mure
 ([[3, 4], [9, 9], [5, 12], [16, 16], [11, 20], [19, 9], [2, 17]] as [number, number][]).forEach(([x, y], i) => F.push({ id: 'f-mush' + i, type: 'mushroom' as any, gx: x, gy: y, w: 1, d: 1, solid: false, action: act('mushroom', 'Culege ciuperci', '🍄') }));
 ([[6, 8], [12, 4], [17, 12], [8, 16], [3, 21]] as [number, number][]).forEach(([x, y], i) => F.push({ id: 'f-berry' + i, type: 'berrybush' as any, gx: x, gy: y, w: 1, d: 1, solid: true, action: act('berries', 'Culege mure', '🫐') }));
+// bolovani: piatra pentru pod, felinare, drum si magazin (in curte sunt doar 5); se refac in 2,5 minute
+([[12, 1], [15, 3], [3, 7], [13, 12], [9, 14], [20, 15], [6, 19], [16, 21]] as [number, number][]).forEach(([x, y], i) => F.push({ id: 'f-rock' + i, type: 'rock' as any, gx: x, gy: y, w: 1, d: 1, solid: true, action: act('mine', 'Sparge piatra', '⛏️') }));
 // lacul: podetul de pescuit
 F.push({ id: 'f-pier', type: 'pier' as any, gx: 15, gy: 11, w: 1, d: 1, solid: false, action: act('fish', 'Pescuiește', '🎣') });
 F.push({ id: 'f-logs', type: 'logpile' as any, gx: 7, gy: 24, w: 1, d: 1, solid: true });

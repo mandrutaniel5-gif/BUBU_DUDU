@@ -25,7 +25,7 @@ export const INV_INFO: Record<string, { icon: string; label: string }> = {
 export const PRICE = {
   bike: 350, scooter: 800, bus: 8, taxi: 70, cinema: 35, resto: 70, ice: 10, carousel: 8, ferris: 15,
   consultVillage: 35, consultCity: 50, florarie: 450, workshop: 450, workshopWood: 20,
-  sawmillDay: 15, // cheresteaua lui Nea Vasile cumpara cel mult 15 lemne pe zi (pretul zilei e in minigames/sawmill.ts)
+  sawmillDay: 25, // cheresteaua lui Nea Vasile cumpara cel mult 25 lemne pe zi (pretul zilei e in minigames/sawmill.ts)
   marketFull: 10,                  // la piata: dupa 10 bucati din acelasi lucru intr-o zi, pretul scade la jumatate; dupa 20, nu mai cumpara
 };
 type ShopItem = { id: string; label: string; icon: string; price: number; give: Record<string, number> };

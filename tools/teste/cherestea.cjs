@@ -17,7 +17,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   await sleep(800); await hide(); await p.screenshot({ path: 'saw_yard.png' });
   const m0 = await p.evaluate(() => ({ money: game.scene.w.money, wood: game.scene.w.res.wood, price: game.scene.minigame.obj.price(), n: game.scene.minigame.obj.sellN }));
   await p.evaluate(() => game.scene.minigame.obj.press('sell')); await sleep(1100); await p.screenshot({ path: 'saw_selling.png' });
-  await sleep(5000);
+  await p.evaluate(async () => { for (let i = 0; i < 150 && game.scene.minigame?.obj.carrying; i++) await new Promise(r => setTimeout(r, 200)); }); await sleep(600);
   const m1 = await p.evaluate(() => ({ money: game.scene.w.money, wood: game.scene.w.res.wood }));
   ok('vanzarea la cantar (+ premiul obiectivului, daca s-a bifat)', [0, 10].includes(m1.money - m0.money - m0.n * m0.price) && m0.wood - m1.wood === m0.n, JSON.stringify({ m0, m1 }));
   ok('5 lemne raman pentru soba', m1.wood >= 5);

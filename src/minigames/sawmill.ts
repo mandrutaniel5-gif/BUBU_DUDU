@@ -1,7 +1,7 @@
 // Cheresteaua lui Nea Vasile (pe drumul dintre casă și lac): afacerea lui Dudu de la începutul jocului.
 //
 // - ⚖️ Cântarul: duci lemnele pe cântar, unul câte unul; Nea Vasile plătește prețul zilei
-//   (2-4 lei, Dudu negociază +1 leu), cel mult 15 lemne pe zi. 5 lemne rămân mereu pentru sobă.
+//   (3-5 lei, Dudu negociază +2 lei), cel mult 25 de lemne pe zi. 5 lemne rămân mereu pentru sobă.
 // - 📜 Comenzile zilei: două comenzi pe zi (lemne de foc sau scânduri), plătite mai bine; aceleași pe ambele telefoane.
 // - 🪚 Gaterul: 2 lemne → 1 scândură. Ții linia de cretă a bușteanului pe pânza gaterului;
 //   o tăietură perfectă dă o scândură în plus.
@@ -14,13 +14,14 @@ import { PRICE } from '../game/economy';
 import { g } from '../game/gender';
 import { nightAmount } from '../game/state';
 import { fillTextIcons } from '../ui/icons';
+import { openStaff } from '../scenes/story';
 
 const O = '#3a2a22';
-/** pretul unui lemn in fiecare zi a saptamanii (Dudu negociaza +1) */
-const DAY_PRICE = [3, 2, 3, 4, 3, 2, 4];
-export const sawPrice = (day: number, who: string) => DAY_PRICE[((day % 7) + 7) % 7] + (who === 'dudu' ? 1 : 0);
+/** pretul unui lemn in fiecare zi a saptamanii (Dudu negociaza +2) */
+const DAY_PRICE = [4, 3, 4, 5, 4, 3, 5];
+export const sawPrice = (day: number, who: string) => DAY_PRICE[((day % 7) + 7) % 7] + (who === 'dudu' ? 2 : 0);
 /** cat platesc pe o scandura la cantar (fara comanda) */
-export const PLANK_PRICE = 8;
+export const PLANK_PRICE = 12;
 /** lemnele care raman mereu pentru soba */
 export const KEEP_WOOD = 5;
 /** „1 scândură”, „2 scânduri”, „20 de scânduri” */
@@ -45,8 +46,8 @@ export function sawOrders(day: number, who: string): SawOrder[] {
   const pick = [a, b].map(i => ORDERS[i]);
   return pick.map((o, idx) => {
     const qty = o.min + Math.floor(r() * (o.max - o.min + 1));
-    const base = o.res === 'wood' ? qty * 4.5 : qty * 14;
-    return { idx, text: o.text, res: o.res, qty, pay: Math.round(base * (who === 'dudu' ? 1.15 : 1)) };
+    const base = o.res === 'wood' ? qty * 6.5 : qty * 20;
+    return { idx, text: o.text, res: o.res, qty, pay: Math.round(base * (who === 'dudu' ? 1.25 : 1)) };
   });
 }
 export const orderKey = (day: number, idx: number) => `sawOrder-${day}-${idx}`;
@@ -205,6 +206,7 @@ export class SawmillGame extends Panel {
     else if (id === 'saw') this.startSaw();
     else if (id === 'planks') this.sellPlanks();
     else if (id.startsWith('ord')) this.deliver(+id.slice(3));
+    else if (id === 'staff') openStaff(this.scene as any);
   }
   key(k: string, d: boolean) {
     if (this.saw) { d ? this.saw.keys.add(k) : this.saw.keys.delete(k); return; }
@@ -260,7 +262,7 @@ export class SawmillGame extends Panel {
     const bx = W * 0.03, by = H * 0.05, bw = Math.min(250, W * 0.3), bh = H * 0.2;
     ctx.fillStyle = '#3d4a45'; ctx.strokeStyle = '#a0703f'; ctx.lineWidth = 6; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = '800 15px "Baloo 2", sans-serif';
-    fillTextIcons(ctx, `Azi: ${this.price()} lei / lemn${this.me === 'dudu' ? ' (+1 Dudu)' : ''}`, bx + 12, by + bh * 0.3, 15);
+    fillTextIcons(ctx, `Azi: ${this.price()} lei / lemn${this.me === 'dudu' ? ' (+2 Dudu)' : ''}`, bx + 12, by + bh * 0.3, 15);
     ctx.font = '700 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffe680';
     fillTextIcons(ctx, `Mai cumpăr azi: ${this.leftToday()} lemne`, bx + 12, by + bh * 0.56, 13);
     ctx.fillStyle = '#ffd6e4'; fillTextIcons(ctx, `Scânduri: ${PLANK_PRICE} lei · comenzi: mai mult`, bx + 12, by + bh * 0.8, 13);
@@ -300,6 +302,8 @@ export class SawmillGame extends Panel {
     const btn = (id: string, x: number, y: number, w: number, h: number, label: string, on = true, col = '#ffd6e4') => { ctx.fillStyle = on ? col : '#e8e2de'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(x, y, w, h, 10); ctx.fill(); ctx.stroke(); ctx.fillStyle = on ? O : '#9a8f88'; ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; fillTextIcons(ctx, label, x + w / 2, y + h / 2 + 1, 12); this.hits.push({ id, x, y, w, h }); };
     const line = (t: string, x: number, y: number, col = O, size = 12) => { ctx.font = `700 ${size}px "Baloo 2", sans-serif`; ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; fillTextIcons(ctx, t, x, y, size); };
     const bh = Math.min(30, ch * 0.28);
+    // ajutoarele lui Dudu: taietori, spargatori de piatra, carausi (deasupra cartonaselor, in dreapta)
+    btn('staff', W - 196, top - bh - 10, 186, bh, '🪓 Angajează ajutoare', true, '#d6f5d0');
     // 1. cantarul
     { const x = card(0, '⚖️ Cântarul', '#c98e5f'); const can = Math.min(this.leftToday(), this.spare());
       line(can ? `Poți vinde ${can} (${KEEP_WOOD} rămân pentru sobă)` : this.leftToday() ? `Ai doar ${this.res('wood')} lemne (${KEEP_WOOD} pentru sobă)` : 'Gata pe azi: vino mâine', x + 10, top + 38, can ? O : '#c0392b', 11);

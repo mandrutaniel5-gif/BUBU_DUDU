@@ -47,6 +47,8 @@ export function orderableChains(res: Record<string, number>, stats: Record<strin
  * Ex. lamaie 8, limonada 18, bubble tea 42, cocktail 97 lei (o lamaie costa 5 lei la magazin).
  */
 const CHAIN_BASE: Record<string, number> = { flower: 3, veg: 4, sweet: 8, drink: 8, garden: 5, pot: 7 };
+/** la florărie vin clienți foarte des, dar un buchet costă puțin (florile se culeg gratis) */
+export const FLORIST_PAY = (v: number) => Math.max(2, Math.round(v * 0.3));
 export const itemValue = (code: string) => { const [ch, ls] = code.split(':'); const l = +ls; return Math.round((CHAIN_BASE[ch] ?? 3) * 2.3 ** l); };
 
 export interface MergeBoard { v: 3; cells: (string | null)[] }
@@ -192,7 +194,7 @@ export class MergeGame extends Panel {
     const grassy = Object.keys(this.scene.w.grass ?? {}).length > 15;
     if (grassy) pay = Math.round(pay * 0.8);
     if (this.scene.myId === 'bubu') pay = Math.round(pay * 1.2); // e taraba ei :)
-    if (this.scene.storeMode === 'florarie') pay = Math.round(pay * ((this.scene.w.stats['dipl-florist-' + this.scene.myId] ?? 0) > 0 ? 1.8 : 1.5)); // cursul de florist: +30%
+    if (this.scene.storeMode === 'florarie') pay = Math.round(pay * ((this.scene.w.stats['dipl-florist-' + this.scene.myId] ?? 0) > 0 ? 1.33 : 1)); // cursul de florist: +33% (buchetele sunt deja ieftine, vezi spawnNpc)
     this.scene.serveNpc(npcId, pay);
     this.served++; this.earned += pay; this.paw = 1;
     Sfx.play('register');

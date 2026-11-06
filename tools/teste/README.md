@@ -35,6 +35,7 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 | `sunet_iphone.cjs` | 1.6.0: sunetul revine după suspendare + atingere și se reface după ce contextul audio e închis |
 | `florarie.cjs` | 1.6.0: florăria are doar lăzi cu flori, clienții cer doar flori, morcovii rămân neatinși; taraba de acasă are 4 lăzi |
 | `cherestea.cjs` | 1.6.0: cheresteaua pe drum, cântarul (preț × lemne, 5 rămân pentru sobă), gaterul, comenzile, stiva din curte nu mai vinde |
+| `ajutoare.cjs` | 1.8.0: bolovanii din pădure (Dudu +3, se refac), prețul lui Dudu la cherestea, „Angajează ajutoare” peste cherestea, ziua angajaților (tăietor → spărgător → culegător → căruțaș), buchetele ieftine la florărie |
 | `sat_oras.cjs` | 1.6.0: în sat și în oraș se ajunge pe jos la fiecare clădire / obiect cu acțiune; nimic solid nu se suprapune |
 | `miniharta.cjs` | 1.6.0: miniharta mică și mărită nu acoperă nimic (telefon, telefon mic, tabletă, laptop) |
 | `v15.cjs` | 1.5.0: butoanele de test (capitolul următor, resurse infinite), stiva de lemne + cheresteaua din Capitolul 1, ieșirea de sub pat, fâșia din spatele casei blocată, banca (amândoi pe șezut, apoi liberi) |

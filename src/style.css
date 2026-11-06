@@ -367,6 +367,7 @@ ul.goals.give li button[disabled] { opacity:.45; }
 .album { display:flex; flex-wrap:wrap; gap:5px; margin:2px 0 6px; } .album span { border:2px dashed #c9b8ae; border-radius:10px; padding:1px 8px; font-size:12px; color:#9a8a80; } .album span.got { border-style:solid; border-color:var(--ink); background:#e9fbe6; color:var(--ink); font-weight:700; }
 
 .hud.in-scene .toasts, .hud.in-scene .regionbanner, .hud.in-scene .modal { display:none !important; }
+.hud.in-mini .regionbanner { display:none !important; }
 /* meniurile 😊 / 💞: deasupra minihartii si mereu in ecran (nu ies peste marginea de sus) */
 .hud .pop { z-index:7; }
 html.h500 .pop { max-height:calc(var(--gh, 100vh) - 132px) !important; }

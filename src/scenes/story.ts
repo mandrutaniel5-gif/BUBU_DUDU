@@ -11,7 +11,8 @@ import { g } from '../game/gender';
 import { VILLAGERS } from '../game/town';
 import { RECIPES } from '../game/food';
 import { ITEMS } from '../char/outfit';
-import { BRIDGE_CHAPTER, VILLAGE_CHAPTER, FARM_CHAPTER, CITY_CHAPTER, SHOP_CHAPTER, WEDDING_CHAPTER } from '../game/economy';
+import { BRIDGE_CHAPTER, VILLAGE_CHAPTER, FARM_CHAPTER, CITY_CHAPTER, SHOP_CHAPTER, WEDDING_CHAPTER, PRICE } from '../game/economy';
+import { sawPrice, KEEP_WOOD } from '../minigames/sawmill';
 import { CITY_BUILDINGS } from '../world/city';
 import { catCount, catPick } from '../world/garden';
 
@@ -266,6 +267,10 @@ export const ROLES: Record<string, { name: [string, string]; icon: string; text:
   stall: { name: ['Vânzător la tarabă', 'Vânzătoare la tarabă'], icon: '🧺', text: 'vinde la taraba de acasă (ia și un procent)', base: 16, need: s => s.w.furn.standBroken ? 'Taraba e încă stricată' : null },
   florist: { name: ['Florar', 'Florăreasă'], icon: '💐', text: 'ține deschisă florăria lui Bubu', base: 22, need: s => st(s, 'florarie') ? null : 'Nu aveți încă florăria' },
   wood: { name: ['Tăietor de lemne', 'Tăietoare de lemne'], icon: '🪓', text: 'taie lemne și le stivuiește acasă', base: 18 },
+  stone: { name: ['Spărgător de piatră', 'Spărgătoare de piatră'], icon: '⛏️', text: 'sparge bolovani în pădure și aduce piatra acasă', base: 16 },
+  carter: { name: ['Căruțaș', 'Căruțașă'], icon: '🛒', text: 'duce lemnele la cherestea și i le vinde lui Nea Vasile', base: 12 },
+  joiner: { name: ['Vânzător la tâmplărie', 'Vânzătoare la tâmplărie'], icon: '🪚', text: 'face scăunele din lemnele voastre și le vinde la tâmplărie', base: 20, need: s => st(s, 'workshop') ? null : 'Nu aveți încă tâmplăria (Primăria satului)' },
+  picker: { name: ['Culegător de flori', 'Culegătoare de flori'], icon: '🌸', text: 'culege flori de câmp pentru florărie și tarabă', base: 12 },
   tractor: { name: ['Tractorist', 'Tractoristă'], icon: '🚜', text: 'lucrează parcelele cu utilajele voastre', base: 26, need: s => Object.values(parcelsOf(s)).some(p => p.owned) ? null : 'Nu aveți încă parcele' },
   shop: { name: ['Vânzător la magazin', 'Vânzătoare la magazin'], icon: '🏪', text: 'vinde la magazinul „Bubu & Dudu” din oraș', base: 30, need: s => st(s, 'shopBuilt') ? null : 'Nu aveți încă magazinul din oraș' },
 };
@@ -274,15 +279,16 @@ const NAMES_F = ['Maria', 'Ioana', 'Elena', 'Ana', 'Floarea', 'Georgiana', 'Lenu
 export const staffOf = (s: S): Staff[] => T(s, 'staff', [] as Staff[]);
 /** candidatii zilei (aceiasi pe ambele telefoane) */
 function candidates(s: S): Staff[] {
-  const r = mulberry(s.w.day * 31337 + 7), roles = Object.keys(ROLES), out: Staff[] = [];
-  for (let i = 0; i < 4; i++) {
+  const r = mulberry(s.w.day * 31337 + 7), out: Staff[] = [];
+  const ok = Object.keys(ROLES).filter(k => !ROLES[k].need?.(s)), roles = ok.length ? ok : Object.keys(ROLES);
+  for (let i = 0; i < 5; i++) {
     const f = r() < 0.5, name = (f ? NAMES_F : NAMES_M)[Math.floor(r() * 10)], role = roles[Math.floor(r() * roles.length)], skill = 1 + Math.floor(r() * 3);
     out.push({ id: `e${s.w.day}-${i}`, name, role, skill, wage: ROLES[role].base + skill * 6, unpaid: 0, days: 0, f });
   }
   return out;
 }
 export function openStaff(s: S) {
-  if (s.chapter < FARM_CHAPTER) { s.hud.toast('🧑‍🌾 Oamenii de muncă se angajează din Capitolul 5 · Ferma'); return; }
+  if (s.chapter < 1) { s.hud.toast('🧑‍🌾 Oamenii de muncă se angajează din Capitolul 1 (de la cherestea sau de la Primărie)'); return; }
   const staff = staffOf(s), hiredIds = new Set(staff.map(x => x.id));
   const now = staff.map(e => `<li><b>${ROLES[e.role].icon} ${esc(e.name)} · ${ROLES[e.role].name[e.f ? 1 : 0]}</b><small>pricepere ${'★'.repeat(Math.round(e.skill))}${'☆'.repeat(5 - Math.round(e.skill))} · salariu ${e.wage} lei/zi${e.unpaid ? ` · ⚠️ neplătit ${e.unpaid} zi` : ''}</small><button data-fire="${e.id}">Concediază</button></li>`).join('') || '<li><small>Nu aveți încă angajați.</small></li>';
   const cand = candidates(s).filter(c => !hiredIds.has(c.id)).map(c => { const why = ROLES[c.role].need?.(s); return `<li><b>${ROLES[c.role].icon} ${esc(c.name)} · ${ROLES[c.role].name[c.f ? 1 : 0]}</b><small>${ROLES[c.role].text} · pricepere ${'★'.repeat(c.skill)}${'☆'.repeat(5 - c.skill)} · ${c.wage} lei/zi</small>${why ? `<small class="need">${why}</small>` : `<button data-hire="${c.id}">Angajează</button>`}</li>`; }).join('');
@@ -295,7 +301,9 @@ function staffDay(s: S): string[] {
   const list = staffOf(s); if (!list.length) return [];
   const lines: string[] = []; let wages = 0, earned = 0;
   const keep: Staff[] = [];
-  for (const e of list) {
+  const ORDER = ['wood', 'stone', 'picker', 'garden', 'animals', 'tractor', 'joiner', 'carter'];
+  const rank = (e: Staff) => { const i = ORDER.indexOf(e.role); return i < 0 ? 99 : i; };
+  for (const e of [...list].sort((a, b) => rank(a) - rank(b))) {
     const R = ROLES[e.role], nm = e.name, k = e.skill;
     if ((s.w.money ?? 0) >= e.wage) { s.op({ k: 'money', delta: -e.wage }); wages += e.wage; e.unpaid = 0; }
     else { e.unpaid++; if (e.unpaid >= 2) { lines.push(`😢 ${nm} a plecat: n-a primit salariul două zile`); continue; } lines.push(`⚠️ ${nm} n-a primit salariul azi`); }
@@ -306,6 +314,10 @@ function staffDay(s: S): string[] {
     else if (e.role === 'stall') { const lei = Math.round(12 + k * 9); s.op({ k: 'money', delta: lei }); earned += lei; what = `a vândut ${Math.round(3 + k * 2)} produse la tarabă, +${lei} lei`; }
     else if (e.role === 'florist') { const lei = Math.round(18 + k * 12); s.op({ k: 'money', delta: lei }); earned += lei; what = `a vândut buchete la florărie, +${lei} lei`; }
     else if (e.role === 'wood') { const n = Math.round(4 + k * 2); s.op({ k: 'res', res: 'wood', delta: n }); what = `a tăiat ${n} lemne`; }
+    else if (e.role === 'stone') { const n = Math.round(3 + k * 1.5); s.op({ k: 'res', res: 'stone', delta: n }); what = `a spart ${n} pietre în pădure`; }
+    else if (e.role === 'picker') { const n = Math.round(5 + k * 2); s.op({ k: 'res', res: 'flower', delta: n }); s.op({ k: 'stat', key: 'flowerTotal', delta: n }); what = `a cules ${n} flori de câmp`; }
+    else if (e.role === 'joiner') { const n = Math.min(1 + Math.floor(k), Math.floor(Math.max(0, res(s, 'wood') - KEEP_WOOD) / 4)); const lei = Math.round(n * 24 * (1 + k * 0.05)); if (n) { s.op({ k: 'res', res: 'wood', delta: -n * 4 }); s.op({ k: 'money', delta: lei }); s.op({ k: 'stat', key: 'crafted', delta: n }); earned += lei; } what = n ? `a făcut și a vândut ${n} ${n === 1 ? 'scăunel' : 'scăunele'} la tâmplărie, +${lei} lei` : 'n-a avut lemne pentru mobilă (îi trebuie câte 4)'; }
+    else if (e.role === 'carter') { const dayKey = 'woodSold-' + s.w.day, left = Math.max(0, PRICE.sawmillDay - st(s, dayKey)); const n = Math.min(left, Math.round(8 + k * 3), Math.max(0, res(s, 'wood') - KEEP_WOOD)); const lei = n * sawPrice(s.w.day, 'dudu'); if (n) { s.op({ k: 'res', res: 'wood', delta: -n }); s.op({ k: 'money', delta: lei }); s.op({ k: 'stat', key: 'woodSold', delta: n }); s.op({ k: 'stat', key: dayKey, delta: n }); earned += lei; } what = n ? `a dus ${n} lemne la cherestea, +${lei} lei` : 'n-a avut lemne de dus la cherestea'; }
     else if (e.role === 'tractor') { const fp = parcelsOf(s); let n = 0; for (const [id, p] of Object.entries(fp)) { if (!p.owned) continue; if (p.stage === 'wild' && hasMachine(s, 'plow')) { p.stage = 'plowed'; n++; } else if (p.stage === 'plowed' && hasMachine(s, 'seeder')) { p.stage = 'sown'; p.crop = ['wheat', 'corn', 'sunflower'][n % 3]; p.prog = 0; n++; } else if (p.stage === 'ripe' && hasMachine(s, 'combine')) { const c = FIELD_CROPS[p.crop ?? 'wheat'], P = PARCELS.find(x => x.id === id)!, q = Math.round((P.x1 - P.x0) * (P.y1 - P.y0) * c.yieldPer / 4 * 0.9); s.op({ k: 'res', res: c.res, delta: q }); p.stage = 'wild'; p.crop = undefined; n++; } }
       setT(s, 'parcels', fp); what = n ? `a lucrat ${n} parcele cu utilajele` : 'a pregătit utilajele'; }
     else if (e.role === 'shop') { const sold = shopSell(s, 6 + k * 3); what = sold ? `a vândut ${sold.n} produse la magazin, +${sold.lei} lei` : 'a așteptat clienți (rafturile sunt goale)'; earned += sold?.lei ?? 0; }
@@ -511,7 +523,7 @@ function todo(s: S): string[] {
 export function openHallMenu(s: S) {
   const opts: [string, string, () => void][] = [['🏛️', 'Afacerile satului (florăria, tâmplăria)', () => s.hud.openHall()]];
   if (s.chapter >= VILLAGE_CHAPTER) opts.push(['📋', `Proiectele satului (${st(s, 'projectsDone')}/${PROJECTS.length})`, () => openProjects(s)]);
-  if (s.chapter >= FARM_CHAPTER) opts.push(['🧑‍🌾', `Oameni de muncă (${staffOf(s).length})`, () => openStaff(s)]);
+  opts.push(['🧑‍🌾', `Oameni de muncă (${staffOf(s).length})`, () => openStaff(s)]);
   if (s.chapter >= WEDDING_CHAPTER) opts.push(['🎻', 'Nunta: lăutarii (250 lei)', () => hireMusic(s)]);
   s.choice('🏛️ Primăria', 'Ce faceți azi la Primărie?', opts);
 }

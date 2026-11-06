@@ -302,7 +302,7 @@ export class Hud {
   openHall() {
     const s = this.s, w = s.w, r = w.res ?? {};
     const deals = [
-      { id: 'florarie', icon: '💐', label: 'Florăria lui Bubu', desc: 'Clienții vin des și plătesc cu 50% mai mult pe flori', cost: { money: PRICE.florarie } },
+      { id: 'florarie', icon: '💐', label: 'Florăria lui Bubu', desc: 'Clienții vin foarte des după buchete (ieftine, dar multe)', cost: { money: PRICE.florarie } },
       { id: 'workshop', icon: '🪚', label: 'Tâmplăria lui Dudu', desc: 'Faceți mobilier din lemn și îl vindeți', cost: { money: PRICE.workshop, wood: PRICE.workshopWood } },
     ];
     const m = this.modal(`<h3>🏛️ Primăria satului</h3><p class="sub">Ai 💰 ${w.money ?? 0} lei · 🪵 ${r.wood ?? 0} lemne. Primarul vă dă autorizații pentru afaceri.</p>
@@ -321,15 +321,15 @@ export class Hud {
   openWorkshop() {
     const s = this.s, w = s.w, r = w.res ?? {};
     const recipes: { id: string; icon: string; label: string; need: Record<string, number>; pay: number }[] = [
-      { id: 'birdhouse', icon: '🐦', label: 'Căsuță pentru păsări', need: { wood: 3, flower: 1 }, pay: 12 },
-      { id: 'chair', icon: '🪑', label: 'Scăunel', need: { wood: 4 }, pay: 14 },
-      { id: 'table', icon: '🪵', label: 'Măsuță', need: { wood: 8 }, pay: 30 },
-      { id: 'swing', icon: '🎠', label: 'Leagăn de grădină', need: { wood: 10, stone: 2 }, pay: 45 },
-      { id: 'cradle', icon: '🍼', label: 'Leagăn de bebeluș', need: { wood: 14, flower: 3 }, pay: 70 },
+      { id: 'birdhouse', icon: '🐦', label: 'Căsuță pentru păsări', need: { wood: 3, flower: 1 }, pay: 20 },
+      { id: 'chair', icon: '🪑', label: 'Scăunel', need: { wood: 4 }, pay: 24 },
+      { id: 'table', icon: '🪵', label: 'Măsuță', need: { wood: 8 }, pay: 50 },
+      { id: 'swing', icon: '🎠', label: 'Leagăn de grădină', need: { wood: 10, stone: 2 }, pay: 75 },
+      { id: 'cradle', icon: '🍼', label: 'Leagăn de bebeluș', need: { wood: 14, flower: 3 }, pay: 115 },
     ];
-    const bonus = (s.myId === 'dudu' ? 1.2 : 1) * ((s.w.stats['dipl-tamplar-' + s.myId] ?? 0) > 0 ? 1.3 : 1); // cursul de tamplar: +30%
+    const bonus = (s.myId === 'dudu' ? 1.3 : 1) * ((s.w.stats['dipl-tamplar-' + s.myId] ?? 0) > 0 ? 1.3 : 1); // cursul de tamplar: +30%
     const need = (n: Record<string, number>) => Object.entries(n).map(([k, v]) => `${k === 'wood' ? '🪵' : k === 'stone' ? '🪨' : '🌸'}${v}`).join(' ');
-    const m = this.modal(`<h3>🪚 Tâmplăria lui Dudu</h3><p class="sub">Ai 🪵 ${r.wood ?? 0} · 🪨 ${r.stone ?? 0} · 🌸 ${r.flower ?? 0}. ${s.myId === 'dudu' ? 'Ești meșterul: +20% la preț 💪' : 'Dudu e meșterul, dar te descurci și tu 🙂'}</p>
+    const m = this.modal(`<h3>🪚 Tâmplăria lui Dudu</h3><p class="sub">Ai 🪵 ${r.wood ?? 0} · 🪨 ${r.stone ?? 0} · 🌸 ${r.flower ?? 0}. ${s.myId === 'dudu' ? 'Ești meșterul: +30% la preț 💪' : 'Dudu e meșterul, dar te descurci și tu 🙂'}</p>
       <div class="shop">${recipes.map(rc => { const ok = Object.entries(rc.need).every(([k, v]) => (r[k] ?? 0) >= v); return `<button data-rc="${rc.id}" class="${ok ? '' : 'poor'}"><span>${rc.icon}</span><b>${rc.label}</b><small>${need(rc.need)} → 💰 ${Math.round(rc.pay * bonus)} lei</small></button>`; }).join('')}</div>`);
     m.querySelectorAll('[data-rc]').forEach(b => b.addEventListener('click', () => {
       const rc = recipes.find(x => x.id === (b as HTMLElement).dataset.rc)!;

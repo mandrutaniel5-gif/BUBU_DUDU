@@ -54,7 +54,7 @@ Anotimpurile și sărbătorile vin pe toată durata jocului.
   - Urci un nivel după câteva ture bune.
 - **Universitatea**:
   - Cursul de birou și cursul de prim ajutor deschid jobul de la birou, respectiv de la spital.
-  - Cursul de florist face florăria să câștige cu 30% mai mult.
+  - Cursul de florist face florăria să câștige cu 33% mai mult.
   - Cursul de tâmplar face tâmplăria să câștige cu 30% mai mult.
   - Plătești o dată, iar examenul se poate relua gratuit.
 - **Banca**:
@@ -104,7 +104,7 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 
 - Toate prețurile importante sunt în `PRICE` (`src/game/economy.ts`): bicicletă 350, scuter 800, autobuz 8/persoană, taxi 70, cinema 35, restaurant 70, înghețată 10, călușei 8, roata mare 15, consult 35 (sat) / 50 (oraș), florăria și tâmplăria câte 450 lei (+20 lemne la tâmplărie).
 - Mâncarea, semințele, ingredientele, hainele, mobila de la mall, cursurile și farmacia sunt de ~1,7 ori mai scumpe. Apartamentul: 5000 lei sau 1000 avans + 20 rate × 220; întreținere 30 lei/zi.
-- Lemnele nu mai fac averi: un copac dă 2 lemne (Dudu 3) și crește la loc în 4 minute; cheresteaua plătește 2 lei lemnul (3 lei când vinde Dudu, din v1.5.0), cel mult 15 lemne pe zi; la piață lemnul, piatra și fânul se vând cu 1 leu.
+- Lemnele nu mai fac averi: un copac dă 2 lemne (Dudu 3) și crește la loc în 4 minute; cheresteaua plătește 3-5 lei lemnul (+2 lei când vinde Dudu, v1.8, din v1.5.0), cel mult 15 lemne pe zi; la piață lemnul, piatra și fânul se vând cu 1 leu.
 - Piața se „saturează”: după 10 bucăți din același lucru într-o zi prețul scade la jumătate, după 20 nu mai cumpără până a doua zi.
 - Tâmplăria: fără limită pe zi (ca taraba și florăria); lemnul e limitat de copaci (2–3 pe copac, cresc la loc în 4 minute).
 - Taraba: prețul depinde din ce e făcut produsul și de nivel (x2,3 la fiecare unire): lămâie 9, limonadă 19, bubble tea 43, cocktail 98; făină 9 … tort 225; flori 4 … coroniță 194; morcov 5 … oala cu ciorbă 113.
@@ -223,3 +223,14 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 **Albumele (📒, lângă ⚙):** pești (6 feluri), flori, rețete, haine; un album complet: 150 de lei și 20 💗.
 
 **Sincronizarea:** salvarea poartă ora ultimei schimbări reale; când intră partenerul, telefoanele își compară lumile, iar cel cu lumea mai nouă o trimite întreagă.
+
+## Echilibrarea economiei (v1.8.0)
+
+Am măsurat jocul (Playwright + o simulare cu formulele din cod) și am schimbat ce ieșea din echilibru:
+
+- **Piatra:** 8 bolovani în pădure („Sparge piatra”, minijocul obișnuit), se refac în 2,5 minute; Dudu scoate 3 pietre, Bubu 2. Înainte erau doar 5 în curte, iar jocul cere ~67.
+- **Cheresteaua lui Nea Vasile:** cel mult 25 de lemne pe zi (`PRICE.sawmillDay`), 3-5 lei lemnul după zi (`DAY_PRICE`), Dudu negociază +2 lei; scândura 12 lei; comenzile: lemne 6,5 lei/buc, scânduri 20 lei/buc, Dudu +25%.
+- **Tâmplăria lui Dudu:** căsuța 20, scăunelul 24, măsuța 50, leagănul 75, leagănul de bebeluș 115 lei; Dudu +30%.
+- **Florăria lui Bubu:** clienții vin la 9-18 s (înainte 14-28), dar plătesc 30% din valoarea buchetului (`FLORIST_PAY` în `merge.ts`); cursul de florist +33%. Florile se culeg gratis; costă doar dacă angajezi un culegător.
+- **Oamenii de muncă:** din Capitolul 1 — la cherestea („🪓 Angajează ajutoare”) sau la Primărie. 5 candidați pe zi, doar meserii care au de lucru acum. Meserii noi: ⛏️ spărgător de piatră (3 + 1,5×pricepere pietre/zi), 🛒 căruțaș (duce lemnele la cherestea, la prețul lui Dudu, păstrează 5 pentru sobă), 🪚 vânzător la tâmplărie (scăunele din câte 4 lemne, 24 lei), 🌸 culegător de flori (5 + 2×pricepere flori/zi). Ordinea de dimineață: întâi cei care aduc materiale, apoi cei care le vând.
+- **Rezultatul simulării:** ~3,2 ore de joc eficient (~5,8 relaxat); urcare lină, cele mai lungi capitole sunt Ferma și Drumul spre oraș (~35-45 min); florăria (~72 lei/min, ~98 cu diplomă) și tâmplăria (~62) sunt la același nivel cu taraba cu experiență (~87).
