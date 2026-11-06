@@ -48,7 +48,7 @@ export const RESOURCE_NODES: Furn[] = [
   { id: 'rock5', type: 'rock', gx: 2, gy: 20, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
   { id: 'tree5', type: 'tree', gx: 18, gy: 2, w: 1, d: 1, solid: true, action: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
   { id: 'tree6', type: 'tree', gx: 20, gy: 9, w: 1, d: 1, solid: true, action: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
-  { id: 'tree7', type: 'tree', gx: 13, gy: 20, w: 1, d: 1, solid: true, action: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
+  { id: 'tree7', type: 'tree', gx: 15, gy: 20, w: 1, d: 1, solid: true, action: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
   { id: 'tree8', type: 'tree', gx: 7, gy: 20, w: 1, d: 1, solid: true, action: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
 ];
 

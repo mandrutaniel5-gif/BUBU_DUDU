@@ -91,9 +91,10 @@ export const FURNITURE: Furn[] = [
   { id: 'sink', type: 'sink', gx: 13, gy: 4, w: 1, d: 1, solid: true, action: act('teeth', 'Spălat pe dinți', '🪥') },
   { id: 'washer', type: 'washer', gx: 13, gy: 2, w: 1, d: 1, solid: true, action: act('laundry', 'Rufe', '🧺') },
   // bucatarie
-  { id: 'fridge', type: 'fridge', gx: 13, gy: 7, w: 1, d: 1, solid: true, action: act('snack', 'Frigiderul', '🧊') },
-  { id: 'stove', type: 'stove', gx: 13, gy: 8, w: 1, d: 1, solid: true, action: act('cook', 'Gătește', '🍳') },
-  { id: 'counter', type: 'counter', gx: 13, gy: 9, w: 1, d: 1, solid: true, action: act('dishes', 'Spălat vase', '🍽️') },
+  // in linie, lipite de peretele din spate al bucatariei (y = 6), cu usile spre camera; usa spre baie e la x = 10
+  { id: 'fridge', type: 'fridge', gx: 11, gy: 6, w: 1, d: 1, solid: true, action: act('snack', 'Frigiderul', '🧊') },
+  { id: 'stove', type: 'stove', gx: 12, gy: 6, w: 1, d: 1, solid: true, action: act('cook', 'Gătește', '🍳') },
+  { id: 'counter', type: 'counter', gx: 13, gy: 6, w: 1, d: 1, solid: true, action: act('dishes', 'Spălat vase', '🍽️') },
   { id: 'table', type: 'table', gx: 10, gy: 9, w: 2, d: 1, solid: true, action: act('eat', 'Masa', '🍰') },
   // sufragerie
   { id: 'rugL', type: 'rug', gx: 3, gy: 8, w: 3, d: 3, solid: false, color: '#c9e4ff' },
@@ -103,16 +104,16 @@ export const FURNITURE: Furn[] = [
   { id: 'plantL', type: 'plant', gx: 2, gy: 11, w: 1, d: 1, solid: true, action: act('water_plant', 'Udă floarea', '🪴') },
   // curte
   { id: 'mat', type: 'doormat', gx: 5, gy: 12, w: 1, d: 1, solid: false },
-  { id: 'tree1', type: 'tree', gx: 17, gy: 9, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
-  { id: 'tree2', type: 'tree', gx: 14, gy: 14, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
+  { id: 'tree1', type: 'tree', gx: 18, gy: 11, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
+  { id: 'tree2', type: 'tree', gx: 9, gy: 18, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
   { id: 'tree3', type: 'tree', gx: 1, gy: 13, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
-  { id: 'tree4', type: 'tree', gx: 15, gy: 3, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
+  { id: 'tree4', type: 'tree', gx: 17, gy: 4, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
   { id: 'bench', type: 'bench', gx: 2, gy: 14, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța', '🌅') },
   { id: 'mail', type: 'mailbox', gx: 6, gy: 13, w: 1, d: 1, solid: true, action: act('mail', 'Cutia poștală', '💌') },
   { id: 'fl1', type: 'flowers', gx: 7, gy: 14, w: 1, d: 1, solid: false },
   { id: 'fl2', type: 'flowers', gx: 13, gy: 12, w: 1, d: 1, solid: false },
   { id: 'fl3', type: 'flowers', gx: 0, gy: 11, w: 1, d: 1, solid: false },
-  { id: 'bush1', type: 'bush', gx: 15, gy: 8, w: 1, d: 1, solid: true },
+  { id: 'bush1', type: 'bush', gx: 16, gy: 6, w: 1, d: 1, solid: true },
   { id: 'bush2', type: 'bush', gx: 8, gy: 15, w: 1, d: 1, solid: true },
   ...RESOURCE_NODES,
   // supravietuire si economie
@@ -187,10 +188,45 @@ let built = false;
 /** lucrurile lumii care nu tin de casa (padure, sat, oras, campie): se pot "coace" in podea */
 const WORLD_STATIC = new Set<string>();
 export const isWorldStatic = (id: string) => WORLD_STATIC.has(id);
+/**
+ * Lucruri puse prea aproape: un copac imediat in fata unei pietre, banci, felinar, statii, fantani... le-ar acoperi
+ * (pe ecran par „intrate” unul in altul). Copacii de decor din fata lor se scot; la fel copacii din padure ascunsi
+ * aproape de tot dupa alt copac. Casa voastra (curtea) e aranjata de mana si nu se atinge.
+ */
+const TREES = new Set(['tree', 'oak', 'pine']);
+function declutter(furn: Furn[]) {
+  const home = new Set(HOME_FURN.map(f => f.id));
+  const drop = new Set<string>();
+  const cx = (f: Furn) => f.gx + f.w / 2, cy = (f: Furn) => f.gy + f.d / 2;
+  // grila ca sa cautam doar vecinii
+  const cell = new Map<string, Furn[]>(); const key = (x: number, y: number) => Math.floor(x / 4) + ',' + Math.floor(y / 4);
+  for (const f of furn) { const k = key(cx(f), cy(f)); let L = cell.get(k); if (!L) cell.set(k, L = []); L.push(f); }
+  const near = (f: Furn) => { const out: Furn[] = []; const X = Math.floor(cx(f) / 4), Y = Math.floor(cy(f) / 4); for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) out.push(...(cell.get((X + i) + ',' + (Y + j)) ?? [])); return out; };
+  const FLATISH = new Set(['flowers', 'wildflower', 'lilypad', 'bridgegap', 'stonepath', 'heartstone', 'flowerbed', 'rug', 'doormat', 'soilplot', 'plot', 'road', 'cropfield', 'pier', 'roadsign', 'signpost', 'fenceline', 'fence']);
+  for (const t of furn) {
+    if (!TREES.has(t.type as string) || home.has(t.id) || drop.has(t.id)) continue;
+    for (const o of near(t)) {
+      if (o === t || drop.has(o.id) || FLATISH.has(o.type as string)) continue;
+      const sum = (cx(t) + cy(t)) - (cx(o) + cy(o)), diff = Math.abs((cx(t) - cy(t)) - (cx(o) - cy(o)));
+      if (sum <= 0) continue; // copacul e in spatele lui: nu-l acopera
+      if (TREES.has(o.type as string)) {
+        // doi copaci aproape unul in fata altuia: cel din spate abia s-ar vedea
+        // (doar cel aflat drept in spatele lui, pe diagonala: din el s-ar vedea doar o margine)
+        if (sum >= 1.5 && sum <= 2.5 && diff <= 0.5 && t.id.startsWith('w-') && o.id.startsWith('w-')) drop.add(o.id);
+      } else {
+        // copacii sunt inalti: acopera si ce e la cateva dale in spatele lor, daca e aproape pe aceeasi verticala a ecranului
+        const big = Math.max(o.w, o.d) * 0.5;
+        if (sum <= 5.5 + big && diff <= 1.3 + big && o.w * o.d <= 9) { drop.add(t.id); break; }
+      }
+    }
+  }
+  for (let i = furn.length - 1; i >= 0; i--) if (drop.has(furn[i].id)) furn.splice(i, 1);
+}
 /** aduna lumea mare din zonele ei (o data) */
 function buildWorld() {
   const furn: Furn[] = [...HOME_FURN];
   for (const c of [...CORES, 'country']) if (AREAS[c]) { furn.push(...AREAS[c].furniture); for (const f of AREAS[c].furniture) WORLD_STATIC.add(f.id); }
+  declutter(furn);
   AREAS.world = { floor: worldFloorRaw, furniture: furn, walls: [...HOME_WALLS], spawn: { x: 6.5, y: 9.4 } };
   grid = new Uint8Array(WORLD_W * WORLD_H);
   for (let iy = 0; iy < WORLD_H; iy++) for (let ix = 0; ix < WORLD_W; ix++) grid[iy * WORLD_W + ix] = FLOOR_ID[worldFloorRaw(ix + WORLD.x0, iy + WORLD.y0)] ?? 1;

@@ -1,5 +1,5 @@
 // Apartamentul: pianul, acvariul, espressorul si consola sunt activitati adevarate (mergi la obiect, animatie, efect);
-// televizorul nu se strica odata cu cel de acasa; peretele cu usa dintre baie si bucatarie
+// televizorul nu se strica odata cu cel de acasa; perete plin intre baie si bucatarie, bucataria in linie pe el
 const { chromium } = require('playwright');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? '  ' + x : ''));
@@ -41,8 +41,13 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   await sleep(2500);
   const second = await E(() => ({ act: game.scene.me.activity?.a.id ?? null, t: window.__toasts.slice(-1)[0] }));
   ok('a doua cafea azi: refuzata cu mesaj', second.act !== 'coffee' && /deja/.test(second.t ?? ''), JSON.stringify(second));
-  // peretele dintre baie si bucatarie: din baie in bucatarie treci doar pe usa (x = 14)
-  const wall = await E(() => { const n = game.scene.nav; return { x13: n.edgeBlocked(13, 7, 13, 8), x15: n.edgeBlocked(15, 7, 15, 8), door: n.edgeBlocked(14, 7, 14, 8) }; });
-  ok('perete intre baie si bucatarie, cu usa', wall.x13 && wall.x15 && !wall.door, JSON.stringify(wall));
+  // peretele dintre baie si bucatarie e plin; frigiderul, blatul, aragazul si espressorul stau in linie lipite de el
+  const wall = await E(() => { const n = game.scene.nav; return [12, 13, 14, 15, 16].map(x => n.edgeBlocked(x, 7, x, 8)); });
+  ok('perete plin intre baie si bucatarie', wall.every(Boolean), JSON.stringify(wall));
+  const row = await E(() => ['fridge', 'counter', 'stove', 'd-coffee'].map(id => { const f = game.scene.furnList.find(x => x.id === id); return f ? [f.gx, f.gy] : null; }));
+  ok('bucataria in linie pe peretele din spate (y = 8)', row.every(r => r && r[1] === 8) && new Set(row.map(r => r[0])).size === 4, JSON.stringify(row));
+  // in baie se ajunge din dormitor, la bucatarie din living
+  const reach = await E(() => { const s = game.scene; return { baie: s.nav.path ? !!s.nav.path(6, 10, 14, 5)?.length : null, bucatarie: s.nav.path ? !!s.nav.path(6, 10, 14, 10)?.length : null }; });
+  console.log('drumuri: ' + JSON.stringify(reach));
   console.log(errs.join('\n') || 'no errors'); await b.close();
 })();

@@ -251,6 +251,8 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
       const R0 = d.box ?? itemBox(d), R = { x0: R0.x0 - 4, y0: R0.y0 - 4, x1: R0.x1 + 4, y1: R0.y1 + 4 };
       for (const e of statics) if (overlap(R, e.box) && isoCmp(d, e) < 0) { let L = assigned.get(e); if (!L) assigned.set(e, L = []); L.push(R); }
     }
+    // pentru teste: ce obiecte coapte se suprapun pe ecran cu personajul tau si care sunt desenate in fata lui
+    { const g = globalThis as any; if (g.__orderLog) { const me = dyn.find(d => d.id === 'p:' + scene.myId); g.__front = me ? statics.filter(e => overlap(me.box ?? itemBox(me), e.box)).map(e => ({ id: e.key, x0: e.x0, y0: e.y0, x1: e.x1, y1: e.y1, front: isoCmp(me, e) < 0 })) : null; g.__me = me ? { x0: me.x0, y0: me.y0, x1: me.x1, y1: me.y1 } : null; } }
     if (PF) { (globalThis as any).__big = { dyn: dyn.length, occ: assigned.size, rects: [...assigned.values()].reduce((a, l) => a + l.length, 0) }; }
     for (const [e, rs] of assigned) {
       const hit = mergeLocal(rs, e.box);

@@ -1531,7 +1531,7 @@ export class WorldScene implements Scene {
     else if (a.place === 'sofa') { pawn.gx = f.gx + 0.45; pawn.gy = f.gy + 0.6 + slot * 0.8; pawn.z = 10; }
     else if (a.place === 'piano') { const other = pawn === this.me ? this.partner : this.me; const duo = other.activity?.a.id === 'piano'; pawn.gx = f.gx + (duo ? 0.62 + slot * 0.76 : 1); pawn.gy = f.gy + 1.42; pawn.z = 18; if (duo && other.gx !== f.gx + 0.62 + (1 - slot) * 0.76) other.gx = f.gx + 0.62 + (1 - slot) * 0.76; }
     else if (a.id === 'aquarium') { pawn.gx = f.gx + 1.35; pawn.gy = f.gy + 0.3 + slot * 0.45; }
-    else if (a.id === 'coffee') { pawn.gx = f.gx - 0.4; pawn.gy = f.gy + 0.5; }
+    else if (a.id === 'coffee') { pawn.gx = f.gx + 0.5; pawn.gy = f.gy + 1.4; }
     else if (a.place === 'bench') {
       // pe sezut, unul langa altul (pe foisor: pe banca din fata lui)
       const gz = (f.type as string) === 'gazebo';
@@ -1546,7 +1546,7 @@ export class WorldScene implements Scene {
     if (a.place === 'sofa') { pawn.actor.flip = -1; pawn.facingBack = true; }
     if (a.place === 'piano') { pawn.actor.flip = 1; pawn.facingBack = true; }
     if (a.id === 'aquarium') { pawn.actor.flip = -1; pawn.facingBack = true; }
-    if (a.id === 'coffee') { pawn.actor.flip = 1; pawn.facingBack = false; }
+    if (a.id === 'coffee') { pawn.actor.flip = -1; pawn.facingBack = false; }
     if (a.place === 'bench') { const other = pawn === this.me ? this.partner : this.me; const both = other.activity?.a.place === 'bench' && other.activity.furn === f; pawn.actor.flip = both ? (slot ? -1 : 1) : -1; pawn.facingBack = false; if (both && other.actor.flip !== (slot ? 1 : -1)) other.actor.flip = slot ? 1 : -1; }
     if (a.place === 'bed' || a.place === 'tub' || a.place === 'toilet') { pawn.facingBack = false; pawn.actor.flip = 1; }
     pawn.actor.play(a.anim);

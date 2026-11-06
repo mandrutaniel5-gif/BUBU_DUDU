@@ -400,7 +400,7 @@ export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, ni
       // dulap de bucatarie (ca blatul de langa) si espressorul pe el
       const on = !!st.aptCoffee;
       isoBox(c, gx + 0.08, gy + 0.08, 0.84, 0.84, 32, { top: '#f6e7d3', left: '#d9a273', right: '#c48b5c' });
-      { const a = iso(gx + 0.92, gy + 0.3, 16), b = iso(gx + 0.92, gy + 0.7, 16); c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(a.x, a.y - 8); c.lineTo(a.x, a.y + 4); c.stroke(); c.beginPath(); c.moveTo(b.x, b.y - 8); c.lineTo(b.x, b.y + 4); c.stroke(); }
+      { const a = iso(gx + 0.42, gy + 0.92, 16), b = iso(gx + 0.58, gy + 0.92, 16), m0 = iso(gx + 0.5, gy + 0.92, 3), m1 = iso(gx + 0.5, gy + 0.92, 29); c.strokeStyle = shade('#d9a273', 0.75); c.lineWidth = 1.2; c.beginPath(); c.moveTo(m0.x, m0.y); c.lineTo(m1.x, m1.y); c.stroke(); c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(a.x, a.y - 5); c.lineTo(a.x, a.y + 3); c.moveTo(b.x, b.y - 5); c.lineTo(b.x, b.y + 3); c.stroke(); }
       isoBox(c, gx + 0.3, gy + 0.25, 0.45, 0.5, 6, { top: '#9aa0ae', left: '#7a8090', right: '#6a7080' }, 32);
       isoBox(c, gx + 0.3, gy + 0.25, 0.2, 0.5, 26, { top: '#c9ccd6', left: '#9aa0ae', right: '#8a90a0' }, 38);
       isoBox(c, gx + 0.3, gy + 0.25, 0.45, 0.5, 8, { top: '#d8dbe3', left: '#a8aebc', right: '#989eac' }, 64);
@@ -464,8 +464,8 @@ function aptWalls(): Wall[] {
   for (let y = 3; y <= 13; y++) W.push({ x: 3, y, dir: 'y', h: 92, kind: 'back', window: y === 5, door: y === 12, color: y <= 7 ? AW : '#fff4dc', lux: true });
   for (let y = 3; y <= 7; y++) if (y !== 6) W.push({ x: 12, y, dir: 'y', h: 26, kind: 'inner', color: '#eadcf5', lux: true });
   for (let x = 3; x <= 11; x++) if (x !== 9) W.push({ x, y: 8, dir: 'x', h: 26, kind: 'inner', color: '#eadcf5', lux: true });
-  // peretele dintre baie si bucatarie, cu usa la x = 14
-  for (let x = 12; x <= 16; x++) if (x !== 14) W.push({ x, y: 8, dir: 'x', h: 26, kind: 'inner', color: '#e3f0fa', lux: true });
+  // peretele dintre baie si bucatarie (plin: in baie intri din dormitor); bucataria sta lipita de el
+  for (let x = 12; x <= 16; x++) W.push({ x, y: 8, dir: 'x', h: 26, kind: 'inner', color: '#e3f0fa', lux: true });
   for (let x = 3; x <= 16; x++) W.push({ x, y: 14, dir: 'x', h: 10, kind: 'low', color: '#e0d0ea', lux: true });
   for (let y = 3; y <= 13; y++) W.push({ x: 17, y, dir: 'y', h: 10, kind: 'low', color: '#e0d0ea', lux: true });
   return W;
@@ -480,9 +480,11 @@ const AF: Furn[] = [
   { id: 'tub', type: 'bathtub', gx: 14, gy: 3, w: 2, d: 1, solid: true, action: act('bath', 'Baie cu spumă', '🛁') },
   { id: 'sink', type: 'sink', gx: 16, gy: 5, w: 1, d: 1, solid: true, action: act('teeth', 'Spălat pe dinți', '🪥') },
   { id: 'washer', type: 'washer', gx: 16, gy: 3, w: 1, d: 1, solid: true, action: act('laundry', 'Rufe', '🧺') },
-  { id: 'fridge', type: 'fridge', gx: 16, gy: 9, w: 1, d: 1, solid: true, action: act('snack', 'Frigiderul', '🧊') },
-  { id: 'stove', type: 'stove', gx: 16, gy: 10, w: 1, d: 1, solid: true, action: act('cook', 'Gătește', '🍳') },
-  { id: 'counter', type: 'counter', gx: 16, gy: 11, w: 1, d: 1, solid: true, action: act('dishes', 'Spălat vase', '🍽️') },
+  // bucataria: in linie pe peretele dinspre baie (y = 8), cu fata spre camera: frigider, blat, aragaz, (espressorul pe dulapul lui)
+  { id: 'fridge', type: 'fridge', gx: 12, gy: 8, w: 1, d: 1, solid: true, action: act('snack', 'Frigiderul', '🧊') },
+  { id: 'counter', type: 'counter', gx: 13, gy: 8, w: 1, d: 1, solid: true, action: act('dishes', 'Spălat vase', '🍽️') },
+  { id: 'stove', type: 'stove', gx: 14, gy: 8, w: 1, d: 1, solid: true, action: act('cook', 'Gătește', '🍳') },
+  { id: 'a-plantK', type: 'plant', gx: 16, gy: 8, w: 1, d: 1, solid: true, action: act('water_plant', 'Udă floarea', '🪴') },
   { id: 'table', type: 'table', gx: 13, gy: 11, w: 2, d: 1, solid: true, action: act('eat', 'Masa', '🍰') },
   { id: 'a-rugL', type: 'rug', gx: 5, gy: 9, w: 4, d: 3, solid: false, color: '#ffd6e4' },
   { id: 'sofa', type: 'sofa', gx: 8, gy: 10, w: 1, d: 2, solid: true, action: act('cuddle', 'Canapeaua', '🛋️') },
