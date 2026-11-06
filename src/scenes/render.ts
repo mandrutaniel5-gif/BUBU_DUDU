@@ -130,10 +130,13 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
       if (f && bakeable(f)) { scene.floorChunks.invalidate(screenBox(f)); scene.sprites.forget('f:' + f.id); }
     }
     scene.bakedDep = dep;
-    // casa: lampa, curatenia, taraba, ce ati construit / plantat
+  }
+  // casa: lampa, curatenia, taraba, ce ati construit / plantat. Se verifica MEREU (si in Capitolul 0, unde nu se „coace”
+  // nimic): altfel mobila ramanea desenata cum era la inceput (toaleta infundata, lampa stinsa) chiar dupa ce o reparai
+  {
     const sb = (globalThis as any).__stand ?? {};
-    const hk = [st.lampOn, st.clogged, st.tubDirty, Math.round(((st.bathFoam as number) ?? 0) * 4), st.fridgeDirty, st.dishesDirty, st.tvBroken, sb.broken, sb.open, scene.placedVersion, lit2].join('|');
-    if (hk !== scene.homeKey) { if (scene.homeKey) { scene.floorChunks.invalidate(HOME_BOX); scene.sprites.clear(); } scene.homeKey = hk; }
+    const hk = [st.lampOn, st.clogged, st.tubDirty, Math.round(((st.bathFoam as number) ?? 0) * 4), st.fridgeDirty, st.dishesDirty, st.tvBroken, sb.broken, sb.open, scene.placedVersion, lit2, ch0 ? 0 : 1].join('|');
+    if (hk !== scene.homeKey) { if (scene.homeKey) { if (baking) scene.floorChunks.invalidate(HOME_BOX); scene.sprites.clear(); } scene.homeKey = hk; }
   }
   const PF = (globalThis as any).__prof as Record<string, number> | undefined; let pt = performance.now();
   const lap = (k: string) => { if (!PF) return; if ((globalThis as any).__flush) ctx.getImageData(0, 0, 1, 1); const n = performance.now(); PF[k] = (PF[k] ?? 0) + n - pt; pt = n; };
@@ -150,7 +153,7 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
 
   // obiectele vii (cele care se schimba): desenate la fiecare cadru; cele care nu se misca: din imaginea lor
   const paint = (f: Furn) => {
-    if (!cacheable(f)) { drawFurn(ctx, f, scene.time, st); return; }
+    if (!cacheable(f) || liveNow(scene, f, st)) { drawFurn(ctx, f, scene.time, st); return; }
     const key = f.id + (dep[f.id] ? '|d' : '') + (lit2 ? '|n' + lit2 : '');
     scene.sprites.draw(ctx, f, key, SS, c => drawFurn(c, f, 0, { ...st, night: bakeNight }));
   };
@@ -432,6 +435,8 @@ function liveNow(scene: WorldScene, f: Furn, st: FurnState) {
   const t = f.type as string;
   if (t === 'tv' && st.tvOn) return true;
   if (t === 'stove' && st.cooking) return true;
+  // mizeria se misca (aburii care miros): vie, nu „poza”
+  if ((t === 'toilet' && st.clogged) || (t === 'bathtub' && st.tubDirty) || (t === 'fridge' && st.fridgeDirty) || (t === 'counter' && st.dishesDirty)) return true;
   for (const p of [scene.me, scene.partner]) if (p.activity?.furn === f) return true;
   return false;
 }
