@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   const b = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] }); const p = await (await b.newContext({ viewport: { width: 900, height: 500 } })).newPage();
-  await p.goto('http://localhost:5173/?skipload&who=bubu&mode=solo&room=snd' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
+  await p.goto('http://localhost:5173/?skipload&dev&who=bubu&mode=solo&room=snd' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
   await p.mouse.click(450, 250); await sleep(1500);
   const s0 = await p.evaluate(() => __sfx.ctx()?.state);
   // 1) contextul suspendat de sistem (ca dupa un apel): revine la atingere

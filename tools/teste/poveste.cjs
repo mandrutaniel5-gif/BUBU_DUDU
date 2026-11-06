@@ -4,7 +4,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 1, hasTouch: true })).newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n')[1]));
-  await p.goto('http://localhost:5173/?skipload&who=dudu&mode=solo&room=story' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
+  await p.goto('http://localhost:5173/?skipload&dev&who=dudu&mode=solo&room=story' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
   const E = (f, a) => p.evaluate(f, a);
   const hide = () => E(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
   const shot = async n => { await hide(); await sleep(300); await p.screenshot({ path: `st_${n}.png` }); };

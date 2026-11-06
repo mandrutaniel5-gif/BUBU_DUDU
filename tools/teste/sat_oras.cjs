@@ -4,7 +4,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 900, height: 500 } })).newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto('http://localhost:5173/?skipload&who=bubu&mode=solo&room=reach' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
+  await p.goto('http://localhost:5173/?skipload&dev&who=bubu&mode=solo&room=reach' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
   await p.evaluate(() => { const s = game.scene; for (let i = 0; i < 5 && s.chapter < 4; i++) s.devSkipChapter(); });
   await sleep(1500);
   const r = await p.evaluate(() => {

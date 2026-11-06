@@ -1,4 +1,5 @@
 import { saveCloud, loadCloud } from '../save/cloud';
+import { DEV } from '../game/dev';
 import * as Town from './townctl';
 import * as TownUI from '../ui/townui';
 import { VILLAGERS, DECOR, HOURS, isOpen } from '../game/town';
@@ -782,7 +783,7 @@ export class WorldScene implements Scene {
   }
   /** PROVIZORIU (pentru test): sari la capitolul urmator */
   /** test (doar pe acest telefon): bani si materiale care nu se termina */
-  infinite = (() => { try { return localStorage.getItem('bd-infinite') === '1'; } catch { return false; } })();
+  infinite = (() => { try { return DEV && localStorage.getItem('bd-infinite') === '1'; } catch { return false; } })();
   private infT = 0;
   setInfinite(on: boolean) { this.infinite = on; try { localStorage.setItem('bd-infinite', on ? '1' : '0'); } catch { /* fara stocare */ } if (on) this.topUp(); }
   /** umple banii, materialele, ingredientele, semintele si soba (doar ce a scazut, ca sa nu trimitem mereu) */

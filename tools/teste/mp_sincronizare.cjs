@@ -4,7 +4,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 900, height: 500 } });
   const room = 'sy' + Date.now();
-  const open = async who => { const p = await ctx.newPage(); await p.goto(`http://localhost:5173/?skipload&who=${who}&mode=local&room=${room}#world`); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 }); return p; };
+  const open = async who => { const p = await ctx.newPage(); await p.goto(`http://localhost:5173/?skipload&dev&who=${who}&mode=local&room=${room}#world`); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 }); return p; };
   const A = await open('dudu'); await sleep(1500);
   // A desfunda toaleta (lumea lui e noua)
   await A.evaluate(() => { const s = game.scene; s.op({ k: 'furn', key: 'clogged', value: false }); s.op({ k: 'stat', key: 'unclogged', delta: 1 }); s.save(true); });

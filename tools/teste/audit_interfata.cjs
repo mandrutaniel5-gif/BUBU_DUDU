@@ -15,7 +15,7 @@ const PANELS = {
   for (const [vn, W, H, touch] of VIEWS) {
     const p = await (await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, hasTouch: touch, isMobile: touch })).newPage();
     p.on('pageerror', e => errs.push(`${vn}: ${e.message}`));
-    await p.goto('http://localhost:5173/?skipload&who=bubu&mode=solo&room=ua' + vn + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
+    await p.goto('http://localhost:5173/?skipload&dev&who=bubu&mode=solo&room=ua' + vn + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
     await p.evaluate(async () => { const s = game.scene; window.S = await import('/src/scenes/story.ts'); window.T = await import('/src/ui/townui.ts'); for (let i = 0; i < 8; i++) s.devSkipChapter(); s.setInfinite(true);
       for (const k of ['florarie', 'workshop', 'bike', 'scooter', 'hens', 'cows', 'sheep', 'hives', 'shopBuilt', 'shopLot', 'truck', 'engaged', 'ring']) s.op({ k: 'stat', key: k, delta: 1 }); s.w.minutes = 11 * 60; s.me.gx = 121; s.me.gy = 25; s.syncPlaced(); });
     await sleep(2500);

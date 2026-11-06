@@ -3,7 +3,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto('http://localhost:5173/?skipload'); await sleep(1500);
+  await p.goto('http://localhost:5173/?skipload&dev'); await sleep(1500);
   await p.screenshot({ path: 'house_menu.png' });
   // solo: casa noua fara retea (calculul cheii)
   await p.selectOption('select[name=mode]', 'solo');

@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 3, hasTouch: true, isMobile: true });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
   const cdp = await ctx.newCDPSession(p); await cdp.send('Performance.enable');
-  await p.goto('http://localhost:5173/?skipload&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
+  await p.goto('http://localhost:5173/?skipload&dev&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
   await p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
   await p.mouse.click(600, 100); await p.waitForTimeout(3000);
   const measure = async (label, fn) => {

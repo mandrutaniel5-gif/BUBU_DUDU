@@ -5,7 +5,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1000, height: 600 } });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto('http://localhost:5173/?skipload&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 });
+  await p.goto('http://localhost:5173/?skipload&dev&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 });
   await sleep(800);
   await p.evaluate(() => { localStorage.removeItem('bd-infinite'); document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); });
   const ok = (name, cond, extra = '') => console.log((cond ? 'OK  ' : 'FAIL') + ' ' + name + (extra ? '  ' + extra : ''));

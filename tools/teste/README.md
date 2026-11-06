@@ -1,5 +1,7 @@
 # Teste automate (Playwright)
 
+> Din 1.8.1 uneltele de test (⏭, ♾️, modul 2 tab-uri) apar doar cu `?dev` în adresă; toate scripturile de aici îl adaugă.
+
 Scripturi care pornesc jocul într-un browser fără ecran și verifică ce s-a reparat. Fiecare scrie în consolă ce a găsit, iar în folderul curent pune capturi de ecran (`.png`).
 
 ## Cum le rulezi

@@ -1,4 +1,5 @@
 // Ecranul de start: cine esti, cum va conectati.
+import { DEV } from '../game/dev';
 import { Actor } from '../char/actor';
 import { Fx } from '../char/fx';
 import { Sfx } from '../engine/sfx';
@@ -41,7 +42,7 @@ export class MenuScene implements Scene {
           <option value="solo">🏠 Joc solo — partenerul e controlat de AI</option>
           <option value="firebase">🌍 Online (Firebase): de oriunde, fără server</option>
           <option value="server">📱 Serverul nostru (Samsung S10 / PC)</option>
-          <option value="local">🧪 Test: 2 tab-uri pe același dispozitiv</option>
+          ${DEV ? '<option value="local">🧪 Test: 2 tab-uri pe același dispozitiv</option>' : ''}
         </select>
         <div class="house-row"></div>
         <label class="m-server">Adresa serverului: lasă <b>auto</b> ca să se conecteze singur la S10<span class="srvrow"><input name="serverUrl" value="${s.net.serverUrl}" placeholder="auto (se conectează singur la S10)" /><button type="button" class="paste" title="Lipește linkul copiat">📋 Lipește</button></span></label>

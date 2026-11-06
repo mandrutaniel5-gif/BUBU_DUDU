@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 900, height: 480 } });
   const errs = []; const room = 'p1' + Date.now();
-  const open = async who => { const p = await ctx.newPage(); p.on('pageerror', e => errs.push(who + ': ' + e.message)); await p.goto(`http://localhost:5173/?skipload&who=${who}&mode=local&room=${room}#world`); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 }); return p; };
+  const open = async who => { const p = await ctx.newPage(); p.on('pageerror', e => errs.push(who + ': ' + e.message)); await p.goto(`http://localhost:5173/?skipload&dev&who=${who}&mode=local&room=${room}#world`); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 }); return p; };
   const D = await open('dudu'); const B = await open('bubu');
   const hide = p => p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
   await D.waitForTimeout(3000);

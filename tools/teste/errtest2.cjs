@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 844, height: 390 } })).newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto('http://localhost:4173/?skipload&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 });
+  await p.goto('http://localhost:4173/?skipload&dev&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 });
   await p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
   // activitate stricata (fara obiect) -> inainte oprea tot desenul
   await p.evaluate(() => { const s = game.scene; s.partner.activity = { a: { id: 'eat', dur: 99, needs: {}, anim: 'act_eat', text: '' }, furn: null, t: 0 }; });

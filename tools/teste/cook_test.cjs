@@ -5,7 +5,7 @@ const { chromium } = require('playwright');
   for (const [name, vw] of [['phoneL', { width: 844, height: 390 }], ['laptop', { width: 1366, height: 768 }]]) {
     const ctx = await b.newContext({ viewport: vw, deviceScaleFactor: 1, hasTouch: name === 'phoneL' }); const p = await ctx.newPage();
     p.on('pageerror', e => errs.push(name + ': ' + String(e)));
-    await p.goto('http://localhost:5173/?skipload&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 20000 });
+    await p.goto('http://localhost:5173/?skipload&dev&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 20000 });
     await p.evaluate(() => { const s = game.scene; s.hud.els['.modal']?.classList.add('hidden'); s.w.stats.chapter = 3; Object.assign(s.w.res, { egg: 6, milk: 3, cheese: 2, cabbage: 2, meat: 2, rice: 2, cornmeal: 2, flour: 3, tomato: 2, carrot: 3, potato: 3, water: 3, fish: 1, lemon: 3, mushroom: 2, strawberry: 2 }); });
     // modalul de retete
     await p.evaluate(() => { const s = game.scene; const f = s.constructor && (globalThis.FURN ?? null); s.hud.openKitchen(rc => { window.__picked = rc; }); });

@@ -5,7 +5,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   const b = await chromium.launch();
   for (const [name, vw, vh, touch] of [['telefon', 844, 390, true], ['telefon_mic', 667, 375, true], ['laptop', 1280, 720, false], ['tableta', 1024, 768, true]]) {
     const p = await (await b.newContext({ viewport: { width: vw, height: vh }, deviceScaleFactor: 2, hasTouch: touch, isMobile: touch })).newPage();
-    await p.goto('http://localhost:5173/?skipload&who=bubu&mode=solo&room=map' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
+    await p.goto('http://localhost:5173/?skipload&dev&who=bubu&mode=solo&room=map' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
     await p.evaluate(() => { localStorage.removeItem('bd-mapbig'); const s = game.scene; s.hud.mapBig = false; for (let i = 0; i < 4; i++) s.devSkipChapter(); s.me.gx = 121; s.me.gy = 25; s.partner.gx = 30; s.partner.gy = 25; });
     await sleep(2500); await p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'))); await sleep(500);
     const over = async () => p.evaluate(() => {

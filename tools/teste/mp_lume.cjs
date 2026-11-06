@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1000, height: 560 } });
   const errs = [];
   const room = 'mpw' + Date.now();
-  const open = async who => { const p = await ctx.newPage(); p.on('pageerror', e => errs.push(who + ': ' + e)); p.on('console', m => { if ((m.type() === 'error' || m.type() === 'warning') && !/firebase|ERR_|Failed to load|WebSocket|tunnel/i.test(m.text())) errs.push(who + ' ' + m.type() + ': ' + m.text().slice(0, 300)); }); await p.goto(`http://localhost:5173/?skipload&who=${who}&mode=local&room=${room}#world`); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 }); return p; };
+  const open = async who => { const p = await ctx.newPage(); p.on('pageerror', e => errs.push(who + ': ' + e)); p.on('console', m => { if ((m.type() === 'error' || m.type() === 'warning') && !/firebase|ERR_|Failed to load|WebSocket|tunnel/i.test(m.text())) errs.push(who + ' ' + m.type() + ': ' + m.text().slice(0, 300)); }); await p.goto(`http://localhost:5173/?skipload&dev&who=${who}&mode=local&room=${room}#world`); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 }); return p; };
   const D = await open('dudu'); const B = await open('bubu');
   const hide = p => p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
   await D.waitForTimeout(3000);

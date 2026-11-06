@@ -5,7 +5,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2 });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto('http://localhost:5173/?skipload&who=dudu&mode=solo&room=ajut' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
+  await p.goto('http://localhost:5173/?skipload&dev&who=dudu&mode=solo&room=ajut' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
   const E = (f, a) => p.evaluate(f, a);
   const hide = () => E(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
   await E(async () => { const s = game.scene; s.devSkipChapter(); s.devSkipChapter(); s.w.minutes = 10 * 60; window.__S = await import('/src/scenes/story.ts'); });

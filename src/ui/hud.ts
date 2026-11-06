@@ -10,6 +10,7 @@ import { ANIM_LIST } from '../char/anims';
 import { NEEDS, NEED_INFO, SICK_INFO, REQUESTS, clockText, nightAmount } from '../game/state';
 import { Sfx } from '../engine/sfx';
 import { ErrorLog } from '../engine/errors';
+import { DEV } from '../game/dev';
 import { moodText, g } from '../game/gender';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
@@ -48,7 +49,7 @@ export class Hud {
       <div class="card partner">
         <div class="name">${pa.id === 'bubu' ? '🐼' : '🐻'} ${pa.name} <span class="pst">🤖 AI</span></div>
         <div class="pmood"></div>
-        <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="menu">⚙</button><button class="mini-btn" data-a="skipch" title="Capitolul următor (test)">⏭</button><button class="mini-btn" data-a="infinite" title="Resurse infinite (test)">♾️</button><button class="mini-btn" data-a="albums" title="Albumele (pești, flori, rețete, haine)">📒</button></div>
+        <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="menu">⚙</button>${DEV ? '<button class="mini-btn" data-a="skipch" title="Capitolul următor (test)">⏭</button><button class="mini-btn" data-a="infinite" title="Resurse infinite (test)">♾️</button>' : ''}<button class="mini-btn" data-a="albums" title="Albumele (pești, flori, rețete, haine)">📒</button></div>
       </div>
       <div class="actions">
         <button class="act big" data-a="action"><span class="ic">✋</span><span class="lb">Acțiune</span></button>
@@ -393,8 +394,8 @@ export class Hud {
     const w = this.s.w; const cur = currentGoal(w); const ch = chapterOf(w);
     const m = this.modal(`<h3>📜 ${ch.title}</h3>
       <p class="sub">${ch.intro} Aveți grijă să nu înghețați 🥶 și să aveți ce mânca 🍲.</p>
-      <div class="devrow"><button data-dev="skip">⏭️ Capitolul următor</button><button data-dev="inf" class="${this.s.infinite ? 'on' : ''}">♾️ Resurse infinite: ${this.s.infinite ? 'pornit' : 'oprit'}</button></div>
-      <p class="sub devnote">🧪 Pentru testare. Resursele infinite umplu mereu banii, materialele, ingredientele, semințele și soba (doar pe acest dispozitiv).</p>
+      ${DEV ? `<div class="devrow"><button data-dev="skip">⏭️ Capitolul următor</button><button data-dev="inf" class="${this.s.infinite ? 'on' : ''}">♾️ Resurse infinite: ${this.s.infinite ? 'pornit' : 'oprit'}</button></div>
+      <p class="sub devnote">🧪 Pentru testare. Resursele infinite umplu mereu banii, materialele, ingredientele, semințele și soba (doar pe acest dispozitiv).</p>` : ''}
       <ul class="goals">${ch.goals.map(g => { const done = !!w.stats['goal-' + g.id]; return `<li class="${done ? 'done' : g === cur ? 'cur' : ''}"><b>${done ? '✅' : g.icon} ${g.text}${g.who ? ` <em class="who ${g.who}">${g.who === 'dudu' ? 'Dudu' : 'Bubu'}</em>` : ''}</b>${!done ? `<small>${g.hint}</small>` : ''}<i>${g.reward.money ? '+' + g.reward.money + ' lei ' : ''}${g.reward.hearts ? '+' + g.reward.hearts + '💗' : ''}</i></li>`; }).join('')}</ul>
       <h4>🗺️ Povestea voastră</h4><p class="sub">${CHAPTERS.map(c => (c.id < ch.id ? '✅ ' : c.id === ch.id ? '👉 ' : '🔒 ') + c.title).join('<br>')}</p>
 `);

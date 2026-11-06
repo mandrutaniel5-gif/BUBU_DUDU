@@ -3,7 +3,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2 });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto('http://localhost:5173/?skipload&who=bubu&mode=solo&room=fl' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
+  await p.goto('http://localhost:5173/?skipload&dev&who=bubu&mode=solo&room=fl' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
   await p.evaluate(() => { const s = game.scene; for (let i = 0; i < 4; i++) s.devSkipChapter(); document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
     s.w.minutes = 10 * 60; s.op({ k: 'stat', key: 'florarie', delta: 1 }); for (const [k, n] of [['flower', 6], ['tulip', 5], ['rose', 3], ['seed_tulip', 4], ['carrot', 9], ['lemon', 5], ['flour', 5]]) s.op({ k: 'res', res: k, delta: n });
     s.storeMode = 'florarie'; s.startCustom('merge'); });

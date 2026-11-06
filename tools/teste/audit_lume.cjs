@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 900, height: 500 } })).newPage();
-  for (let i = 0; i < 30; i++) { try { await p.goto('http://localhost:5173/?skipload&who=dudu&mode=solo&room=wa' + Date.now() + '#world'); break; } catch { await sleep(1000); } }
+  for (let i = 0; i < 30; i++) { try { await p.goto('http://localhost:5173/?skipload&dev&who=dudu&mode=solo&room=wa' + Date.now() + '#world'); break; } catch { await sleep(1000); } }
   await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
   await p.evaluate(() => { const s = game.scene; for (let i = 0; i < 8; i++) s.devSkipChapter(); for (const k of ['florarie', 'workshop', 'bike', 'scooter', 'shopBuilt', 'shopLot', 'truck']) s.op({ k: 'stat', key: k, delta: 1 }); for (const k of ['hens', 'cows', 'sheep', 'hives']) s.op({ k: 'stat', key: k, delta: 4 }); s.op({ k: 'furn', key: 'roofBroken', value: true }); s.syncPlaced(); });
   await sleep(1500);

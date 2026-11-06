@@ -4,7 +4,7 @@ const { chromium } = require('playwright');
   const errs = [];
   const room = 'mig' + Date.now();
   // 1) salvare veche: amandoi in sat, coordonate vechi (locale), vehicule bicicleta + scuter
-  const p0 = await ctx.newPage(); await p0.goto('http://localhost:5173/?skipload&who=dudu&mode=solo#menu'); await p0.waitForTimeout(1500);
+  const p0 = await ctx.newPage(); await p0.goto('http://localhost:5173/?skipload&dev&who=dudu&mode=solo#menu'); await p0.waitForTimeout(1500);
   await p0.evaluate((room) => {
     const w = { v: 1, ts: Date.now() + 100000, created: Date.now(), minutes: 600, day: 5, hearts: 50, chars: { bubu: { needs: { hunger: 70, energy: 90, warmth: 60, hygiene: 80, fun: 70, love: 75, health: 100 }, sick: null, fart: 30, gx: 10.5, gy: 13.2, area: 'village' }, dudu: { needs: { hunger: 70, energy: 90, warmth: 60, hygiene: 80, fun: 70, love: 75, health: 100 }, sick: null, fart: 30, gx: 9.5, gy: 12.6, area: 'village' } }, furn: { lampOn: false, fire: 40 }, jar: [], log: [], stats: { chapter: 3, bike: 1, scooter: 1, served: 10 }, res: { wood: 10 }, placed: [], nodes: {}, money: 300, grass: {}, plots: {} };
     localStorage.setItem('bd-save-' + (JSON.parse(localStorage.getItem('bd-settings') || '{}').net?.room ?? 'casa'), JSON.stringify({ json: JSON.stringify(w), ts: w.ts }));
@@ -12,7 +12,7 @@ const { chromium } = require('playwright');
   }, room);
   await p0.close();
   const p = await ctx.newPage(); p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'warning' && m.text().includes('eroare')) errs.push(m.text().slice(0, 200)); });
-  await p.goto('http://localhost:5173/?skipload&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 });
+  await p.goto('http://localhost:5173/?skipload&dev&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 });
   await p.waitForTimeout(1200);
   console.log('dupa migrare:', await p.evaluate(() => { const s = game.scene; return JSON.stringify({ me: [s.me.gx, s.me.gy, s.area], pa: [s.partner.gx, s.partner.gy], veh: s.w.veh, worldV: s.w.worldV, chapter: s.chapter }); }));
   await p.screenshot({ path: 'mig.png' });

@@ -4,7 +4,7 @@ const URL = process.argv[2] || 'http://localhost:5173';
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 3, hasTouch: true, isMobile: true });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
   const cdp = await ctx.newCDPSession(p); await cdp.send('Performance.enable');
-  await p.goto(URL + '/?skipload&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
+  await p.goto(URL + '/?skipload&dev&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
   await p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
   await p.evaluate(() => { const s = game.scene; s.w.stats.chapter = 4; s.w.stats.scooter = 1; s.syncPlaced && s.syncPlaced(); });
   const get = async () => Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(m => [m.name, m.value]));

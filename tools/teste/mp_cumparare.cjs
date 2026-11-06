@@ -3,7 +3,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 900, height: 500 } });
   const room = 'bk' + Date.now();
-  const open = async who => { const p = await ctx.newPage(); await p.goto(`http://localhost:5173/?skipload&who=${who}&mode=local&room=${room}#world`); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 }); return p; };
+  const open = async who => { const p = await ctx.newPage(); await p.goto(`http://localhost:5173/?skipload&dev&who=${who}&mode=local&room=${room}#world`); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 }); return p; };
   const A = await open('dudu'); const B = await open('bubu'); await sleep(2500);
   await A.evaluate(() => { const s = game.scene; s.devSkipChapter(); s.devSkipChapter(); s.op({ k: 'money', delta: 1000 }); });
   await sleep(800);

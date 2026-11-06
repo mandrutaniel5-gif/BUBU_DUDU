@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
-  await p.goto('http://localhost:5173/?skipload&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 });
+  await p.goto('http://localhost:5173/?skipload&dev&who=dudu&mode=solo#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 });
   await p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')));
   const r = await p.evaluate(() => {
     const s = game.scene; s.w.stats.chapter = 3; s.w.res.wood = 200; s.w.money = 0;
