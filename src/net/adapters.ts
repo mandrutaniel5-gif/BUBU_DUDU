@@ -5,9 +5,15 @@ abstract class Base implements NetAdapter {
   abstract kind: string;
   status: NetStatus = 'offline';
   onState?: (s: PlayerState) => void;
-  onEvent?: (e: NetEvent) => void;
-  onPresence?: (who: CharId, online: boolean) => void;
   onStatus?: (s: NetStatus, msg?: string) => void;
+  // ne conectam inainte ca lumea sa fie incarcata: ce vine de la partener pana atunci (versiunea lui, „e aici”, cererea de sincronizare)
+  // nu se pierde (Firebase sterge evenimentul dupa ce l-a dat), ci asteapta pana jocul e gata sa-l primeasca
+  private evH?: (e: NetEvent) => void; private evQ: NetEvent[] = [];
+  private prH?: (who: CharId, online: boolean) => void; private prLast = new Map<CharId, boolean>();
+  get onEvent(): (e: NetEvent) => void { return this.evH ?? (e => { if (this.evQ.length < 500) this.evQ.push(e); }); }
+  set onEvent(h: ((e: NetEvent) => void) | undefined) { this.evH = h; if (h) { const q = this.evQ; this.evQ = []; q.forEach(e => h(e)); } }
+  get onPresence(): (who: CharId, online: boolean) => void { return this.prH ?? ((w, on) => { this.prLast.set(w, on); }); }
+  set onPresence(h: ((who: CharId, online: boolean) => void) | undefined) { this.prH = h; if (h) { const l = [...this.prLast]; this.prLast.clear(); l.forEach(([w, on]) => h(w, on)); } }
   protected room = ''; protected me: CharId = 'bubu';
   protected setStatus(s: NetStatus, msg?: string) { this.status = s; this.onStatus?.(s, msg); }
   abstract connect(room: string, me: CharId): Promise<void>;

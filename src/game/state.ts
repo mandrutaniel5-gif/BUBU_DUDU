@@ -141,8 +141,8 @@ export function applyOp(w: WorldState, op: WorldOp) {
     case 'sick': w.chars[op.who].sick = op.value as Sickness | null; if (!op.value) w.chars[op.who].request = null; break;
     case 'jar': w.jar.push({ from: op.from, text: op.text, ts: op.ts }); break;
     case 'char': case 'npcs': case 'npcServe': return;
-    case 'plot': { w.plots ??= {}; if (op.plot === null) delete w.plots[op.key]; else w.plots[op.key] = op.plot as any; return; }
-    case 'plots': w.plots = op.all as any; return;
+    case 'plot': { w.plots ??= {}; if (op.plot == null) delete w.plots[op.key]; else w.plots[op.key] = op.plot as any; return; }
+    case 'plots': w.plots = (op.all ?? {}) as any; return; // Firebase nu pastreaza obiectele / listele goale
     case 'clock': if (Math.abs((w.gameMin ?? 0) - op.gameMin) > 2) w.gameMin = op.gameMin; return;
     case 'res': { w.res ??= {}; w.res[op.res] = Math.max(0, (w.res[op.res] ?? 0) + op.delta); break; }
     case 'place': { w.placed ??= []; if (!w.placed.some(p => p.uid === op.uid)) w.placed.push({ uid: op.uid, type: op.type, gx: op.gx, gy: op.gy }); break; }
@@ -153,7 +153,7 @@ export function applyOp(w: WorldState, op: WorldOp) {
     case 'stat': w.stats[op.key] = (w.stats[op.key] ?? 0) + op.delta; break;
     case 'grass': { w.grass ??= {}; if (op.value <= 0) delete w.grass[op.key]; else w.grass[op.key] = op.value; break; }
     case 'grassAll': w.grass = {}; break;
-    case 'town': w.town ??= {}; w.town[op.key] = op.value; break;
+    case 'town': w.town ??= {}; if (op.value === undefined) delete w.town[op.key]; else w.town[op.key] = op.value; break;
     case 'board': w.boards ??= {}; w.boards[op.which] = op.enc; break;
     case 'veh': w.veh ??= {}; w.veh[op.kind] = op.at; break;
     case 'log': w.log.push({ text: op.text, ts: op.ts }); if (w.log.length > 60) w.log.splice(0, w.log.length - 60); break;

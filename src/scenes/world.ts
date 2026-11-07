@@ -231,8 +231,6 @@ export class WorldScene implements Scene {
     setTimeout(() => this.hud.refreshGoal(), 50);
     // retea
     this.net.onState = s => this.onRemoteState(s);
-    this.net.onEvent = e => this.onRemoteEvent(e);
-    this.net.onPresence = (_who, on) => this.setPartnerOnline(on);
     this.net.onStatus = (s, msg) => this.hud.setNet(s, msg);
     this.hud.setNet(this.net.status);
     // te intorci exact unde erai (in lume sau in apartament)
@@ -244,6 +242,9 @@ export class WorldScene implements Scene {
     const news = this.w.log.filter(l => l.ts > last);
     if (news.length) setTimeout(() => this.hud.showLog(news.map(n => n.text)), 600);
     this.bindInput();
+    // abia acum primim ce a trimis partenerul (s-a pastrat de la conectare: versiunea lui, sincronizarea lumii)
+    this.net.onEvent = e => this.onRemoteEvent(e);
+    this.net.onPresence = (_who, on) => this.setPartnerOnline(on);
     this.ready = true;
   }
 
@@ -272,7 +273,8 @@ export class WorldScene implements Scene {
       this.net.sendEvent({ t: 'ver', who: this.myId, ver: APP_VER });
       // comparam lumile: cine are lumea mai noua o trimite intreaga (altfel cel venit mai tarziu juca pe o lume veche)
       this.net.sendEvent({ t: 'sync', who: this.myId, mod: this.w.mod ?? 0 });
-      setTimeout(() => { if (this.partnerOnline && !this.partnerVer && !this.verWarned) { this.verWarned = true; this.hud.toast(`⚠️ ${this.partner.actor.spec.name} are o versiune mai veche a jocului. Instalați amândoi ultima versiune (${APP_VER})`); } }, 12000);
+      setTimeout(() => { if (!this.partnerVer) this.net.sendEvent({ t: 'ver', who: this.myId, ver: APP_VER }); }, 6000);
+      setTimeout(() => { if (this.partnerOnline && !this.partnerVer && !this.verWarned) { this.verWarned = true; this.hud.toast(`⚠️ ${this.partner.actor.spec.name} are o versiune mai veche a jocului. Instalați amândoi ultima versiune (${APP_VER})`); } }, 25000);
       return;
     }
     if (!this.partnerOnline || this.offlineTimer) return;
@@ -341,6 +343,8 @@ export class WorldScene implements Scene {
       }
       case 'world': this.adoptWorld(e.json, e.mod); break;
       case 'ver': {
+        // ii raspundem o data cu a noastra (daca mesajul nostru de la intrare s-a pierdut, asa tot o afla)
+        if (!this.partnerVer) this.net.sendEvent({ t: 'ver', who: this.myId, ver: APP_VER });
         this.partnerVer = e.ver;
         if (e.ver !== APP_VER && !this.verWarned) { this.verWarned = true; this.hud.toast(`⚠️ ${this.partner.actor.spec.name} are versiunea ${e.ver}, tu ${APP_VER}. Instalați amândoi ultima versiune ca să meargă totul bine`); }
         break;
@@ -370,7 +374,7 @@ export class WorldScene implements Scene {
   /** aplica local si trimite partenerului */
   op(o: WorldOp) { this.applyLocal(o); this.net.sendEvent({ t: 'op', op: o }); if (o.k !== 'need' && o.k !== 'clock' && o.k !== 'npcs') { this.dirty = true; this.w.mod = Date.now(); } }
   applyLocal(o: WorldOp) {
-    if (o.k === 'npcs') { this.mergeNpcs(o.list as Npc[]); return; }
+    if (o.k === 'npcs') { this.mergeNpcs((o.list ?? []) as Npc[]); return; } // lista goala nu ajunge prin Firebase (vine fara camp)
     if (o.k === 'npcServe') { const n = this.npcs.find(x => x.id === o.id); if (n) { n.state = 'leave'; n.happy = true; n.actor?.play('love'); } return; }
     if (o.k === 'char') { if (o.who !== this.myId) Object.assign(this.w.chars[o.who], o.state as object); return; }
     applyOp(this.w, o);
@@ -560,7 +564,7 @@ export class WorldScene implements Scene {
       if (this.minigame) {
         const mk = this.miniScale(); e.clientX /= mk; e.clientY /= mk;
         const b = this.minigame.obj.box;
-        if (b && e.clientX > b.x + b.w - 44 && e.clientX < b.x + b.w + 6 && e.clientY > b.y - 6 && e.clientY < b.y + 40) { this.minigame.obj.abort?.(); return; }
+        if (b && e.clientX > b.x + b.w - 64 && e.clientX < b.x + b.w + 6 && e.clientY > b.y - 6 && e.clientY < b.y + 60) { this.minigame.obj.abort?.(); return; } // X-ul: zona mare (degetul pe tableta)
         if (this.minigame.obj.ended) { this.minigame.obj.skipEnd?.(); return; }
         this.minigame.obj.pointer?.('down', e.clientX, e.clientY); return;
       }
