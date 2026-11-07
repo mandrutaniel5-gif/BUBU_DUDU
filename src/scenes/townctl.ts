@@ -3,6 +3,7 @@
 import type { WorldScene } from './world';
 import { Sfx } from '../engine/sfx';
 import { g } from '../game/gender';
+import { hotMealKeys, hotMealCount } from '../game/food';
 import { JOBS, LEVEL_NAMES, LEVEL_NEED, COURSES, VILLAGERS, DECOR, APT_PRICE, APT_DOWN, LOAN_RATE, LOAN_DAYS, APT_BILLS,
   jobBlock, jobPay, jobLevel, jobXp, jobKey, hasDiploma, makeQuests, reputation, repLevel, villageBonus, isMarketDay, bankOf, type Quest, type Bank } from '../game/town';
 import { SHOP_SELL, SHOP_BUY, SHOP_CITY, INV_INFO, PRICE } from '../game/economy';
@@ -157,11 +158,15 @@ export function questsToday(s: WorldScene): Quest[] {
   if (s.isHost) s.op({ k: 'town', key: 'quests', value: fresh });
   return fresh;
 }
+/** cat ai pentru o cerere: la mancare se pune si ce ati gatit (ciorba etc.) */
+export const questHave = (s: WorldScene, q: Quest) => q.res === 'meals' ? hotMealCount(s.w.res ?? {}) : s.w.res?.[q.res] ?? 0;
 export function deliverQuest(s: WorldScene, q: Quest): string | null {
-  const have = s.w.res?.[q.res] ?? 0;
+  const have = questHave(s, q);
   if (q.done) return 'E deja gata 🙂';
   if (have < q.qty) return `Îți mai trebuie ${q.qty - have} × ${resName(q.res).toLowerCase()}`;
-  s.op({ k: 'res', res: q.res, delta: -q.qty }); s.op({ k: 'money', delta: q.pay });
+  if (q.res === 'meals') { let left = q.qty; for (const k of hotMealKeys(s.w.res ?? {})) { const h = Math.min(left, s.w.res?.[k] ?? 0); if (h > 0) { s.op({ k: 'res', res: k, delta: -h }); left -= h; } if (!left) break; } }
+  else s.op({ k: 'res', res: q.res, delta: -q.qty });
+  s.op({ k: 'money', delta: q.pay });
   s.op({ k: 'stat', key: 'friend-' + q.who, delta: 1 }); s.op({ k: 'stat', key: 'questsDone', delta: 1 }); s.op({ k: 'hearts', delta: 2 });
   const list = questsToday(s).map(x => x.id === q.id ? { ...x, done: true } : x);
   s.op({ k: 'town', key: 'quests', value: list });

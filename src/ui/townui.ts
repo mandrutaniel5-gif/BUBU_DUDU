@@ -5,7 +5,7 @@ import { Sfx } from '../engine/sfx';
 import { drawCharacter, NPC_SPECS } from '../char/draw';
 import { basePose } from '../char/pose';
 import { JOBS, COURSES, VILLAGERS, LEVEL_NAMES, LEVEL_NEED, LEVEL_MULT, jobLevel, jobXp, jobKey, hasDiploma, reputation, repLevel, REP_LEVELS, bankOf, isMarketDay, APT_PRICE, APT_DOWN, LOAN_RATE, LOAN_DAYS, APT_BILLS } from '../game/town';
-import { startJob, startCourse, questsToday, deliverQuest, questText, setBank, buyApartment } from '../scenes/townctl';
+import { startJob, startCourse, questsToday, deliverQuest, questHave, questText, setBank, buyApartment } from '../scenes/townctl';
 
 const portraits: Record<string, string> = {};
 function portrait(spec: string) {
@@ -69,7 +69,7 @@ export function openBoard(s: WorldScene) {
   const qs = questsToday(s), rep = reputation(s.w), L = repLevel(s.w); const next = REP_LEVELS.find(l => l.at > rep);
   const m = s.hud.modal(`<h3>📜 Avizierul satului · ziua ${s.w.day}</h3>
     <p class="sub">Reputația voastră: <b>${L.name}</b> (${rep}${next ? ` / ${next.at} pentru „${next.name}”` : ''}) · ${L.bonus ? `reducere ${Math.round(L.bonus * 100)}% la magazinele din sat și prețuri mai bune la piață` : 'ajutați sătenii ca să primiți reduceri'}${isMarketDay(s.w) ? ' · 🎪 azi e târg!' : ''}</p>
-    <div class="shop">${qs.map(q => { const v = VILLAGERS.find(v => v.id === q.who)!; const have = s.w.res?.[q.res] ?? 0; return `<button data-q="${q.id}" class="${q.done ? 'on' : have < q.qty ? 'poor' : ''}"><span><img class="prev" src="${portrait(v.spec)}" alt=""></span><b>${v.name}</b><small>vrea ${questText(q)}</small><small>${q.done ? '✔ gata' : `ai ${have} · 💰 ${q.pay} lei`}</small></button>`; }).join('')}</div>
+    <div class="shop">${qs.map(q => { const v = VILLAGERS.find(v => v.id === q.who)!; const have = questHave(s, q); return `<button data-q="${q.id}" class="${q.done ? 'on' : have < q.qty ? 'poor' : ''}"><span><img class="prev" src="${portrait(v.spec)}" alt=""></span><b>${v.name}</b><small>vrea ${questText(q)}</small><small>${q.done ? '✔ gata' : `ai ${have} · 💰 ${q.pay} lei`}</small></button>`; }).join('')}</div>
     <p class="sub">Cererile se schimbă în fiecare dimineață. Poți vorbi și direct cu sătenii pe stradă.</p>`);
   m.querySelectorAll('[data-q]').forEach(el => el.addEventListener('click', () => { const q = questsToday(s).find(x => x.id === (el as HTMLElement).dataset.q)!; const err = deliverQuest(s, q); if (err) { s.hud.toast(err); Sfx.play('bad'); return; } s.hud.toast(`💕 Mulțumesc! +${q.pay} lei`); openBoard(s); }));
 }
@@ -80,7 +80,7 @@ export function openVillager(s: WorldScene, vid: string) {
   const secret = lvl ? Story.SECRETS[vid]?.[lvl - 1] : '';
   const canInvite = s.chapter >= 8 && (s.w.stats.engaged ?? 0) > 0 && !(s.w.stats['invite-' + vid] ?? 0);
   const q = questsToday(s).find(x => x.who === vid);
-  const have = q ? s.w.res?.[q.res] ?? 0 : 0;
+  const have = q ? questHave(s, q) : 0;
   const hello = v.hello[Math.floor(Math.random() * v.hello.length)];
   const giftOk = (s.w.res?.flower ?? 0) > 0 && (s.w.stats[`gift-${vid}-${s.w.day}`] ?? 0) < 1;
   const m = s.hud.modal(`<div class="villager"><img src="${portrait(v.spec)}" alt=""><div><h3>${v.name}</h3><p class="sub">${hearts(lvl)} ${Story.tierName(vid, lvl)} (${lvl}/5)${nextAt ? ` · mai ${nextAt - fr} până la treapta următoare` : ''}</p>${secret ? `<p class="sub">🤫 ${secret}</p>` : ''}<p class="say">„${hello}”</p></div></div>

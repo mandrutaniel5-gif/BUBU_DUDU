@@ -45,6 +45,7 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 | `angajati_zi.cjs` | 1.9.0: angajații aduc lemne / flori peste zi (8–18), grădinarul udă ora de oră, noaptea nu lucrează, tăietorul lucrează lângă copac cu animație |
 | `angajati_munca.cjs` | 1.9.1: tăietorul merge în pădure, taie și cară lemnele acasă; spărgătorul sparge bolovani; căruțașul duce lemne la cherestea; vânzătorul deschide taraba și servește clienții; nimeni nu trece prin obiecte |
 | `autobuz_oras.cjs` | 1.9.1: înainte de Capitolul 6 autobuzul și scuterul nu merg la oraș; după, merg |
+| `pod_ciorba.cjs` | 1.9.7: la Podul Mare, ciorba gătită contează ca „mâncare caldă” (37 de boluri → „ai 37”, „Dă 3”); cererea unui sătean pentru mâncare primește tot ciorbă |
 | `casa_conectare.cjs` | 1.9.2: din Solo casa se face online; casa de pe server e găsită și de cine are Firebase selectat; parola greșită; după creare jocul rămâne online. Pornește înainte `PORT=8799 node server/server.mjs` (dintr-o copie a folderului server) |
 | `versiune_partener.cjs` | 1.9.3: doi jucători pe serverul nostru (local, port 8799): fiecare află versiunea celuilalt, fără avertismentul fals „are o versiune mai veche” |
 | `taraba_x.cjs` | 1.9.3: lista goală de clienți (cum vine prin Firebase) nu mai crapă jocul; X-ul închide taraba pe tabletă |

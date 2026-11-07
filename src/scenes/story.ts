@@ -9,7 +9,7 @@ import { Sfx } from '../engine/sfx';
 import { iso } from '../world/iso';
 import { g } from '../game/gender';
 import { VILLAGERS } from '../game/town';
-import { RECIPES } from '../game/food';
+import { RECIPES, hotMealKeys } from '../game/food';
 import { ITEMS } from '../char/outfit';
 import { BRIDGE_CHAPTER, VILLAGE_CHAPTER, FARM_CHAPTER, CITY_CHAPTER, SHOP_CHAPTER, WEDDING_CHAPTER, PRICE } from '../game/economy';
 import { sawPrice, KEEP_WOOD } from '../minigames/sawmill';
@@ -68,10 +68,12 @@ const BRIDGE_NEED: { key: string; res: string[]; n: number; label: string; icon:
   { key: 'meal', res: ['meals'], n: 3, label: 'porții de mâncare caldă', icon: '🍲' },
   { key: 'money', res: [], n: 150, label: 'lei pentru meșteri', icon: '💰' },
 ];
+/** la „mancare calda” merge si ce ati gatit voi (ciorba, sarmale...), nu doar mancarea gata cumparata */
+const bridgeKeys = (s: S, b: { key: string; res: string[] }) => b.key === 'meal' ? hotMealKeys(s.w.res ?? {}) : b.res;
 export function openBridge(s: S) {
   if (s.bridgeFixed()) { s.hud.toast('🌉 Podul Mare e reparat: drumul spre sat e deschis'); return; }
   if (s.chapter < BRIDGE_CHAPTER) { s.hud.toast('🌉 Podul Mare e rupt. Îl reparați în Capitolul 3 (după pădure)'); return; }
-  const rows = BRIDGE_NEED.map(b => { const have = st(s, 'bridge-' + b.key), left = Math.max(0, b.n - have), mine = b.key === 'money' ? (s.w.money ?? 0) : b.res.reduce((a, k) => a + res(s, k), 0) - (b.key === 'wood' ? 5 : 0);
+  const rows = BRIDGE_NEED.map(b => { const have = st(s, 'bridge-' + b.key), left = Math.max(0, b.n - have), mine = b.key === 'money' ? (s.w.money ?? 0) : bridgeKeys(s, b).reduce((a, k) => a + res(s, k), 0) - (b.key === 'wood' ? 5 : 0);
     return `<li class="${left ? '' : 'done'}"><b>${b.icon} ${have}/${b.n} ${b.label}</b><small>${left ? `ai ${Math.max(0, mine)}${b.key === 'wood' ? ' (5 rămân pentru sobă)' : ''}` : '✔ gata'}</small>${left ? `<button data-give="${b.key}" ${mine > 0 ? '' : 'disabled'}>Dă ${Math.min(left, Math.max(0, mine))}</button>` : ''}</li>`; }).join('');
   const m = s.hud.modal(`<h3>🌉 Podul Mare</h3><p class="sub">Meșterii din sat (Nea Gogu și Rex) repară podul. Aduceți ce le trebuie: când e tot, se apucă de treabă.</p><ul class="goals give">${rows}</ul>`);
   m.querySelectorAll('[data-give]').forEach(b => b.addEventListener('click', () => { giveBridge(s, (b as HTMLElement).dataset.give!); openBridge(s); }));
@@ -81,7 +83,7 @@ function giveBridge(s: S, key: string) {
   let n = 0;
   if (key === 'money') { n = Math.min(left, s.w.money ?? 0); if (n) s.op({ k: 'money', delta: -n }); }
   else if (key === 'wood') { n = Math.min(left, Math.max(0, res(s, 'wood') - 5)); if (n) s.op({ k: 'res', res: 'wood', delta: -n }); }
-  else n = take(s, b.res, left);
+  else n = take(s, bridgeKeys(s, b), left);
   if (!n) { Sfx.play('bad'); return; }
   s.op({ k: 'stat', key: 'bridge-' + key, delta: n });
   Sfx.play(key === 'money' ? 'coin' : 'wood_drop'); s.me.actor.play(key === 'money' ? 'wave' : 'act_carry');

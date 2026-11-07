@@ -73,6 +73,9 @@ export function dishesOwned(r: Res): { rc: Recipe; n: number; key: string }[] {
   if ((r.meals ?? 0) > 0) out.push({ rc: READY_MEAL, n: r.meals, key: 'meals' });
   return out;
 }
+/** cheile care conteaza ca „mancare calda” (podul, cererile satenilor): mancarea gata + mancarurile gatite, fara cele reci (salata, limonada) */
+export function hotMealKeys(r: Res): string[] { return ['meals', ...RECIPES.filter(rc => rc.method !== 'cold' && (r[dishKey(rc.id)] ?? 0) > 0).sort((a, b) => (r[dishKey(b.id)] ?? 0) - (r[dishKey(a.id)] ?? 0)).map(rc => dishKey(rc.id))]; }
+export const hotMealCount = (r: Res) => hotMealKeys(r).reduce((a, k) => a + (r[k] ?? 0), 0);
 export const dishCount = (r: Res) => dishesOwned(r).reduce((s, d) => s + d.n, 0);
 /** ce ar gati / manca partenerul AI: cea mai satioasa optiune */
 export function bestRecipe(r: Res) { return RECIPES.filter(rc => canCook(r, rc) && (rc.needs.hunger ?? 0) >= 18).sort((a, b) => (b.needs.hunger ?? 0) * b.portions - (a.needs.hunger ?? 0) * a.portions)[0] ?? null; }
