@@ -1452,6 +1452,14 @@ export class WorldScene implements Scene {
     this.stopActivity(this.me); this.me.path = path; this.me.pendingInteract = null;
     this.hud.toast(`🚶 Pe jos spre ${d.icon} ${d.name}${(this.w.stats.bike ?? 0) || (this.w.stats.scooter ?? 0) ? ' (cu bicicleta sau scuterul e mai repede)' : ''}`);
   }
+  /** pe jos pana la un loc de pe harta („Unde e?”) */
+  walkToPlace(x: number, y: number, name: string) {
+    if (this.ride) { this.hud.toast('Coboară întâi de pe vehicul'); return; }
+    const path = this.nav.path(this.me.gx, this.me.gy, x, y, 120000);
+    if (!path) { this.hud.toast('🚶 Nu găsesc drumul pe jos de aici'); return; }
+    this.stopActivity(this.me); this.me.path = path; this.me.pendingInteract = null;
+    this.hud.toast(`🚶 Pe jos spre ${name}`);
+  }
   /** ⏸ / ▶ pe drum */
   ridePause() { const r = this.ride; if (!r) return; r.paused = !r.paused; Sfx.play(r.paused ? 'click' : (r.kind === 'bike' ? 'bike_bell' : 'car_start'), { vol: 0.5, rate: r.kind === 'scooter' ? 1.3 : 1 }); }
   /** ↩ intoarce: inapoi de unde ai plecat */

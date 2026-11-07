@@ -545,9 +545,12 @@ export function daily(s: S) {
   }
   const se = seasonOf(day);
   const card = [`${se.icon} ${se.name}, ziua ${dayOfSeason(day)}`, ...ev.map(e => `${e.icon} ${e.name}: ${e.text}`), ...lines, ...todo(s)];
+  card.push('📅 Detaliile zilei le vezi oricând: atinge „Ziua ' + day + '” sus');
   s.hud.showLog(card, '☀️ Bună dimineața!');
 }
 /** ce e de facut azi pentru fiecare (ca sa nu ramaneti fara treaba) */
+export const todoLines = (s: S) => todo(s);
+export const BRIDGE_CH = BRIDGE_CHAPTER;
 function todo(s: S): string[] {
   const b: string[] = [], d: string[] = [];
   if (st(s, 'hens') && ready(s, 'hens')) b.push('strânge ouăle');

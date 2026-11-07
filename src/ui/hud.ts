@@ -75,6 +75,7 @@ export class Hud {
     for (const sel of ['.me .mood', '.me .sick', '.clock .time', '.clock .day', '.clock .hearts', '.pst', '.pmood', '.net', '.dot', '[data-a="action"]', '.emotes', '.pairs', '.toasts', '.modal', '.fart .fill', '[data-a="pairs"]']) this.els[sel] = root.querySelector(sel)!;
     root.addEventListener('click', e => {
       if ((e.target as HTMLElement).closest('[data-inv]')) { this.openInventory(); return; }
+      if ((e.target as HTMLElement).closest('.clock .day')) { Sfx.unlock(); Sfx.play('click'); this.openDay(); return; }
       const b = (e.target as HTMLElement).closest('button') as HTMLButtonElement | null; if (!b) return;
       Sfx.unlock(); Sfx.play('click');
       const a = b.dataset.a;
@@ -167,13 +168,34 @@ export class Hud {
     const c = cv.getContext('2d')!; c.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawMini(c, W, H, this.mapMarks(), this.mapBig ? (this.s.ride ? 0.5 : 0.65) : (this.s.ride ? 0.55 : 0.8), this.mapBig);
   }
+  /** „Unde e?”: locurile pe care jucatorii noi nu le gasesc, cu ce faci acolo si un buton care te duce */
+  placesHtml() {
+    const s = this.s;
+    return `<h4>📍 Unde e?</h4><ul class="goals places">${PLACES.map(p => { const lock = p.ch && s.chapter < p.ch; return `<li class="${lock ? 'lock' : ''}"><b>${p.icon} ${p.name}</b><small>${p.where} · ${p.what}${lock ? ` · 🔒 din Capitolul ${p.ch}` : ''}</small><button data-place="${p.id}" ${lock ? 'class="off"' : ''}>🚶 Du-mă</button></li>`; }).join('')}</ul>`;
+  }
+  /** „Ziua X” de sus: sarbatorile si evenimentele de azi, ce urmeaza, ce e de facut — oricand, nu doar dimineata */
+  lastMorning: string[] = []; morningDay = -1;
+  openDay() {
+    const s = this.s, day = s.w.day, se = Story.seasonOf(day), ev = Story.eventsOf(day);
+    const next: string[] = [];
+    for (let d = day + 1; d <= day + 10 && next.length < 4; d++) for (const e of Story.eventsOf(d)) next.push(`<li><b>${e.icon} ${esc(e.name)}</b><small>${d - day === 1 ? 'mâine' : `în ${d - day} zile (ziua ${d})`} · ${esc(e.text)}</small></li>`);
+    const todo = Story.todoLines(s);
+    const rep = this.morningDay === day ? this.lastMorning.slice(1).filter(l => !ev.some(e => l.startsWith(e.icon + ' ' + e.name)) && !todo.includes(l)) : [];
+    this.modal(`<h3>📅 Ziua ${day}</h3><p class="sub">${se.icon} ${esc(se.name)}, ziua ${Story.dayOfSeason(day)} · ${clockText(s.w.minutes)}</p>
+      <h4>Azi</h4><ul class="goals">${ev.length ? ev.map(e => `<li><b>${e.icon} ${esc(e.name)}</b><small>${esc(e.text)}</small></li>`).join('') : '<li><small>Nicio sărbătoare sau eveniment azi: o zi obișnuită 🙂</small></li>'}</ul>
+      ${todo.length ? `<h4>De făcut azi</h4><ul class="log">${todo.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+      ${rep.length ? `<h4>Raportul de dimineață</h4><ul class="log">${rep.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+      <h4>Urmează</h4><ul class="goals">${next.join('') || '<li><small>Nimic special în următoarele 10 zile</small></li>'}</ul>
+      <button data-daymap>🗺️ Unde sunt locurile (harta)</button>`).querySelector('[data-daymap]')?.addEventListener('click', () => this.openMap());
+  }
   /** harta mare (toata lumea) */
   openMap() {
     const s = this.s;
     const r = s.space === 'apartment' ? null : REGION_BY_ID[s.area];
-    const m = this.modal(`<h3>🗺️ Harta lumii</h3><p class="sub">${r ? `Ești ${WHERE[s.area]?.replace(' · ', '') ?? r.name}` : 'Ești în apartament (Blocul Lalelelor)'}</p><canvas class="bigmap"></canvas><div class="mapgo">${s.space === 'world' ? DESTS.map(d => `<button data-mapgo="${d.id}" class="${s.reachWhy(d.id) ? 'off' : ''}">${d.icon} ${d.name}</button>`).join('') : ''}</div>`);
+    const m = this.modal(`<h3>🗺️ Harta lumii</h3><p class="sub">${r ? `Ești ${WHERE[s.area]?.replace(' · ', '') ?? r.name}` : 'Ești în apartament (Blocul Lalelelor)'}</p><canvas class="bigmap"></canvas>${s.space === 'world' ? this.placesHtml() : ''}<div class="mapgo">${s.space === 'world' ? DESTS.map(d => `<button data-mapgo="${d.id}" class="${s.reachWhy(d.id) ? 'off' : ''}">${d.icon} ${d.name}</button>`).join('') : ''}</div>`);
     m.querySelector('.box')?.classList.add('mapbox');
     m.querySelectorAll('[data-mapgo]').forEach(b => b.addEventListener('click', () => { this.closeModal(); s.mapGo((b as HTMLElement).dataset.mapgo!); }));
+    m.querySelectorAll('[data-place]').forEach(b => b.addEventListener('click', () => { const p = PLACES.find(x => x.id === (b as HTMLElement).dataset.place)!; const lock = p.ch && s.chapter < p.ch; if (lock) { this.toast(`🔒 ${p.name}: din Capitolul ${p.ch}`); Sfx.play('bad'); return; } this.closeModal(); s.walkToPlace(p.x, p.y, `${p.icon} ${p.name}`); }));
     const cv = m.querySelector('.bigmap') as HTMLCanvasElement;
     const tick = () => {
       if (m.classList.contains('hidden') || !cv.isConnected) return;
@@ -199,7 +221,7 @@ export class Hud {
     sk.classList.toggle('hidden', !c.sick);
     if (c.sick) { const t = `${SICK_INFO[c.sick].icon} ${SICK_INFO[c.sick].label}${c.request ? ' · vrei ' + (REQUESTS[c.request]?.icon ?? '') : ''}`; if (sk.dataset.t !== t) { sk.dataset.t = t; sk.innerHTML = `${t} <button class="mini-btn" data-a="bell">🔔 Cheamă</button>`; } }
     this.txt(this.els['.clock .time'], (nightAmount(w.minutes) > 0.5 ? '🌙 ' : '☀️ ') + clockText(w.minutes));
-    { const se = Story.seasonOf(w.day), ev = Story.eventsOf(w.day)[0]; this.txt(this.els['.clock .day'], `${se.icon} Ziua ${w.day}${ev ? ' · ' + ev.icon : ''}`); }
+    { const se = Story.seasonOf(w.day), ev = Story.eventsOf(w.day)[0]; this.txt(this.els['.clock .day'], `${se.icon} Ziua ${w.day}${ev ? ' · ' + ev.icon : ''} 📅`); }
     this.txt(this.els['.clock .hearts'], `💗 ${w.hearts}`);
     this.txt(this.root.querySelector('.clock .money'), `💰 ${w.money ?? 0} lei`);
     const rs = (this.root.querySelector('.clock .res') as HTMLElement); const R = w.res ?? {}; const seeds = Object.keys(CROPS).reduce((a, c) => a + (R[seedKey(c)] ?? 0), 0); const rt = `🪵${R.wood ?? 0} 🪨${R.stone ?? 0} 🥕${catCount(R, 'veg')} 🌸${catCount(R, 'flower')} 🍲${dishCount(R)} 💧${R.water ?? 0} 🌰${seeds} · 🔥${Math.round((w.furn.fire as number) ?? 0)}% 🎒`; this.txt(rs, rt);
@@ -260,6 +282,7 @@ export class Hud {
   /** ferestrele care vin singure (raportul, capitolul nou) asteapta sa termini minijocul: nu apar peste el */
   whenFree(fn: () => void) { const m = this.s.minigame; if (m && m.id !== 'cutscene') { setTimeout(() => this.whenFree(fn), 800); return; } fn(); }
   showLog(items: string[], title = '💭 Cât ai lipsit…') {
+    if (title.includes('Bună dimineața')) { this.lastMorning = items; this.morningDay = this.s.w.day; }
     if (this.s.minigame && this.s.minigame.id !== 'cutscene') { this.whenFree(() => this.showLog(items, title)); return; }
     this.modal(`<h3>${title}</h3><ul class="log">${items.slice(-12).map(i => `<li>${esc(i)}</li>`).join('')}</ul>`);
   }
@@ -608,4 +631,11 @@ export class Hud {
 const WHERE: Record<string, string> = { home: '🏡 acasă · ', forest: '🌲 la pădure · ', woods: '🌲 în pădure · ', village: '🏘️ în sat · ', city: '🏙️ la oraș · ', lake: '🏞️ la lac · ', country: '🌾 pe câmp · ', apartment: '🔑 în apartament · ' };
 const VEH_ICON: Record<string, string> = { bike: '🚲', scooter: '🛵', tractor: '🚜', bus: '🚌', taxi: '🚕' };
 const DEST_TXT: Record<string, string> = { village: 'Spre sat', home: 'Spre casă', city: 'Spre oraș', forest: 'Spre pădure' };
+/** locurile greu de gasit pentru cine e nou (harta → „Unde e?”); x, y = unde ajungi pe jos */
+const PLACES: { id: string; icon: string; name: string; where: string; what: string; x: number; y: number; ch?: number }[] = [
+  { id: 'sawmill', icon: '🪚', name: 'Cheresteaua lui Nea Vasile', where: 'pe drum, la dreapta casei', what: 'aici tai scânduri și vinzi lemne', x: 29, y: 22.6 },
+  { id: 'farm', icon: '🐔', name: 'Ferma voastră', where: 'ieși din curte spre dreapta, indicatorul de lângă gard', what: 'găini, vacă, stupi', x: 24.5, y: 14.3, ch: FARM_CHAPTER },
+  { id: 'forest', icon: '🌲', name: 'Pădurea', where: 'în spatele casei, spre nord (poarta pădurii)', what: 'lemne, pietre, ciuperci, fructe de pădure', x: 20, y: -7.6, ch: 2 },
+  { id: 'bridge', icon: '🌉', name: 'Podul Mare', where: 'pe drum spre est, după cherestea, peste râu', what: 'îl reparați ca să ajungeți în sat', x: 61.6, y: 37, ch: Story.BRIDGE_CH },
+];
 const esc = (t: string) => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));

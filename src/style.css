@@ -377,3 +377,7 @@ html.h500 .pop { max-height:calc(var(--gh, 100vh) - 132px) !important; }
 
 /* in minijocuri mesajele stau sus, nu peste lazile / butoanele de jos */
 .hud.in-mini .toasts { top:52px !important; bottom:auto !important; }
+/* „Ziua X” de sus se apasa: detaliile zilei oricand */
+.hud .clock .day { cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px; }
+.goals.places li.lock { opacity:.6; }
+.goals.places li small { display:block; }
