@@ -1,8 +1,10 @@
 :root { --pink:#ff7aa2; --ink:#3a2a22; --cream:#fff8f0; --brown:#b9875c; }
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+/* doar in campurile de scris (parola, codul casei) se poate selecta text */
+input, textarea { -webkit-user-select:text; user-select:text; -webkit-touch-callout:default; }
 html, body { margin:0; height:100%; overflow:hidden; background:#ffe9f0; font-family:'Baloo 2', 'Comic Sans MS', system-ui, sans-serif; color:var(--ink); user-select:none; touch-action:none; }
 #stage { position:fixed; left:0; top:0; width:100vw; height:100vh; overflow:hidden; }
-#game { position:absolute; left:0; top:0; display:block; }
+#game { position:absolute; left:0; top:0; display:block; touch-action:none; }
 #ui { position:absolute; inset:0; pointer-events:none; }
 #ui > * { pointer-events:auto; }
 button { font-family:inherit; color:inherit; cursor:pointer; }

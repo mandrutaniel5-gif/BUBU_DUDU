@@ -95,3 +95,37 @@ shutil.copy(repo / 'ci' / 'ios-icon-1024.png', icons / 'AppIcon-1024.png')
     'info': {'author': 'xcode', 'version': 1},
 }, indent=2))
 print('Iconita: AppIcon-1024.png (Bubu si Dudu)')
+
+# 5. Ca un joc: fara bara de jos (se ascunde), gesturile de la margine nu mai scot din joc din prima,
+#    fara bara de stare. Ecranul jocului e un CAPBridgeViewController al nostru (in AppDelegate.swift, deja in proiect).
+src = app_p.read_text()
+if 'BubuViewController' not in src:
+    src += '''
+
+/// Ecranul jocului: bara de jos (home) se ascunde, gesturile de la margini cer o a doua tragere, fara bara de stare.
+class BubuViewController: CAPBridgeViewController {
+    override var prefersHomeIndicatorAutoHidden: Bool { return true }
+    override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge { return .all }
+    override var prefersStatusBarHidden: Bool { return true }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // fara lupa / meniul de text la apasare lunga si fara „bounce” (jocul nu e o pagina)
+        webView?.scrollView.isScrollEnabled = false
+        webView?.scrollView.bounces = false
+        webView?.allowsLinkPreview = false
+        setNeedsUpdateOfHomeIndicatorAutoHidden()
+        setNeedsUpdateOfScreenEdgesDeferringSystemGestures()
+    }
+}
+'''
+    if 'import Capacitor' not in src:
+        src = src.replace('import UIKit', 'import UIKit\nimport Capacitor', 1)
+    app_p.write_text(src)
+sb = root / 'Base.lproj' / 'Main.storyboard'
+if sb.exists():
+    t = sb.read_text()
+    t2 = re.sub(r'customClass="CAPBridgeViewController" customModule="Capacitor"( customModuleProvider="[^"]*")?', 'customClass="BubuViewController" customModule="App" customModuleProvider="target"', t)
+    if t2 == t and 'BubuViewController' not in t:
+        sys.exit('Main.storyboard: nu gasesc CAPBridgeViewController')
+    sb.write_text(t2)
+    print('Main.storyboard: ecranul jocului = BubuViewController (fara bara home, gesturi amanate)')

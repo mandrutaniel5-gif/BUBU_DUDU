@@ -25,6 +25,14 @@ addEventListener('pointerdown', () => {
   else lockLandscape();
 }, { once: true });
 
+// ---- jocul se poarta ca un joc, nu ca o pagina: fara lupa / selectie / meniul „Copiaza” la apasare lunga, fara zoom ----
+addEventListener('contextmenu', e => { if (!(e.target as HTMLElement)?.closest?.('input, textarea')) e.preventDefault(); });
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) addEventListener(ev, e => e.preventDefault(), { passive: false } as any);
+addEventListener('selectstart', e => { if (!(e.target as HTMLElement)?.closest?.('input, textarea')) e.preventDefault(); });
+// pe iPhone, tinut apasat pe joc pornea lupa: atingerile pe ecranul jocului nu mai fac nimic „de pagina” (jocul le ia prin pointer events)
+document.getElementById('game')!.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+document.getElementById('game')!.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
 const game = new Game(document.getElementById('game') as HTMLCanvasElement);
 game.scenes.menu = () => new MenuScene(game);
 game.scenes.studio = () => new StudioScene(game);

@@ -90,6 +90,8 @@ jobs:
           V=$(node -p "require('./package.json').version"); IFS=. read -r A B C <<< "$V"; CODE=$((A * 10000 + B * 100 + C))
           sed -i -E "s/versionCode [0-9]+/versionCode $CODE/; s/versionName \"[^\"]*\"/versionName \"$V\"/" android/app/build.gradle
           grep -E "versionCode|versionName|targetSdk|compileSdk" android/app/build.gradle android/variables.gradle || true
+      - name: Ecran complet de joc (fara barele telefonului)
+        run: python3 ci/android_patch.py android
       - name: Doar pe orizontala
         run: sed -i 's/<activity/<activity android:screenOrientation="sensorLandscape"/' android/app/src/main/AndroidManifest.xml
       - name: Pictograma aplicatiei

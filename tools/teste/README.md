@@ -48,6 +48,7 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 | `casa_conectare.cjs` | 1.9.2: din Solo casa se face online; casa de pe server e găsită și de cine are Firebase selectat; parola greșită; după creare jocul rămâne online. Pornește înainte `PORT=8799 node server/server.mjs` (dintr-o copie a folderului server) |
 | `versiune_partener.cjs` | 1.9.3: doi jucători pe serverul nostru (local, port 8799): fiecare află versiunea celuilalt, fără avertismentul fals „are o versiune mai veche” |
 | `taraba_x.cjs` | 1.9.3: lista goală de clienți (cum vine prin Firebase) nu mai crapă jocul; X-ul închide taraba pe tabletă |
+| `ca_un_joc.cjs` | 1.9.5: pe iPhone (emulat) nu se mai selectează text / lupă; joystick-ul cu degetul și butoanele merg |
 | `curte.cjs` | 1.8.6: muți / scoți copaci și pietre din curte, nu se poate în casă, rămâne salvat; fără stiva de lemne; fântâna departe de răzoare |
 | `adancime_casa.cjs` | 1.8.3: Dudu plimbat prin toată casa (pas 0,3): obiectele care se acoperă au mereu aceeași ordine (fără pâlpâit) și Dudu e de partea bună a fiecărui perete și a fiecărei mobile |
 | `sat_oras.cjs` | 1.6.0: în sat și în oraș se ajunge pe jos la fiecare clădire / obiect cu acțiune; nimic solid nu se suprapune |
