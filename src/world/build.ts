@@ -75,6 +75,7 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
     case 'signpost': {
       // la poarta casei: satul e spre est (dreapta, pe drum); in sat: casa e spre vest
       if (f.id === 'a-exit') { drawRoadSign(ctx, gx, gy, 'Ieșire', ''); return true; }
+      if (f.id === 'st-farmgate') { drawRoadSign(ctx, gx, gy, '🐔 Ferma voastră', 'N', true); return true; } // inainte scria „Spre sat” si ferma nu se gasea
       if (f.id === 'v-home') drawRoadSign(ctx, gx, gy, '🏡 Spre casă', 'W');
       else drawRoadSign(ctx, gx, gy, '🏘️ Spre sat', 'E');
       return true;

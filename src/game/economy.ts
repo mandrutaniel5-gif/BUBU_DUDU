@@ -166,7 +166,7 @@ export const CHAPTERS: Chapter[] = [
       { id: 'plow', icon: '🚜', text: 'Arați parcela cu plugul', hint: 'Laptopul → Utilaje (plugul), apoi atingeți parcela', done: w => st(w, 'fieldPlowed') >= 1, reward: { money: 10 }, who: 'dudu' },
       { id: 'sow', icon: '🌱', text: 'Semănați cu semănătoarea', hint: 'Grâu, porumb sau floarea-soarelui', done: w => st(w, 'fieldSown') >= 1, reward: { money: 10 }, who: 'dudu' },
       { id: 'harvestF', icon: '🌾', text: 'Prima recoltă cu combina', hint: 'Udați cu cisterna ca să crească mai repede, apoi recoltați', done: w => st(w, 'fieldHarvested') >= 1, reward: { money: 40, hearts: 10 }, who: 'dudu' },
-      { id: 'hens', icon: '🐔', text: 'Luați găini în coteț', hint: 'Poarta fermei, lângă curte → Animale', done: w => st(w, 'hens') >= 1, reward: { hearts: 5 }, who: 'bubu' },
+      { id: 'hens', icon: '🐔', text: 'Luați găini în coteț', hint: 'Ieși din curte spre dreapta: indicatorul „🐔 Ferma voastră”, lângă gard → Animale', done: w => st(w, 'hens') >= 1, reward: { hearts: 5 }, who: 'bubu' },
       { id: 'eggs', icon: '🥚', text: 'Strânge 6 ouă', hint: 'Cotețul: o dată pe zi', done: w => st(w, 'eggsCollected') >= 6, reward: { money: 10 }, who: 'bubu' },
       { id: 'cow', icon: '🐄', text: 'Luați o văcuță', hint: 'Poarta fermei → Animale', done: w => st(w, 'cows') >= 1, reward: { hearts: 5 } },
       { id: 'cheese', icon: '🧀', text: 'Fă brânză din lapte', hint: 'Mulge vaca, apoi „Fă brânză” la grajd', done: w => st(w, 'cheeseMade') >= 1, reward: { money: 15 }, who: 'bubu' },
