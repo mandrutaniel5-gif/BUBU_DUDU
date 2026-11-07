@@ -184,12 +184,19 @@ export class MenuScene implements Scene {
     this.ui.appendChild(d);
   }
   private houseMsg(t: string, ok = false) { const m = this.ui.querySelector('.house-msg') as HTMLElement | null; if (m) { m.textContent = t; m.classList.toggle('ok', ok); } }
-  private async houseNet() {
-    const mode = (this.ui.querySelector('select') as HTMLSelectElement).value as NetConfig['mode'];
+  /** unde se face / se cauta casa. Casa e pentru doi: in modul solo se face online (Firebase), altfel partenerul n-o gaseste */
+  private async houseNet(force?: NetConfig['mode']) {
+    let mode = force ?? (this.ui.querySelector('select') as HTMLSelectElement).value as NetConfig['mode'];
+    if (mode === 'solo') mode = 'firebase';
     const net: NetConfig = { ...Settings.get().net, mode };
     let url = (this.ui.querySelector('[name=serverUrl]') as HTMLInputElement).value.trim() || net.serverUrl;
     if (mode === 'server') url = !url || /^auto/i.test(url) ? (await WsAdapter.resolveAuto()) ?? '' : WsAdapter.norm(url);
     return { net, url };
+  }
+  /** dupa ce ati facut / gasit casa: jocul intra exact acolo (online), nu in solo */
+  private useMode(mode: NetConfig['mode']) {
+    const sel = this.ui.querySelector('select') as HTMLSelectElement; sel.value = mode; sel.dispatchEvent(new Event('change'));
+    Settings.set({ net: { ...Settings.get().net, mode } });
   }
   private async doCreate(b: HTMLButtonElement) {
     const pass = (this.ui.querySelector('[name=hpass]') as HTMLInputElement).value;
@@ -207,6 +214,7 @@ export class MenuScene implements Scene {
     if (!r.ok) { this.houseMsg('❌ ' + r.msg); Sfx.play('bad'); return; }
     if (seed) try { localStorage.setItem(`bd-save-${r.room}`, JSON.stringify({ json: seed.json, ts: Date.now() })); } catch { /* */ }
     Settings.set({ net: { ...Settings.get().net, room: r.room, code: r.code }, resetAt: seed ? 0 : Settings.get().resetAt });
+    this.useMode(net.mode);
     Sfx.play('good'); this.houseRow();
     const dudu = Settings.get().who === 'bubu';
     this.showReady(`✅ Casa e gata!`, `Spune-i ${dudu ? 'lui Dudu' : 'lui Bubu'} codul și parola, ca să intre și ${dudu ? 'el' : 'ea'}.`);
@@ -214,11 +222,18 @@ export class MenuScene implements Scene {
   private async doJoin(b: HTMLButtonElement) {
     const code = normCode((this.ui.querySelector('[name=hcode]') as HTMLInputElement).value), pass = (this.ui.querySelector('[name=hjpass]') as HTMLInputElement).value;
     b.disabled = true; this.houseMsg('Caut casa…');
-    const { net, url } = await this.houseNet();
-    const r = await joinHouse(net, url, code, pass);
+    let { net, url } = await this.houseNet();
+    let r = await joinHouse(net, url, code, pass);
+    // nu e acolo: poate partenerul a facut-o pe celalalt server (Firebase <-> serverul S10); o cautam si acolo
+    if (!r.ok && !/Parola|Codul arată/.test(r.msg) && (net.mode === 'firebase' || net.mode === 'server')) {
+      this.houseMsg('Caut casa și pe celălalt server…');
+      const alt = await this.houseNet(net.mode === 'firebase' ? 'server' : 'firebase');
+      if (alt.net.mode === 'firebase' || alt.url) { const r2 = await joinHouse(alt.net, alt.url, code, pass); if (r2.ok || !/Nu există|nu răspunde|Nu mă pot conecta|Adresa/.test(r2.msg)) { r = r2; net = alt.net; url = alt.url; } }
+    }
     b.disabled = false;
-    if (!r.ok) { this.houseMsg('❌ ' + r.msg); Sfx.play('bad'); return; }
+    if (!r.ok) { this.houseMsg('❌ ' + r.msg + (/Nu există/.test(r.msg) ? ' Dacă partenerul a făcut casa în modul Solo, trebuie s-o facă din nou (acum se face online).' : '')); Sfx.play('bad'); return; }
     Settings.set({ net: { ...Settings.get().net, room: r.room, code: r.code }, resetAt: 0 });
+    this.useMode(net.mode);
     Sfx.play('good'); this.houseRow();
     this.ui.querySelector('.cred')?.remove();
     this.play(); // casa e gasita: intri direct in joc (nu mai apesi inca o data)
