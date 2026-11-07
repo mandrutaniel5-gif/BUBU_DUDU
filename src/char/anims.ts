@@ -625,6 +625,17 @@ def({
   tick(f, t, _p, dt) { if (every(t, dt, 0.45)) f.burst('drop', 20, -6, 3, 1.4, 50, { grav: 180, max: 0.5, color: '#8b5e34' }); },
 });
 
+// ---- angajatii (cu fata spre noi, intorsi lateral spre copac / piatra)
+def({
+  id: 'act_chop', label: 'Taie', icon: '🪓', who: 'both', kind: 'base', dur: 0.8, loop: true,
+  pose(P, t) {
+    const c = Math.sin(t * Math.PI * 2 / 0.8), hit = c < -0.7;
+    P.armL = P.armR = 1.9 + c * 0.9; P.rot = c * 0.08; P.headRot = c * 0.06;
+    P.sy = hit ? 0.95 : 1; P.dy = hit ? 1.5 : 0; P.eyes = hit ? 'strain' : 'happy'; P.mouth = hit ? 'flat' : 'w'; P.sweat = 0.6;
+  },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.8, 0.55)) f.burst('drop', 26, -40, 4, 1.4, 60, { grav: 220, max: 0.45, color: '#c98e5f' }); },
+});
+
 // ---- mobila din apartament
 def({
   id: 'act_piano', label: 'Cântă la pian', icon: '🎹', who: 'both', kind: 'base', dur: 9, loop: true,

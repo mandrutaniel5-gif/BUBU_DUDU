@@ -144,7 +144,7 @@ export class WorldScene implements Scene {
   /** drumul cu vehiculul (bicicleta, scuter, tractor, autobuz, taxi), in lume */
   ride: Ride | null = null;
   travel: { t: 0 | number; to: string; from?: string; switched?: boolean; vehicle?: 'tractor' | 'bike' | 'scooter' | 'bus' | 'door' | 'taxi'; withPartner?: boolean } | null = null;
-  walkers: { a: Actor; x: number; y: number; tx: number; ty: number; t: number; greetT: number; vid?: string; name?: string; region: 'village' | 'city'; emp?: boolean; paths?: Pt[] }[] = [];
+  walkers: { a: Actor; x: number; y: number; tx: number; ty: number; t: number; greetT: number; vid?: string; name?: string; region: 'village' | 'city'; emp?: boolean; paths?: Pt[]; eid?: string; work?: string; working?: boolean; aims?: Pt[] }[] = [];
   critters: Critter[] = [];
   timeMult = 1;
   npcs: Npc[] = []; npcSpawnT = 6;
@@ -423,6 +423,7 @@ export class WorldScene implements Scene {
       FURNITURE.push({ id: 'p-' + p.uid, type: it.type as any, gx: p.gx, gy: p.gy, w: it.w, d: it.d, solid: it.solid, action: it.action });
     }
     furnChanged(); this.placedVersion++;
+    if (this.walkers.some(v => v.emp)) this.syncWalkers();
     this.nav = new Nav([...this.doorBlocks(), ...this.worldBlocks()]);
     this.navKey = this.blockKey();
   }
@@ -1148,7 +1149,13 @@ export class WorldScene implements Scene {
       if (md > 45) continue;
       const PATHS = v.paths ?? (v.region === 'city' ? CITY_PATHS : VILLAGE_PATHS);
       v.t -= dt; v.greetT -= dt;
-      if (v.t <= 0 && Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1) { v.t = 2 + Math.random() * 5; const p = PATHS[Math.floor(Math.random() * PATHS.length)]; const tx = p.x + (Math.random() - 0.5) * 1.2, ty = p.y + (Math.random() - 0.5) * 0.8; if (!this.nav.hits(tx, ty)) { v.tx = tx; v.ty = ty; } }
+      // angajatii: ajung la obiect -> lucreaza 7-13 s -> merg la urmatorul (nu stau degeaba)
+      if (v.emp && v.work && Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1 && !v.working && v.t <= 0) {
+        v.working = true; v.t = 7 + Math.random() * 6; v.a.play(v.work);
+        const aim = (v.aims ?? []).reduce<Pt | null>((b, q) => !b || Math.hypot(q.x - v.x, q.y - v.y) < Math.hypot(b.x - v.x, b.y - v.y) ? q : b, null);
+        if (aim) { const d = iso(aim.x - v.x, aim.y - v.y); v.a.flip = d.x >= 0 ? 1 : -1; }
+      }
+      if (v.t <= 0 && Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1 && (!v.emp || v.working)) { if (v.working) { v.working = false; v.a.stop(); } v.t = v.emp ? 0 : 2 + Math.random() * 5; const p = PATHS[Math.floor(Math.random() * PATHS.length)]; const j = v.emp ? 0 : 1, tx = p.x + (Math.random() - 0.5) * 1.2 * j, ty = p.y + (Math.random() - 0.5) * 0.8 * j; if (!this.nav.hits(tx, ty)) { v.tx = tx; v.ty = ty; } }
       const dx = v.tx - v.x, dy = v.ty - v.y, d = Math.hypot(dx, dy);
       if (d > 0.05 && v.t <= 0) { const sp = 1.1 * dt; const nx = v.x + dx / d * Math.min(sp, d), ny = v.y + dy / d * Math.min(sp, d); if (!this.nav.hits(nx, ny, 0.18)) { v.x = nx; v.y = ny; } else { v.tx = v.x; v.ty = v.y; } const s = iso(dx, dy); if (Math.abs(s.x) > 0.01) v.a.flip = s.x > 0 ? 1 : -1; v.a.moving = true; }
       else v.a.moving = false;
@@ -1899,6 +1906,7 @@ export class WorldScene implements Scene {
       this.checkGoals();
       Town.dailyTick(this);
       Story.daily(this);
+      Story.staffHour(this);
       this.growPlots();
       if (this.isHost && this.partnerOnline) {
         this.netTick = (this.netTick + 1) % 6;
@@ -2328,6 +2336,11 @@ export class WorldScene implements Scene {
     this.ride = { kind: 'tractor', path, len: polyLen(path), s: 0, v: 0, dest: 'field', duo: false, t: 0 };
     this.fieldDone = done; this.hud.closeMenus(); this.hud.setRide('riding'); Sfx.play('car_start', { vol: 0.6, rate: 0.8 });
   }
+  /** ce a produs un angajat: un text care urca deasupra lui (daca e pe aproape) */
+  staffFx(eid: string, text: string) {
+    const v = this.walkers.find(x => x.eid === eid); if (!v || this.space !== 'world' || Math.hypot(v.x - this.me.gx, v.y - this.me.gy) > 30) return;
+    const q = iso(v.x, v.y, 96); this.fx.text(q.x, q.y, text, '#2ec4b6', 0.9);
+  }
   /** angajatii se vad pe la locul lor de munca (acasa, la ferma, la taraba) */
   syncWalkers() {
     this.walkers = this.walkers.filter(v => !v.emp);
@@ -2335,7 +2348,16 @@ export class WorldScene implements Scene {
     Story.staffOf(this).forEach((e, i) => {
       const P = spots[e.role] ?? spots.garden, kinds = Object.keys(NPC_SPECS), a = new Actor('bubu', this.fx, NPC_SPECS[kinds[(i * 3 + e.name.length) % kinds.length]]); a.scale = ACTOR_SCALE * 0.92;
       a.outfit = { head: e.role === 'tractor' || e.role === 'garden' ? 'palarie' : 'none', face: 'none', neck: 'none', body: e.role === 'shop' || e.role === 'florist' || e.role === 'picker' ? 'rochita' : 'salopeta' } as any;
-      this.walkers.push({ a, x: P[0].x, y: P[0].y, tx: P[0].x, ty: P[0].y, t: Math.random() * 3, greetT: 0, region: 'village', name: e.name, emp: true, paths: P } as any);
+      // langa obiectul lor de lucru din curte: copaci, pietre, flori, razoare (daca exista; altfel locurile de mai sus)
+      const near = (types: string[], pred: (f: Furn) => boolean = () => true) => FURNITURE.filter(f => types.includes(f.type as string) && f.gx >= 0 && f.gx < MAP_W && f.gy >= 0 && f.gy < YARD_H && pred(f));
+      const objs = e.role === 'wood' ? near(['tree']) : e.role === 'stone' ? near(['rock']) : e.role === 'picker' ? near(['wildflower', 'flowers']) : e.role === 'garden' ? near(['soilplot']) : [];
+      const first = objs[i % Math.max(1, objs.length)], pick = first ? [...objs].sort((a, b) => Math.hypot(a.gx - first.gx, a.gy - first.gy) - Math.hypot(b.gx - first.gx, b.gy - first.gy)).slice(0, 3) : [];
+      const stand = (f: Furn): Pt => e.role === 'picker' ? { x: f.gx + 0.5, y: f.gy + 1.15 } : { x: f.gx + f.w + 0.45, y: f.gy + f.d / 2 + 0.2 };
+      const spotsHere = pick.map(stand).filter(q => !this.nav.hits(q.x, q.y, 0.2));
+      const aims = pick.map(f => ({ x: f.gx + f.w / 2, y: f.gy + f.d / 2 }));
+      const P2 = spotsHere.length >= 2 ? spotsHere : P;
+      const WORK: Record<string, string> = { wood: 'act_chop', stone: 'act_chop', picker: 'act_garden', garden: 'act_water', animals: 'act_garden', tractor: 'act_scrub', carter: 'act_carry', joiner: 'act_scrub', florist: 'wave', stall: 'wave', shop: 'wave' };
+      this.walkers.push({ a, x: P2[0].x, y: P2[0].y, tx: P2[0].x, ty: P2[0].y, t: 3 + Math.random() * 4, greetT: 0, region: 'village', name: e.name, emp: true, paths: P2, eid: e.id, work: WORK[e.role], aims } as any);
     });
   }
 }

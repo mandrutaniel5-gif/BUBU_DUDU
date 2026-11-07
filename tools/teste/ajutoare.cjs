@@ -36,6 +36,8 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
     const mk = (id, role) => ({ id, name: 'Test' + id, role, wage: 20, skill: 2, unpaid: 0, days: 0 });
     s.op({ k: 'town', key: 'staff', value: [mk('c', 'carter'), mk('w', 'wood'), mk('s', 'stone'), mk('p', 'picker')] });
     const r0 = { ...s.w.res }, m0 = s.w.money;
+    // din 1.9.0 taietorul, spargatorul si culegatorul lucreaza peste zi (8-18), ora de ora; dimineata carausul duce lemnele
+    for (let h = 8; h < 18; h++) { s.w.minutes = h * 60 + 5; S.staffHour(s); }
     s.w.stats.storyDay = -1; S.daily(s); await new Promise(r => setTimeout(r, 1500));
     const log = [...document.querySelectorAll('.modal')].map(m => m.innerText).join('\n');
     return { wood: (s.w.res.wood ?? 0) - r0.wood, stone: (s.w.res.stone ?? 0) - (r0.stone ?? 0), flower: (s.w.res.flower ?? 0) - (r0.flower ?? 0), money: s.w.money - m0, log: log.slice(0, 600) };
