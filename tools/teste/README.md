@@ -43,6 +43,8 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 | `adancime_lume.cjs` | 1.8.5: Dudu e pus în jurul fiecărui obiect de pe toată harta; obiectul e desenat în fața lui doar când chiar e în față; niciun obiect pus peste altul |
 | `aglomerare.cjs [prag]` | 1.8.5: obiecte vecine desenate singure și comparate pixel cu pixel: cât din cel din spate e acoperit de cel din față (copac peste fântână, piatră ascunsă etc.) |
 | `angajati_zi.cjs` | 1.9.0: angajații aduc lemne / flori peste zi (8–18), grădinarul udă ora de oră, noaptea nu lucrează, tăietorul lucrează lângă copac cu animație |
+| `angajati_munca.cjs` | 1.9.1: tăietorul merge în pădure, taie și cară lemnele acasă; spărgătorul sparge bolovani; căruțașul duce lemne la cherestea; vânzătorul deschide taraba și servește clienții; nimeni nu trece prin obiecte |
+| `autobuz_oras.cjs` | 1.9.1: înainte de Capitolul 6 autobuzul și scuterul nu merg la oraș; după, merg |
 | `curte.cjs` | 1.8.6: muți / scoți copaci și pietre din curte, nu se poate în casă, rămâne salvat; fără stiva de lemne; fântâna departe de răzoare |
 | `adancime_casa.cjs` | 1.8.3: Dudu plimbat prin toată casa (pas 0,3): obiectele care se acoperă au mereu aceeași ordine (fără pâlpâit) și Dudu e de partea bună a fiecărui perete și a fiecărei mobile |
 | `sat_oras.cjs` | 1.6.0: în sat și în oraș se ajunge pe jos la fiecare clădire / obiect cu acțiune; nimic solid nu se suprapune |

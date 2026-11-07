@@ -9,7 +9,7 @@ export type MouthType =
 export type BrowType = 'none' | 'angry' | 'sad' | 'up';
 export type PropType =
   | 'none' | 'pan' | 'boba' | 'heart' | 'flower' | 'plunger' | 'thermometer'
-  | 'spoon' | 'mic' | 'tissue' | 'pillow' | 'cup' | 'pad';
+  | 'spoon' | 'mic' | 'tissue' | 'pillow' | 'cup' | 'pad' | 'axe' | 'pickaxe' | 'logs' | 'stones';
 
 export interface Pose {
   dx: number; dy: number;        // deplasarea corpului (px)

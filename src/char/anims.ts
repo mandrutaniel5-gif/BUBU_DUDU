@@ -632,8 +632,30 @@ def({
     const c = Math.sin(t * Math.PI * 2 / 0.8), hit = c < -0.7;
     P.armL = P.armR = 1.9 + c * 0.9; P.rot = c * 0.08; P.headRot = c * 0.06;
     P.sy = hit ? 0.95 : 1; P.dy = hit ? 1.5 : 0; P.eyes = hit ? 'strain' : 'happy'; P.mouth = hit ? 'flat' : 'w'; P.sweat = 0.6;
+    P.propR = 'axe'; P.propRotR = 0.2;
   },
-  tick(f, t, _p, dt) { if (every(t, dt, 0.8, 0.55)) f.burst('drop', 26, -40, 4, 1.4, 60, { grav: 220, max: 0.45, color: '#c98e5f' }); },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.8, 0.55)) { f.burst('drop', 34, -30, 5, 1.4, 70, { grav: 220, max: 0.45, color: '#c98e5f' }); f.sound('bonk'); } },
+});
+// sparge piatra cu tarnacopul (scantei gri)
+def({
+  id: 'act_mine', label: 'Sparge', icon: '⛏️', who: 'both', kind: 'base', dur: 0.9, loop: true,
+  pose(P, t) {
+    const c = Math.sin(t * Math.PI * 2 / 0.9), hit = c < -0.7;
+    P.armL = P.armR = 1.9 + c * 0.9; P.rot = c * 0.08; P.headRot = c * 0.06;
+    P.sy = hit ? 0.95 : 1; P.dy = hit ? 1.5 : 0; P.eyes = hit ? 'strain' : 'happy'; P.mouth = hit ? 'flat' : 'w'; P.sweat = 0.6;
+    P.propR = 'pickaxe'; P.propRotR = 0.2;
+  },
+  tick(f, t, _p, dt) { if (every(t, dt, 0.9, 0.62)) { f.burst('drop', 34, -30, 5, 1.4, 70, { grav: 220, max: 0.45, color: '#9aa0a6' }); f.sound('bonk'); } },
+});
+// cara acasa ce a strans (lemne / pietre) in brate, mergand
+for (const [k, prop] of [['logs', 'logs'], ['stones', 'stones']] as const) def({
+  id: 'act_haul_' + k, label: 'Cară', icon: k === 'logs' ? '🪵' : '🪨', who: 'both', kind: 'base', dur: 0.5, loop: true,
+  pose(P, t) {
+    const s = Math.sin(t * Math.PI * 2 / 0.5);
+    P.armL = P.armR = 1.15; P.propR = prop; P.propRotR = -1.15; // recuzita dreapta (orizontala), tinuta cu ambele brate
+    P.legL = Math.max(0, s) * 5; P.legR = Math.max(0, -s) * 5; P.dy = -Math.abs(s) * 2.5;
+    P.eyes = 'strain'; P.mouth = 'flat'; P.sweat = 0.4;
+  },
 });
 
 // ---- mobila din apartament

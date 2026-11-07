@@ -521,6 +521,28 @@ export function drawProp(ctx: CanvasRenderingContext2D, prop: PropType, O: strin
       ctx.fillStyle = '#ffe1ea'; ctx.beginPath(); ctx.roundRect(-16, 0, 32, 22, 9); ctx.fill(); ctx.stroke();
       heartPath(ctx, 0, 12, 5); ctx.fillStyle = '#ff7aa2'; ctx.fill();
       break;
+    case 'axe': // toporul: coada de lemn, lama de fier
+      ctx.fillStyle = '#9b6b3e'; ctx.beginPath(); ctx.roundRect(-2.5, -6, 5, 34, 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#b8c0c8'; ctx.beginPath(); ctx.moveTo(2, 18); ctx.lineTo(15, 14); ctx.quadraticCurveTo(19, 23, 15, 32); ctx.lineTo(2, 28); ctx.closePath(); ctx.fill(); ctx.stroke();
+      break;
+    case 'pickaxe':
+      ctx.fillStyle = '#9b6b3e'; ctx.beginPath(); ctx.roundRect(-2.5, -6, 5, 34, 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#8f979f'; ctx.beginPath(); ctx.moveTo(-16, 30); ctx.quadraticCurveTo(0, 18, 16, 30); ctx.lineTo(14, 32); ctx.quadraticCurveTo(0, 24, -14, 32); ctx.closePath(); ctx.fill(); ctx.stroke();
+      break;
+    case 'logs': // un brat de lemne tinut in fata (de-a curmezisul)
+      ctx.save(); ctx.translate(-32, -6);
+      for (const [x, y] of [[0, 0], [3, 9], [-2, 18]] as const) {
+        ctx.fillStyle = '#a8703f'; ctx.beginPath(); ctx.roundRect(x - 22, y - 5, 44, 10, 5); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#e8c38f'; ell(ctx, x + 21, y, 3.5, 4.5); ctx.fill(); ctx.stroke();
+      }
+      ctx.restore();
+      break;
+    case 'stones': // cos cu pietre
+      ctx.save(); ctx.translate(-32, -2);
+      ctx.fillStyle = '#c99a5b'; ctx.beginPath(); ctx.roundRect(-20, 4, 40, 20, 6); ctx.fill(); ctx.stroke();
+      for (const [x, y, r] of [[-11, 3, 7], [0, 0, 8], [11, 3, 7]] as const) { ctx.fillStyle = '#9aa0a6'; ell(ctx, x, y, r, r * 0.8); ctx.fill(); ctx.stroke(); }
+      ctx.restore();
+      break;
     case 'cup':
       // ceasca de cafea alba cu inimioara, toarta si cafea la gura
       ctx.save(); ctx.rotate(Math.PI);

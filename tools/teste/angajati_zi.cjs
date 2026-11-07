@@ -32,8 +32,8 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   ok('noaptea nu lucreaza', (await E(() => game.scene.w.res.wood)) === w20);
   // la locul de munca: animatie de lucru
   await E(() => { const s = game.scene; window.__at(10); const v = s.walkers.find(x => x.eid === 'w'); s.me.gx = v.x - 2.5; s.me.gy = v.y + 2.5; s.me.path = []; });
-  await p.waitForFunction(() => game.scene.walkers.find(x => x.eid === 'w').working, null, { timeout: 20000 }).catch(() => {});
-  const anim = await E(() => { const s = game.scene, v = s.walkers.find(x => x.eid === 'w'); const t = s.furnList.filter(f => f.type === 'tree').map(f => Math.hypot(f.gx + 0.5 - v.x, f.gy + 0.5 - v.y)); return { working: v.working, work: v.work, nearTree: +Math.min(...t).toFixed(2) }; });
+  await p.waitForFunction(() => { const v = game.scene.walkers.find(x => x.eid === 'w'); return v.job.at && v.a.anim.id === 'act_chop'; }, null, { timeout: 90000 }).catch(() => {});
+  const anim = await E(() => { const s = game.scene, v = s.walkers.find(x => x.eid === 'w'); const t = s.furnList.filter(f => f.action?.id === 'chop').map(f => Math.hypot(f.gx + 0.5 - v.x, f.gy + 0.5 - v.y)); return { working: v.job.at, work: v.a.anim.id, nearTree: +Math.min(...t).toFixed(2) }; });
   ok('taietorul lucreaza langa un copac (animatie)', anim.working && anim.work === 'act_chop' && anim.nearTree < 1.4, JSON.stringify(anim));
   await E(() => { document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); game.scene.staffFx('w', '+1 🪵'); }); await sleep(250); await p.screenshot({ path: 'angajat_lucreaza.png' }); await sleep(1500); await p.screenshot({ path: 'angajat_lucreaza2.png' });
   console.log(errs.join('\n') || 'no errors'); await b.close();
