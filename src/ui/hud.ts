@@ -636,6 +636,7 @@ const PLACES: { id: string; icon: string; name: string; where: string; what: str
   { id: 'sawmill', icon: '🪚', name: 'Cheresteaua lui Nea Vasile', where: 'pe drum, la dreapta casei', what: 'aici tai scânduri și vinzi lemne', x: 29, y: 22.6 },
   { id: 'farm', icon: '🐔', name: 'Ferma voastră', where: 'ieși din curte spre dreapta, indicatorul de lângă gard', what: 'găini, vacă, stupi', x: 24.5, y: 14.3, ch: FARM_CHAPTER },
   { id: 'forest', icon: '🌲', name: 'Pădurea', where: 'în spatele casei, spre nord (poarta pădurii)', what: 'lemne, pietre, ciuperci, fructe de pădure', x: 20, y: -7.6, ch: 2 },
+  { id: 'mill', icon: '🌾', name: 'Moara satului', where: 'la sud de câmpuri, sub parcele', what: 'vinzi cerealele angro, macini făină și mălai', x: 35, y: 44.6, ch: FARM_CHAPTER },
   { id: 'bridge', icon: '🌉', name: 'Podul Mare', where: 'pe drum spre est, după cherestea, peste râu', what: 'îl reparați ca să ajungeți în sat', x: 61.6, y: 37, ch: Story.BRIDGE_CH },
 ];
 const esc = (t: string) => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));

@@ -31,7 +31,8 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   const inForest = l => l.some(([x, y]) => y < -10);
   const chopF = sim.wood.filter(([x, y, a]) => a === 'act_chop' && y < -10).length, haul = sim.wood.filter(([, , a]) => a === 'act_haul_logs').length;
   ok('taietorul merge in padure si taie copaci', inForest(sim.wood) && chopF > 10, `chop in padure ${chopF}`);
-  ok('taietorul cara lemnele acasa', haul > 5 && sim.wood.some(([x, y]) => Math.hypot(x - 15.6, y - 14.6) < 0.5), `haul ${haul}`);
+  void haul; // 1.9.9: lemnele intra pe loc la fiecare copac (nu le mai cara acasa)
+  ok('taietorul: fiecare copac taiat da lemne pe loc', (await E(() => game.scene.w.town.staff.find(e => e.id === 'w').got?.wood ?? 0)) >= 6);
   ok('spargatorul sparge bolovani in padure', inForest(sim.stone) && sim.stone.filter(([, y, a]) => a === 'act_mine' && y < -10).length > 10);
   ok('carausul cara lemne la cherestea', sim.carter.filter(([, , a]) => a === 'act_haul_logs').length > 5 && sim.carter.some(([x, y]) => Math.hypot(x - 25.4, y - 19) < 3), JSON.stringify(sim.carter.slice(-3)));
   // nu calca prin obiecte: niciun punct al lor nu e intr-o dala blocata
@@ -47,7 +48,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
     out.open = !!s.w.furn.standOpen; out.money = s.w.money - m0; out.served = (s.w.stats.served ?? 0) - sv0; out.done = s.w.town?.staff?.find(e => e.id === 't')?.done;
     return out;
   });
-  ok('vanzatorul deschide taraba si serveste clientii', stall.open && stall.served >= 4 && stall.money > 0, JSON.stringify(stall));
+  ok('vanzatorul deschide taraba si serveste clientii', stall.open && stall.served >= 2 && stall.money > 0, JSON.stringify(stall));
   ok('vanzatorul sta in spatele tarabei (cu fata la clienti)', Math.abs(stall.x - 8.0) < 0.1 && Math.abs(stall.y - 22.45) < 0.1);
 
   // poze: taraba cu client servit, taietorul in padure

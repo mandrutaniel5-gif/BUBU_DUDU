@@ -111,7 +111,7 @@ wall(-12.6, -8.4, -12.4, 64.4);                                        // dealul
 FIELDS.forEach((fl, i) => {
   // primele patru campuri sunt parcelele care se cumpara in Capitolul 5 (Ferma)
   put({ id: i < 4 ? `parcel-${i + 1}` : id('crop'), type: 'cropfield' as any, kind: fl.crop, ...(i < 4 ? { action: act('st-parcel', 'Parcela de câmp', '🟫') } : {}), gx: fl.x0, gy: fl.y0, w: fl.x1 - fl.x0, d: fl.y1 - fl.y0, solid: true });
-  put({ id: id('fence'), type: 'fenceline' as any, gx: fl.x0 - 0.5, gy: fl.y0 - 0.55, w: fl.x1 - fl.x0 + 1, d: 0.1, solid: true });
+  put({ id: id('fence'), type: 'fenceline' as any, gx: fl.x0 - 0.2, gy: fl.y0 - 0.55, w: fl.x1 - fl.x0 + 0.4, d: 0.1, solid: true }); // 1.9.9: nu mai iese o jumatate de dala in culoarul dintre campuri (te opreai in el)
 });
 put({ id: id('scare'), type: 'scarecrow' as any, gx: 28, gy: 32, w: 1, d: 1, solid: true }); // intre parcele, nu pe ele
 put({ id: id('scare'), type: 'scarecrow' as any, gx: 86, gy: 44, w: 1, d: 1, solid: true });
@@ -137,7 +137,7 @@ put({ id: id('fence'), type: 'fenceline' as any, gx: -11.6, gy: 38.7, w: 0.1, d:
 put({ id: id('fence'), type: 'fenceline' as any, gx: -2.6, gy: 38.7, w: 0.1, d: 7.6, solid: true });
 for (let i = 0; i < 5; i++) F.push({ id: id('sheep'), type: 'sheep' as any, gx: -10 + i * 1.6, gy: 40 + (i % 2) * 2.4, w: 1, d: 1, solid: false });
 for (let i = 0; i < 3; i++) F.push({ id: id('cow'), type: 'cow' as any, gx: 162 + i * 3, gy: 40 + (i % 2) * 2, w: 1, d: 1, solid: false });
-put({ id: id('mill'), type: 'windmill' as any, gx: 34, gy: 42, w: 2, d: 2, solid: true });
+put({ id: 'w-mill', type: 'windmill' as any, gx: 34, gy: 42, w: 2, d: 2, solid: true, action: act('mill', 'Moara: cereale angro, făină, mălai', '🌾') }); // langa campuri (1.9.9)
 put({ id: id('mill'), type: 'windmill' as any, gx: 92, gy: 5, w: 2, d: 2, solid: true });
 // --- livada Mariei
 for (let x = 74; x < 86; x += 3) for (let y = 49; y < 58; y += 3) tree(x, y, 'apple');

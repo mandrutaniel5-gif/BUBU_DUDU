@@ -51,6 +51,22 @@ const CHAIN_BASE: Record<string, number> = { flower: 3, veg: 4, sweet: 8, drink:
 export const FLORIST_PAY = (v: number) => Math.max(2, Math.round(v * 0.3));
 export const itemValue = (code: string) => { const [ch, ls] = code.split(':'); const l = +ls; return Math.round((CHAIN_BASE[ch] ?? 3) * 2.3 ** l); };
 
+/**
+ * ce ia vanzatorul angajat din inventar ca sa faca o comanda (fara tejghea): produsul gata („prod_lant_nivel”) daca il aveti,
+ * altfel 2^nivel bucati din sursa lantului (cum ai uni tu pe tejghea). null = n-aveti destul.
+ */
+export function orderCost(res: Record<string, number>, wants: string[]): [string, number][] | null {
+  const r = { ...res }; const out: [string, number][] = [];
+  for (const code of wants) {
+    const pk = prodKey(code); if ((r[pk] ?? 0) > 0) { r[pk]--; out.push([pk, 1]); continue; }
+    const ci = CHAIN_INFO.find(c => c.id === chain(code)); if (!ci) return null;
+    let need = 2 ** lvl(code);
+    while (need > 0) { const k = pickKey(r, ci.src); if (!k || (r[k] ?? 0) <= 0) return null; const h = Math.min(need, r[k]); r[k] -= h; need -= h; out.push([k, h]); }
+  }
+  return out;
+}
+/** din ce e facut un produs (pentru mesajul „n-avem marfa”) */
+export const orderSrc = (code: string) => CHAIN_INFO.find(c => c.id === chain(code)) ?? null;
 export interface MergeBoard { v: 3; cells: (string | null)[] }
 const COLS = 7, ROWS = 4;
 const lvl = (c: string) => +c.split(':')[1];

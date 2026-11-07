@@ -12,10 +12,10 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   // harta
   await E(() => game.scene.hud.openMap()); await sleep(600);
   const rows = await E(() => [...document.querySelectorAll('.goals.places li')].map(l => ({ t: l.textContent.replace(/\s+/g, ' '), lock: l.classList.contains('lock') })));
-  ok('Unde e? are 4 locuri', rows.length === 4, rows.map(r => r.t.slice(0, 30)).join(' | '));
+  ok('Unde e? are 5 locuri', rows.length === 5, rows.map(r => r.t.slice(0, 30)).join(' | '));
   ok('scândurile: la cherestea', /Cheresteaua.*scânduri/.test(rows[0]?.t));
   ok('ferma încuiată în cap. 3', rows[1]?.lock && /Capitolul 5/.test(rows[1].t));
-  ok('pădurea și podul deschise în cap. 3', !rows[2]?.lock && !rows[3]?.lock);
+  ok('pădurea și podul deschise în cap. 3', !rows[2]?.lock && !rows[4]?.lock);
   await p.screenshot({ path: 'unde_harta.png' });
   await E(() => document.querySelector('.modal:not(.hidden) .box').scrollTop = 9999); await sleep(200); await p.screenshot({ path: 'unde_lista.png' });
   // Du-mă la cherestea

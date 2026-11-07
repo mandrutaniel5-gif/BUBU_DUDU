@@ -128,7 +128,7 @@ export function drawFull(c: CanvasRenderingContext2D, W: number, H: number, m: M
   { c.font = '800 11px "Baloo 2", sans-serif'; c.fillStyle = '#4a2a22'; c.textAlign = 'left'; c.textBaseline = 'top'; c.fillText('↑ Nord (pădurea)', ox + 6, oy + 4); }
   // numele regiunilor
   c.textAlign = 'center'; c.textBaseline = 'middle';
-  const labels: [string, string, number, number][] = [['🏡', 'Acasă', 4, 6], ['🌲', 'Pădurea', 19, -24], ['🏞️', 'Lacul', 70, 18], ['🌉', 'Podul Mare', 66, 44], ['🏘️', 'Satul', 121, 14], ['🏙️', 'Orașul', 214, 30], ['🌾', 'Câmpurile', 20, 41], ['🪚', 'Cheresteaua (scânduri)', 26, 27], ['🐓', 'Ferma', 40, -1]];
+  const labels: [string, string, number, number][] = [['🏡', 'Acasă', 4, 6], ['🌲', 'Pădurea', 19, -24], ['🏞️', 'Lacul', 70, 18], ['🌉', 'Podul Mare', 66, 44], ['🏘️', 'Satul', 121, 14], ['🏙️', 'Orașul', 214, 30], ['🌾', 'Câmpurile', 20, 41], ['🪚', 'Cheresteaua (scânduri)', 26, 27], ['🐓', 'Ferma', 40, -1], ['🌾', 'Moara', 42, 47]];
   for (const [ic, name, x, y] of labels) {
     const q = P(x, y); c.font = '800 12px "Baloo 2", sans-serif'; const tw = c.measureText(name).width + 30;
     c.fillStyle = '#fffaf5ee'; c.strokeStyle = '#4a2a22'; c.lineWidth = 2; c.beginPath(); c.roundRect(q.x - tw / 2, q.y - 11, tw, 22, 11); c.fill(); c.stroke();

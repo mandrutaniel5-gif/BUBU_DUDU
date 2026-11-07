@@ -14,7 +14,7 @@ import { ITEMS } from '../char/outfit';
 import { BRIDGE_CHAPTER, VILLAGE_CHAPTER, FARM_CHAPTER, CITY_CHAPTER, SHOP_CHAPTER, WEDDING_CHAPTER, PRICE } from '../game/economy';
 import { sawPrice, KEEP_WOOD } from '../minigames/sawmill';
 import { CITY_BUILDINGS } from '../world/city';
-import { catCount, catPick } from '../world/garden';
+import { catCount, catPick, CROPS, seedKey, WET_MIN } from '../world/garden';
 
 type S = WorldScene;
 const st = (s: S, k: string) => s.w.stats[k] ?? 0;
@@ -208,7 +208,7 @@ function fieldDone(s: S, id: string, mach: string, crop?: string) {
     const c = FIELD_CROPS[p.crop ?? 'wheat'], n = Math.round(area * c.yieldPer / 4);
     s.op({ k: 'res', res: c.res, delta: n }); s.op({ k: 'stat', key: 'fieldHarvested', delta: 1 }); s.op({ k: 'stat', key: 'harvest-' + (p.crop ?? 'wheat'), delta: n });
     p.stage = 'wild'; p.crop = undefined; p.prog = 0; p.wet = 0;
-    s.hud.toast(`${c.icon} Recoltă: +${n} ${c.name.toLowerCase()}! Le vindeți la piață, la oraș sau la contracte`);
+    s.hud.toast(`${c.icon} Recoltă: +${n} ${c.name.toLowerCase()}! Le vindeți angro la moara de lângă câmpuri sau le măcinați acolo în făină / mălai`);
     s.log(`${s.me.actor.spec.name} a recoltat ${n} ${c.name.toLowerCase()} cu combina 🌾`); Sfx.play('victory');
   }
   all[id] = p; setT(s, 'parcels', all); s.syncPlaced();
@@ -224,6 +224,31 @@ function growFields(s: S, minutes: number) {
     if (Math.floor(p.prog * 4) !== Math.floor(before * 4)) ch = true;
   }
   if (ch) { setT(s, 'parcels', all); s.syncPlaced(); }
+}
+
+// --- moara de langa campuri (1.9.9): cerealele se vand angro (oricat, pe loc) sau se macina in faina / malai
+export const MILL_PRICE: Record<string, number> = { grain: 5, corn: 6, sunseed: 8 };
+export const MILL_GRIND: { from: string; to: string; label: string; icon: string }[] = [
+  { from: 'grain', to: 'flour', label: 'făină', icon: '🥡' },
+  { from: 'corn', to: 'cornmeal', label: 'mălai', icon: '🌽' },
+];
+const GRAIN_NAME: Record<string, string> = { grain: 'grâu', corn: 'porumb', sunseed: 'semințe de floarea-soarelui' };
+const GRAIN_ICON: Record<string, string> = { grain: '🌾', corn: '🌽', sunseed: '🌻' };
+export function openMill(s: S) {
+  if (s.chapter < FARM_CHAPTER) { s.hud.toast('🌾 Moara satului: cumpără cereale de la cine are câmp (din Capitolul 5 · Ferma)'); return; }
+  const sell = Object.entries(MILL_PRICE).map(([k, p]) => { const n = res(s, k); return `<button data-sell="${k}" class="${n ? '' : 'poor'}"><span>${GRAIN_ICON[k]}</span><b>Vinde tot ${GRAIN_NAME[k]}</b><small>${n ? `ai ${n} · ${p} lei bucata = ${n * p} lei` : `n-ai · ${p} lei bucata`}</small></button>`; }).join('');
+  const grind = MILL_GRIND.map(g => { const n = res(s, g.from); return `<button data-grind="${g.from}" class="${n ? '' : 'poor'}"><span>${g.icon}</span><b>Macină ${GRAIN_NAME[g.from]} → ${g.label}</b><small>${n ? `ai ${n} ${GRAIN_NAME[g.from]} → ${n} ${g.label} (gratis)` : `n-ai ${GRAIN_NAME[g.from]}`}</small></button>`; }).join('');
+  const m = s.hud.modal(`<h3>🌾 Moara satului</h3><p class="sub">Morarul cumpără angro tot ce aduceți de pe câmp, fără limită, și plătește pe loc. Sau vă macină grâul în făină și porumbul în mălai (1 la 1), ca să nu le mai cumpărați: făina merge la clătite, pizza, plăcinte și la tarabă (dulciuri), mălaiul la mămăligă.</p><h4>Vinde angro</h4><div class="shop">${sell}</div><h4>Macină</h4><div class="shop">${grind}</div>`);
+  m.querySelectorAll('[data-sell]').forEach(b => b.addEventListener('click', () => {
+    const k = (b as HTMLElement).dataset.sell!, n = res(s, k); if (!n) { Sfx.play('bad'); s.hud.toast(`N-ai ${GRAIN_NAME[k]}: îl recoltezi de pe parcele cu combina`); return; }
+    const lei = n * MILL_PRICE[k]; s.op({ k: 'res', res: k, delta: -n }); s.op({ k: 'money', delta: lei }); s.op({ k: 'stat', key: 'millSold', delta: n });
+    Sfx.play('coin'); s.me.actor.play('act_carry'); s.hud.toast(`🌾 Ai vândut ${n} ${GRAIN_NAME[k]} la moară: +${lei} lei`); s.log(`${s.me.actor.spec.name} a vândut ${n} ${GRAIN_NAME[k]} la moară: +${lei} lei 🌾`); openMill(s);
+  }));
+  m.querySelectorAll('[data-grind]').forEach(b => b.addEventListener('click', () => {
+    const g = MILL_GRIND.find(x => x.from === (b as HTMLElement).dataset.grind)!, n = res(s, g.from); if (!n) { Sfx.play('bad'); s.hud.toast(`N-ai ${GRAIN_NAME[g.from]} de măcinat`); return; }
+    s.op({ k: 'res', res: g.from, delta: -n }); s.op({ k: 'res', res: g.to, delta: n }); s.op({ k: 'stat', key: 'milled', delta: n });
+    Sfx.play('leaves', { vol: 0.5, rate: 0.7 }); Sfx.play('good', { delay: 0.5, vol: 0.6 }); s.me.actor.play('act_carry'); s.hud.toast(`${g.icon} Morarul ți-a măcinat ${n} ${GRAIN_NAME[g.from]}: +${n} ${g.label}`); s.log(`${s.me.actor.spec.name} a măcinat ${n} ${GRAIN_NAME[g.from]} în ${g.label} la moară ${g.icon}`); openMill(s);
+  }));
 }
 
 // --- animalele (Bubu): gaini, vaca, oi, stupi
@@ -247,12 +272,15 @@ export function openFarmGate(s: S) {
 }
 /** cat e gata de strans la un animal azi */
 export function ready(s: S, k: string) { const a = ANIMALS[k], n = st(s, a.stat); if (!n) return 0; const last = st(s, 'got-' + k); return s.w.day - last >= a.every ? n * a.per : 0; }
-export function collect(s: S, k: string, pawn = s.me) {
+/** strange produsele unui animal; pawn = null: le strange angajatul (fara animatia voastra) */
+export function collect(s: S, k: string, pawn: S['me'] | null = s.me) {
   const a = ANIMALS[k], n = ready(s, k);
   if (!n) { if (pawn === s.me) s.hud.toast(`${a.icon} Ai strâns deja. Revino ${a.every === 1 ? 'mâine' : `peste ${a.every} zile`}`); return; }
   s.op({ k: 'res', res: a.product, delta: n }); s.op({ k: 'stat', key: 'got-' + k, delta: s.w.day - st(s, 'got-' + k) });
   const statKey = { egg: 'eggsCollected', milk: 'milkCollected', wool: 'woolCollected', honey: 'honeyCollected' }[a.product]!;
-  s.op({ k: 'stat', key: statKey, delta: n }); s.op({ k: 'need', who: pawn.id, need: 'fun', delta: 4 });
+  s.op({ k: 'stat', key: statKey, delta: n });
+  if (!pawn) return;
+  s.op({ k: 'need', who: pawn.id, need: 'fun', delta: 4 });
   pawn.actor.play(k === 'cows' ? 'act_milk' : 'act_collect'); Sfx.play(k === 'hens' ? 'chicken' : k === 'cows' ? 'pour' : k === 'sheep' ? 'sheep' : 'bubble', { vol: 0.8 });
   if (pawn === s.me) { fx(s, pawn.gx, pawn.gy, `+${n} ${a.prodLabel} ${a.icon}`); s.hud.toast(`${a.icon} +${n} ${a.prodLabel}`); }
 }
@@ -263,19 +291,19 @@ export function makeCheese(s: S) {
 }
 
 // ====================================================================== ANGAJATII
-export interface Staff { id: string; name: string; role: string; wage: number; skill: number; unpaid: number; days: number; f?: boolean; acc?: number; done?: number }
+export interface Staff { id: string; name: string; role: string; wage: number; skill: number; unpaid: number; days: number; f?: boolean; got?: Record<string, number> }
 export const ROLES: Record<string, { name: [string, string]; icon: string; text: string; base: number; need?: (s: S) => string | null }> = {
-  garden: { name: ['Grădinar', 'Grădinăreasă'], icon: '🧑‍🌾', text: 'udă și culege grădina, udă câmpurile', base: 18 },
-  animals: { name: ['Îngrijitor de animale', 'Îngrijitoare de animale'], icon: '🐄', text: 'strânge ouăle, laptele, mierea și lâna', base: 20, need: s => Object.values(ANIMALS).some(a => st(s, a.stat)) ? null : 'Nu aveți încă animale' },
-  stall: { name: ['Vânzător la tarabă', 'Vânzătoare la tarabă'], icon: '🧺', text: 'deschide taraba de acasă și servește clienții (ia un sfert)', base: 16, need: s => s.w.furn.standBroken ? 'Taraba e încă stricată' : null },
-  florist: { name: ['Florar', 'Florăreasă'], icon: '💐', text: 'ține deschisă florăria lui Bubu', base: 22, need: s => st(s, 'florarie') ? null : 'Nu aveți încă florăria' },
-  wood: { name: ['Tăietor de lemne', 'Tăietoare de lemne'], icon: '🪓', text: 'merge în pădure, taie copaci și aduce lemnele acasă', base: 18 },
-  stone: { name: ['Spărgător de piatră', 'Spărgătoare de piatră'], icon: '⛏️', text: 'sparge bolovani în pădure și aduce piatra acasă', base: 16 },
-  carter: { name: ['Căruțaș', 'Căruțașă'], icon: '🛒', text: 'duce lemnele la cherestea și i le vinde lui Nea Vasile', base: 12 },
-  joiner: { name: ['Vânzător la tâmplărie', 'Vânzătoare la tâmplărie'], icon: '🪚', text: 'face scăunele din lemnele voastre și le vinde la tâmplărie', base: 20, need: s => st(s, 'workshop') ? null : 'Nu aveți încă tâmplăria (Primăria satului)' },
-  picker: { name: ['Culegător de flori', 'Culegătoare de flori'], icon: '🌸', text: 'culege flori de câmp pentru florărie și tarabă', base: 12 },
-  tractor: { name: ['Tractorist', 'Tractoristă'], icon: '🚜', text: 'lucrează parcelele cu utilajele voastre', base: 26, need: s => Object.values(parcelsOf(s)).some(p => p.owned) ? null : 'Nu aveți încă parcele' },
-  shop: { name: ['Vânzător la magazin', 'Vânzătoare la magazin'], icon: '🏪', text: 'vinde la magazinul „Bubu & Dudu” din oraș', base: 30, need: s => st(s, 'shopBuilt') ? null : 'Nu aveți încă magazinul din oraș' },
+  garden: { name: ['Grădinar', 'Grădinăreasă'], icon: '🧑‍🌾', text: 'plantează din semințele voastre, udă și culege grădina (vă spune când nu mai are semințe)', base: 18 },
+  animals: { name: ['Îngrijitor de animale', 'Îngrijitoare de animale'], icon: '🐄', text: 'merge pe la animale și strânge ouăle, laptele, mierea și lâna', base: 20, need: s => Object.values(ANIMALS).some(a => st(s, a.stat)) ? null : 'Nu aveți încă animale' },
+  stall: { name: ['Vânzător la tarabă', 'Vânzătoare la tarabă'], icon: '🧺', text: 'vine dimineața, deschide taraba și servește clienții din marfa voastră; banii intră pe loc', base: 16, need: s => s.w.furn.standBroken ? 'Taraba e încă stricată' : null },
+  florist: { name: ['Florar', 'Florăreasă'], icon: '💐', text: 'face buchete din florile voastre (câte 3) și le vinde la florărie', base: 22, need: s => st(s, 'florarie') ? null : 'Nu aveți încă florăria' },
+  wood: { name: ['Tăietor de lemne', 'Tăietoare de lemne'], icon: '🪓', text: 'taie copaci de dimineața până seara; fiecare copac vă dă lemne pe loc', base: 18 },
+  stone: { name: ['Spărgător de piatră', 'Spărgătoare de piatră'], icon: '⛏️', text: 'sparge bolovani toată ziua; fiecare piatră intră pe loc la voi', base: 16 },
+  carter: { name: ['Căruțaș', 'Căruțașă'], icon: '🛒', text: 'ia lemne de acasă și le vinde la cherestea (banii pe loc; 5 rămân pentru sobă)', base: 12 },
+  joiner: { name: ['Vânzător la tâmplărie', 'Vânzătoare la tâmplărie'], icon: '🪚', text: 'face scăunele din lemnele voastre (câte 4) și le vinde la tâmplărie', base: 20, need: s => st(s, 'workshop') ? null : 'Nu aveți încă tâmplăria (Primăria satului)' },
+  picker: { name: ['Culegător de flori', 'Culegătoare de flori'], icon: '🌸', text: 'culege florile de câmp din curte toată ziua', base: 12 },
+  tractor: { name: ['Tractorist', 'Tractoristă'], icon: '🚜', text: 'ară, seamănă, udă și recoltează parcelele cu utilajele voastre', base: 26, need: s => Object.values(parcelsOf(s)).some(p => p.owned) ? null : 'Nu aveți încă parcele' },
+  shop: { name: ['Vânzător la magazin', 'Vânzătoare la magazin'], icon: '🏪', text: 'vinde marfa de pe rafturile magazinului „Bubu & Dudu”', base: 30, need: s => st(s, 'shopBuilt') ? null : 'Nu aveți încă magazinul din oraș' },
 };
 const NAMES_M = ['Ion', 'Vasile', 'Mihai', 'Andrei', 'Costel', 'Radu', 'Gelu', 'Petrică', 'Florin', 'Sorin'];
 const NAMES_F = ['Maria', 'Ioana', 'Elena', 'Ana', 'Floarea', 'Georgiana', 'Lenuța', 'Anca', 'Viorica', 'Irina'];
@@ -295,79 +323,111 @@ export function openStaff(s: S) {
   const staff = staffOf(s), hiredIds = new Set(staff.map(x => x.id));
   const now = staff.map(e => `<li><b>${ROLES[e.role].icon} ${esc(e.name)} · ${ROLES[e.role].name[e.f ? 1 : 0]}</b><small>pricepere ${'★'.repeat(Math.round(e.skill))}${'☆'.repeat(5 - Math.round(e.skill))} · salariu ${e.wage} lei/zi${e.unpaid ? ` · ⚠️ neplătit ${e.unpaid} zi` : ''}</small><button data-fire="${e.id}">Concediază</button></li>`).join('') || '<li><small>Nu aveți încă angajați.</small></li>';
   const cand = candidates(s).filter(c => !hiredIds.has(c.id)).map(c => { const why = ROLES[c.role].need?.(s); return `<li><b>${ROLES[c.role].icon} ${esc(c.name)} · ${ROLES[c.role].name[c.f ? 1 : 0]}</b><small>${ROLES[c.role].text} · pricepere ${'★'.repeat(c.skill)}${'☆'.repeat(5 - c.skill)} · ${c.wage} lei/zi</small>${why ? `<small class="need">${why}</small>` : `<button data-hire="${c.id}">Angajează</button>`}</li>`; }).join('');
-  const m = s.hud.modal(`<h3>🧑‍🌾 Oameni de muncă</h3><p class="sub">Angajații lucrează în fiecare zi de la 8 la 18, și când sunteți la oraș: îi vezi cum merg în pădure și taie copaci, sparg pietre, culeg flori, udă grădina și servesc clienții la tarabă, iar ce aduc intră pe loc. Salariul se plătește dimineața; dacă nu aveți bani două zile, pleacă. Pricepere crește cu fiecare zi. Seara primiți raportul.</p><h4>Angajații voștri</h4><ul class="goals give">${now}</ul><h4>Vor să lucreze azi</h4><ul class="goals give">${cand}</ul>`);
+  const m = s.hud.modal(`<h3>🧑‍🌾 Oameni de muncă</h3><p class="sub">Angajații muncesc în fiecare zi de la 8 la 18 și îi vezi la treabă: fiecare copac tăiat, piatră spartă, floare culeasă, plantă semănată sau culeasă și client servit intră pe loc la voi. Lucrează cu ce aveți voi (semințe, marfă, lemne) și vă spun când le lipsește ceva. Salariul se plătește dimineața; dacă nu aveți bani două zile, pleacă. Pricepere crește cu fiecare zi. Dimineața primiți raportul.</p><h4>Angajații voștri</h4><ul class="goals give">${now}</ul><h4>Vor să lucreze azi</h4><ul class="goals give">${cand}</ul>`);
   m.querySelectorAll('[data-hire]').forEach(b => b.addEventListener('click', () => { const c = candidates(s).find(x => x.id === (b as HTMLElement).dataset.hire)!; const list = staffOf(s); if (list.length >= 6) { s.hud.toast('Aveți destui oameni (6)'); return; } list.push(c); setT(s, 'staff', list); s.op({ k: 'stat', key: 'hired', delta: 1 }); s.log(`L-ați angajat pe ${c.name} (${ROLES[c.role].name[c.f ? 1 : 0].toLowerCase()}) ${ROLES[c.role].icon}`.replace('L-ați angajat pe', c.f ? 'Ați angajat-o pe' : 'L-ați angajat pe')); Sfx.play('good'); s.syncWalkers(); openStaff(s); }));
   m.querySelectorAll('[data-fire]').forEach(b => b.addEventListener('click', () => { setT(s, 'staff', staffOf(s).filter(x => x.id !== (b as HTMLElement).dataset.fire)); s.syncWalkers(); openStaff(s); }));
 }
-/** cat produce un angajat intr-o zi intreaga (se imparte pe orele de lucru, 8–18) */
-const HOURLY: Record<string, { daily: (k: number) => number; give: (s: S, n: number) => void; tag: (n: number) => string; report: (n: number) => string; money?: boolean }> = {
-  wood: { daily: k => 8 + k * 3, give: (s, n) => s.op({ k: 'res', res: 'wood', delta: n }), tag: n => `+${n} 🪵`, report: n => n ? `a tăiat ieri ${n} lemne` : 'n-a apucat să taie lemne ieri' },
-  stone: { daily: k => 5 + k * 2, give: (s, n) => s.op({ k: 'res', res: 'stone', delta: n }), tag: n => `+${n} 🪨`, report: n => n ? `a spart ieri ${n} pietre` : 'n-a apucat să spargă pietre ieri' },
-  picker: { daily: k => 8 + k * 3, give: (s, n) => { s.op({ k: 'res', res: 'flower', delta: n }); s.op({ k: 'stat', key: 'flowerTotal', delta: n }); }, tag: n => `+${n} 🌸`, report: n => n ? `a cules ieri ${n} flori` : 'n-a apucat să culeagă flori ieri' },
-  florist: { daily: k => 18 + k * 12, give: (s, n) => s.op({ k: 'money', delta: n }), tag: n => `+${n} lei 💐`, report: n => n ? `a vândut ieri buchete de ${n} lei` : 'n-a vândut buchete ieri', money: true },
-  // la taraba banii vin din clientii pe care ii serveste el (updateNpcs: stallStaff), nu din tabel
-  stall: { daily: () => 0, give: (s, n) => s.op({ k: 'money', delta: n }), tag: n => `+${n} lei 🧺`, report: n => n ? `a vândut ieri la tarabă de ${n} lei` : 'n-a vândut la tarabă ieri', money: true },
-};
+// Angajatii muncesc PAS CU PAS, de la 8 la 18: fiecare copac taiat, piatra sparta, floare culeasa, planta semanata /
+// udata / culeasa, client servit, drum la cherestea etc. intra pe loc in inventar / bani (staffWork, chemat de
+// world.updateStaff cand angajatul termina ce face). Nimic nu se mai „produce din tabel”. Dimineata: salariile + raportul de ieri.
 const WORK_H0 = 8, WORK_H1 = 18;
-/** o ora de munca a angajatilor (pe gazda, intre 8 si 18): lemne, pietre, flori, bani pe loc; gradinarul uda, ingrijitorul strange */
-export function staffHour(s: S) {
-  if (!s.isHost) return;
-  const h = Math.floor(s.w.minutes / 60), key = s.w.day * 24 + h;
-  if (st(s, 'staffHour') === key) return;
-  s.op({ k: 'stat', key: 'staffHour', delta: key - st(s, 'staffHour') });
-  if (h < WORK_H0 || h >= WORK_H1) return;
-  const list = staffOf(s); if (!list.length) return;
-  let changed = false;
-  for (const e of list) {
-    if ((e.unpaid ?? 0) > 0 && (s.w.money ?? 0) <= 0) continue;
-    const H = HOURLY[e.role];
-    if (H) {
-      e.acc = (e.acc ?? 0) + H.daily(e.skill) / (WORK_H1 - WORK_H0);
-      const n = Math.floor(e.acc); if (n > 0) { e.acc -= n; e.done = (e.done ?? 0) + n; H.give(s, n); s.staffFx(e.id, H.tag(n)); }
-      changed = true;
-    } else if (e.role === 'garden') {
-      const plots = s.w.plots ?? {}; let w = 0; for (const p of Object.values(plots)) if (p.crop && p.wetUntil <= (s.w.gameMin ?? 0) + 30) { p.wetUntil = (s.w.gameMin ?? 0) + 120; w++; }
-      if (w) { s.op({ k: 'plots', all: plots }); s.staffFx(e.id, `💧 ${w}`); }
-    } else if (e.role === 'animals') {
-      const got: string[] = []; for (const a of Object.keys(ANIMALS)) { const n = ready(s, a); if (n) { collect(s, a, s.partner); got.push(`+${n}`); } }
-      if (got.length) s.staffFx(e.id, got.join(' ') + ' 🥚');
-    }
-  }
-  if (changed) setT(s, 'staff', list);
+const GOT_LABEL: Record<string, string> = { wood: 'lemne 🪵', stone: 'pietre 🪨', flower: 'flori 🌸', planted: 'plante semănate 🌱', watered: 'plante udate 💧', harvested: 'legume și flori culese 🧺', served: 'clienți serviți 🧺', egg: 'ouă 🥚', milk: 'lapte 🥛', wool: 'lână 🧶', honey: 'miere 🍯', chairs: 'scăunele 🪑', bouquets: 'buchete 💐', fields: 'lucrări pe câmp 🚜', sold: 'produse vândute', woodsold: 'lemne duse la cherestea', lei: 'lei 💰' };
+/** ce a facut azi (pentru raport): got[cheie] += n */
+export function staffGot(s: S, e: Staff, key: string, n: number) {
+  const list = staffOf(s), x = list.find(q => q.id === e.id); if (!x) return;
+  x.got = { ...(x.got ?? {}), [key]: (x.got?.[key] ?? 0) + n }; setT(s, 'staff', list);
 }
-/** munca de peste zi a angajatilor + salariile: dimineata (pe gazda); intoarce randurile raportului */
+/** un mesaj de la angajat catre voi (o data pe zi pentru acelasi lucru): toast + jurnal */
+const noted: Record<string, number> = {};
+export function staffNote(s: S, e: Staff, key: string, text: string) {
+  const k = e.id + key; if (noted[k] === s.w.day) return; noted[k] = s.w.day;
+  s.hud.toast(text); s.log(text);
+}
+/** compatibilitate: munca nu mai merge pe ore (vezi staffWork) */
+export function staffHour(_s: S) { /* nimic */ }
+const now = (s: S) => s.w.gameMin ?? 0;
+/** angajatul a terminat ce facea (pe gazda): aplica rezultatul real; intoarce textul de deasupra lui */
+export function staffWork(s: S, eid: string, fxk: string, tid?: string): string | null {
+  if (!s.isHost) return null;
+  const e = staffOf(s).find(x => x.id === eid); if (!e) return null;
+  if ((e.unpaid ?? 0) > 0 && (s.w.money ?? 0) <= 0) { staffNote(s, e, 'unpaid', `😕 ${e.name} nu mai muncește: n-a primit salariul`); return '😕 fără salariu…'; }
+  const k = Math.min(5, e.skill);
+  const node = (id: string | undefined, sec: number) => { if (id) s.op({ k: 'node', id, until: Date.now() + sec * 1000 }); };
+  const gone = (id?: string) => !!id && (s.w.nodes?.[id] ?? 0) > Date.now();
+  switch (fxk) {
+    case 'chop': { if (gone(tid)) return null; const n = 2 + Math.floor(k / 2); s.op({ k: 'res', res: 'wood', delta: n }); s.op({ k: 'stat', key: 'woodTotal', delta: n }); node(tid, 240); staffGot(s, e, 'wood', n); Sfx.play('wood_drop', { vol: 0.25 }); return `+${n} 🪵`; }
+    case 'mine': { if (gone(tid)) return null; const n = 1 + Math.floor(k / 2); s.op({ k: 'res', res: 'stone', delta: n }); node(tid, 150); staffGot(s, e, 'stone', n); return `+${n} 🪨`; }
+    case 'pick': { if (gone(tid)) return null; const n = 2 + (k >= 3 ? 1 : 0); s.op({ k: 'res', res: 'flower', delta: n }); s.op({ k: 'stat', key: 'flowerTotal', delta: n }); node(tid, 60); staffGot(s, e, 'flower', n); return `+${n} 🌸`; }
+    case 'plant': {
+      const p = s.w.plots?.[tid!]; if (!p || p.crop) return null;
+      const seed = Object.keys(CROPS).filter(c => res(s, seedKey(c)) > 0).sort((a, b) => res(s, seedKey(b)) - res(s, seedKey(a)))[0];
+      if (!seed) { noSeeds(s, e); return '🌰 n-am semințe!'; }
+      s.op({ k: 'res', res: seedKey(seed), delta: -1 }); s.op({ k: 'plot', key: tid!, plot: { crop: seed, prog: 0, wetUntil: now(s) + WET_MIN, fert: 0 } }); s.op({ k: 'stat', key: 'planted', delta: 1 });
+      staffGot(s, e, 'planted', 1); return `🌱 ${CROPS[seed].name} (+💧)`;
+    }
+    case 'water': { const p = s.w.plots?.[tid!]; if (!p?.crop || p.prog >= 1) return null; s.op({ k: 'plot', key: tid!, plot: { ...p, wetUntil: now(s) + WET_MIN } }); staffGot(s, e, 'watered', 1); return '💧 udat'; }
+    case 'harvest': {
+      const p = s.w.plots?.[tid!]; if (!p?.crop || p.prog < 1) return null;
+      const c = CROPS[p.crop], n = c.yield + (p.fert ? 1 : 0);
+      s.op({ k: 'res', res: c.id, delta: n }); s.op({ k: 'plot', key: tid!, plot: { crop: null, prog: 0, wetUntil: 0, fert: 0 } });
+      s.op({ k: 'stat', key: 'harvested', delta: 1 }); s.op({ k: 'stat', key: c.cat === 'veg' ? 'vegTotal' : 'flowerTotal', delta: n }); s.op({ k: 'stat', key: 'harv-' + c.id, delta: n });
+      staffGot(s, e, 'harvested', n); return `+${n} ${c.name.toLowerCase()}`;
+    }
+    case 'noseed': noSeeds(s, e); return '🌰 n-am semințe!';
+    case 'collect': { const a = ANIMALS[tid!], n = a ? ready(s, tid!) : 0; if (!n) return null; collect(s, tid!, null); staffGot(s, e, a.product, n); return `+${n} ${a.prodLabel} ${a.icon}`; }
+    case 'sellwood': {
+      const dayKey = 'woodSold-' + s.w.day, left = Math.max(0, PRICE.sawmillDay - st(s, dayKey));
+      const n = Math.min(left, 4 + Math.floor(k), Math.max(0, res(s, 'wood') - KEEP_WOOD)), lei = n * sawPrice(s.w.day, 'dudu');
+      if (!n) { if (!left) return '🪵 cheresteaua a luat destul azi'; staffNote(s, e, 'nowood', `🛒 ${e.name}: n-am lemne de dus la cherestea (5 rămân pentru sobă)`); return '🪵 n-am lemne…'; }
+      s.op({ k: 'res', res: 'wood', delta: -n }); s.op({ k: 'money', delta: lei }); s.op({ k: 'stat', key: 'woodSold', delta: n }); s.op({ k: 'stat', key: dayKey, delta: n });
+      staffGot(s, e, 'woodsold', n); staffGot(s, e, 'lei', lei); Sfx.play('coin', { vol: 0.3 }); return `+${lei} lei (${n} 🪵)`;
+    }
+    case 'joiner': {
+      if (res(s, 'wood') - KEEP_WOOD < 4) { staffNote(s, e, 'nowood', `🪚 ${e.name}: n-am lemne pentru scăunele (îmi trebuie câte 4)`); return '🪵 n-am lemne…'; }
+      const lei = Math.round(24 * (1 + k * 0.05)); s.op({ k: 'res', res: 'wood', delta: -4 }); s.op({ k: 'money', delta: lei }); s.op({ k: 'stat', key: 'crafted', delta: 1 });
+      staffGot(s, e, 'chairs', 1); staffGot(s, e, 'lei', lei); return `🪑 +${lei} lei`;
+    }
+    case 'florist': {
+      if (catCount(s.w.res ?? {}, 'flower') < 3) { staffNote(s, e, 'noflower', `💐 ${e.name}: n-am flori pentru buchete (culegeți sau creșteți flori)`); return '🌸 n-am flori…'; }
+      take(s, FLOWERS, 3); const lei = Math.round(12 + k * 2); s.op({ k: 'money', delta: lei });
+      staffGot(s, e, 'bouquets', 1); staffGot(s, e, 'lei', lei); return `💐 +${lei} lei`;
+    }
+    case 'field': {
+      const all = parcelsOf(s), p = all[tid!]; if (!p?.owned) return null; const P = PARCELS.find(x => x.id === tid)!;
+      let t: string | null = null;
+      if (p.stage === 'wild') { if (!hasMachine(s, 'plow')) return needMachine(s, e, 'plow'); p.stage = 'plowed'; t = '🚜 arat'; }
+      else if (p.stage === 'plowed') { if (!hasMachine(s, 'seeder')) return needMachine(s, e, 'seeder'); p.stage = 'sown'; p.crop = ['wheat', 'corn', 'sunflower'][st(s, 'fieldSown') % 3]; p.prog = 0; s.op({ k: 'stat', key: 'fieldSown', delta: 1 }); t = `🌱 ${FIELD_CROPS[p.crop].name.toLowerCase()}`; }
+      else if (p.stage === 'sown') { if (p.wet > now(s)) return null; if (!hasMachine(s, 'tanker')) return null; p.wet = now(s) + 24 * 60; t = '💧 udat'; }
+      else if (p.stage === 'ripe') { if (!hasMachine(s, 'combine')) return needMachine(s, e, 'combine'); const c = FIELD_CROPS[p.crop ?? 'wheat'], n = Math.round((P.x1 - P.x0) * (P.y1 - P.y0) * c.yieldPer / 4); s.op({ k: 'res', res: c.res, delta: n }); s.op({ k: 'stat', key: 'fieldHarvested', delta: 1 }); p.stage = 'wild'; p.crop = undefined; p.prog = 0; p.wet = 0; t = `+${n} ${c.icon}`; }
+      if (!t) return null; all[tid!] = p; setT(s, 'parcels', all); s.syncPlaced(); staffGot(s, e, 'fields', 1); return t;
+    }
+    case 'shop': { const r = shopSell(s, 1 + Math.floor(k / 2)); if (!r) { staffNote(s, e, 'noshop', `🏪 ${e.name}: rafturile magazinului sunt goale`); return '🏪 rafturi goale…'; } staffGot(s, e, 'sold', r.n); staffGot(s, e, 'lei', r.lei); return `+${r.lei} lei 🏪`; }
+  }
+  return null;
+}
+function noSeeds(s: S, e: Staff) { staffNote(s, e, 'noseed', `🌰 ${e.name}: n-am semințe de pus în grădină! Cumpărați de pe laptop (online) sau din sat`); }
+function needMachine(s: S, e: Staff, m: string) { staffNote(s, e, 'mach-' + m, `🚜 ${e.name}: vă trebuie ${MACHINES[m].name.toLowerCase()} (laptopul → Utilaje)`); return `${MACHINES[m].icon} n-am ${MACHINES[m].name.toLowerCase()}`; }
+/** salariile (dimineata, pe gazda) + raportul cu ce a facut fiecare ieri; intoarce randurile raportului */
 function staffDay(s: S): string[] {
   const list = staffOf(s); if (!list.length) return [];
   const lines: string[] = []; let wages = 0, earned = 0;
   const keep: Staff[] = [];
-  const ORDER = ['wood', 'stone', 'picker', 'garden', 'animals', 'tractor', 'joiner', 'carter'];
-  const rank = (e: Staff) => { const i = ORDER.indexOf(e.role); return i < 0 ? 99 : i; };
-  for (const e of [...list].sort((a, b) => rank(a) - rank(b))) {
-    const R = ROLES[e.role], nm = e.name, k = e.skill;
+  for (const e of list) {
+    const R = ROLES[e.role], nm = e.name;
+    const got = e.got ?? {}; e.got = {};
+    const did = Object.entries(got).filter(([q]) => q !== 'lei').map(([q, n]) => `${n} ${GOT_LABEL[q] ?? q}`);
+    earned += got.lei ?? 0;
+    lines.push(`${R.icon} ${nm} ieri: ${did.length ? did.join(', ') : 'n-a avut ce face'}${got.lei ? `, +${got.lei} lei` : ''}`);
     if ((s.w.money ?? 0) >= e.wage) { s.op({ k: 'money', delta: -e.wage }); wages += e.wage; e.unpaid = 0; }
     else { e.unpaid++; if (e.unpaid >= 2) { lines.push(`😢 ${nm} a plecat: n-a primit salariul două zile`); continue; } lines.push(`⚠️ ${nm} n-a primit salariul azi`); }
     e.days++; e.skill = Math.min(5, e.skill + 0.15);
-    let what = '';
-    if (HOURLY[e.role]) { const n = e.done ?? 0; e.done = 0; e.acc = e.acc ?? 0; what = HOURLY[e.role].report(n); if (HOURLY[e.role].money) earned += n; }
-    else if (e.role === 'garden') { const plots = s.w.plots ?? {}; let w = 0; for (const p of Object.values(plots)) if (p.crop) { p.wetUntil = (s.w.gameMin ?? 0) + 180; w++; } s.op({ k: 'plots', all: plots }); const fp = parcelsOf(s); for (const p of Object.values(fp)) if (p.stage === 'sown') p.wet = (s.w.gameMin ?? 0) + 1440; setT(s, 'parcels', fp); what = `a udat ${w} răzoare și câmpurile`; }
-    else if (e.role === 'animals') { const got: string[] = []; for (const a of Object.keys(ANIMALS)) { const n = ready(s, a); if (n) { collect(s, a, s.partner); got.push(`${n} ${ANIMALS[a].prodLabel}`); } } what = got.length ? `a strâns ${got.join(', ')}` : 'a hrănit animalele'; }
-    else if (e.role === 'stall') { const lei = Math.round(12 + k * 9); s.op({ k: 'money', delta: lei }); earned += lei; what = `a vândut ${Math.round(3 + k * 2)} produse la tarabă, +${lei} lei`; }
-    else if (e.role === 'florist') { const lei = Math.round(18 + k * 12); s.op({ k: 'money', delta: lei }); earned += lei; what = `a vândut buchete la florărie, +${lei} lei`; }
-    else if (e.role === 'wood') { const n = Math.round(4 + k * 2); s.op({ k: 'res', res: 'wood', delta: n }); what = `a tăiat ${n} lemne`; }
-    else if (e.role === 'stone') { const n = Math.round(3 + k * 1.5); s.op({ k: 'res', res: 'stone', delta: n }); what = `a spart ${n} pietre în pădure`; }
-    else if (e.role === 'picker') { const n = Math.round(5 + k * 2); s.op({ k: 'res', res: 'flower', delta: n }); s.op({ k: 'stat', key: 'flowerTotal', delta: n }); what = `a cules ${n} flori de câmp`; }
-    else if (e.role === 'joiner') { const n = Math.min(1 + Math.floor(k), Math.floor(Math.max(0, res(s, 'wood') - KEEP_WOOD) / 4)); const lei = Math.round(n * 24 * (1 + k * 0.05)); if (n) { s.op({ k: 'res', res: 'wood', delta: -n * 4 }); s.op({ k: 'money', delta: lei }); s.op({ k: 'stat', key: 'crafted', delta: n }); earned += lei; } what = n ? `a făcut și a vândut ${n} ${n === 1 ? 'scăunel' : 'scăunele'} la tâmplărie, +${lei} lei` : 'n-a avut lemne pentru mobilă (îi trebuie câte 4)'; }
-    else if (e.role === 'carter') { const dayKey = 'woodSold-' + s.w.day, left = Math.max(0, PRICE.sawmillDay - st(s, dayKey)); const n = Math.min(left, Math.round(8 + k * 3), Math.max(0, res(s, 'wood') - KEEP_WOOD)); const lei = n * sawPrice(s.w.day, 'dudu'); if (n) { s.op({ k: 'res', res: 'wood', delta: -n }); s.op({ k: 'money', delta: lei }); s.op({ k: 'stat', key: 'woodSold', delta: n }); s.op({ k: 'stat', key: dayKey, delta: n }); earned += lei; } what = n ? `a dus ${n} lemne la cherestea, +${lei} lei` : 'n-a avut lemne de dus la cherestea'; }
-    else if (e.role === 'tractor') { const fp = parcelsOf(s); let n = 0; for (const [id, p] of Object.entries(fp)) { if (!p.owned) continue; if (p.stage === 'wild' && hasMachine(s, 'plow')) { p.stage = 'plowed'; n++; } else if (p.stage === 'plowed' && hasMachine(s, 'seeder')) { p.stage = 'sown'; p.crop = ['wheat', 'corn', 'sunflower'][n % 3]; p.prog = 0; n++; } else if (p.stage === 'ripe' && hasMachine(s, 'combine')) { const c = FIELD_CROPS[p.crop ?? 'wheat'], P = PARCELS.find(x => x.id === id)!, q = Math.round((P.x1 - P.x0) * (P.y1 - P.y0) * c.yieldPer / 4 * 0.9); s.op({ k: 'res', res: c.res, delta: q }); p.stage = 'wild'; p.crop = undefined; n++; } }
-      setT(s, 'parcels', fp); what = n ? `a lucrat ${n} parcele cu utilajele` : 'a pregătit utilajele'; }
-    else if (e.role === 'shop') { const sold = shopSell(s, 6 + k * 3); what = sold ? `a vândut ${sold.n} produse la magazin, +${sold.lei} lei` : 'a așteptat clienți (rafturile sunt goale)'; earned += sold?.lei ?? 0; }
-    lines.push(`${R.icon} ${nm} ${what}`);
     keep.push(e);
   }
-  setT(s, 'staff', keep);
-  lines.push(`💰 Salarii −${wages} lei${earned ? ` · câștigat de angajați +${earned} lei` : ''}`);
+  setT(s, 'staff', keep); s.syncWalkers();
+  lines.push(`💰 Salarii −${wages} lei${earned ? ` · câștigat de angajați ieri +${earned} lei` : ''}`);
   return lines;
 }
+export const staffHours = (h: number) => h >= WORK_H0 && h < WORK_H1;
 
 // ====================================================================== MAGAZINUL DIN ORAS, CONTRACTELE, TARGUL (Capitolul 7)
 export const SHOP_ITEMS: Record<string, { label: string; icon: string; price: number }> = {
