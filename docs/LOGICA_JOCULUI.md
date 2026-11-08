@@ -186,8 +186,8 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 - **iPhone:** sunetul repornește singur după un apel, Siri, ecranul blocat sau altă aplicație (și la prima atingere); merge și cu telefonul pe silențios. Aplicația e marcată ca joc (Game Mode pe iOS 18), pe tot ecranul, fără bara de sus.
 - **Florăria lui Bubu:** un magazin adevărat (vitrină spre sat, rafturi, ușă cu clopoțel). Vinde doar flori:
   - flori de câmp → floricică … coroniță;
-  - florile din grădină (lalele, trandafiri, floarea-soarelui) → lalea … buchet de mireasă;
-  - răsaduri (semințe de flori) → ghiveci … coș suspendat.
+  - florile din grădină (lalele, trandafiri, floarea-soarelui) → lalea … buchet de mireasă.
+  - (Răsadurile în ghiveci au fost scoase în 1.10.0: se vindeau în pierdere. Ce era pe tejghea sau în inventar se întoarce în semințe de lalele.)
 - **Cheresteaua lui Nea Vasile** (pe drum, între casă și lac, deschisă 7-19):
   - ⚖️ cântarul: prețul zilei 2-4 lei pe lemn (Dudu +1 leu), cel mult 15 lemne pe zi, 5 lemne rămân mereu pentru sobă; lemnele zboară unul câte unul pe cântar;
   - 📜 două comenzi pe zi (lemne de foc sau scânduri), plătite mai bine (Dudu +15%), aceleași pe ambele telefoane;

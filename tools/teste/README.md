@@ -47,6 +47,13 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 | `autobuz_oras.cjs` | 1.9.1: înainte de Capitolul 6 autobuzul și scuterul nu merg la oraș; după, merg |
 | `angajati_real.cjs` | 1.9.9: fiecare angajat muncește pas cu pas cu resursele voastre: grădinarul culege / udă / plantează și cere semințe, tăietorul și culegătorul aduc pe loc, îngrijitorul strânge ouăle, vânzătorul deschide taraba și servește din inventar (toți banii), căruțașul vinde la cherestea, tractoristul ară, tâmplarul și florarul; raportul de dimineață |
 | `moara.cjs` | 1.9.9: „Du-mă” la moară (prin culoarul dintre câmpuri), vânzarea angro a porumbului și a semințelor, măcinatul grâului în făină și al porumbului în mălai |
+| `harta_mare.cjs` | 1.10.0: butonul „🗺️ Harta”, toate clădirile pe harta mare, ＋ și trasul cu degetul, atingi Primăria → „Du-mă” te duce pe jos |
+| `furtuna.cjs` | 1.10.0: ziua furtunii (cer întunecat, ploaie, fulger), acoperișul reparat dispare pe loc, se domolește seara; apartamentul e cald |
+| `taraba_vanzator.cjs` | 1.10.0: vânzătoarea deschide taraba și când ești departe, cumpără făina lipsă doar cu câștig, îți cere florile lipsă |
+| `seara_muls.cjs` | 1.10.0: X la rutina de seară ajunge la partener, un X vechi nu strică seara următoare, somnul sărit de ceas reface energia; mulsul se oprește singur |
+| `scuter_clona.cjs` | 1.10.0: scuterul parcat la cherestea nu mai rămâne desenat cât mergi cu el |
+| `padure_parcele.cjs` | 1.10.0: gardul pădurii, 3 parcele de vânzare, cumperi una → gardul se mută, copaci / bolovani noi, tăietorul lucrează și acolo |
+| `anotimpuri.cjs` | 1.10.0: curtea și pădurea în cele 4 anotimpuri (poze), iarna albă, toamna caldă |
 | `unde_e_ziua.cjs` | 1.9.8: harta → „Unde e?” (4 locuri, ferma încuiată înainte de cap. 5), „Du-mă” găsește drumul și ajunge la indicatorul fermei; „Ziua X 📅” deschide evenimentul zilei și ce urmează |
 | `pod_ciorba.cjs` | 1.9.7: la Podul Mare, ciorba gătită contează ca „mâncare caldă” (37 de boluri → „ai 37”, „Dă 3”); cererea unui sătean pentru mâncare primește tot ciorbă |
 | `casa_conectare.cjs` | 1.9.2: din Solo casa se face online; casa de pe server e găsită și de cine are Firebase selectat; parola greșită; după creare jocul rămâne online. Pornește înainte `PORT=8799 node server/server.mjs` (dintr-o copie a folderului server) |

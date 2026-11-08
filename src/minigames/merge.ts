@@ -30,11 +30,10 @@ export const CHAIN_INFO: ChainInfo[] = [
   { id: 'sweet', src: 'flour', srcLabel: 'Făină', where: 'magazinul online 🛒' },
   { id: 'drink', src: 'lemon', srcLabel: 'Lămâi', where: 'magazinul online 🛒' },
 ];
-/** florăria lui Bubu vinde DOAR flori: de câmp, din grădină și răsaduri în ghiveci */
+/** florăria lui Bubu vinde DOAR flori: de câmp și din grădină (din 1.10.0 fără răsaduri: se vindeau în pierdere și încurcau) */
 export const FLORIST_CHAINS: ChainInfo[] = [
   { id: 'flower', src: 'wild', srcLabel: 'Flori de câmp', where: 'culege-le din curte și de lângă drum 🌸' },
   { id: 'garden', src: 'gflower', srcLabel: 'Flori din grădină', where: 'crește lalele, trandafiri sau floarea-soarelui 🌷' },
-  { id: 'pot', src: 'fseed', srcLabel: 'Răsaduri', where: 'semințe de flori: magazinul satului 🌰' },
 ];
 /** ce poate cere un client: lanturile pentru care ai (sau ai avut) resursa */
 export function orderableChains(res: Record<string, number>, stats: Record<string, number>, florist = false) {
@@ -64,6 +63,20 @@ export function orderCost(res: Record<string, number>, wants: string[]): [string
     while (need > 0) { const k = pickKey(r, ci.src); if (!k || (r[k] ?? 0) <= 0) return null; const h = Math.min(need, r[k]); r[k] -= h; need -= h; out.push([k, h]); }
   }
   return out;
+}
+/** marfa care se poate cumpara (faina, lamai: lei pe bucata, ca la magazin); florile si legumele le cresteti voi */
+export const BUYABLE: Record<string, number> = { flour: 5, lemon: 5 };
+/** ce lipseste dintr-o comanda si se poate cumpara: [cheie, bucati] (null = lipseste si ceva ce nu se cumpara) */
+export function orderShortfall(res: Record<string, number>, wants: string[]): [string, number][] | null {
+  const r = { ...res }; const buy: Record<string, number> = {};
+  for (const code of wants) {
+    const pk = prodKey(code); if ((r[pk] ?? 0) > 0) { r[pk]--; continue; }
+    const ci = CHAIN_INFO.find(c => c.id === chain(code)); if (!ci) return null;
+    let need = 2 ** lvl(code);
+    while (need > 0) { const k = pickKey(r, ci.src); if (!k || (r[k] ?? 0) <= 0) break; const h = Math.min(need, r[k]); r[k] -= h; need -= h; }
+    if (need > 0) { if (!(ci.src in BUYABLE)) return null; buy[ci.src] = (buy[ci.src] ?? 0) + need; }
+  }
+  return Object.entries(buy);
 }
 /** din ce e facut un produs (pentru mesajul „n-avem marfa”) */
 export const orderSrc = (code: string) => CHAIN_INFO.find(c => c.id === chain(code)) ?? null;
@@ -112,6 +125,16 @@ export class MergeGame extends Panel {
       this.commit();
     }
     this.lastEnc = encBoard(this.b.cells);
+    if (this.which === 'florist') this.refundPots();
+  }
+  /** răsadurile (scoase în 1.10.0): ce era pe tejghea sau în inventar se întoarce în semințe de lalele (2^nivel bucăți) */
+  refundPots() {
+    let n = 0;
+    this.b.cells.forEach((c, i) => { if (c?.startsWith('pot:')) { n += 2 ** +c.split(':')[1]; this.b.cells[i] = null; } });
+    if (n) this.commit();
+    const r = this.scene.w.res ?? {};
+    for (const k of Object.keys(r)) if (k.startsWith('prod_pot_') && r[k] > 0) { n += r[k] * 2 ** +k.split('_')[2]; this.scene.op({ k: 'res', res: k, delta: -r[k] }); }
+    if (n) { this.scene.op({ k: 'res', res: 'seed_tulip', delta: n }); this.scene.hud.toast(`🌰 Răsadurile nu se mai vând la florărie: ai primit înapoi ${n} semințe de lalele (pune-le în grădină)`); }
   }
   /** trimite tejgheaua (s-a schimbat ceva pe ea) */
   commit() { const enc = encBoard(this.b.cells); this.lastEnc = enc; this.scene.op({ k: 'board', which: this.which, enc }); }

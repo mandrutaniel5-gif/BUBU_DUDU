@@ -56,7 +56,7 @@ export class BedtimeGame extends Panel {
     super(scene, done, '🌙 Rutina de seară', '');
     this.partnerAI = scene.partner.control !== 'remote';
     this.me = new Actor(scene.myId, this.fx); this.pa = new Actor(scene.partner.id, this.fx);
-    for (const d of scene.miniInbox.splice(0)) this.net(d);
+    for (const d of scene.miniInbox.splice(0)) if (!(d as any)?.quit) this.net(d); // un „a iesit” vechi (de aseara) nu conteaza
     const rnd = seeded(scene.nightKey() * 7919 + 13);
     const pool: Step[] = ['pos', 'tug', 'story', 'stars', 'dream', 'sheep'];
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
@@ -87,6 +87,16 @@ export class BedtimeGame extends Panel {
     if (d.dutch) { this.dutchBy = 'them'; this.go('dutch'); }
     if (d.kiss !== undefined) this.theirKiss = d.kiss;
     if (d.dream !== undefined) this.theirDream = d.dream;
+    // partenerul a inchis rutina (X): nu mai astepti dupa el, adormi si tu (somnul merge mai departe la amandoi)
+    if (d.quit && !this.ended) { this.theirQuit = true; this.go('night'); }
+  }
+  theirQuit = false;
+  /** X: ii spunem si partenerului (altfel ramanea singur in rutina, cu timpul oprit) si adormim mai departe */
+  abort() {
+    if (this.ended) return;
+    if (!this.partnerAI) this.send({ quit: true });
+    this.finish(Math.max(0.5, this.score), 'Noapte bună 💤');
+    this.ended!.t = 1.6;
   }
 
   go(s: Step) { this.step = s; this.stepT = 0; this.removeInput(); if (s === 'msg') this.showInput(); }
@@ -430,6 +440,7 @@ export class BedtimeGame extends Panel {
         drawBed('spoon');
         ctx.fillStyle = `rgba(10,10,30,${Math.min(0.75, this.stepT / 2)})`; ctx.fillRect(x, y, w, h);
         T('Noapte bună, iubire 💕', y + h * 0.35, 28, '#ffd6e4');
+        if (this.theirQuit) T(`${this.scene.partner.actor.spec.name} a adormit deja 😴`, y + h * 0.35 + 40, 17, '#ffd6e4');
         break;
       }
     }

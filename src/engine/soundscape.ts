@@ -5,6 +5,8 @@ import { iso } from '../world/iso';
 import { floorAt, HOUSE, FURNITURE, type Floor } from '../world/map';
 import { ORIGIN } from '../world/layout';
 import { nightAmount } from '../game/state';
+import * as Story from '../scenes/story';
+import { lightning } from '../world/season';
 import type { WorldScene, Pawn } from '../scenes/world';
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
@@ -84,6 +86,7 @@ export class Soundscape {
   private travelRef: unknown = null;
   private travelDoor = 0; private stairT = 0;
   private lastHour = -1;
+  private thunderN = -1;
   private tv = FURNITURE.find(f => f.id === 'tv' || f.type === 'tv');
 
   constructor(private s: WorldScene) {}
@@ -254,6 +257,15 @@ export class Soundscape {
     } else if (area === 'apartment') {
       L('amb1', 'amb_room', 0.5);
       L('amb2', 'amb_city', 0.2 - 0.06 * night, { lp: 900 });
+    }
+    // furtuna: ploaie, vant tare si tunete dupa fulgere (in casa mai infundat)
+    const storm = s.space === 'world' ? Story.stormLevel(s) : 0;
+    if (storm > 0) {
+      const indoor = area === 'home' && me.gx >= HOUSE.x0 && me.gx <= HOUSE.x1 + 1 && me.gy >= HOUSE.y0 && me.gy <= HOUSE.y1 + 1;
+      L('storm-rain', 'amb_rain', (indoor ? 0.3 : 0.7) * storm, indoor ? { lp: 1400 } : undefined);
+      L('storm-wind', 'amb_wind', (indoor ? 0.12 : 0.35) * storm, indoor ? { lp: 900 } : undefined);
+      const Lg = lightning(s.time, storm);
+      if (Lg.n >= 0 && Lg.n !== this.thunderN && Lg.since > 0.6) { this.thunderN = Lg.n; if (!mini) Sfx.play(storm > 0.6 ? 'thunder' : 'thunder_far', { vol: indoor ? 0.5 : 0.85 }); }
     }
     if (mini) { const own = (s.minigame!.obj as { loops?: [string, number, LoopOpts?][] }).loops; for (const [i, [id, v, o]] of (own ?? MINI_LOOPS[mini] ?? []).entries()) L('mini' + i, id, v, { bus: 'sfx', ...(o ?? {}) }); }
     Sfx.keepOnly(keep);

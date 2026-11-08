@@ -10,7 +10,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
     await sleep(2500); await p.evaluate(() => document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'))); await sleep(500);
     const over = async () => p.evaluate(() => {
       const mm = document.querySelector('.minimap').getBoundingClientRect(); const hits = [];
-      for (const el of document.querySelectorAll('.hud > *')) { if (el.classList.contains('minimap') || el.classList.contains('mapsize') || el.classList.contains('toasts') || el.classList.contains('modal') || el.classList.contains('pop') || getComputedStyle(el).display === 'none' || el.classList.contains('hidden')) continue; const r = el.getBoundingClientRect(); if (!r.width) continue; if (r.left < mm.right && mm.left < r.right && r.top < mm.bottom && mm.top < r.bottom) hits.push(el.className); }
+      for (const el of document.querySelectorAll('.hud > *')) { if (el.classList.contains('minimap') || el.classList.contains('mapsize') || el.classList.contains('mapopen') || el.classList.contains('toasts') || el.classList.contains('modal') || el.classList.contains('pop') || getComputedStyle(el).display === 'none' || el.classList.contains('hidden')) continue; const r = el.getBoundingClientRect(); if (!r.width) continue; if (r.left < mm.right && mm.left < r.right && r.top < mm.bottom && mm.top < r.bottom) hits.push(el.className); }
       return { hits, mm: [Math.round(mm.width), Math.round(mm.height)] };
     });
     const a = await over(); ok(`${name}: miniharta mica nu acopera nimic`, !a.hits.length, JSON.stringify(a));

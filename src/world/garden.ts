@@ -1,6 +1,7 @@
 // Gradina (stil Hay Day): culturi, stadii de crestere, udat, ingrasamant.
 import { iso, tilePath } from './iso';
 import { heartPath } from '../char/draw';
+import { isWinter } from './seasonlook';
 
 export type CropCat = 'veg' | 'flower';
 export interface Crop { id: string; name: string; cat: CropCat; grow: number; yield: number; seed: number; sell: number; where: 'online' | 'sat' }
@@ -46,6 +47,8 @@ export function drawPlotSoil(ctx: CanvasRenderingContext2D, gx: number, gy: numb
   for (const v of [0.3, 0.5, 0.7]) { const a = iso(gx + 0.15, gy + v), b = iso(gx + 0.85, gy + v); ctx.strokeStyle = wet ? '#5e3e24' : '#9a7650'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
   if (wet) { const c = iso(gx + 0.5, gy + 0.5); ctx.fillStyle = 'rgba(120,190,255,0.35)'; ctx.beginPath(); ctx.ellipse(c.x - 6, c.y + 2, 6, 2.5, 0, 0, 7); ctx.ellipse(c.x + 9, c.y - 3, 4, 2, 0, 0, 7); ctx.fill(); }
   if (p.fert > 0 && p.crop) { const c = iso(gx + 0.25, gy + 0.75); for (let i = 0; i < 4; i++) e(ctx, c.x + i * 4, c.y - (i % 2) * 2, 1.6, 1.2, '#f4e2b5', false); }
+  // iarna: zapada peste razor (mai putina cand e udat / are planta)
+  if (isWinter()) { const c = iso(gx + 0.5, gy + 0.5); ctx.fillStyle = 'rgba(255,255,255,0.9)'; for (const [dx, dy, rx] of (p.crop ? [[-12, 3, 7], [11, -3, 6]] : [[-8, 2, 12], [9, -3, 11], [0, 6, 9]])) { ctx.beginPath(); ctx.ellipse(c.x + dx, c.y + dy, rx, rx * 0.42, 0, 0, 7); ctx.fill(); } }
   void t;
 }
 

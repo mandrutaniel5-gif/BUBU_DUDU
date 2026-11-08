@@ -6,6 +6,7 @@ import { heartPath } from '../char/draw';
 import { drawItem } from './items';
 import { drawWell } from './garden';
 import type { Furn } from './map';
+import { leaf, isWinter, snowMound } from './seasonlook';
 
 export type Res = 'wood' | 'stone' | 'flower' | 'soil';
 export const RES_INFO: Record<Res, { icon: string; label: string }> = {
@@ -171,6 +172,7 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
       return true;
     }
     case 'wildflower': case 'flowerbed': {
+      if (isWinter()) { if (f.type === 'flowerbed') { tilePath(ctx, gx + 0.1, gy + 0.1, 0.8, 0.8, 0.4); ctx.fillStyle = '#eef3f8'; ctx.fill(); } snowMound(ctx, gx, gy); return true; } // iarna: sub zapada
       if (f.type === 'flowerbed') { tilePath(ctx, gx + 0.1, gy + 0.1, 0.8, 0.8, 0.4); ctx.fillStyle = '#a87a50'; ctx.fill(); }
       const n = depleted ? 0 : f.type === 'flowerbed' ? 9 : 6;
       for (let i = 0; i < n; i++) {
@@ -219,7 +221,7 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
       if (f.type === 'tree') return false;
       isoBox(ctx, gx + 0.45, gy + 0.45, 0.1, 0.1, 22, boxOf('#a0703f'));
       const c = iso(gx + 0.5, gy + 0.5, 22); const sw = Math.sin(t + gx) * 1.5;
-      for (const [dx, dy, r] of [[-9, -2, 11], [9, -4, 11], [0, -14, 13]]) ell(ctx, { x: c.x + dx + sw, y: c.y + dy }, r, r * 0.9, '#8fdc8f');
+      ([[-9, -2, 11], [9, -4, 11], [0, -14, 13]] as const).forEach(([dx, dy, r], i) => ell(ctx, { x: c.x + dx + sw, y: c.y + dy }, r, r * 0.9, leaf('#8fdc8f', i + gx)));
       return true;
     }
     case 'swing': {

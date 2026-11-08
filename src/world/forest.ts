@@ -4,6 +4,7 @@ import { iso, isoBox, boxOf } from './iso';
 import { heartPath } from '../char/draw';
 import { drawTractorIso, drawParked } from './vehicles';
 import { ORIGIN } from './layout';
+import { leaf, fruit, isWinter } from './seasonlook';
 
 /** padurea sta in lume la nord de casa: coordonatele de mai jos sunt cele vechi (locale), plus OX/OY */
 const OX = ORIGIN.forest.x, OY = ORIGIN.forest.y;
@@ -68,7 +69,10 @@ export function drawForestType(ctx: CanvasRenderingContext2D, f: Furn, t: number
       if (depleted) { isoBox(ctx, gx + 0.38, gy + 0.38, 0.24, 0.24, 8, { top: '#e7c08f', left: '#a0703f', right: '#8a5d32' }); return true; }
       isoBox(ctx, gx + 0.42, gy + 0.42, 0.16, 0.16, 18, boxOf('#8a5d32'));
       const sw = Math.sin(t * 0.9 + gx) * 1.5;
-      for (let i = 0; i < 3; i++) { const y0 = c.y - 16 - i * 22, w = 30 - i * 8; ctx.beginPath(); ctx.moveTo(c.x - w + sw * i, y0); ctx.lineTo(c.x + sw * (i + 1), y0 - 34); ctx.lineTo(c.x + w + sw * i, y0); ctx.closePath(); ctx.fillStyle = ['#3f8f5a', '#4aa267', '#57b574'][i]; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.stroke(); }
+      const snow = isWinter();
+      for (let i = 0; i < 3; i++) { const y0 = c.y - 16 - i * 22, w = 30 - i * 8; ctx.beginPath(); ctx.moveTo(c.x - w + sw * i, y0); ctx.lineTo(c.x + sw * (i + 1), y0 - 34); ctx.lineTo(c.x + w + sw * i, y0); ctx.closePath(); ctx.fillStyle = snow ? ['#2f7a4c', '#3a8a58', '#46996a'][i] : ['#3f8f5a', '#4aa267', '#57b574'][i]; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.stroke();
+        // iarna: zapada pe fiecare etaj al bradului
+        if (snow) { const tx = c.x + sw * (i + 1), ty = y0 - 34; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx + w * 0.55, ty + 34 * 0.55); ctx.quadraticCurveTo(tx + w * 0.2, ty + 34 * 0.42, tx, ty + 34 * 0.5); ctx.quadraticCurveTo(tx - w * 0.2, ty + 34 * 0.42, tx - w * 0.55, ty + 34 * 0.55); ctx.closePath(); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.strokeStyle = '#b9c9dc'; ctx.lineWidth = 1.2; ctx.stroke(); } }
       return true;
     }
     case 'mushroom': {
@@ -81,8 +85,8 @@ export function drawForestType(ctx: CanvasRenderingContext2D, f: Furn, t: number
       return true;
     }
     case 'berrybush': {
-      for (const [dx, dy, r] of [[-10, -8, 12], [10, -8, 12], [0, -18, 13]]) e(ctx, c.x + dx, c.y + dy, r, r * 0.85, '#4f9d4a');
-      if (!depleted) for (let i = 0; i < 9; i++) e(ctx, c.x - 14 + (i * 7) % 28, c.y - 22 + (i * 5) % 18, 2.6, 2.6, '#4b3b8f', true, 1);
+      ([[-10, -8, 12], [10, -8, 12], [0, -18, 13]] as const).forEach(([dx, dy, r], i) => e(ctx, c.x + dx, c.y + dy, r, r * 0.85, leaf('#4f9d4a', i + gx)));
+      if (!depleted && fruit()) for (let i = 0; i < 9; i++) e(ctx, c.x - 14 + (i * 7) % 28, c.y - 22 + (i * 5) % 18, 2.6, 2.6, '#4b3b8f', true, 1);
       return true;
     }
     case 'pier': {

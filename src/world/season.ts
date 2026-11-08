@@ -9,7 +9,40 @@ const O = '#3a2a22';
 const rnd = (i: number) => { const v = Math.sin(i * 91.7 + 7.3) * 43758.5; return v - Math.floor(v); };
 function e(c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, fill: string, st = true, lw = 1.5) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fillStyle = fill; c.fill(); if (st) { c.strokeStyle = O; c.lineWidth = lw; c.stroke(); } }
 
-export function drawSeason(c: CanvasRenderingContext2D, W: number, H: number, t: number, season: string, minutes: number, newYear: boolean) {
+/** fulgerul furtunii la momentul t: cat de tare lumineaza (0-1) si al catelea fulger e (pentru tunet, in soundscape) */
+export function lightning(t: number, lv: number): { a: number; n: number; since: number } {
+  const P = 7, n = Math.floor(t / P), since = t - n * P - rnd(n + 0.37) * 3;
+  if (lv <= 0 || rnd(n * 1.7 + 0.11) > 0.25 + lv * 0.55) return { a: 0, n: -1, since: 0 };
+  const a = since > 0 && since < 0.09 ? 1 : since > 0.2 && since < 0.3 ? 0.65 : since > 0.3 && since < 0.7 ? 0.25 * (0.7 - since) / 0.4 : 0;
+  return { a: a * Math.min(1, lv + 0.2), n, since };
+}
+/** furtuna: cer intunecat, ploaie in rafale piezise, fulgere (cu traznetul desenat) */
+function drawStorm(c: CanvasRenderingContext2D, W: number, H: number, t: number, lv: number) {
+  c.fillStyle = `rgba(28,36,64,${0.34 * lv})`; c.fillRect(0, 0, W, H);
+  const gust = 0.75 + 0.25 * Math.sin(t * 0.7) + 0.15 * Math.sin(t * 2.3), dx = 7 * gust, dy = 20;
+  c.strokeStyle = `rgba(205,222,255,${0.38 + 0.25 * lv})`; c.lineWidth = 1.3; c.lineCap = 'round'; c.beginPath();
+  const n = Math.round(70 + 150 * lv);
+  for (let i = 0; i < n; i++) {
+    const sp = 520 + rnd(i + 40) * 260, y = (rnd(i + 900) * (H + 60) + t * sp) % (H + 60) - 30, x = ((rnd(i) * (W + 120) + t * sp * dx / dy) % (W + 120)) - 60;
+    const len = 0.55 + rnd(i + 7) * 0.5; c.moveTo(x, y); c.lineTo(x + dx * len, y + dy * len);
+  }
+  c.stroke();
+  // stropi pe jos
+  c.strokeStyle = `rgba(225,236,255,${0.45 * lv})`; c.lineWidth = 1;
+  for (let i = 0; i < 26 * lv; i++) { const ph = (t * 2.2 + rnd(i + 77)) % 1, x = rnd(i * 3 + Math.floor(t * 2.2 + rnd(i + 77))) * W, y = H * 0.25 + rnd(i * 5 + Math.floor(t * 2.2 + rnd(i + 77))) * H * 0.75, r = 2 + ph * 7; c.globalAlpha = 1 - ph; c.beginPath(); c.ellipse(x, y, r, r * 0.4, 0, 0, 7); c.stroke(); }
+  c.globalAlpha = 1;
+  const L = lightning(t, lv);
+  if (L.a > 0) {
+    c.fillStyle = `rgba(235,240,255,${0.55 * L.a})`; c.fillRect(0, 0, W, H);
+    if (L.since < 0.3) { // traznetul: o linie franta din cer
+      let x = W * (0.15 + rnd(L.n + 0.9) * 0.7), y = -5; c.strokeStyle = `rgba(255,255,240,${L.a})`; c.lineWidth = 3; c.shadowColor = '#bcd4ff'; c.shadowBlur = 14; c.beginPath(); c.moveTo(x, y);
+      for (let k = 0; k < 7; k++) { x += (rnd(L.n * 13 + k) - 0.5) * 60; y += H * 0.07 + rnd(L.n + k * 7) * H * 0.04; c.lineTo(x, y); }
+      c.stroke(); c.shadowBlur = 0;
+    }
+  }
+}
+
+export function drawSeason(c: CanvasRenderingContext2D, W: number, H: number, t: number, season: string, minutes: number, newYear: boolean, storm = 0) {
   c.save();
   if (season === 'winter') {
     // un val alb-albastrui (zapada pe jos) + fulgi care cad lin
@@ -17,7 +50,8 @@ export function drawSeason(c: CanvasRenderingContext2D, W: number, H: number, t:
     for (let i = 0; i < 90; i++) { const x = (rnd(i) * W + Math.sin(t * 0.6 + i) * 20 + t * 8) % W, y = (rnd(i + 500) * H + t * (24 + rnd(i + 9) * 30)) % H, r = 1.2 + rnd(i + 3) * 2.4; c.fillStyle = 'rgba(255,255,255,0.9)'; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }
   } else if (season === 'autumn') {
     c.fillStyle = 'rgba(255,170,80,0.08)'; c.fillRect(0, 0, W, H);
-    for (let i = 0; i < 26; i++) { const x = (rnd(i) * W + t * (20 + rnd(i + 4) * 30)) % W, y = (rnd(i + 200) * H + t * (16 + rnd(i + 2) * 18)) % H, a = t * 2 + i; c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = ['#e07a2f', '#c9502a', '#e8b23a'][i % 3]; c.beginPath(); c.ellipse(0, 0, 5, 2.6, 0, 0, 7); c.fill(); c.restore(); }
+    const tw = t * (1 + storm * 2.5); // in furtuna frunzele zboara de 3 ori mai repede
+    for (let i = 0; i < 26 + storm * 20; i++) { const x = (rnd(i) * W + tw * (20 + rnd(i + 4) * 30)) % W, y = (rnd(i + 200) * H + tw * (16 + rnd(i + 2) * 18)) % H, a = tw * 2 + i; c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = ['#e07a2f', '#c9502a', '#e8b23a'][i % 3]; c.beginPath(); c.ellipse(0, 0, 5, 2.6, 0, 0, 7); c.fill(); c.restore(); }
   } else if (season === 'spring') {
     for (let i = 0; i < 20; i++) { const x = (rnd(i) * W + t * 14 + Math.sin(t + i) * 12) % W, y = (rnd(i + 300) * H + t * 12) % H; c.fillStyle = i % 2 ? 'rgba(255,182,201,0.85)' : 'rgba(255,255,255,0.85)'; c.beginPath(); c.ellipse(x, y, 3, 2, t + i, 0, 7); c.fill(); }
   } else {
@@ -29,6 +63,7 @@ export function drawSeason(c: CanvasRenderingContext2D, W: number, H: number, t:
       if (ph < 0.15) { c.fillStyle = '#fff'; c.beginPath(); c.arc(cx, H - ph / 0.15 * (H - cy), 2.5, 0, 7); c.fill(); continue; }
       c.globalAlpha = 1 - ph; for (let i = 0; i < 14; i++) { const a = i / 14 * 6.283; c.fillStyle = col; c.beginPath(); c.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r + ph * 20, 2.2, 0, 7); c.fill(); } c.globalAlpha = 1; }
   }
+  if (storm > 0) drawStorm(c, W, H, t, storm);
   c.restore();
 }
 
@@ -72,6 +107,14 @@ export function drawStoryType(c: CanvasRenderingContext2D, f: Furn, t: number): 
       const p = iso(gx + 0.5, gy + 0.5, 120 + Math.sin(t * 3) * 3);
       c.fillStyle = '#ffffff'; c.strokeStyle = '#e63946'; c.lineWidth = 3; c.beginPath(); c.roundRect(p.x - 70, p.y - 14, 140, 26, 12); c.fill(); c.stroke();
       c.font = '800 11px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#e63946'; fillTextIcons(c, '⛈️ Acoperișul e stricat!', p.x, p.y, 11); c.textBaseline = 'alphabetic';
+      return true;
+    }
+    case 'lotsign': { // tablita „De vanzare” la gardul padurii
+      const p = iso(gx + 0.5, gy + 0.5), b = iso(gx + 0.5, gy + 0.5, 46);
+      c.strokeStyle = O; c.lineWidth = 6; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(b.x, b.y); c.stroke(); c.strokeStyle = '#a0703f'; c.lineWidth = 3.5; c.stroke();
+      c.fillStyle = '#fff8ef'; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.roundRect(b.x - 44, b.y - 30, 88, 30, 6); c.fill(); c.stroke();
+      c.font = '800 10px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#2f7a45'; fillTextIcons(c, '🌲 De vânzare', b.x, b.y - 20, 10);
+      c.fillStyle = '#c0573e'; c.font = '800 9px "Baloo 2", sans-serif'; c.fillText(String((f as any).price ?? '') + ' lei', b.x, b.y - 8); c.textBaseline = 'alphabetic';
       return true;
     }
     case 'fairstand': {

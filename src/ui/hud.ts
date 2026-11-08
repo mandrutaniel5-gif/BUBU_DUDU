@@ -23,7 +23,8 @@ import { basePose } from '../char/pose';
 import { CROPS, seedKey, catCount, drawCropPlant, WET_MIN } from '../world/garden';
 import { CRITTER_NAMES } from '../world/forest';
 import type { NetStatus } from '../net/types';
-import { drawMini, drawFull, topMapImage, type MapMarks } from './minimap';
+import { drawMini, drawFull, topMapImage, mapGeom, type MapMarks, type MapPoi, type MapView } from './minimap';
+import { FURNITURE } from '../world/map';
 import { ORIGIN, REGION_BY_ID } from '../world/layout';
 
 
@@ -63,7 +64,7 @@ export class Hud {
       </div>
       <div class="pop emotes hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>Emote-uri & dansuri</h4><div class="grid">${emotes.map(a => `<button data-emote="${a.id}"><span>${a.icon}</span>${a.label}</button>`).join('')}</div></div>
       <div class="pop pairs hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>Împreună 💞</h4><div class="grid">${PAIRS.filter(p => !p.only || p.only === s.myId).map(p => `<button data-pair="${p.id}"><span>${p.icon}</span>${p.label}</button>`).join('')}<button data-pair="follow" class="pfollow"><span>🚶</span><i>Vino cu mine</i></button></div></div>
-      <canvas class="minimap" data-a="map" title="Harta (atinge: toată lumea)"></canvas><button class="mapsize" data-a="mapsize" title="Mărește / micșorează harta">⤢</button>
+      <canvas class="minimap" data-a="map" title="Harta (atinge: toată lumea)"></canvas><button class="mapsize" data-a="mapsize" title="Mărește / micșorează harta">⤢</button><button class="mapopen" data-a="map" title="Harta mare a lumii: toate clădirile">🗺️ Harta</button>
       <div class="regionbanner hidden"><span class="ri"></span><b class="rn"></b></div>
       <div class="ridebar hidden"><span class="rt"></span><div class="rbtns"><span class="rdest"></span><button data-a="rgo" class="go">▶ Pornește</button><button data-a="rpause">⏸ Oprește</button><button data-a="rback">↩ Întoarce</button><button data-a="rstop"></button><button data-a="rcall">📣 Cheamă</button><button data-a="roff">⬇ Coboară</button></div></div>
       <div class="buildbar hidden"><span class="bt"></span><button data-a="bok">✔ Pune</button><button data-a="bend">✖ Gata</button></div>
@@ -132,6 +133,8 @@ export class Hud {
   }
   private miniT = 0;
   /** miniharta marita (se tine minte pe fiecare telefon) */
+  /** harta mare: ultima marire (la redeschidere se centreaza pe tine) */
+  mapView: MapView | null = null;
   mapBig = (() => { try { return !!localStorage.getItem('bd-mapbig'); } catch { return false; } })();
   private mapLayoutAt = 0; private mapKey = '';
   /**
@@ -153,13 +156,14 @@ export class Hud {
     const key = `${right}|${top}|${w}|${h}`; if (key === this.mapKey) return; this.mapKey = key;
     Object.assign(cv.style, { right: right + 'px', top: top + 'px', width: w + 'px', height: h + 'px' });
     Object.assign(btn.style, { right: (right + 4) + 'px', top: (top + h - 26) + 'px' });
+    const mo = this.root.querySelector('.mapopen') as HTMLElement | null; if (mo) Object.assign(mo.style, { right: (right + w - 74) + 'px', top: (top + h - 26) + 'px' });
     btn.textContent = this.mapBig ? '⤡' : '⤢';
   }
   drawMinimap() {
     const cv = this.root.querySelector('.minimap') as HTMLCanvasElement | null; if (!cv) return;
     const show = this.s.chapter > 0;
     const btn = this.root.querySelector('.mapsize') as HTMLElement | null;
-    if ((cv.style.display !== 'none') !== show) { cv.style.display = show ? '' : 'none'; if (btn) btn.style.display = show ? '' : 'none'; }
+    if ((cv.style.display !== 'none') !== show) { cv.style.display = show ? '' : 'none'; if (btn) btn.style.display = show ? '' : 'none'; const mo = this.root.querySelector('.mapopen') as HTMLElement | null; if (mo) mo.style.display = show ? '' : 'none'; }
     if (!show) return;
     this.layoutMinimap();
     const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
@@ -188,19 +192,74 @@ export class Hud {
       <h4>Urmează</h4><ul class="goals">${next.join('') || '<li><small>Nimic special în următoarele 10 zile</small></li>'}</ul>
       <button data-daymap>🗺️ Unde sunt locurile (harta)</button>`).querySelector('[data-daymap]')?.addEventListener('click', () => this.openMap());
   }
+  /** toate cladirile si locurile pentru harta mare (major = se vad si cand harta e mica) */
+  mapPois(): MapPoi[] {
+    const s = this.s, list = s.space === 'world' ? s.furnList : FURNITURE;
+    const out: MapPoi[] = [{ id: 'home', x: 8, y: 7, icon: '🏡', name: 'Acasă', label: 'Casa voastră', major: false }];
+    const seen = new Set<string>();
+    for (const f of list) {
+      const a = f.action, t = f.type as string; if (!a?.id || !a.icon) continue;
+      if (!MAP_TYPES.has(t) && !(a.id.startsWith('st-') && !['st-parcel', 'st-roof', 'st-fieldsign'].includes(a.id)) && !MAP_IDS.has(f.id)) continue;
+      const key = a.id + (a.id.startsWith('st-') && a.id !== 'st-flot' ? '' : f.id); if (seen.has(key)) continue; seen.add(key);
+      const visit = /^Bate la u(ș|s)a: (.+)$/.exec(a.label);
+      const name = MAP_NAMES[f.id] ?? (visit ? 'Casa: ' + visit[2] : a.label.replace(/\s*\(.*\)\s*/g, '').replace(/^(Intră în bloc|Aruncă o monedă)$/, m => m === 'Aruncă o monedă' ? 'Fântâna' : 'Blocul (apartamentul)'));
+      out.push({ id: f.id, x: f.gx + f.w / 2, y: f.gy + f.d / 2, icon: visit ? '🏠' : a.icon, name, label: visit ? `Casa lui ${visit[2]}: bate la ușă și vorbiți` : a.label, major: !visit && !MAP_LABELED.has(f.id) && !['busstop', 'taxistand', 'cfountain', 'fountain', 'icecart', 'noticeboard', 'carousel', 'gazebo', 'pier'].includes(t) });
+    }
+    return out;
+  }
   /** harta mare (toata lumea) */
   openMap() {
     const s = this.s;
     const r = s.space === 'apartment' ? null : REGION_BY_ID[s.area];
-    const m = this.modal(`<h3>🗺️ Harta lumii</h3><p class="sub">${r ? `Ești ${WHERE[s.area]?.replace(' · ', '') ?? r.name}` : 'Ești în apartament (Blocul Lalelelor)'}</p><canvas class="bigmap"></canvas>${s.space === 'world' ? this.placesHtml() : ''}<div class="mapgo">${s.space === 'world' ? DESTS.map(d => `<button data-mapgo="${d.id}" class="${s.reachWhy(d.id) ? 'off' : ''}">${d.icon} ${d.name}</button>`).join('') : ''}</div>`);
+    const m = this.modal(`<h3>🗺️ Harta lumii</h3><p class="sub">${r ? `Ești ${WHERE[s.area]?.replace(' · ', '') ?? r.name}` : 'Ești în apartament (Blocul Lalelelor)'} · trage cu degetul, mărește cu ＋ și atinge o clădire</p><div class="bigmapwrap"><canvas class="bigmap"></canvas><div class="mapzoom"><button data-z="in" aria-label="Mărește">＋</button><button data-z="out" aria-label="Micșorează">－</button><button data-z="me" aria-label="Unde sunt">📍</button></div></div><div class="mapinfo"><small>👆 Atinge o iconiță ca să vezi ce clădire e</small></div>${s.space === 'world' ? this.placesHtml() : ''}<div class="mapgo">${s.space === 'world' ? DESTS.map(d => `<button data-mapgo="${d.id}" class="${s.reachWhy(d.id) ? 'off' : ''}">${d.icon} ${d.name}</button>`).join('') : ''}</div>`);
     m.querySelector('.box')?.classList.add('mapbox');
     m.querySelectorAll('[data-mapgo]').forEach(b => b.addEventListener('click', () => { this.closeModal(); s.mapGo((b as HTMLElement).dataset.mapgo!); }));
     m.querySelectorAll('[data-place]').forEach(b => b.addEventListener('click', () => { const p = PLACES.find(x => x.id === (b as HTMLElement).dataset.place)!; const lock = p.ch && s.chapter < p.ch; if (lock) { this.toast(`🔒 ${p.name}: din Capitolul ${p.ch}`); Sfx.play('bad'); return; } this.closeModal(); s.walkToPlace(p.x, p.y, `${p.icon} ${p.name}`); }));
-    const cv = m.querySelector('.bigmap') as HTMLCanvasElement;
+    const cv = m.querySelector('.bigmap') as HTMLCanvasElement, info = m.querySelector('.mapinfo') as HTMLElement;
+    const pois = this.mapPois(), me0 = this.mapMarks().me;
+    const view: MapView = this.mapView ?? { z: 1, cx: me0.x, cy: me0.y }; view.cx = me0.x; view.cy = me0.y; this.mapView = view;
+    let sel = '';
+    const zoomAt = (f: number, sx?: number, sy?: number) => {
+      const W = cv.clientWidth, H = cv.clientHeight; if (!W) return;
+      const G = mapGeom(W, H, view), a = G.inv(sx ?? W / 2, sy ?? H / 2);
+      view.z = Math.max(1, Math.min(8, view.z * f));
+      const G2 = mapGeom(W, H, view), b = G2.inv(sx ?? W / 2, sy ?? H / 2); view.cx += a.x - b.x; view.cy += a.y - b.y;
+    };
+    const pick = (sx: number, sy: number) => {
+      const G = mapGeom(cv.clientWidth, cv.clientHeight, view), zoomed = G.px >= 6;
+      let best: MapPoi | null = null, bd = 22;
+      for (const p of pois) { if (!zoomed && !p.major) continue; const q = G.P(p.x, p.y), d = Math.hypot(q.x - sx, q.y - sy); if (d < bd) { bd = d; best = p; } }
+      sel = best?.id ?? '';
+      if (!best) { info.innerHTML = '<small>👆 Atinge o iconiță ca să vezi ce clădire e (mărește cu ＋ pentru toate casele)</small>'; return; }
+      const why = s.space === 'world' ? s.reachWhyAt(best.x, best.y) : 'Ieși întâi din apartament';
+      info.innerHTML = `<b>${esc(best.icon)} ${esc(best.label)}</b>${why ? `<small>${esc(why)}</small>` : ''}<button data-walk ${why ? 'class="off"' : ''}>🚶 Du-mă</button>`;
+      Sfx.play('click', { vol: 0.4 });
+      info.querySelector('[data-walk]')?.addEventListener('click', () => {
+        if (why) { this.toast(why); Sfx.play('bad'); return; }
+        this.closeModal();
+        if (best!.id === 'home') s.walkToPlace(4.5, 13.6, '🏡 Acasă'); else s.walkToFurn(best!.id, `${best!.icon} ${best!.name}`);
+      });
+    };
+    m.querySelectorAll('[data-z]').forEach(b => b.addEventListener('click', () => { const z = (b as HTMLElement).dataset.z; if (z === 'me') { const q = this.mapMarks().me; view.z = Math.max(view.z, 3); view.cx = q.x; view.cy = q.y; } else zoomAt(z === 'in' ? 1.6 : 1 / 1.6); Sfx.play('click', { vol: 0.4 }); }));
+    // degetul: tragi harta, doua degete = mărești; o atingere scurta = alegi cladirea
+    const pts = new Map<number, { x: number; y: number }>(); let moved = 0, pinch0 = 0;
+    const rel = (e: PointerEvent) => { const b = cv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
+    cv.style.touchAction = 'none';
+    cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, rel(e)); moved = 0; if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); } });
+    cv.addEventListener('pointermove', e => {
+      const o = pts.get(e.pointerId); if (!o) return; const q = rel(e);
+      if (pts.size === 1) { const G = mapGeom(cv.clientWidth, cv.clientHeight, view); view.cx -= (q.x - o.x) / G.px; view.cy -= (q.y - o.y) / G.px; moved += Math.abs(q.x - o.x) + Math.abs(q.y - o.y); }
+      pts.set(e.pointerId, q);
+      if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0 > 0) zoomAt(d / pinch0, (a.x + b.x) / 2, (a.y + b.y) / 2); pinch0 = d; moved += 99; }
+    });
+    const up = (e: PointerEvent) => { const q = rel(e); if (pts.has(e.pointerId) && pts.size === 1 && moved < 8) pick(q.x, q.y); pts.delete(e.pointerId); if (pts.size < 2) pinch0 = 0; };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', e => { pts.delete(e.pointerId); pinch0 = 0; });
+    cv.addEventListener('wheel', e => { e.preventDefault(); const q = { x: e.offsetX, y: e.offsetY }; zoomAt(e.deltaY < 0 ? 1.25 : 0.8, q.x, q.y); }, { passive: false });
+    cv.addEventListener('dblclick', e => zoomAt(2, e.offsetX, e.offsetY));
     const tick = () => {
       if (m.classList.contains('hidden') || !cv.isConnected) return;
       const W = cv.clientWidth, H = cv.clientHeight, dpr = Math.min(2, devicePixelRatio || 1);
-      if (W && H) { if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); } const c = cv.getContext('2d')!; c.setTransform(dpr, 0, 0, dpr, 0, 0); drawFull(c, W, H, this.mapMarks()); }
+      if (W && H) { if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); } const c = cv.getContext('2d')!; c.setTransform(dpr, 0, 0, dpr, 0, 0); drawFull(c, W, H, this.mapMarks(), view, pois, sel); }
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -632,6 +691,12 @@ const WHERE: Record<string, string> = { home: '🏡 acasă · ', forest: '🌲 l
 const VEH_ICON: Record<string, string> = { bike: '🚲', scooter: '🛵', tractor: '🚜', bus: '🚌', taxi: '🚕' };
 const DEST_TXT: Record<string, string> = { village: 'Spre sat', home: 'Spre casă', city: 'Spre oraș', forest: 'Spre pădure' };
 /** locurile greu de gasit pentru cine e nou (harta → „Unde e?”); x, y = unde ajungi pe jos */
+/** ce apare pe harta mare: toate cladirile si locurile la care faci ceva */
+const MAP_TYPES = new Set(['building', 'cbuilding', 'farmhouse', 'church', 'barn', 'windmill', 'sawmill', 'stalls', 'busstop', 'ferris', 'carousel', 'towerdoor', 'taxistand', 'stand', 'bridgegap', 'gazebo', 'noticeboard', 'cfountain', 'fountain', 'icecart', 'roadblock', 'forestgate']);
+/** au deja eticheta mare pe harta intreaga (iconita lor apare doar cand mărești) */
+const MAP_LABELED = new Set(['w-sawmill', 'w-mill', 'w-bridge-gap', 'w-forestgate', 'st-farmgate']);
+const MAP_IDS = new Set(['f-pier', 'w-lakepier', 'well', 'c-lot']);
+const MAP_NAMES: Record<string, string> = { 'f-pier': 'Pescuit (pădure)', 'w-lakepier': 'Pescuit la lac', 'w-sawmill': 'Cheresteaua', 'w-mill': 'Moara', 'w-bridge-gap': 'Podul Mare', 'w-roadblock': 'Drumul spre oraș', 'w-forestgate': 'Poarta pădurii', stand: 'Taraba', well: 'Fântâna', 'v-bus': 'Autobuz', 'c-bus': 'Autobuz', 'c-taxi': 'Taxi', 'c-towerdoor': 'Blocul (apartamentul)', 'v-board': 'Avizierul', 'c-lot': 'Teren de vânzare' };
 const PLACES: { id: string; icon: string; name: string; where: string; what: string; x: number; y: number; ch?: number }[] = [
   { id: 'sawmill', icon: '🪚', name: 'Cheresteaua lui Nea Vasile', where: 'pe drum, la dreapta casei', what: 'aici tai scânduri și vinzi lemne', x: 29, y: 22.6 },
   { id: 'farm', icon: '🐔', name: 'Ferma voastră', where: 'ieși din curte spre dreapta, indicatorul de lângă gard', what: 'găini, vacă, stupi', x: 24.5, y: 14.3, ch: FARM_CHAPTER },

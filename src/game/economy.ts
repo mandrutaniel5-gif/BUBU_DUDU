@@ -180,7 +180,7 @@ export const CHAPTERS: Chapter[] = [
     goals: [
       { id: 'city1', icon: '🚌', text: 'Prima călătorie cu autobuzul la oraș', hint: `Stația de autobuz din sat (${PRICE.bus} lei de persoană)`, done: w => st(w, 'cityTrips') > 0, reward: { money: 10 } },
       { id: 'citysell', icon: '🧺', text: 'Vindeți 15 produse de la fermă la oraș', hint: 'Supermarketul cumpără ouă, lapte, brânză, miere, lână și grâne', done: w => st(w, 'citySold') >= 15, reward: { money: 30 } },
-      { id: 'cafe3', icon: '☕', text: 'Lucrează 3 ture la cafenea', hint: 'Cafeneaua (7:00-21:00) — fă cafelele din comandă', done: w => st(w, 'cafeShifts') >= 3, reward: { money: 30 } },
+      { id: 'cafe3', icon: '☕', text: 'O tură la cafenea (barista)', hint: 'Cafeneaua (7:00-21:00) — fă cafelele din comandă', done: w => st(w, 'cafeShifts') >= 1, reward: { money: 30 } }, // id-ul ramane (salvarile vechi); din 1.10.0 o singura tura
       { id: 'diploma', icon: '🎓', text: 'Obține o diplomă la universitate', hint: 'Universitatea: cursul de birou, de prim ajutor, florist sau tâmplar', done: w => st(w, 'diplomas') >= 1, reward: { hearts: 10 } },
       { id: 'office1', icon: '💼', text: 'O zi de muncă la birou sau la spital', hint: 'Ai nevoie de diploma potrivită', done: w => st(w, 'officeShifts') + st(w, 'nurseShifts') >= 1, reward: { money: 20 } },
       { id: 'elegant', icon: '🎩', text: 'Cumpără haine elegante', hint: 'Buticul Elegant: rochie de seară, costum, joben', done: w => ['rochie', 'costum', 'joben', 'crown'].some(i => Object.values(w.chars).some(c => (c as any).owned?.includes(i))), reward: { hearts: 10 } },

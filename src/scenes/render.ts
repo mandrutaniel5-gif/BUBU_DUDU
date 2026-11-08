@@ -49,6 +49,7 @@ import type { WorldScene, Pawn, Npc } from './world';
 import { isWorldStatic } from '../world/map';
 import { screenBox } from '../world/cull';
 import { ACTOR_SCALE } from './world';
+import { setSeason, season } from '../world/seasonlook';
 
 export function drawNpc(scene: WorldScene, ctx: CanvasRenderingContext2D, n: Npc) {
   if (!n.actor) return;
@@ -121,7 +122,9 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
   // rezolutia s-a schimbat (calitatea adaptiva, zoom): bucatile si imaginile se refac la noua marime
   { const cs = scene.chunkScale(); if (cs !== scene.floorChunks.scale) { scene.floorChunks.reset(cs); scene.sprites.clear(); } }
   const SS = scene.floorChunks.scale;
-  const bakeKey = baking ? `${lit2}|${own.florarie ? 1 : 0}${own.workshop ? 1 : 0}${own.apartment ? 1 : 0}|${bf ? 1 : 0}|${scene.chapter >= 2 ? 1 : 0}|${Story.storyKey(scene)}` : 'nu';
+  // anotimpul: toata lumea arata altfel (iarba, copacii, florile, zapada); cand se schimba, se redeseneaza tot
+  setSeason((globalThis as any).__seasonForce ?? (scene.space === 'world' ? Story.seasonOf(scene.w.day).id : 'summer'));
+  const bakeKey = baking ? `${season()}|${lit2}|${own.florarie ? 1 : 0}${own.workshop ? 1 : 0}${own.apartment ? 1 : 0}|${bf ? 1 : 0}|${scene.chapter >= 2 ? 1 : 0}|${Story.storyKey(scene)}` : 'nu|' + season();
   if (bakeKey !== scene.bakeKey) { scene.bakeKey = bakeKey; scene.floorChunks.reset(); scene.sprites.clear(); }
   scene.floorChunks.bake = baking ? (c, ox, oy, bw, bh) => bakeChunk(scene, c, ox, oy, bw, bh, stBake, bakeNight) : null;
   // un copac taiat / o piatra sparta (sau crescute la loc): refacem doar bucatile de podea in care sunt
@@ -194,7 +197,7 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
   const onTractor = (scene.me.riding && scene.me.rideKind === 'tractor') || (scene.sameArea() && scene.partner.riding && scene.partner.rideKind === 'tractor');
   const overlays: (() => void)[] = [];
   for (const f of visible) if (!scene.isDecor(f)) {
-    if ((onBike && (f.id === 'h-bike' || f.id === 'v-bike')) || (onScoot && (f.id === 'h-scooter' || f.id === 'v-scooter')) || (onTractor && (f.id === 'h-tractor' || f.id === 'f-tractor'))) continue;
+    if (parkedHidden(!!onBike, !!onScoot, !!onTractor, f.id)) continue; // cat mergi cu el, vehiculul parcat nu se mai deseneaza (si la cherestea / lac / oras, nu doar acasa si in sat: ramanea o „clona”)
     if (isBaked(f) && !liveNow(scene, f, st)) {
       // copt in podea; peste el, viu: semnul plutitor / ceasul / luminitele cladirii, fumul din cos
       if (layered(f)) overlays.push(() => { const g = globalThis as any; g.__layer = 'live'; try { drawFurn(ctx, f, scene.time, st); } finally { g.__layer = ''; } });
@@ -431,6 +434,8 @@ interface StaticEntry { key: string; x0: number; y0: number; x1: number; y1: num
 /** mobila si lucrurile casei care se pot "coace" (se refac cand li se schimba starea: lampa, curatenia...) */
 const HOME_BAKE = new Set(['bed', 'nightstand', 'wardrobe', 'rug', 'plant', 'toilet', 'bathtub', 'sink', 'washer', 'fridge', 'stove', 'counter', 'table', 'sofa', 'tv', 'bookshelf', 'tree', 'bush', 'bench', 'mailbox', 'flowers', 'doormat', 'lamp', 'well', 'laptop', 'signpost', 'gateway', 'shed', 'mower', 'stand', 'rock', 'wildflower', 'stonepath', 'heartstone', 'fence', 'pot', 'lamppost', 'sapling', 'snowman', 'gazebo', 'swing', 'flowerbed', 'logpile']);
 /** se poate "coace"? lucrurile lumii si ale casei care arata la fel (cele care se schimba se refac separat) */
+/** vehiculul parcat nu se deseneaza cat timp cineva merge cu el (oriunde ar fi parcat: acasa, sat, cherestea, lac, oras) */
+export const parkedHidden = (bike: boolean, scoot: boolean, tractor: boolean, id: string) => (bike && /-bike$/.test(id)) || (scoot && /-scooter$/.test(id)) || (tractor && /-tractor$/.test(id));
 export function bakeable(f: Furn) {
   if (isWorldStatic(f.id)) return cacheable(f);
   if (/^(h|v|f)-/.test(f.id)) return false; // vehiculele si gramada de lemne se misca dintr-un loc in altul

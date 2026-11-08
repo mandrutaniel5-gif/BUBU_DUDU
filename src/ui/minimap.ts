@@ -116,24 +116,56 @@ export function topMapImage(): HTMLCanvasElement {
   ctx.fillStyle = '#ff9ab8'; ctx.fillRect((2 - T0.x) * TK, (2 - T0.y) * TK, 12 * TK, 10 * TK); ctx.strokeStyle = '#4a2a22'; ctx.lineWidth = 1.5; ctx.strokeRect((2 - T0.x) * TK, (2 - T0.y) * TK, 12 * TK, 10 * TK);
   top = cv; return cv;
 }
-/** harta mare: toata lumea vazuta de sus, cu regiunile si unde sunteti */
-export function drawFull(c: CanvasRenderingContext2D, W: number, H: number, m: MapMarks) {
-  const img = topMapImage();
-  const k = Math.min(W / img.width, H / img.height), ox = (W - img.width * k) / 2, oy = (H - img.height * k) / 2;
-  c.clearRect(0, 0, W, H);
-  c.imageSmoothingEnabled = true;
-  c.drawImage(img, ox, oy, img.width * k, img.height * k);
-  const P = (x: number, y: number) => ({ x: ox + (x - T0.x) * TK * k, y: oy + (y - T0.y) * TK * k });
+export interface MapPoi { id: string; x: number; y: number; icon: string; name: string; label: string; major: boolean }
+export interface MapView { z: number; cx: number; cy: number }
+export const MAP_T0 = T0, MAP_T1 = T1;
+/** geometria hartii mari: scara (pixeli pe dala), dala → ecran si ecran → dala; centrul se tine in interiorul lumii */
+export function mapGeom(W: number, H: number, v: MapView) {
+  const img = topMapImage(), k0 = Math.min(W / img.width, H / img.height), k = k0 * v.z, px = TK * k;
+  const hw = W / 2 / px, hh = H / 2 / px;
+  const cx = (T1.x - T0.x) <= hw * 2 ? (T0.x + T1.x) / 2 : Math.max(T0.x + hw, Math.min(T1.x - hw, v.cx));
+  const cy = (T1.y - T0.y) <= hh * 2 ? (T0.y + T1.y) / 2 : Math.max(T0.y + hh, Math.min(T1.y - hh, v.cy));
+  v.cx = cx; v.cy = cy;
+  return { px, k, P: (x: number, y: number) => ({ x: W / 2 + (x - cx) * px, y: H / 2 + (y - cy) * px }), inv: (sx: number, sy: number) => ({ x: cx + (sx - W / 2) / px, y: cy + (sy - H / 2) / px }) };
+}
+/** harta mare: toata lumea vazuta de sus, cu regiunile, toate cladirile si unde sunteti; se mareste (z) si se trage */
+export function drawFull(c: CanvasRenderingContext2D, W: number, H: number, m: MapMarks, view: MapView = { z: 1, cx: 0, cy: 0 }, pois: MapPoi[] = [], sel = '') {
+  const img = topMapImage(), G = mapGeom(W, H, view), P = G.P;
+  c.clearRect(0, 0, W, H); c.fillStyle = '#8fc98a'; c.fillRect(0, 0, W, H);
+  c.imageSmoothingEnabled = G.px < TK * 1.5;
+  { const a = P(T0.x, T0.y); c.drawImage(img, a.x, a.y, img.width * G.k, img.height * G.k); }
   // busola: padurea e la nord
-  { c.font = '800 11px "Baloo 2", sans-serif'; c.fillStyle = '#4a2a22'; c.textAlign = 'left'; c.textBaseline = 'top'; c.fillText('↑ Nord (pădurea)', ox + 6, oy + 4); }
-  // numele regiunilor
+  { c.font = '800 11px "Baloo 2", sans-serif'; c.fillStyle = '#4a2a22'; c.textAlign = 'left'; c.textBaseline = 'top'; const a = P(T0.x, T0.y); c.fillText('↑ Nord (pădurea)', Math.max(6, a.x + 6), Math.max(4, a.y + 4)); }
   c.textAlign = 'center'; c.textBaseline = 'middle';
+  const zoomed = G.px >= 6;
+  // numele regiunilor (cand harta e mica); cand o maresti, apar numele fiecarei cladiri
   const labels: [string, string, number, number][] = [['🏡', 'Acasă', 4, 6], ['🌲', 'Pădurea', 19, -24], ['🏞️', 'Lacul', 70, 18], ['🌉', 'Podul Mare', 66, 44], ['🏘️', 'Satul', 121, 14], ['🏙️', 'Orașul', 214, 30], ['🌾', 'Câmpurile', 20, 41], ['🪚', 'Cheresteaua (scânduri)', 26, 27], ['🐓', 'Ferma', 40, -1], ['🌾', 'Moara', 42, 47]];
-  for (const [ic, name, x, y] of labels) {
-    const q = P(x, y); c.font = '800 12px "Baloo 2", sans-serif'; const tw = c.measureText(name).width + 30;
-    c.fillStyle = '#fffaf5ee'; c.strokeStyle = '#4a2a22'; c.lineWidth = 2; c.beginPath(); c.roundRect(q.x - tw / 2, q.y - 11, tw, 22, 11); c.fill(); c.stroke();
-    const cv = iconCanvas(ic, 48); if (cv) c.drawImage(cv, q.x - tw / 2 + 4, q.y - 8, 16, 16);
-    c.fillStyle = '#4a2a22'; c.fillText(name, q.x + 9, q.y + 1);
+  const pill = (ic: string, name: string, q: { x: number; y: number }, fs: number, hot = false) => {
+    c.font = `800 ${fs}px "Baloo 2", sans-serif`; const tw = c.measureText(name).width + fs * 2.5;
+    c.fillStyle = hot ? '#ffe3ea' : '#fffaf5ee'; c.strokeStyle = hot ? '#ff4d6d' : '#4a2a22'; c.lineWidth = 2; c.beginPath(); c.roundRect(q.x - tw / 2, q.y - fs * 0.92, tw, fs * 1.84, fs * 0.92); c.fill(); c.stroke();
+    const cv = iconCanvas(ic, 48); if (cv) c.drawImage(cv, q.x - tw / 2 + fs * 0.35, q.y - fs * 0.66, fs * 1.33, fs * 1.33);
+    c.fillStyle = '#4a2a22'; c.fillText(name, q.x + fs * 0.75, q.y + 1);
+    return { x0: q.x - tw / 2, x1: q.x + tw / 2, y0: q.y - fs, y1: q.y + fs };
+  };
+  // cladirile: iconita pe fiecare; numele cand e loc (cele importante intai, fara sa se incalece)
+  const taken: { x0: number; x1: number; y0: number; y1: number }[] = [];
+  const free = (b: { x0: number; x1: number; y0: number; y1: number }) => !taken.some(t => b.x0 < t.x1 && b.x1 > t.x0 && b.y0 < t.y1 && b.y1 > t.y0);
+  const vis = pois.filter(p => { const q = P(p.x, p.y); return q.x > -20 && q.x < W + 20 && q.y > -20 && q.y < H + 20 && (zoomed || p.major); });
+  const isz = zoomed ? Math.min(22, 10 + G.px * 0.9) : 12;
+  for (const p of vis) { const q = P(p.x, p.y), hot = p.id === sel; c.fillStyle = hot ? '#ff4d6d' : '#fffaf5'; c.strokeStyle = '#4a2a22'; c.lineWidth = 1.5; c.beginPath(); c.arc(q.x, q.y, isz * 0.62, 0, 7); c.fill(); c.stroke(); const ic = iconCanvas(p.icon, 48); if (ic) c.drawImage(ic, q.x - isz * 0.4, q.y - isz * 0.4, isz * 0.8, isz * 0.8); taken.push({ x0: q.x - isz * 0.6, x1: q.x + isz * 0.6, y0: q.y - isz * 0.6, y1: q.y + isz * 0.6 }); }
+  if (!zoomed) for (const [ic, name, x, y] of labels) pill(ic, name, P(x, y), 12);
+  if (zoomed) {
+    const fs = Math.min(13, 8 + G.px * 0.35);
+    for (const p of [...vis].sort((a, b) => (b.id === sel ? 1 : 0) - (a.id === sel ? 1 : 0) || +b.major - +a.major)) {
+      const q = P(p.x, p.y), r = isz * 0.62; c.font = `800 ${fs}px "Baloo 2", sans-serif`; const tw = c.measureText(p.name).width + 8;
+      // sub iconita; daca nu e loc: deasupra, in dreapta, in stanga
+      const spots = [[q.x, q.y + r + fs], [q.x, q.y - r - fs * 0.8], [q.x + r + tw / 2 + 2, q.y], [q.x - r - tw / 2 - 2, q.y]];
+      let at: number[] | null = null, b = { x0: 0, x1: 0, y0: 0, y1: 0 };
+      for (const [x, y] of spots) { b = { x0: x - tw / 2, x1: x + tw / 2, y0: y - fs * 0.7, y1: y + fs * 0.7 }; if (free(b)) { at = [x, y]; break; } }
+      if (!at) { if (p.id !== sel) continue; at = spots[0]; b = { x0: at[0] - tw / 2, x1: at[0] + tw / 2, y0: at[1] - fs * 0.7, y1: at[1] + fs * 0.7 }; }
+      taken.push(b);
+      c.lineWidth = 3; c.strokeStyle = '#fff'; c.strokeText(p.name, at[0], at[1]); c.fillStyle = p.id === sel ? '#ff4d6d' : '#4a2a22'; c.fillText(p.name, at[0], at[1]);
+    }
   }
   for (const v of m.vehicles) { const q = P(v.x, v.y), ic = iconCanvas(v.icon, 48); if (ic) c.drawImage(ic, q.x + 4, q.y - 16, 14, 14); }
   // impreuna (aproape unul de altul): un singur nume, ca sa nu se incalece

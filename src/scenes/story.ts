@@ -4,7 +4,7 @@
 // anotimpurile, sarbatorile, evenimentele, prieteniile pe 5 trepte si albumele.
 // Tot ce se schimba trece prin s.op (se trimite si partenerului si se salveaza).
 import type { WorldScene } from './world';
-import type { Furn } from '../world/map';
+import { FURNITURE, type Furn } from '../world/map';
 import { Sfx } from '../engine/sfx';
 import { iso } from '../world/iso';
 import { g } from '../game/gender';
@@ -59,6 +59,8 @@ export function eventsOf(day: number): DayEvent[] {
   return out;
 }
 export const hasEvent = (s: S, id: string) => eventsOf(s.w.day).some(e => e.id === id);
+/** furtuna de toamna (ziua evenimentului): 1 = in toi (pana la 12), apoi se domoleste spre seara (0,3); 0 = nu e furtuna */
+export const stormLevel = (s: S) => { if (!hasEvent(s, 'storm')) return 0; const h = s.w.minutes / 60; return h < 12 ? 1 : Math.max(0.3, 1 - (h - 12) / 6 * 0.7); };
 
 // ====================================================================== PODUL (Capitolul 3)
 const BRIDGE_NEED: { key: string; res: string[]; n: number; label: string; icon: string }[] = [
@@ -242,12 +244,12 @@ export function openMill(s: S) {
   m.querySelectorAll('[data-sell]').forEach(b => b.addEventListener('click', () => {
     const k = (b as HTMLElement).dataset.sell!, n = res(s, k); if (!n) { Sfx.play('bad'); s.hud.toast(`N-ai ${GRAIN_NAME[k]}: îl recoltezi de pe parcele cu combina`); return; }
     const lei = n * MILL_PRICE[k]; s.op({ k: 'res', res: k, delta: -n }); s.op({ k: 'money', delta: lei }); s.op({ k: 'stat', key: 'millSold', delta: n });
-    Sfx.play('coin'); s.me.actor.play('act_carry'); s.hud.toast(`🌾 Ai vândut ${n} ${GRAIN_NAME[k]} la moară: +${lei} lei`); s.log(`${s.me.actor.spec.name} a vândut ${n} ${GRAIN_NAME[k]} la moară: +${lei} lei 🌾`); openMill(s);
+    Sfx.play('coin'); brief(s.me, 'act_carry'); s.hud.toast(`🌾 Ai vândut ${n} ${GRAIN_NAME[k]} la moară: +${lei} lei`); s.log(`${s.me.actor.spec.name} a vândut ${n} ${GRAIN_NAME[k]} la moară: +${lei} lei 🌾`); openMill(s);
   }));
   m.querySelectorAll('[data-grind]').forEach(b => b.addEventListener('click', () => {
     const g = MILL_GRIND.find(x => x.from === (b as HTMLElement).dataset.grind)!, n = res(s, g.from); if (!n) { Sfx.play('bad'); s.hud.toast(`N-ai ${GRAIN_NAME[g.from]} de măcinat`); return; }
     s.op({ k: 'res', res: g.from, delta: -n }); s.op({ k: 'res', res: g.to, delta: n }); s.op({ k: 'stat', key: 'milled', delta: n });
-    Sfx.play('leaves', { vol: 0.5, rate: 0.7 }); Sfx.play('good', { delay: 0.5, vol: 0.6 }); s.me.actor.play('act_carry'); s.hud.toast(`${g.icon} Morarul ți-a măcinat ${n} ${GRAIN_NAME[g.from]}: +${n} ${g.label}`); s.log(`${s.me.actor.spec.name} a măcinat ${n} ${GRAIN_NAME[g.from]} în ${g.label} la moară ${g.icon}`); openMill(s);
+    Sfx.play('leaves', { vol: 0.5, rate: 0.7 }); Sfx.play('good', { delay: 0.5, vol: 0.6 }); brief(s.me, 'act_carry'); s.hud.toast(`${g.icon} Morarul ți-a măcinat ${n} ${GRAIN_NAME[g.from]}: +${n} ${g.label}`); s.log(`${s.me.actor.spec.name} a măcinat ${n} ${GRAIN_NAME[g.from]} în ${g.label} la moară ${g.icon}`); openMill(s);
   }));
 }
 
@@ -273,6 +275,12 @@ export function openFarmGate(s: S) {
 /** cat e gata de strans la un animal azi */
 export function ready(s: S, k: string) { const a = ANIMALS[k], n = st(s, a.stat); if (!n) return 0; const last = st(s, 'got-' + k); return s.w.day - last >= a.every ? n * a.per : 0; }
 /** strange produsele unui animal; pawn = null: le strange angajatul (fara animatia voastra) */
+/** o animatie de lucru scurta (mulsul, culesul, caratul): animatiile act_ se repeta la nesfarsit, asa ca dupa cateva
+ *  secunde personajul revine la normal (inainte ramanea „inghetat” mulgand pana pleca) */
+function brief(pawn: S['me'], id: string, sec = 2.6) {
+  pawn.actor.play(id);
+  setTimeout(() => { if (pawn.actor.anim.id === id && !pawn.activity) pawn.actor.stop(); }, sec * 1000);
+}
 export function collect(s: S, k: string, pawn: S['me'] | null = s.me) {
   const a = ANIMALS[k], n = ready(s, k);
   if (!n) { if (pawn === s.me) s.hud.toast(`${a.icon} Ai strâns deja. Revino ${a.every === 1 ? 'mâine' : `peste ${a.every} zile`}`); return; }
@@ -281,13 +289,13 @@ export function collect(s: S, k: string, pawn: S['me'] | null = s.me) {
   s.op({ k: 'stat', key: statKey, delta: n });
   if (!pawn) return;
   s.op({ k: 'need', who: pawn.id, need: 'fun', delta: 4 });
-  pawn.actor.play(k === 'cows' ? 'act_milk' : 'act_collect'); Sfx.play(k === 'hens' ? 'chicken' : k === 'cows' ? 'pour' : k === 'sheep' ? 'sheep' : 'bubble', { vol: 0.8 });
+  brief(pawn, k === 'cows' ? 'act_milk' : 'act_collect'); Sfx.play(k === 'hens' ? 'chicken' : k === 'cows' ? 'pour' : k === 'sheep' ? 'sheep' : 'bubble', { vol: 0.8 });
   if (pawn === s.me) { fx(s, pawn.gx, pawn.gy, `+${n} ${a.prodLabel} ${a.icon}`); s.hud.toast(`${a.icon} +${n} ${a.prodLabel}`); }
 }
 export function makeCheese(s: S) {
   if (res(s, 'milk') < 3) { s.hud.toast('🧀 Pentru brânză îți trebuie 3 lapte (mulge vaca)'); Sfx.play('bad'); return; }
   s.op({ k: 'res', res: 'milk', delta: -3 }); s.op({ k: 'res', res: 'cheese', delta: 1 }); s.op({ k: 'stat', key: 'cheeseMade', delta: 1 });
-  s.me.actor.play('act_cook'); Sfx.play('spoon'); s.hud.toast('🧀 Ai făcut o roată de brânză de vaci!');
+  brief(s.me, 'act_cook'); Sfx.play('spoon'); s.hud.toast('🧀 Ai făcut o roată de brânză de vaci!');
 }
 
 // ====================================================================== ANGAJATII
@@ -634,12 +642,67 @@ export function openHallMenu(s: S) {
 export function fixRoof(s: S) {
   if (res(s, 'wood') < 5 || res(s, 'plank') < 2) { s.hud.toast('🔨 Pentru acoperiș: 5 lemne și 2 scânduri'); Sfx.play('bad'); return; }
   s.op({ k: 'res', res: 'wood', delta: -5 }); s.op({ k: 'res', res: 'plank', delta: -2 }); s.op({ k: 'furn', key: 'roofBroken', value: false }); s.op({ k: 'hearts', delta: 5 });
-  s.me.actor.play('act_scrub'); Sfx.play('hammer'); s.hud.toast(`🔨 ${g(s.myId, 'Ai reparat', 'Ai reparat')} acoperișul! Casa e din nou caldă`);
+  brief(s.me, 'act_scrub', 2); Sfx.play('hammer'); s.hud.toast(`🔨 ${g(s.myId, 'Ai reparat', 'Ai reparat')} acoperișul! Casa e din nou caldă`);
+}
+
+// ====================================================================== PADUREA PE PARCELE (1.10.0)
+// Partea voastra (din Capitolul 2) e ingradita cu un gardulet; alaturi sunt parcele de padure de cumparat. Cand cumparati
+// una, gardul se muta mai departe si pe ea aveti copaci de taiat, bolovani, ciuperci si mure (si angajatii lucreaza acolo).
+export interface ForestLot { id: string; name: string; x0: number; y0: number; x1: number; y1: number; price: number; sign: { x: number; y: number } }
+export const FOREST_CORE = { x0: 8, y0: -37, x1: 30, y1: -8.6 };
+export const FOREST_LOTS: ForestLot[] = [
+  { id: 'west', name: 'Pădurea de la apus', x0: -11, y0: -37, x1: 8, y1: -8.6, price: 500, sign: { x: 8.6, y: -22 } },
+  { id: 'east', name: 'Pădurea de la răsărit', x0: 30, y0: -37, x1: 50, y1: -8.6, price: 500, sign: { x: 28.6, y: -22 } },
+  { id: 'north', name: 'Pădurea de sus', x0: 8, y0: -47, x1: 30, y1: -37, price: 700, sign: { x: 19, y: -36.4 } },
+];
+export const lotOwned = (s: S, id: string) => st(s, 'flot-' + id) > 0;
+const ownedRects = (s: S) => [FOREST_CORE, ...FOREST_LOTS.filter(l => lotOwned(s, l.id))];
+export const forestKey = (s: S) => FOREST_LOTS.filter(l => lotOwned(s, l.id)).map(l => l.id).join(',');
+/** marginea padurii voastre: bucati de 1 dala (gard + zid nevazut), doar unde dincolo nu e tot al vostru */
+function forestEdges(s: S): { x0: number; y0: number; x1: number; y1: number; vert: boolean }[] {
+  const R = ownedRects(s), mine = (x: number, y: number) => R.some(r => x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1), out: { x0: number; y0: number; x1: number; y1: number; vert: boolean }[] = [];
+  for (const r of R) {
+    for (let y = r.y0; y < r.y1 - 0.5; y++) { const y1 = Math.min(y + 1, r.y1); if (!mine(r.x0 - 0.5, y + 0.5)) out.push({ x0: r.x0 - 0.1, y0: y, x1: r.x0 + 0.1, y1, vert: true }); if (!mine(r.x1 + 0.5, y + 0.5)) out.push({ x0: r.x1 - 0.1, y0: y, x1: r.x1 + 0.1, y1, vert: true }); }
+    for (let x = r.x0; x < r.x1; x++) if (!mine(x + 0.5, r.y0 - 0.5)) out.push({ x0: x, y0: r.y0 - 0.1, x1: x + 1, y1: r.y0 + 0.1, vert: false });
+  }
+  return out;
+}
+/** zidurile nevazute ale padurii (pentru navigare): se schimba cand cumparati o parcela */
+export function forestBlocks(s: S) { return s.chapter >= 2 ? forestEdges(s).map(({ x0, y0, x1, y1 }) => ({ x0, y0, x1, y1 })) : []; }
+const lotRnd = (seed: number) => () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+function placeForest(s: S, push: (f: Furn) => void) {
+  if (s.chapter < 2) return;
+  forestEdges(s).forEach((e, i) => push({ id: 'st-fence' + i, type: 'fenceline' as any, gx: e.vert ? e.x0 + 0.05 : e.x0, gy: e.vert ? e.y0 : e.y0 + 0.05, w: e.vert ? 0.1 : 1, d: e.vert ? e.y1 - e.y0 : 0.1, solid: false }));
+  for (const l of FOREST_LOTS) {
+    if (!lotOwned(s, l.id)) { push({ id: 'st-flot-' + l.id, type: 'lotsign' as any, ...({ price: l.price } as object), gx: l.sign.x - 0.5, gy: l.sign.y - 0.5, w: 1, d: 1, solid: false, action: { id: 'st-flot', label: `${l.name}: de vânzare (${l.price} lei)`, icon: '🌲' } }); continue; }
+    // ce creste pe parcela cumparata: pe locurile libere (fara copacii de decor)
+    const busy = new Set(FURNITURE.filter(f => f.solid && f.gx >= l.x0 - 1 && f.gx < l.x1 + 1 && f.gy >= l.y0 - 1 && f.gy < l.y1 + 1).map(f => Math.floor(f.gx) + ',' + Math.floor(f.gy)));
+    const R = lotRnd(l.id.length * 7919 + l.x0 * 31 + 1), spot = () => { for (let k = 0; k < 40; k++) { const x = Math.floor(l.x0 + 1 + R() * (l.x1 - l.x0 - 2)), y = Math.floor(l.y0 + 1 + R() * (l.y1 - l.y0 - 3)); const key = x + ',' + y; if (busy.has(key)) continue; busy.add(key); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) busy.add((x + dx) + ',' + (y + dy)); return { x, y }; } return null; };
+    const add = (n: number, kind: string, type: string, act: { id: string; label: string; icon: string }, solid: boolean) => { for (let i = 0; i < n; i++) { const q = spot(); if (q) push({ id: `st-fl-${l.id}-${kind}${i}`, type: type as any, gx: q.x, gy: q.y, w: 1, d: 1, solid, action: act }); } };
+    add(14, 'tree', 'pine', { id: 'chop', label: 'Taie lemne', icon: '🪓' }, true);
+    add(6, 'rock', 'rock', { id: 'mine', label: 'Sparge piatra', icon: '⛏️' }, true);
+    add(4, 'mush', 'mushroom', { id: 'mushroom', label: 'Culege ciuperci', icon: '🍄' }, false);
+    add(3, 'berry', 'berrybush', { id: 'berries', label: 'Culege mure', icon: '🫐' }, true);
+  }
+}
+export function openForestLot(s: S) {
+  const near = FOREST_LOTS.filter(l => !lotOwned(s, l.id)).sort((a, b) => Math.hypot(a.sign.x - s.me.gx, a.sign.y - s.me.gy) - Math.hypot(b.sign.x - s.me.gx, b.sign.y - s.me.gy))[0];
+  if (!near) return;
+  const owned = FOREST_LOTS.filter(l => lotOwned(s, l.id)).length;
+  s.choice(`🌲 ${near.name}`, `O parcelă de pădure lângă a voastră (${owned + 1}/${FOREST_LOTS.length + 1} după ce o cumpărați). Gardul se mută mai departe și aveți 14 copaci de tăiat, bolovani, ciuperci și mure. Angajații lucrează și aici.`, [
+    ['🌲', `Cumpără (${near.price} lei)`, () => {
+      if ((s.w.money ?? 0) < near.price) { s.hud.toast(`💰 Parcela costă ${near.price} lei`); Sfx.play('bad'); return; }
+      s.op({ k: 'money', delta: -near.price }); s.op({ k: 'stat', key: 'flot-' + near.id, delta: 1 });
+      s.syncPlaced(); Sfx.play('coin'); Sfx.play('good', { delay: 0.3 }); s.me.actor.play('dance_hop');
+      s.hud.toast(`🌲 ${near.name} e a voastră! Gardul s-a mutat mai departe`); s.log(`${s.me.actor.spec.name} a cumpărat ${near.name} 🌲`);
+    }],
+  ]);
 }
 
 // ====================================================================== OBIECTELE DIN LUME (ferma, parcelele, magazinul, standul de la targ)
 export const FARM = { gate: { gx: 24, gy: 13 }, coop: { gx: 26, gy: 5 }, hens: { gx: 26, gy: 8 }, shed: { gx: 31, gy: 4 }, cow: { gx: 32, gy: 8 }, pen: { x0: 37, y0: 4, x1: 43, y1: 10 }, hives: { gx: 27, gy: 0 } };
 export function place(s: S, push: (f: Furn) => void) {
+  placeForest(s, push);
   if (s.chapter >= FARM_CHAPTER) {
     push({ id: 'st-farmgate', type: 'signpost' as any, gx: FARM.gate.gx, gy: FARM.gate.gy, w: 1, d: 1, solid: true, action: { id: 'st-farm', label: 'Ferma voastră (animale)', icon: '🐔' } });
     push({ id: 'st-fields', type: 'signpost' as any, gx: 16, gy: 27, w: 1, d: 1, solid: true, action: { id: 'st-fieldsign', label: 'Câmpurile de vânzare', icon: '🟫' } });
@@ -659,7 +722,7 @@ export function place(s: S, push: (f: Furn) => void) {
   if (s.chapter >= SHOP_CHAPTER && !st(s, 'fairDone')) push({ id: 'st-fair', type: 'fairstand' as any, gx: 222, gy: 32, w: 2, d: 1, solid: true, action: { id: 'st-fair', label: 'Târgul orașului', icon: '🎪' } });
 }
 /** cheia pentru imaginile gata desenate (cand se schimba, se redeseneaza) */
-export function storyKey(s: S) { const p = parcelsOf(s); return `${s.chapter}|${st(s, 'projectsDone')}|${Object.entries(p).map(([k, v]) => k + v.stage + Math.floor(v.prog * 4) + (v.crop ?? '')).join(',')}|${st(s, 'shopBuilt')}|${st(s, 'bridgeFixed')}`; }
+export function storyKey(s: S) { const p = parcelsOf(s); return `${s.w.furn.roofBroken ? 'R' : ''}${forestKey(s)}|${s.chapter}|${st(s, 'projectsDone')}|${Object.entries(p).map(([k, v]) => k + v.stage + Math.floor(v.prog * 4) + (v.crop ?? '')).join(',')}|${st(s, 'shopBuilt')}|${st(s, 'bridgeFixed')}`; }
 
 /** actiunile noi (id-uri cu prefixul st-) */
 export function action(s: S, id: string, f: Furn) {
@@ -674,6 +737,7 @@ export function action(s: S, id: string, f: Furn) {
     case 'st-hives': collect(s, 'hives'); break;
     case 'st-cheese': makeCheese(s); break;
     case 'st-roof': fixRoof(s); break;
+    case 'st-flot': openForestLot(s); break;
     case 'st-lot': openLot(s); break;
     case 'st-shop': openShop(s); break;
     case 'st-fair': openFair(s); break;

@@ -4,6 +4,7 @@ import { CITY_CROSS } from './city';
 import { iso, unIso, tilePath } from './iso';
 import { floorAt, spaceBounds, AREA, type Floor } from './map';
 import { ORIGIN, CORE_W, CORE_H } from './layout';
+import { grassPair, earthTint, season } from './seasonlook';
 
 const rnd = (x: number, y: number) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
 const COL: Partial<Record<Floor, [string, string]>> = {
@@ -21,19 +22,34 @@ export function drawTile(ctx: CanvasRenderingContext2D, x: number, y: number) {
   const f = floorAt(x, y);
   if (f === 'void') return;
   const r = rnd(x, y);
-  const pair = COL[f] ?? ['#9ad48a', '#9ad48a'];
-  let col = (f === 'road' ? x % 2 : f === 'grass' || f === 'forest' || f === 'meadow' ? r > 0.5 : (x + y) % 2) ? pair[0] : pair[1];
+  const green = f === 'grass' || f === 'forest' || f === 'meadow', se = season();
+  const pair = green ? grassPair(f, COL[f]!) : COL[f] ?? ['#9ad48a', '#9ad48a'];
+  let col = (f === 'road' ? x % 2 : green ? r > 0.5 : (x + y) % 2) ? pair[0] : pair[1];
   if (f === 'road') col = (x % 2) ? '#cdb48f' : '#c9af89';
+  // iarna: zapada si pe drumurile de pamant, carari, campuri, nisip (mai deschise); apa mai pala (rece)
+  if (se === 'winter' && (f === 'road' || f === 'path' || f === 'field' || f === 'dirt' || f === 'sand')) col = earthTint(col);
+  if (se === 'winter' && f === 'water') col = r > 0.5 ? '#a9d6ee' : '#a2d1ea';
   tilePath(ctx, x, y); ctx.fillStyle = col; ctx.fill();
   ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.stroke(); // acopera rosturile dintre bucati
   if (f !== 'water') { ctx.strokeStyle = 'rgba(58,42,34,0.12)'; ctx.stroke(); }
   const c = iso(x + 0.5, y + 0.5);
-  if ((f === 'grass' && r > 0.55) || (f === 'meadow' && r > 0.4)) {
-    ctx.strokeStyle = f === 'meadow' ? '#8fcb76' : '#7fbf6e'; ctx.lineWidth = 1.5;
+  // iarna: zapada (cu umbre albastrui si sclipiri), fara fire de iarba si flori
+  if (se === 'winter' && green) {
+    if (r > 0.6) { ctx.fillStyle = 'rgba(150,180,215,0.22)'; ctx.beginPath(); ctx.ellipse(c.x + (r - 0.8) * 30, c.y + 2, 9, 3, 0, 0, 7); ctx.fill(); }
+    if (r < 0.15) { ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(c.x + (r - 0.07) * 80, c.y - 3, 1.6, 0, 7); ctx.fill(); }
+  }
+  // toamna: frunze cazute pe iarba si in padure (galbene, portocalii, rosiatice)
+  if (se === 'autumn' && green && r < 0.5) {
+    for (let k = 0; k < (r < 0.2 ? 3 : 1); k++) { const u = rnd(x * 7 + k, y * 3 - k); ctx.fillStyle = ['#e07a2f', '#e8a33a', '#c9502a', '#b98a3a'][Math.floor(u * 4)]; ctx.beginPath(); ctx.ellipse(c.x + (u - 0.5) * 34, c.y + (rnd(y + k, x) - 0.5) * 12, 3.4, 1.8, u * 6, 0, 7); ctx.fill(); }
+  }
+  if (se !== 'winter' && ((f === 'grass' && r > 0.55) || (f === 'meadow' && r > 0.4))) {
+    ctx.strokeStyle = se === 'autumn' ? '#a8ad62' : f === 'meadow' ? '#8fcb76' : '#7fbf6e'; ctx.lineWidth = 1.5;
     for (let k = 0; k < 3; k++) { const px = c.x + (k - 1) * 5 + (r - 0.5) * 20, py = c.y + (r - 0.5) * 8; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px - 2, py - 6); ctx.moveTo(px, py); ctx.lineTo(px + 2, py - 5); ctx.stroke(); }
   }
-  if (f === 'meadow' && r < 0.18) { ctx.fillStyle = ['#fff', '#ffd23f', '#ff9ab8'][Math.floor(r * 50) % 3]; ctx.beginPath(); ctx.arc(c.x + (r - 0.09) * 60, c.y - 2, 2.2, 0, 7); ctx.fill(); }
-  if (f === 'forest' && r > 0.7) { ctx.fillStyle = '#5ea85c'; ctx.beginPath(); ctx.ellipse(c.x + (r - 0.85) * 40, c.y, 5, 2.5, 0, 0, 7); ctx.fill(); }
+  // primavara: flori si prin iarba (nu doar in poienite)
+  if (se === 'spring' && f === 'grass' && r < 0.1) { ctx.fillStyle = ['#fff', '#ffd23f', '#ff9ab8', '#c77dff'][Math.floor(r * 40) % 4]; ctx.beginPath(); ctx.arc(c.x + (r - 0.05) * 120, c.y - 2, 2.2, 0, 7); ctx.fill(); }
+  if (f === 'meadow' && r < (se === 'spring' ? 0.3 : se === 'summer' ? 0.18 : 0) && se !== 'winter') { ctx.fillStyle = ['#fff', '#ffd23f', '#ff9ab8'][Math.floor(r * 50) % 3]; ctx.beginPath(); ctx.arc(c.x + (r - 0.09) * 60, c.y - 2, 2.2, 0, 7); ctx.fill(); }
+  if (f === 'forest' && r > 0.7 && se !== 'winter') { ctx.fillStyle = se === 'autumn' ? '#9a7a3a' : '#5ea85c'; ctx.beginPath(); ctx.ellipse(c.x + (r - 0.85) * 40, c.y, 5, 2.5, 0, 0, 7); ctx.fill(); }
   if (f === 'wood' || f === 'pinkwood') {
     ctx.strokeStyle = 'rgba(120,70,40,0.18)'; ctx.lineWidth = 1;
     for (let k = 1; k < 3; k++) { const p = iso(x + k / 3, y), q = iso(x + k / 3, y + 1); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }

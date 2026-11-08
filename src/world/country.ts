@@ -9,6 +9,7 @@ import { drawPOI } from './poi';
 import { WORLD, ORIGIN, CORE_W, CORE_H, ROADS, RIVER, LAKE, BROOK, BRIDGE, BROOK_BRIDGE, type RoadRect } from './layout';
 import { HOUSES } from './houses';
 import { drawParcel } from './season';
+import { leaf, fruit } from './seasonlook';
 import { VILLAGE_BOUNDS, villageFloorW } from './village';
 import { CITY_BOUNDS, cityFloorW } from './city';
 
@@ -101,9 +102,7 @@ for (let x = WORLD.x0 + 1; x < WORLD.x1 - 1; x++) for (let y = 64; y < WORLD.y1 
 const wall = (x0: number, y0: number, x1: number, y1: number) => EXTRA_COLLIDERS.push({ x0, y0, x1, y1 });
 wall(WORLD.x0, -8.6, 18, -8.4); wall(22, -8.6, 150, -8.4);           // marginea padurii (trecerea: x 18..22)
 wall(152, -12.6, WORLD.x1, -12.4);                                     // marginea padurii de langa oras
-wall(ORIGIN.forest.x - 0.1, ORIGIN.forest.y, ORIGIN.forest.x + 0.1, -8.4); // padurea jucabila: laturi si capat
-wall(ORIGIN.forest.x + CORE_W - 0.1, ORIGIN.forest.y, ORIGIN.forest.x + CORE_W + 0.1, -8.4);
-wall(ORIGIN.forest.x, ORIGIN.forest.y - 0.1, ORIGIN.forest.x + CORE_W, ORIGIN.forest.y + 0.1);
+// padurea jucabila: laturile si capatul sunt acum gardul vazut (Story.forestBlocks): se muta cand cumparati parcele
 wall(WORLD.x0, 64.4, WORLD.x1, 64.6);                                  // marginea de sud
 wall(-12.6, -8.4, -12.4, 64.4);                                        // dealul impadurit din vest
 
@@ -239,14 +238,14 @@ function drawTree(c: CanvasRenderingContext2D, f: Furn, t: number) {
   if (kind === 'birch') {
     isoBox(c, gx + 0.44, gy + 0.44, 0.12, 0.12, 52 * big, { top: '#f4f1ea', left: '#ebe6dc', right: '#d6d0c4' });
     const p = iso(gx + 0.5, gy + 0.5, 0); c.strokeStyle = '#3a3a3a'; c.lineWidth = 1.5; for (const z of [12, 24, 36]) { c.beginPath(); c.moveTo(p.x - 3, p.y - z * big); c.lineTo(p.x + 1, p.y - z * big - 1); c.stroke(); }
-    const q = iso(gx + 0.5, gy + 0.5, 52 * big); for (const [dx, dy, r] of [[-10, -4, 14], [10, -8, 13], [0, -20, 15], [-4, -32, 11]] as const) e(c, q.x + dx + sw, q.y + dy, r * big, r * 0.85 * big, '#a8d86a');
+    const q = iso(gx + 0.5, gy + 0.5, 52 * big); ([[-10, -4, 14], [10, -8, 13], [0, -20, 15], [-4, -32, 11]] as const).forEach(([dx, dy, r], i) => e(c, q.x + dx + sw, q.y + dy, r * big, r * 0.85 * big, leaf('#a8d86a', i)));
     return;
   }
   isoBox(c, gx + 0.4, gy + 0.4, 0.2, 0.2, 34 * big, boxOf('#a0703f'));
   const q = iso(gx + 0.5, gy + 0.5, 34 * big);
   const cols = kind === 'apple' ? ['#5fae5f', '#6cbf6c', '#7cc97c'] : ['#4f9f55', '#5fb35f', '#6fc46c'];
-  for (const [dx, dy, r, k] of [[-17, -6, 20, 0], [17, -8, 20, 0], [0, -24, 24, 1], [-9, -40, 16, 2], [11, -38, 16, 2]] as const) e(c, q.x + (dx + sw) * big, q.y + dy * big, r * big, r * 0.9 * big, cols[k]);
-  if (kind === 'apple') for (const [dx, dy] of [[-12, -16], [14, -26], [2, -42], [-4, -8]]) e(c, q.x + dx * big + sw, q.y + dy * big, 3.5, 3.5, '#e63946', true, 1.2);
+  ([[-17, -6, 20, 0], [17, -8, 20, 0], [0, -24, 24, 1], [-9, -40, 16, 2], [11, -38, 16, 2]] as const).forEach(([dx, dy, r, k], i) => e(c, q.x + (dx + sw) * big, q.y + dy * big, r * big, r * 0.9 * big, leaf(cols[k], i + gx)));
+  if (kind === 'apple' && fruit()) for (const [dx, dy] of [[-12, -16], [14, -26], [2, -42], [-4, -8]]) e(c, q.x + dx * big + sw, q.y + dy * big, 3.5, 3.5, '#e63946', true, 1.2);
 }
 function drawCountryHouse(c: CanvasRenderingContext2D, h: typeof COUNTRY_HOUSES[number], t: number, night: number) { // eslint-disable-line
   const { gx, gy, w, d } = h, H = h.h;

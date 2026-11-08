@@ -8,6 +8,7 @@ import { drawVillageType } from './village';
 import { drawCityType } from './city';
 import { drawCountryType } from './country';
 import { drawStoryType } from './season';
+import { leaf, fruit, isWinter, isAutumn, snowMound } from './seasonlook';
 
 const O = '#3a2a22';
 
@@ -232,14 +233,14 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
       isoBox(ctx, gx + 0.4, gy + 0.4, 0.2, 0.2, 40, boxOf('#a0703f'));
       const c = iso(gx + 0.5, gy + 0.5, 40);
       const sw = Math.sin(t * 0.8 + gx * 2) * 2;
-      for (const [dx, dy, r, col] of [[-18, -6, 22, '#6cbf6c'], [18, -8, 22, '#6cbf6c'], [0, -26, 26, '#7fd07f'], [-10, -44, 18, '#8fdc8f'], [12, -42, 18, '#8fdc8f']] as const) ell(ctx, { x: c.x + dx + sw, y: c.y + dy }, r, r * 0.9, col);
-      for (const [dx, dy] of [[-12, -20], [14, -30], [2, -48]]) ell(ctx, { x: c.x + dx + sw, y: c.y + dy }, 3.5, 3.5, '#ff7aa2');
+      ([[-18, -6, 22, '#6cbf6c'], [18, -8, 22, '#6cbf6c'], [0, -26, 26, '#7fd07f'], [-10, -44, 18, '#8fdc8f'], [12, -42, 18, '#8fdc8f']] as const).forEach(([dx, dy, r, col], i) => ell(ctx, { x: c.x + dx + sw, y: c.y + dy }, r, r * 0.9, leaf(col, i + gx)));
+      if (fruit()) for (const [dx, dy] of [[-12, -20], [14, -30], [2, -48]]) ell(ctx, { x: c.x + dx + sw, y: c.y + dy }, 3.5, 3.5, isAutumn() ? '#e63946' : '#ff7aa2');
       break;
     }
     case 'bush': {
       const c = iso(gx + 0.5, gy + 0.5, 0);
-      for (const [dx, dy, r] of [[-10, -8, 12], [10, -8, 12], [0, -18, 13]]) ell(ctx, { x: c.x + dx, y: c.y + dy }, r, r * 0.85, '#79c879');
-      ell(ctx, { x: c.x - 4, y: c.y - 16 }, 2.5, 2.5, '#fff');
+      ([[-10, -8, 12], [10, -8, 12], [0, -18, 13]] as const).forEach(([dx, dy, r], i) => ell(ctx, { x: c.x + dx, y: c.y + dy }, r, r * 0.85, leaf('#79c879', i + gx)));
+      if (fruit()) ell(ctx, { x: c.x - 4, y: c.y - 16 }, 2.5, 2.5, '#fff');
       break;
     }
     case 'plot': {
@@ -270,6 +271,7 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
       break;
     }
     case 'flowers': {
+      if (isWinter()) { snowMound(ctx, gx, gy); break; } // iarna: florile sunt sub zapada
       for (let i = 0; i < 6; i++) {
         const p = iso(gx + 0.2 + (i * 0.37) % 0.7, gy + 0.2 + (i * 0.53) % 0.7, 0);
         ctx.strokeStyle = '#3d8b3d'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - 8); ctx.stroke();
