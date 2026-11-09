@@ -52,7 +52,7 @@ Adresele de test folosesc `?skipload` (sare peste ecranul de încărcare), `who=
 | `taraba_vanzator.cjs` | 1.10.0: vânzătoarea deschide taraba și când ești departe, cumpără făina lipsă doar cu câștig, îți cere florile lipsă |
 | `seara_muls.cjs` | 1.10.0: X la rutina de seară ajunge la partener, un X vechi nu strică seara următoare, somnul sărit de ceas reface energia; mulsul se oprește singur |
 | `scuter_clona.cjs` | 1.10.0: scuterul parcat la cherestea nu mai rămâne desenat cât mergi cu el |
-| `padure_parcele.cjs` | 1.10.0: gardul pădurii, 3 parcele de vânzare, cumperi una → gardul se mută, copaci / bolovani noi, tăietorul lucrează și acolo |
+| `padure_parcele.cjs` | 1.10.0 / 1.10.1: gardul pădurii, 3 parcele de vânzare, cumperi una → gardul se mută, copaci / bolovani noi, tăietorul lucrează și acolo; pe fiecare parcelă niciun copac de decor (toți se taie) și ajungi pe toate dalele libere |
 | `anotimpuri.cjs` | 1.10.0: curtea și pădurea în cele 4 anotimpuri (poze), iarna albă, toamna caldă |
 | `unde_e_ziua.cjs` | 1.9.8: harta → „Unde e?” (4 locuri, ferma încuiată înainte de cap. 5), „Du-mă” găsește drumul și ajunge la indicatorul fermei; „Ziua X 📅” deschide evenimentul zilei și ce urmează |
 | `pod_ciorba.cjs` | 1.9.7: la Podul Mare, ciorba gătită contează ca „mâncare caldă” (37 de boluri → „ai 37”, „Dă 3”); cererea unui sătean pentru mâncare primește tot ciorbă |

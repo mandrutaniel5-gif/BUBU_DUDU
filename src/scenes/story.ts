@@ -4,7 +4,8 @@
 // anotimpurile, sarbatorile, evenimentele, prieteniile pe 5 trepte si albumele.
 // Tot ce se schimba trece prin s.op (se trimite si partenerului si se salveaza).
 import type { WorldScene } from './world';
-import { FURNITURE, type Furn } from '../world/map';
+import { type Furn } from '../world/map';
+import { FOREST_LOT_RECTS } from '../world/layout';
 import { Sfx } from '../engine/sfx';
 import { iso } from '../world/iso';
 import { g } from '../game/gender';
@@ -651,9 +652,9 @@ export function fixRoof(s: S) {
 export interface ForestLot { id: string; name: string; x0: number; y0: number; x1: number; y1: number; price: number; sign: { x: number; y: number } }
 export const FOREST_CORE = { x0: 8, y0: -37, x1: 30, y1: -8.6 };
 export const FOREST_LOTS: ForestLot[] = [
-  { id: 'west', name: 'Pădurea de la apus', x0: -11, y0: -37, x1: 8, y1: -8.6, price: 500, sign: { x: 8.6, y: -22 } },
-  { id: 'east', name: 'Pădurea de la răsărit', x0: 30, y0: -37, x1: 50, y1: -8.6, price: 500, sign: { x: 28.6, y: -22 } },
-  { id: 'north', name: 'Pădurea de sus', x0: 8, y0: -47, x1: 30, y1: -37, price: 700, sign: { x: 19, y: -36.4 } },
+  { id: 'west', name: 'Pădurea de la apus', ...FOREST_LOT_RECTS.west, price: 500, sign: { x: 8.6, y: -22 } },
+  { id: 'east', name: 'Pădurea de la răsărit', ...FOREST_LOT_RECTS.east, price: 500, sign: { x: 28.6, y: -22 } },
+  { id: 'north', name: 'Pădurea de sus', ...FOREST_LOT_RECTS.north, price: 700, sign: { x: 19, y: -36.4 } },
 ];
 export const lotOwned = (s: S, id: string) => st(s, 'flot-' + id) > 0;
 const ownedRects = (s: S) => [FOREST_CORE, ...FOREST_LOTS.filter(l => lotOwned(s, l.id))];
@@ -670,26 +671,42 @@ function forestEdges(s: S): { x0: number; y0: number; x1: number; y1: number; ve
 /** zidurile nevazute ale padurii (pentru navigare): se schimba cand cumparati o parcela */
 export function forestBlocks(s: S) { return s.chapter >= 2 ? forestEdges(s).map(({ x0, y0, x1, y1 }) => ({ x0, y0, x1, y1 })) : []; }
 const lotRnd = (seed: number) => () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+/** 1.10.1: ce creste pe fiecare parcela, ca in padurea voastra (aceeasi desime): copaci pe un caroiaj de 3 dale cu putin
+ *  joc, deci intre oricare doua obiecte ramane mereu macar o dala libera si treci peste tot; locurile ramase goale sunt poieni.
+ *  Acelasi aranjament se vede si peste gard inainte s-o cumparati (doar ca nu se poate taia). */
+function lotLayout(l: ForestLot) {
+  const R = lotRnd(l.id.length * 7919 + Math.abs(l.x0) * 31 + 7), pts: { x: number; y: number }[] = [];
+  for (let y = Math.ceil(l.y0) + 1; y + 1 < l.y1 - 1; y += 3) for (let x = Math.ceil(l.x0) + 1; x + 1 < l.x1 - 1; x += 3) pts.push({ x: x + (R() < 0.5 ? 0 : 1), y: y + (R() < 0.5 ? 0 : 1) });
+  for (let i = pts.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [pts[i], pts[j]] = [pts[j], pts[i]]; }
+  const area = (l.x1 - l.x0) * (l.y1 - l.y0), n = (k: number) => Math.max(2, Math.round(k * area / 594)); // padurea voastra: 22 x 27 dale
+  const out: { kind: string; x: number; y: number; i: number }[] = [];
+  let k = 0; const take = (kind: string, c: number) => { for (let i = 0; i < c && k < pts.length; i++, k++) out.push({ kind, ...pts[k], i }); };
+  take('tree', n(25)); take('rock', n(8)); take('berry', n(5)); take('mush', n(7));
+  return out;
+}
 function placeForest(s: S, push: (f: Furn) => void) {
   if (s.chapter < 2) return;
   forestEdges(s).forEach((e, i) => push({ id: 'st-fence' + i, type: 'fenceline' as any, gx: e.vert ? e.x0 + 0.05 : e.x0, gy: e.vert ? e.y0 : e.y0 + 0.05, w: e.vert ? 0.1 : 1, d: e.vert ? e.y1 - e.y0 : 0.1, solid: false }));
+  const ACT: Record<string, { type: string; solid: boolean; act: { id: string; label: string; icon: string } }> = {
+    tree: { type: 'pine', solid: true, act: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
+    rock: { type: 'rock', solid: true, act: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
+    berry: { type: 'berrybush', solid: true, act: { id: 'berries', label: 'Culege mure', icon: '🫐' } },
+    mush: { type: 'mushroom', solid: false, act: { id: 'mushroom', label: 'Culege ciuperci', icon: '🍄' } },
+  };
   for (const l of FOREST_LOTS) {
-    if (!lotOwned(s, l.id)) { push({ id: 'st-flot-' + l.id, type: 'lotsign' as any, ...({ price: l.price } as object), gx: l.sign.x - 0.5, gy: l.sign.y - 0.5, w: 1, d: 1, solid: false, action: { id: 'st-flot', label: `${l.name}: de vânzare (${l.price} lei)`, icon: '🌲' } }); continue; }
-    // ce creste pe parcela cumparata: pe locurile libere (fara copacii de decor)
-    const busy = new Set(FURNITURE.filter(f => f.solid && f.gx >= l.x0 - 1 && f.gx < l.x1 + 1 && f.gy >= l.y0 - 1 && f.gy < l.y1 + 1).map(f => Math.floor(f.gx) + ',' + Math.floor(f.gy)));
-    const R = lotRnd(l.id.length * 7919 + l.x0 * 31 + 1), spot = () => { for (let k = 0; k < 40; k++) { const x = Math.floor(l.x0 + 1 + R() * (l.x1 - l.x0 - 2)), y = Math.floor(l.y0 + 1 + R() * (l.y1 - l.y0 - 3)); const key = x + ',' + y; if (busy.has(key)) continue; busy.add(key); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) busy.add((x + dx) + ',' + (y + dy)); return { x, y }; } return null; };
-    const add = (n: number, kind: string, type: string, act: { id: string; label: string; icon: string }, solid: boolean) => { for (let i = 0; i < n; i++) { const q = spot(); if (q) push({ id: `st-fl-${l.id}-${kind}${i}`, type: type as any, gx: q.x, gy: q.y, w: 1, d: 1, solid, action: act }); } };
-    add(14, 'tree', 'pine', { id: 'chop', label: 'Taie lemne', icon: '🪓' }, true);
-    add(6, 'rock', 'rock', { id: 'mine', label: 'Sparge piatra', icon: '⛏️' }, true);
-    add(4, 'mush', 'mushroom', { id: 'mushroom', label: 'Culege ciuperci', icon: '🍄' }, false);
-    add(3, 'berry', 'berrybush', { id: 'berries', label: 'Culege mure', icon: '🫐' }, true);
+    const own = lotOwned(s, l.id);
+    if (!own) push({ id: 'st-flot-' + l.id, type: 'lotsign' as any, ...({ price: l.price } as object), gx: l.sign.x - 0.5, gy: l.sign.y - 0.5, w: 1, d: 1, solid: false, action: { id: 'st-flot', label: `${l.name}: de vânzare (${l.price} lei)`, icon: '🌲' } });
+    for (const o of lotLayout(l)) {
+      const a = ACT[o.kind];
+      push({ id: `st-fl-${l.id}-${o.kind}${o.i}`, type: (o.kind === 'tree' && o.i % 3 === 0 ? 'tree' : a.type) as any, gx: o.x, gy: o.y, w: 1, d: 1, solid: a.solid, ...(own ? { action: a.act } : {}) });
+    }
   }
 }
 export function openForestLot(s: S) {
   const near = FOREST_LOTS.filter(l => !lotOwned(s, l.id)).sort((a, b) => Math.hypot(a.sign.x - s.me.gx, a.sign.y - s.me.gy) - Math.hypot(b.sign.x - s.me.gx, b.sign.y - s.me.gy))[0];
   if (!near) return;
   const owned = FOREST_LOTS.filter(l => lotOwned(s, l.id)).length;
-  s.choice(`🌲 ${near.name}`, `O parcelă de pădure lângă a voastră (${owned + 1}/${FOREST_LOTS.length + 1} după ce o cumpărați). Gardul se mută mai departe și aveți 14 copaci de tăiat, bolovani, ciuperci și mure. Angajații lucrează și aici.`, [
+  s.choice(`🌲 ${near.name}`, `O parcelă de pădure lângă a voastră (${owned + 1}/${FOREST_LOTS.length + 1} după ce o cumpărați). Gardul se mută mai departe și tot ce vedeți peste gard e al vostru: copaci de tăiat, bolovani, ciuperci și mure. Angajații lucrează și aici.`, [
     ['🌲', `Cumpără (${near.price} lei)`, () => {
       if ((s.w.money ?? 0) < near.price) { s.hud.toast(`💰 Parcela costă ${near.price} lei`); Sfx.play('bad'); return; }
       s.op({ k: 'money', delta: -near.price }); s.op({ k: 'stat', key: 'flot-' + near.id, delta: 1 });

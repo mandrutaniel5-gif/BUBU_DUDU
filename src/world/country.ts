@@ -6,7 +6,7 @@ import { iso, isoBox, boxOf, shade, tilePath, type Pt } from './iso';
 import { heartPath } from '../char/draw';
 import { fillTextIcons } from '../ui/icons';
 import { drawPOI } from './poi';
-import { WORLD, ORIGIN, CORE_W, CORE_H, ROADS, RIVER, LAKE, BROOK, BRIDGE, BROOK_BRIDGE, type RoadRect } from './layout';
+import { WORLD, ORIGIN, CORE_W, CORE_H, ROADS, RIVER, LAKE, BROOK, BRIDGE, BROOK_BRIDGE, FOREST_LOT_RECTS, type RoadRect } from './layout';
 import { HOUSES } from './houses';
 import { drawParcel } from './season';
 import { leaf, fruit } from './seasonlook';
@@ -66,6 +66,7 @@ const CORES: Rect[] = [
   VILLAGE_BOUNDS,
   { x0: 23, y0: -6, x1: 44, y1: 14 }, // ferma voastra (Capitolul 5): cotetul, grajdul, oile, stupii
   CITY_BOUNDS,
+  ...Object.values(FOREST_LOT_RECTS), // 1.10.1: parcelele de padure au copacii lor (toti se taie), nu decor
 ];
 const nearRoad = (x: number, y: number, m: number) => [...ROADS, ...STREETS].some(r => x >= r.x0 - m && x < r.x1 + m && y >= r.y0 - m && y < r.y1 + m);
 /** e loc liber pentru un obiect de w x d la (x,y)? */

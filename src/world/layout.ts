@@ -25,6 +25,12 @@ export const ORIGIN = {
 export type CoreId = keyof typeof ORIGIN;
 /** marimea hartilor vechi */
 export const CORE_W = 22, CORE_H = 27;
+/** parcelele de padure de cumparat (langa padurea voastra): aici nu creste decorul salbatic, au aranjamentul lor (Story) */
+export const FOREST_LOT_RECTS = {
+  west: { x0: -11, y0: -37, x1: 8, y1: -8.6 },
+  east: { x0: 30, y0: -37, x1: 50, y1: -8.6 },
+  north: { x0: 8, y0: -47, x1: 30, y1: -37 },
+} as const;
 export const at = (o: Pt, x: number, y: number): Pt => ({ x: o.x + x, y: o.y + y });
 
 /** regiunile lumii (pentru "unde sunt?", ambianta, harta). Prima care contine punctul castiga. */
