@@ -196,6 +196,7 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
   const onScoot = (scene.me.riding && scene.me.rideKind === 'scooter') || (scene.sameArea() && scene.partner.riding && scene.partner.rideKind === 'scooter');
   const onTractor = (scene.me.riding && scene.me.rideKind === 'tractor') || (scene.sameArea() && scene.partner.riding && scene.partner.rideKind === 'tractor');
   const overlays: (() => void)[] = [];
+  const ground: (() => void)[] = [];
   for (const f of visible) if (!scene.isDecor(f)) {
     if (parkedHidden(!!onBike, !!onScoot, !!onTractor, f.id)) continue; // cat mergi cu el, vehiculul parcat nu se mai deseneaza (si la cherestea / lac / oras, nu doar acasa si in sat: ramanea o „clona”)
     if (isBaked(f) && !liveNow(scene, f, st)) {
@@ -204,6 +205,7 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
       if ((f.type as string) === 'farmhouse') overlays.push(() => houseSmoke(ctx, f, scene.time));
       continue;
     }
+    if (GROUND.has(f.type as string)) { ground.push(() => paint(f)); continue; }
     items.push({ x0: f.gx, y0: f.gy, x1: f.gx + f.w, y1: f.gy + f.d, box: screenBox(f), draw: () => paint(f), k: f.type, id: f.id });
   }
   if (!baking) {
@@ -262,8 +264,9 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
       items.push({ x0: e.x0, y0: e.y0, x1: e.x1, y1: e.y1, box: e.box, draw: () => scene.sprites.drawBox(ctx, e.key + '|' + lit2 + (dep[e.key.slice(2)] ? '|d' : ''), e.box, SS, c => e.paint(c, stBake, bakeNight), hit), k: 'copt' });
     }
     lap('liste');
+    for (const g of ground) { ctx.save(); try { g(); } catch (e) { ErrorLog.add(e, 'desen camp'); } ctx.restore(); }
     drawSorted(ctx, items, inHouse);
-  } else drawSorted(ctx, items, inHouse);
+  } else { for (const g of ground) { ctx.save(); try { g(); } catch (e) { ErrorLog.add(e, 'desen camp'); } ctx.restore(); } drawSorted(ctx, items, inHouse); }
   lap('vii');
   for (const o of overlays) { ctx.save(); try { o(); } catch (e) { ErrorLog.add(e, 'desen semn'); } ctx.restore(); }
   lap('semne');
@@ -553,10 +556,12 @@ function houseEntries(): StaticEntry[] {
   wallEntries = L; return L;
 }
 function furnEntry(f: Furn): StaticEntry {
-  return { key: 'f:' + f.id, x0: f.gx, y0: f.gy, x1: f.gx + f.w, y1: f.gy + f.d, box: screenBox(f), flat: !f.solid && FLAT.has(f.type as string),
+  return { key: 'f:' + f.id, x0: f.gx, y0: f.gy, x1: f.gx + f.w, y1: f.gy + f.d, box: screenBox(f), flat: (!f.solid && FLAT.has(f.type as string)) || GROUND.has(f.type as string),
     paint: (c, st) => { const g = globalThis as any; const lay = layered(f); if (lay) g.__layer = 'body'; try { drawFurn(c, f, 0, st); } finally { if (lay) g.__layer = ''; } } };
 }
 const FLAT = new Set(['flowers', 'wildflower', 'lilypad', 'bridgegap', 'stonepath', 'heartstone', 'flowerbed', 'rug', 'doormat', 'soilplot', 'plot']);
+/** campurile (parcelele, campurile vecinilor) sunt „pamant”: mereu sub tractor, personaje si animale (1.11.1: tractorul nu mai intra sub camp) */
+const GROUND = new Set(['cropfield']);
 /** lucrurile "coapte" din zona de dale data, care ating dreptunghiul de ecran */
 function staticEntriesIn(scene: WorldScene, gx0: number, gy0: number, gx1: number, gy1: number, vx0: number, vy0: number, vx1: number, vy1: number): StaticEntry[] {
   const V = { x0: vx0, y0: vy0, x1: vx1, y1: vy1 };

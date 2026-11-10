@@ -72,9 +72,9 @@ html.w759 .menu-card { margin-right:0; }
 .hud .dot { width:9px; height:9px; border-radius:50%; background:#aaa; border:1.5px solid var(--ink); }
 .hud .dot.online { background:#2ec4b6; } .hud .dot.connecting { background:#ffd23f; } .hud .dot.error { background:#e63946; }
 .mini-btn { margin-left:auto; border:2px solid var(--ink); background:#fff; border-radius:8px; font-size:14px; padding:0 6px; }
-.hud .clock { position:absolute; top:10px; left:50%; transform:translateX(-50%); display:flex; gap:8px; background:#fffaf5e6; border:3px solid var(--ink); border-radius:16px; padding:3px 12px; font-weight:800; box-shadow:0 4px 0 var(--ink); white-space:nowrap; }
+.hud .clock { position:absolute; top:10px; left:0; right:0; margin:0 auto; width:max-content; transform:none; font-variant-numeric:tabular-nums; display:flex; gap:8px; background:#fffaf5e6; border:3px solid var(--ink); border-radius:16px; padding:3px 12px; font-weight:800; box-shadow:0 4px 0 var(--ink); white-space:nowrap; }
 /* (max-width: 700px) */
-html.w700 .hud .clock { top:auto; bottom:10px; left:10px; transform:none; font-size:13px; }
+html.w700 .hud .clock { top:auto; bottom:10px; left:10px; right:auto; margin:0; transform:none; font-size:13px; }
 .hud .actions { position:absolute; right:14px; bottom:14px; display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
 .hud .actions .row { display:flex; gap:10px; }
 .act { width:60px; height:60px; border-radius:50%; border:3px solid var(--ink); background:#fff; box-shadow:0 4px 0 var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden; }
@@ -167,7 +167,7 @@ html.h520w760 .hud .card.partner { transform:scale(.85); transform-origin:top ri
 /* (max-width: 700px) */
 html.w700 .hud .card.me { width:min(200px, 50vw); transform:scale(.8); transform-origin:top left; }
 html.w700 .hud .card.partner { width:min(170px, 44vw); transform:scale(.8); transform-origin:top right; }
-html.w700 .hud .clock { top:128px; bottom:auto; left:50%; transform:translateX(-50%) scale(.92); font-size:12.5px; padding:2px 8px; gap:5px; }
+html.w700 .hud .clock { top:128px; bottom:auto; left:0; right:0; margin:0 auto; transform:scale(.92); transform-origin:top center; font-size:12.5px; padding:2px 8px; gap:5px; }
 html.w700 .hud .goal { top:196px; transform:scale(.9); transform-origin:top left; }
 html.w700 .act { width:52px; height:52px; }
 html.w700 .act .ic { font-size:22px; }
@@ -179,7 +179,7 @@ html.w700 .shop { grid-template-columns:repeat(auto-fill, minmax(84px,1fr)); }
 /* (max-height: 500px) */
 html.h500 .hud .card.me { transform:scale(.7); transform-origin:top left; }
 html.h500 .hud .card.partner { transform:scale(.7); transform-origin:top right; }
-html.h500 .hud .clock { top:auto; bottom:8px; left:8px; transform:scale(.85); transform-origin:bottom left; }
+html.h500 .hud .clock { top:auto; bottom:8px; left:8px; right:auto; margin:0; transform:scale(.85); transform-origin:bottom left; }
 html.h500 .hud .goal { top:auto; bottom:62px; left:8px; transform:scale(.8); transform-origin:bottom left; }
 html.h500 .act { width:48px; height:48px; }
 html.h500 .act .ic { font-size:20px; }
@@ -188,7 +188,7 @@ html.h500 .hud .actions { right:8px; bottom:8px; gap:6px; }
 html.h500 .hud .actions .row { gap:6px; }
 html.h500 .pop { bottom:120px; max-height:70vh; }
 /* (min-width: 701px) and (max-width: 1100px) and (min-height: 501px) */
-html.tabmid .hud .clock { top:auto; bottom:12px; left:12px; transform:none; }
+html.tabmid .hud .clock { top:auto; bottom:12px; left:12px; right:auto; margin:0; transform:none; }
 
 /* butonul de inchidere: mereu vizibil sus, nu mai trebuie scroll */
 .modal .box { position:relative; }
@@ -206,7 +206,7 @@ html.tabmid .hud .clock { top:auto; bottom:12px; left:12px; transform:none; }
 /* (max-height: 500px) */
 html.h500 .hud .card.me { transform:scale(.62); }
 html.h500 .hud .card.partner { transform:scale(.62); }
-html.h500 .hud .clock { top:8px; bottom:auto; left:50%; transform:translateX(-50%) scale(.78); transform-origin:top center; }
+html.h500 .hud .clock { top:8px; bottom:auto; left:0; right:0; margin:0 auto; transform:scale(.78); transform-origin:top center; }
 html.h500 .hud .goal { top:calc(8px + 150px * .62 + 30px); bottom:auto; left:8px; transform:scale(.75); transform-origin:top left; }
 
 .srvrow { display:flex; gap:6px; } .srvrow input { flex:1; min-width:0; }

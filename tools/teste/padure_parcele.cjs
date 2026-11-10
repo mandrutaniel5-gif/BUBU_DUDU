@@ -26,7 +26,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   let clicked = false;
   for (const x of await p.$$('.modal:not(.hidden) button')) { const t = await x.textContent(); if (/Cumpără/.test(t)) { await x.click(); clicked = true; break; } }
   await sleep(500);
-  const r = await E(() => { const s = game.scene; return { owned: s.w.stats['flot-west'], path: !!s.nav.path(12, -20, 2, -20), trees: s.furnList.filter(f => f.id.startsWith('st-fl-west-tree') && f.action?.id === 'chop').length, rocks: s.furnList.filter(f => f.id.startsWith('st-fl-west-rock')).length, signs: s.furnList.filter(f => f.id.startsWith('st-flot')).length }; });
+  const r = await E(() => { const s = game.scene; return { owned: s.w.stats['flot-west'], path: (() => { for (let y = -20; y < -12; y++) for (let x = 2; x > -6; x--) if (!s.nav.hits(x + 0.5, y + 0.5)) return !!s.nav.path(12, -20, x + 0.5, y + 0.5); return false; })(), trees: s.furnList.filter(f => f.id.startsWith('st-fl-west-tree') && f.action?.id === 'chop').length, rocks: s.furnList.filter(f => f.id.startsWith('st-fl-west-rock')).length, signs: s.furnList.filter(f => f.id.startsWith('st-flot')).length }; });
   ok('cumperi „Pădurea de la apus”', clicked && r.owned === 1 && r.signs === 2, JSON.stringify(r));
   ok('gardul s-a mutat: intri in parcela noua', r.path);
   ok('pe parcela: copaci de taiat si bolovani', r.trees >= 18 && r.rocks >= 5, r.trees + ' copaci, ' + r.rocks + ' bolovani');

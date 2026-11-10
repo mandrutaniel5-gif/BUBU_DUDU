@@ -690,7 +690,11 @@ function lotLayout(l: ForestLot) {
   const area = (l.x1 - l.x0) * (l.y1 - l.y0), n = (k: number) => Math.max(2, Math.round(k * area / 594)); // padurea voastra: 22 x 27 dale
   const out: { kind: string; x: number; y: number; i: number }[] = [];
   let k = 0; const take = (kind: string, c: number) => { for (let i = 0; i < c && k < pts.length; i++, k++) out.push({ kind, ...pts[k], i }); };
-  take('tree', n(25)); take('rock', n(8)); take('berry', n(5)); take('mush', n(7));
+  take('rock', n(8)); take('berry', n(5)); take('mush', n(7));
+  // copacii nu stau chiar in fata unui bolovan / tufe (pe ecran le-ar ascunde): locurile acelea raman poieni
+  const small = out.slice(), rest = pts.slice(k);
+  const hides = (q: { x: number; y: number }) => small.some(o => { const dz = (q.x + q.y) - (o.x + o.y), dd = Math.abs((q.x - q.y) - (o.x - o.y)); return dz > 0 && dz <= 6 && dd <= 2.5; });
+  let t = 0; for (const q of rest) { if (t >= n(25)) break; if (hides(q)) continue; out.push({ kind: 'tree', ...q, i: t++ }); }
   return out;
 }
 function placeForest(s: S, push: (f: Furn) => void) {
