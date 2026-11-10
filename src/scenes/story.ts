@@ -5,6 +5,7 @@
 // Tot ce se schimba trece prin s.op (se trimite si partenerului si se salveaza).
 import type { WorldScene } from './world';
 import { type Furn } from '../world/map';
+import * as Hol from './holidays';
 import { FOREST_LOT_RECTS } from '../world/layout';
 import { Sfx } from '../engine/sfx';
 import { iso } from '../world/iso';
@@ -45,18 +46,18 @@ export interface DayEvent { id: string; icon: string; name: string; text: string
 /** ce se intampla azi (la fel pe ambele telefoane: depinde doar de zi) */
 export function eventsOf(day: number): DayEvent[] {
   const se = seasonOf(day).id, d = dayOfSeason(day), out: DayEvent[] = [];
-  if (se === 'spring' && d === 1) out.push({ id: 'martisor', icon: '🌸', name: 'Mărțișorul', text: 'Dăruiți-vă câte un mărțișor: iubirea crește la amândoi' });
-  if (se === 'spring' && d === 5) out.push({ id: 'paste', icon: '🥚', name: 'Paștele', text: 'Ouă vopsite pe masă și cozonac: primiți 6 ouă roșii' });
-  if (se === 'spring' && d === 6) out.push({ id: 'villwed', icon: '💒', name: 'Nunta Inei', text: 'Ina se mărită! Mergeți la biserica din sat: prietenia crește' });
-  if (se === 'summer' && d === 2) out.push({ id: 'bdaybubu', icon: '🎂', name: 'Ziua lui Bubu', text: 'Bubu e sărbătorită! Dudu, fă-i o surpriză (un pupic, o floare)' });
-  if (se === 'summer' && d === 4) out.push({ id: 'grandparents', icon: '👵', name: 'Vizita bunicilor', text: 'Bunicii vin în vizită la voi acasă, cu daruri' });
-  if (se === 'summer' && d === 6) out.push({ id: 'swim', icon: '🏊', name: 'Zi de lac', text: 'E cald: o baie în lac vă face fericiți (debarcaderul de la lac)' });
+  if (se === 'spring' && d === 1) out.push({ id: 'martisor', icon: '🌸', name: 'Mărțișorul', text: 'Faceți-vă câte un mărțișor (masa din curte): îl purtați toată primăvara' });
+  if (se === 'spring' && d === 5) out.push({ id: 'paste', icon: '🥚', name: 'Paștele', text: 'Vopsiți ouăle și le ciocniți (masa din curte); cozonac de la vecini' });
+  if (se === 'spring' && d === 6) out.push({ id: 'villwed', icon: '💒', name: 'Nunta Inei', text: 'Ina se mărită! De la 11:00 la biserica din sat, apoi hora în piață' });
+  if (se === 'summer' && d === 2) out.push({ id: 'bdaybubu', icon: '🎂', name: 'Ziua lui Bubu', text: 'Petrecere surpriză în piața satului, la 18:00 🤫' });
+  if (se === 'summer' && d === 4) out.push({ id: 'grandparents', icon: '👵', name: 'Vizita bunicilor', text: 'Bunicii vin la voi (10:00 – 20:00): gătiți-le ceva bun' });
+  if (se === 'summer' && d === 6) out.push({ id: 'swim', icon: '🏊', name: 'Zi de lac', text: 'Concurs de pescuit cu premii și picnic, la lac (8:00 – 19:00)' });
   if (se === 'autumn' && d === 3) out.push({ id: 'storm', icon: '⛈️', name: 'Furtuna', text: 'Furtuna a stricat acoperișul: Dudu îl repară cu lemne și scânduri' });
-  if (se === 'autumn' && d === 5) out.push({ id: 'bdaydudu', icon: '🎂', name: 'Ziua lui Dudu', text: 'Dudu e sărbătorit! Bubu, fă-i o surpriză' });
-  if (se === 'winter' && d === 3) out.push({ id: 'craciun', icon: '🎄', name: 'Crăciunul', text: 'Bradul, colindele și cadourile: primiți daruri de la săteni' });
-  if (se === 'winter' && d === 5) out.push({ id: 'dragobete', icon: '💞', name: 'Dragobetele', text: 'Ziua îndrăgostiților la români: un pupic face cât zece' });
-  if (se === 'winter' && d === 7) out.push({ id: 'revelion', icon: '🎆', name: 'Revelionul', text: 'La miezul nopții: artificii deasupra satului' });
-  if (day % 28 === 14) out.push({ id: 'fairday', icon: '🎪', name: 'Târgul lunar', text: 'Târg în sat: piața plătește mult mai bine azi' });
+  if (se === 'autumn' && d === 5) out.push({ id: 'bdaydudu', icon: '🎂', name: 'Ziua lui Dudu', text: 'Petrecere surpriză în piața satului, la 18:00 🤫' });
+  if (se === 'winter' && d === 3) out.push({ id: 'craciun', icon: '🎄', name: 'Crăciunul', text: 'Cadourile de sub bradul din piață; seara vin colindătorii' });
+  if (se === 'winter' && d === 5) out.push({ id: 'dragobete', icon: '💞', name: 'Dragobetele', text: 'Culegeți ghiocei din pădure și dați-i la masa din curte' });
+  if (se === 'winter' && d === 7) out.push({ id: 'revelion', icon: '🎆', name: 'Revelionul', text: 'Petrecere în piață de la 21:00, artificii lansate de voi' });
+  if (day % 28 === 14) out.push({ id: 'fairday', icon: '🎪', name: 'Târgul lunar', text: 'Piața plătește mai bine; negustorul ambulant e în piață' });
   return out;
 }
 export const hasEvent = (s: S, id: string) => eventsOf(s.w.day).some(e => e.id === id);
@@ -594,6 +595,7 @@ export function albums(s: S): AlbumDef[] {
     { id: 'flowers', name: 'Flori', icon: '🌸', items: [{ id: 'flower', name: 'Flori de câmp', got: st(s, 'flowerTotal') > 0 }, ...['tulip', 'rose', 'sunflower'].map(c => ({ id: c, name: { tulip: 'Lalele', rose: 'Trandafiri', sunflower: 'Floarea-soarelui' }[c]!, got: st(s, 'harv-' + c) > 0 }))] },
     { id: 'recipes', name: 'Rețete', icon: '🍲', items: RECIPES.map(r => ({ id: r.id, name: r.name, got: st(s, 'cooked_' + r.id) > 0 })) },
     { id: 'clothes', name: 'Haine', icon: '👗', items: ITEMS.map(i => ({ id: i.id, name: i.label, got: owned.has(i.id) })) },
+    { id: 'memories', name: 'Amintiri de sărbători', icon: '📸', items: Hol.MEMORIES.map(m => ({ id: m.id, name: m.name, got: st(s, 'mem-' + m.id) > 0 })) },
   ];
 }
 export function openAlbums(s: S) {
@@ -615,14 +617,12 @@ export function daily(s: S) {
   // evenimentele zilei
   const ev = eventsOf(day);
   for (const e of ev) {
-    if (e.id === 'martisor' || e.id === 'dragobete') for (const id of ['bubu', 'dudu'] as const) s.op({ k: 'need', who: id, need: 'love', delta: 25 });
-    if (e.id === 'paste') { s.op({ k: 'res', res: 'egg', delta: 6 }); }
-    if (e.id === 'craciun') { s.op({ k: 'money', delta: 100 }); s.op({ k: 'res', res: 'meals', delta: 4 }); }
-    if (e.id === 'grandparents') { s.op({ k: 'money', delta: 80 }); s.op({ k: 'res', res: 'meals', delta: 3 }); }
+    // 1.11.0: sarbatorile se traiesc (bradul, petrecerea, colindatorii...): dimineata doar va spunem unde si cand
+    if (e.id === 'paste') { s.op({ k: 'res', res: 'egg', delta: 6 }); s.op({ k: 'res', res: 'meals', delta: 2 }); }
     if (e.id === 'storm') s.op({ k: 'furn', key: 'roofBroken', value: true });
   }
   const se = seasonOf(day);
-  const card = [`${se.icon} ${se.name}, ziua ${dayOfSeason(day)}`, ...ev.map(e => `${e.icon} ${e.name}: ${e.text}`), ...lines, ...todo(s)];
+  const card = [`${se.icon} ${se.name}, ziua ${dayOfSeason(day)}`, ...ev.map(e => Hol.morning(s, e.id) ?? `${e.icon} ${e.name}: ${e.text}`), ...Hol.morningExtra(s), ...lines, ...todo(s)];
   card.push('📅 Detaliile zilei le vezi oricând: atinge „Ziua ' + day + '” sus');
   s.hud.showLog(card, '☀️ Bună dimineața!');
 }
@@ -746,7 +746,7 @@ export function place(s: S, push: (f: Furn) => void) {
     if (!CITY_BUILDINGS.some(b => b.id === 'c-ourshop')) CITY_BUILDINGS.push({ id: 'c-ourshop', gx: 230, gy: 30, w: 8, d: 7, h: 96, floors: 3, front: 'y', wall: '#fff0f5', trim: '#ff7aa2', sign: 'Bubu & Dudu', signCol: '#ff4d8d', awning: '#ff9ab8', action: { id: 'st-shop', label: 'Magazinul „Bubu & Dudu”', icon: '🏪' } });
     push({ id: 'c-ourshop', type: 'cbuilding' as any, gx: 230, gy: 30, w: 8, d: 7, solid: true, action: { id: 'st-shop', label: 'Magazinul „Bubu & Dudu”', icon: '🏪' } });
   }
-  if (s.chapter >= SHOP_CHAPTER && !st(s, 'fairDone')) push({ id: 'st-fair', type: 'fairstand' as any, gx: 222, gy: 32, w: 2, d: 1, solid: true, action: { id: 'st-fair', label: 'Târgul orașului', icon: '🎪' } });
+  // 1.11.0: targul orasului (standul) a devenit Targul de Craciun (iarna, in nordul orasului): vezi holidays.ts
 }
 /** cheia pentru imaginile gata desenate (cand se schimba, se redeseneaza) */
 export function storyKey(s: S) { const p = parcelsOf(s); return `${s.w.furn.roofBroken ? 'R' : ''}${forestKey(s)}|${s.chapter}|${st(s, 'projectsDone')}|${Object.entries(p).map(([k, v]) => k + v.stage + Math.floor(v.prog * 4) + (v.crop ?? '')).join(',')}|${st(s, 'shopBuilt')}|${st(s, 'bridgeFixed')}`; }

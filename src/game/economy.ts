@@ -194,7 +194,7 @@ export const CHAPTERS: Chapter[] = [
   },
   {
     id: 7, title: 'Capitolul 7 · Afacerea din oraș', done: '💍 Afacerea voastră e cunoscută în tot orașul! Dudu are o surpriză…',
-    intro: 'Terenul de vânzare din oraș devine magazinul vostru „Bubu & Dudu”, cu produsele de la fermă. Bubu aranjează vitrina, Dudu face contractele cu restaurantele și duce marfa cu camionul. La final, târgul orașului!',
+    intro: 'Terenul de vânzare din oraș devine magazinul vostru „Bubu & Dudu”, cu produsele de la fermă. Bubu aranjează vitrina, Dudu face contractele cu restaurantele și duce marfa cu camionul.',
     goals: [
       { id: 'lot', icon: '🏗️', text: 'Cumpărați terenul din oraș', hint: 'Indicatorul „Teren de vânzare”, la est de Parcul Central', done: w => st(w, 'shopLot') > 0, reward: { hearts: 10 } },
       { id: 'shopbuilt', icon: '🏪', text: 'Construiți magazinul „Bubu & Dudu”', hint: 'Pe teren: scânduri, pietre și bani', done: w => st(w, 'shopBuilt') > 0, reward: { hearts: 20 } },
@@ -203,7 +203,6 @@ export const CHAPTERS: Chapter[] = [
       { id: 'shopsold', icon: '🧾', text: 'Magazinul vinde 30 de produse', hint: 'Se vinde singur în fiecare zi (mai mult cu vânzător angajat)', done: w => st(w, 'shopSold') >= 30, reward: { money: 50 } },
       { id: 'truck', icon: '🚚', text: 'Cumpărați camionul', hint: 'Laptopul → Vehicule', done: w => st(w, 'truck') > 0, reward: { hearts: 10 }, who: 'dudu' },
       { id: 'contract2', icon: '📜', text: 'Livrați 2 contracte la restaurante', hint: 'În magazin → Contracte (cu camionul)', done: w => st(w, 'contracts') >= 2, reward: { money: 80 }, who: 'dudu' },
-      { id: 'fair', icon: '🎪', text: 'Standul vostru la târgul orașului', hint: 'Când magazinul a vândut destul: Parcul Central → Târgul orașului', done: w => st(w, 'fairDone') > 0, reward: { money: 100, hearts: 25 } },
     ],
   },
   {

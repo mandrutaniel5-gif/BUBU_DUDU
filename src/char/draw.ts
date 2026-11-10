@@ -1,5 +1,5 @@
 import type { Pose, EyeType, MouthType, PropType } from './pose';
-import { drawHeadItem, drawFaceItem, drawNeckItem, drawBodyItem, type Outfit } from './outfit';
+import { drawHeadItem, drawFaceItem, drawNeckItem, drawBodyItem, drawPin, type Outfit } from './outfit';
 
 export type CharId = 'bubu' | 'dudu';
 
@@ -157,6 +157,7 @@ export function drawCharacter(
   if (p.back) { ell(ctx, p.hip, -10, 6, 5.5); fillStroke(ctx, spec.tail, O, 2); }
 
   if (outfit && outfit.neck !== 'none' && !p.back) drawNeckItem(ctx, outfit.neck, time);
+  if (outfit?.pin && !p.back) drawPin(ctx, outfit.pin, time);
   // recuzita din labute
   for (const [side, ang, prop, pr] of [[-1, p.armL, p.propL, p.propRotL], [1, p.armR, p.propR, p.propRotR]] as const) {
     if (prop === 'none' || ang + ARM_OFS >= 1.75) continue;

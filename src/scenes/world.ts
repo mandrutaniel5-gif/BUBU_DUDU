@@ -36,6 +36,7 @@ import { orderableChains, itemValue, FLORIST_PAY, orderCost, orderSrc, orderShor
 import { DESTS, DEST_BY_ID } from '../world/layout';
 import { CITY_CHAPTER, BRIDGE_CHAPTER, WEDDING_CHAPTER } from '../game/economy';
 import * as Story from './story';
+import * as Hol from './holidays';
 import { drawSeason } from '../world/season';
 import { sawPrice, KEEP_WOOD, nWood, nPlanks } from '../minigames/sawmill';
 import { drawItem, MAX_LVL } from '../world/items';
@@ -435,6 +436,7 @@ export class WorldScene implements Scene {
       for (const f of YARD_ITEMS) { const i = FURNITURE.indexOf(f); if (i >= 0) FURNITURE.splice(i, 1); }
       for (const f of YARD_ITEMS) { const at = yard[f.id]; if (at === 0) continue; const o = YARD_ORIG.get(f.id)!; f.gx = at ? at.gx : o.gx; f.gy = at ? at.gy : o.gy; FURNITURE.push(f); } }
     Story.place(this, f => FURNITURE.push(f));
+    Hol.place(this, f => FURNITURE.push(f)); this.holKeyNow = Hol.holKey(this);
     for (const key of Object.keys(this.w.plots ?? {})) { const [x, y] = key.split(',').map(Number); FURNITURE.push({ id: 'plot:' + key, type: 'soilplot', gx: x, gy: y, w: 1, d: 1, solid: false, action: { id: 'plot', label: 'Răzor', icon: '🌱' } }); }
     for (const p of this.w.placed ?? []) {
       const it = CATALOG.find(c => c.type === p.type); if (!it) continue;
@@ -718,6 +720,7 @@ export class WorldScene implements Scene {
     if (act.id === 'forestgate') { if (pawn === this.me) this.hud.toast(this.chapter >= 2 ? '🌲 Poarta pădurii e deschisă' : '🔒 Pădurea se deschide în Capitolul 2'); return; }
     // casele satenilor: bati la usa si vorbesti cu ei (acasa), chiar daca nu sunt pe strada
     if (act.id === 'st-propose') { if (pawn === this.me) this.playScene('propose', true); return; }
+    if (act.id.startsWith('st-h-')) { if (pawn === this.me) Hol.action(this, act.id, f); return; }
     if (act.id.startsWith('st-')) { if (pawn === this.me) Story.action(this, act.id, f); return; }
     if (act.id.startsWith('v-visit-') && pawn === this.me) { const vid = act.id.slice(8); this.me.actor.play('wave'); Sfx.play('doorbell', { vol: 0.6 }); TownUI.openVillager(this, vid); return; }
     if (act.id.startsWith('v-') && pawn === this.me) { this.villageAction(act.id, f); return; }
@@ -1210,6 +1213,7 @@ export class WorldScene implements Scene {
   }
   updateWalkers(dt: number) {
     if (this.space !== 'world') return;
+    const gatherNow = Hol.gather(this);
     const GREET = ['Bună ziua! 🌸', 'Ce zi frumoasă! ☀️', 'Să trăiți! 😊', 'Ați fost la piață? 🧺', 'Ce haine faine! 👗', 'Vă stă bine împreună! 💕'];
     for (const v of this.walkers) {
       const md = Math.hypot(this.me.gx - v.x, this.me.gy - v.y);
@@ -1219,7 +1223,15 @@ export class WorldScene implements Scene {
       if (md > 45) continue;
       const PATHS = v.paths ?? (v.region === 'city' ? CITY_PATHS : VILLAGE_PATHS);
       v.t -= dt; v.greetT -= dt;
-      if (v.t <= 0 && Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1) { v.t = 2 + Math.random() * 5; const p = PATHS[Math.floor(Math.random() * PATHS.length)]; const tx = p.x + (Math.random() - 0.5) * 1.2, ty = p.y + (Math.random() - 0.5) * 0.8; if (!this.nav.hits(tx, ty)) { v.tx = tx; v.ty = ty; } }
+      // sarbatorile: satenii se aduna (petrecerea din piata, nunta Inei, bradul de Craciun) si danseaza
+      const gat = v.vid && v.region === 'village' ? gatherNow : null;
+      if (gat && v.t <= 0 && Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1) {
+        const i = VILLAGERS.findIndex(x => x.id === v.vid), a = (i / VILLAGERS.length) * Math.PI * 2 + this.time * 0.02;
+        const far = Math.hypot(v.x - gat.x, v.y - gat.y) > gat.r + 1.5;
+        if (far) { const pth = this.nav.path(v.x, v.y, gat.x + Math.cos(a) * gat.r, gat.y + Math.sin(a) * gat.r * 0.7); const nx = pth?.[Math.min(1, (pth?.length ?? 1) - 1)]; if (nx) { v.tx = nx.x; v.ty = nx.y; } v.t = 0; }
+        else { v.t = 1.5 + Math.random() * 2.5; const tx = gat.x + Math.cos(a + Math.random() * 0.6) * gat.r * (0.7 + Math.random() * 0.3), ty = gat.y + Math.sin(a) * gat.r * 0.7; if (!this.nav.hits(tx, ty)) { v.tx = tx; v.ty = ty; } if (gat.dance && !v.a.busy) v.a.play(['dance_hop', 'dance_wave', 'dance_disco', 'love'][Math.floor(Math.random() * 4)]); }
+      }
+      if (!gat && v.t <= 0 && Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1) { v.t = 2 + Math.random() * 5; const p = PATHS[Math.floor(Math.random() * PATHS.length)]; const tx = p.x + (Math.random() - 0.5) * 1.2, ty = p.y + (Math.random() - 0.5) * 0.8; if (!this.nav.hits(tx, ty)) { v.tx = tx; v.ty = ty; } }
       const dx = v.tx - v.x, dy = v.ty - v.y, d = Math.hypot(dx, dy);
       if (d > 0.05 && v.t <= 0) { const sp = 1.1 * dt; const nx = v.x + dx / d * Math.min(sp, d), ny = v.y + dy / d * Math.min(sp, d); if (!this.nav.hits(nx, ny, 0.18)) { v.x = nx; v.y = ny; } else { v.tx = v.x; v.ty = v.y; } const s = iso(dx, dy); if (Math.abs(s.x) > 0.01) v.a.flip = s.x > 0 ? 1 : -1; v.a.moving = true; }
       else v.a.moving = false;
@@ -1418,7 +1430,7 @@ export class WorldScene implements Scene {
       if (score > 0) this.op({ k: 'hearts', delta: Math.round(score * 3) });
     });
     this.minigame = { id: mini, obj };
-    this.hud.setMinigame(true, mini === 'cutscene'); // in scenele mari nu apar mesaje peste ele
+    this.hud.setMinigame(true, mini === 'cutscene' || mini === 'holiday'); // in scenele mari (si la sarbatori) nu apar mesaje peste ele
   }
 
   /** urci pe vehiculul parcat: de aici alegi Porneste singur / Cheama partenerul / Coboara */
@@ -1917,6 +1929,8 @@ export class WorldScene implements Scene {
   }
   onMiniEvent(_who: CharId, data: unknown) {
     // scenele mari pornite de partener: le vezi si tu, in acelasi timp (lumea se schimba la el si vine prin op-uri)
+    const hd = data as { holiday?: string; arg?: any } | null;
+    if (hd?.holiday) { this.joinHoliday(hd.holiday, hd.arg, _who); return; }
     const sc = (data as { scene?: string } | null)?.scene;
     if (sc) { if (this.minigame) this.minigame.obj.abort?.(); this.sceneId = sc; this.sceneRemote = true; this.startCustom('cutscene'); return; }
     if (this.minigame?.obj.net) this.minigame.obj.net(data);
@@ -1991,6 +2005,10 @@ export class WorldScene implements Scene {
       Town.dailyTick(this);
       Story.daily(this);
       Story.staffHour(this);
+      // sarbatorile: lucrurile zilei apar / dispar la ora lor; seara de Revelion nu va e somn
+      if (Hol.holKey(this) !== this.holKeyNow) this.syncPlaced();
+      Hol.revelionPerk(this);
+      if (this.holInvite && !this.minigame) this.checkHolInvite();
       this.growPlots();
       if (this.isHost && this.partnerOnline) {
         this.netTick = (this.netTick + 1) % 6;
@@ -2008,7 +2026,9 @@ export class WorldScene implements Scene {
       const apt = (p === this.me ? this.area : this.partnerArea()) === 'apartment';
       const cold = (0.7 + night * 1.1) * (apt ? 0.3 : inside(p) ? 0.6 : 1.1);
       const gain = (fuel > 0 && inside(p) ? 11 : 0) + (apt ? 12 : 0) + (asleep ? 3 : 0) + (p.activity?.a.id === 'bath' ? 6 : 0);
+      const en0 = this.w.chars[p.id].needs.energy;
       const ev = tickNeeds(this.w.chars[p.id], hours, asleep, gain, cold);
+      if (Hol.partyNight(this) && this.w.chars[p.id].needs.energy < en0) this.w.chars[p.id].needs.energy = en0; // Revelionul: nu va e somn
       // atentionari cand ti-e foame / somn (o data, pana iti revii)
       { const nd = this.w.chars[p.id].needs, wk = (this.warned[p.id] ??= {}), nm = p.actor.spec.name;
         const warn = (key: string, low: boolean, high: boolean, msg: string, bubble: string) => {
@@ -2027,7 +2047,7 @@ export class WorldScene implements Scene {
         this.sendCharSync();
       }
     }
-    for (const p of [this.me, this.partner]) { p.actor.mood = moodFrom(this.w.chars[p.id]); p.actor.outfit = this.w.chars[p.id].outfit; }
+    for (const p of [this.me, this.partner]) { p.actor.mood = moodFrom(this.w.chars[p.id]); p.actor.outfit = Hol.withPin(this, p.id, this.w.chars[p.id].outfit); }
     this.sickT -= dt;
     if (this.sickT <= 0) {
       this.sickT = 7 + Math.random() * 6;
@@ -2396,6 +2416,28 @@ export class WorldScene implements Scene {
   draw(ctx: CanvasRenderingContext2D) { drawWorld(this, ctx); if (this.space === 'world' && !this.minigame) drawSeason(ctx, this.game.w, this.game.h, this.time, Story.seasonOf(this.w.day).id, this.w.minutes, Story.hasEvent(this, 'revelion'), Story.stormLevel(this)); }
   // ------------------------------------------------------------------ scenele mari (podul, cererea, nunta, targul, camionul)
   sceneId = ''; sceneRemote = false; pendingPay = 0; pendingClient = '';
+  // ------------------------------------------------------------------ sarbatorile (1.11.0)
+  holidayId = ''; holidayArg: any = null; holidayRemote = false; holKeyNow = ''; holInvite: { id: string; arg: any; from: CharId } | null = null;
+  /** porneste o sarbatoare pe tot ecranul; both = si la partener (daca e in alt minijoc, il intreaba cand termina) */
+  playHoliday(id: string, both = true, arg: any = null) {
+    if (this.minigame) return;
+    this.stopActivity(this.me); this.me.path = [];
+    this.holidayId = id; this.holidayArg = arg; this.holidayRemote = false; this.startCustom('holiday');
+    if (both && this.partnerOnline) this.net.sendEvent({ t: 'mini', who: this.myId, data: { holiday: id, arg } });
+  }
+  /** partenerul a pornit o sarbatoare: intri si tu (sau te intreaba, daca esti ocupat) */
+  joinHoliday(id: string, arg: any, from: CharId) {
+    if (this.minigame && this.minigame.id !== 'holiday') { this.holInvite = { id, arg, from }; return; }
+    if (this.minigame) return;
+    this.stopActivity(this.me); this.me.path = [];
+    this.holidayId = id; this.holidayArg = arg; this.holidayRemote = true; this.startCustom('holiday');
+  }
+  /** invitatia ramasa (erai intr-un minijoc): te intreaba dupa ce termini */
+  checkHolInvite() {
+    const v = this.holInvite; if (!v || this.minigame) return; this.holInvite = null;
+    const nm = this.partner.actor.spec.name;
+    this.choice('🎉 Sărbătoare!', `${nm} te cheamă: a început ${Hol.showName(v.id)}. Vii?`, [['🎉', 'Vin!', () => { this.holidayId = v.id; this.holidayArg = v.arg; this.holidayRemote = true; this.startCustom('holiday'); }], ['⏳', 'Mai târziu', () => { /* */ }]]);
+  }
   /** porneste o scena animata; both = o vede si partenerul (pe telefonul lui) in acelasi timp */
   playScene(id: string, both: boolean) {
     if (this.minigame) return;

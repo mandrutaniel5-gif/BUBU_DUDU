@@ -1,10 +1,10 @@
 // Accesorii (garderoba): desenate peste personaj.
 import { heartPath, starPath } from './draw';
 
-export interface Outfit { head: string; face: string; neck: string; body?: string }
+export interface Outfit { head: string; face: string; neck: string; body?: string; /** marțisorul prins in piept (1.11.0) */ pin?: string }
 export const NO_OUTFIT: Outfit = { head: 'none', face: 'none', neck: 'none', body: 'none' };
 
-export interface Item { id: string; slot: keyof Outfit; label: string; icon: string; price: number; shop?: 'sat' | 'oras' }
+export interface Item { id: string; slot: keyof Outfit; label: string; icon: string; price: number; shop?: 'sat' | 'oras' | 'targ' }
 export const ITEMS: Item[] = [
   { id: 'bow', slot: 'head', label: 'Fundiță roz', icon: '🎀', price: 15 },
   { id: 'flower', slot: 'head', label: 'Coroniță de flori', icon: '🌸', price: 25 },
@@ -35,6 +35,11 @@ export const ITEMS: Item[] = [
   { id: 'mireasa', slot: 'body', label: 'Rochie de mireasă', icon: '👰', price: 650, shop: 'oras' },
   { id: 'voal', slot: 'head', label: 'Voal de mireasă', icon: '💐', price: 120, shop: 'oras' },
   { id: 'mire', slot: 'body', label: 'Costum de mire', icon: '🤵', price: 600, shop: 'oras' },
+  // negustorul ambulant (targul lunar din sat, 1.11.0): doar la el
+  { id: 'mustata', slot: 'face', label: 'Mustață falsă', icon: '🥸', price: 40, shop: 'targ' },
+  { id: 'monoclu', slot: 'face', label: 'Monoclu de boier', icon: '🧐', price: 60, shop: 'targ' },
+  { id: 'ochelari', slot: 'face', label: 'Ochelari rotunzi', icon: '🤓', price: 45, shop: 'targ' },
+  { id: 'cowboy', slot: 'head', label: 'Pălărie de cowboy', icon: '🤠', price: 80, shop: 'targ' },
 ];
 // accesoriile vechi se gasesc tot la Croitoria din sat (coroana: la oras)
 for (const it of ITEMS) if (!it.shop) it.shop = it.id === 'crown' ? 'oras' : 'sat';
@@ -56,6 +61,11 @@ export function drawHeadItem(ctx: CanvasRenderingContext2D, id: string, t: numbe
       ctx.beginPath(); ctx.moveTo(-36, 4); ctx.bezierCurveTo(-38, -34, 38, -34, 36, 4); ctx.quadraticCurveTo(30, -12, 0, -14); ctx.quadraticCurveTo(-30, -12, -36, 4); ctx.closePath(); st(ctx, '#e5383b');
       for (const [x, y] of [[-20, -18], [0, -24], [20, -18], [-10, -12], [10, -12]]) { for (let k = 0; k < 5; k++) { const a = k * 1.256; ctx.beginPath(); ctx.arc(x + Math.cos(a) * 2.6, y + Math.sin(a) * 2.6, 2, 0, 7); ctx.fillStyle = '#fff'; ctx.fill(); } ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 7); ctx.fillStyle = '#ffd23f'; ctx.fill(); }
       ctx.beginPath(); ctx.moveTo(30, 0); ctx.lineTo(40, 10); ctx.lineTo(34, 12); ctx.closePath(); st(ctx, '#e5383b', 1.5);
+      break;
+    case 'cowboy':
+      ctx.beginPath(); ctx.moveTo(-46, -20); ctx.quadraticCurveTo(-30, -14, 0, -15); ctx.quadraticCurveTo(30, -14, 46, -20); ctx.quadraticCurveTo(40, -10, 0, -9); ctx.quadraticCurveTo(-40, -10, -46, -20); ctx.closePath(); st(ctx, '#b07a45');
+      ctx.beginPath(); ctx.moveTo(-22, -16); ctx.bezierCurveTo(-24, -46, -8, -40, 0, -36); ctx.bezierCurveTo(8, -40, 24, -46, 22, -16); ctx.closePath(); st(ctx, '#c98e5f');
+      ctx.beginPath(); ctx.roundRect(-22, -22, 44, 6, 3); st(ctx, '#6b3a1e', 1.5); ctx.beginPath(); ctx.arc(14, -19, 3, 0, 7); st(ctx, '#ffd23f', 1);
       break;
     case 'joben':
       ctx.beginPath(); ctx.ellipse(0, -22, 26, 6, 0, 0, 7); st(ctx, '#2b2b33');
@@ -110,6 +120,16 @@ export function drawFaceItem(ctx: CanvasRenderingContext2D, id: string) {
   if (id === 'hearts') {
     for (const s of [-1, 1]) { heartPath(ctx, s * 13, 5, 9); st(ctx, '#ff4d6d'); heartPath(ctx, s * 13, 5, 6); ctx.fillStyle = '#ff8fab'; ctx.fill(); }
     ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-5, 1); ctx.quadraticCurveTo(0, -2, 5, 1); ctx.stroke();
+  } else if (id === 'mustata') {
+    // mustata falsa (sub nasuc), cu varfurile rasucite
+    ctx.fillStyle = '#4a2a1a'; ctx.strokeStyle = O; ctx.lineWidth = 1.5;
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(0, 13); ctx.bezierCurveTo(s * 6, 9, s * 14, 10, s * 17, 15); ctx.bezierCurveTo(s * 20, 18, s * 22, 13, s * 20, 11); ctx.bezierCurveTo(s * 22, 16, s * 16, 19, s * 10, 17); ctx.quadraticCurveTo(s * 4, 16, 0, 15); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  } else if (id === 'monoclu') {
+    ctx.beginPath(); ctx.arc(13, 4, 9, 0, 7); ctx.fillStyle = 'rgba(200,230,255,0.35)'; ctx.fill(); ctx.strokeStyle = '#c9a227'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.strokeStyle = '#c9a227'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(20, 9); ctx.quadraticCurveTo(26, 22, 18, 34); ctx.stroke();
+  } else if (id === 'ochelari') {
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 13, 4, 8, 0, 7); ctx.fillStyle = 'rgba(220,240,255,0.3)'; ctx.fill(); ctx.strokeStyle = '#5a3a2a'; ctx.lineWidth = 2.2; ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(-5, 2); ctx.quadraticCurveTo(0, -1, 5, 2); ctx.stroke();
   } else if (id === 'shades') {
     for (const s of [-1, 1]) { ctx.beginPath(); ctx.roundRect(s * 13 - 8, -2, 16, 10, 4); st(ctx, '#222'); ctx.fillStyle = '#ffffff55'; ctx.fillRect(s * 13 - 5, 0, 5, 2.5); }
     ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-5, 1); ctx.lineTo(5, 1); ctx.stroke();
@@ -199,4 +219,21 @@ export function drawBodyItem(ctx: CanvasRenderingContext2D, id: string, clipBody
       ctx.fillStyle = '#ffd23f'; for (const y of [-20, -12]) { ctx.beginPath(); ctx.arc(hip, y, 1.8, 0, 7); ctx.fill(); }
     }, () => { ctx.fillStyle = '#2f3b5c'; ctx.fillRect(-12, -10, 24, 30); ctx.fillStyle = '#fff'; ctx.fillRect(-12, 13, 24, 3); }); break;
   }
+}
+
+/** martisorul prins in piept (1.11.0): snurul alb-rosu cu fundita si talismanul ales */
+export const CHARMS = [{ id: 'trifoi', icon: '🍀', label: 'Trifoi cu 4 foi', text: 'aduce noroc' }, { id: 'inima', icon: '❤️', label: 'Inimioară', text: 'pentru dragoste' }, { id: 'potcoava', icon: '🧲', label: 'Potcoavă', text: 'aduce noroc în casă' }, { id: 'coșar', icon: '🎩', label: 'Coșar', text: 'alungă necazurile' }, { id: 'ghiocel', icon: '🤍', label: 'Ghiocel', text: 'vestește primăvara' }];
+export function drawPin(ctx: CanvasRenderingContext2D, id: string, t: number) {
+  ctx.save(); ctx.translate(-12, -16); ctx.rotate(Math.sin(t * 2) * 0.05);
+  // snurul rasucit, alb si rosu, cu fundita
+  for (const [col, off] of [['#ffffff', 0], ['#e63946', 1.6]] as const) { ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.beginPath(); for (let i = 0; i <= 8; i++) { const y = i * 1.4, x = Math.sin(i * 1.4 + off * 2) * 1.6; i ? ctx.lineTo(x, y - 6) : ctx.moveTo(x, y - 6); } ctx.stroke(); }
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(s * 3.5, -7, 3.2, 1.8, s * 0.5, 0, 7); ctx.fillStyle = s < 0 ? '#e63946' : '#fff'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 0.8; ctx.stroke(); }
+  // talismanul
+  ctx.translate(0, 8);
+  if (id === 'trifoi') { for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + 0.78; ctx.beginPath(); ctx.arc(Math.cos(a) * 2.6, Math.sin(a) * 2.6, 2.4, 0, 7); ctx.fillStyle = '#4caf50'; ctx.fill(); } }
+  else if (id === 'inima') { heartPath(ctx, 0, -1, 4.5); ctx.fillStyle = '#e63946'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 0.8; ctx.stroke(); }
+  else if (id === 'potcoava') { ctx.strokeStyle = '#c9a227'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(0, 0, 3.6, Math.PI * 0.15, Math.PI * 0.85, true); ctx.stroke(); }
+  else if (id === 'coșar') { ctx.fillStyle = '#2b2b33'; ctx.fillRect(-2.2, -4, 4.4, 4); ctx.fillRect(-3.4, 0, 6.8, 1.2); ctx.beginPath(); ctx.arc(0, 3.4, 2.4, 0, 7); ctx.fill(); }
+  else { ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 0.8; for (const s of [-1, 0, 1]) { ctx.beginPath(); ctx.ellipse(s * 1.8, 1, 1.4, 3.2, s * 0.4, 0, 7); ctx.fill(); ctx.stroke(); } ctx.strokeStyle = '#4caf50'; ctx.beginPath(); ctx.moveTo(0, -2); ctx.quadraticCurveTo(2, -5, 4, -4); ctx.stroke(); }
+  ctx.restore();
 }

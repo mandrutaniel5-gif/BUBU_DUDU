@@ -104,7 +104,27 @@ function pianoNote() {
   tone('triangle', f, f * 0.998, 0.7, 0.18); tone('sine', f * 2, f * 2, 0.35, 0.05);
   if (melI % 4 === 1) tone('sine', f / 2, f / 2, 1.1, 0.08);
 }
+// 1.11.0: melodiile si sunetele sarbatorilor (sintetizate)
+function tune(notes: [number, number][], tempo = 0.22, type: OscillatorType = 'triangle', vol = 0.16) { let t = 0; for (const [f, d] of notes) { if (f) { tone(type, f, f * 0.999, d * tempo * 1.4, vol, t); tone('sine', f * 2, f * 2, d * tempo * 0.6, vol * 0.25, t); } t += d * tempo; } }
+const N: Record<string, number> = { C4: 262, D4: 294, E4: 330, F4: 349, G4: 392, A4: 440, B4: 494, C5: 523, D5: 587, E5: 659, F5: 698, G5: 784, A5: 880, B5: 988, C6: 1047 };
+const nn = (s: string): [number, number][] => s.split(' ').map(x => { const [n, d] = x.split(':'); return [n === '_' ? 0 : N[n], Number(d ?? 1)]; });
+let carolI = 0;
+const CAROL = ['E5:1 E5:1 F5:1 G5:2 G5:1 F5:1 E5:2', 'D5:1 D5:1 E5:1 F5:2 E5:1 D5:1 C5:2', 'E5:1 G5:1 C6:2 B5:1 A5:1 G5:2', 'A5:1 G5:1 F5:1 E5:2 D5:1 D5:1 C5:3'];
 const SOUNDS: Record<string, () => void> = {
+  jingle: () => { tune(nn('E5:1 E5:1 E5:2 E5:1 E5:1 E5:2 E5:1 G5:1 C5:1.5 D5:0.5 E5:3'), 0.17, 'triangle', 0.13); for (let i = 0; i < 6; i++) noiseHit(0.08, 7000, 0.06, 'highpass', i * 0.34); },
+  carol: () => { tune(nn(CAROL[carolI++ % CAROL.length]), 0.26, 'triangle', 0.15); },
+  bdaysong: () => tune(nn('C5:0.75 C5:0.25 D5:1 C5:1 F5:1 E5:2 C5:0.75 C5:0.25 D5:1 C5:1 G5:1 F5:2 C5:0.75 C5:0.25 C6:1 A5:1 F5:1 E5:1 D5:2 B5:0.75 B5:0.25 A5:1 F5:1 G5:1 F5:3'), 0.3, 'triangle', 0.15),
+  fanfare: () => tune(nn('C5:1 E5:1 G5:1 C6:3 G5:1 C6:4'), 0.12, 'square', 0.07),
+  rocket: () => { tone('sawtooth', 300, 1600, 0.7, 0.04); noiseHit(0.7, 2500, 0.08, 'highpass'); },
+  boom: () => { noiseHit(0.5, 600, 0.45, 'lowpass'); noiseHit(1.2, 3000, 0.12, 'highpass', 0.15); for (let i = 0; i < 6; i++) noiseHit(0.05, 5000, 0.08, 'highpass', 0.3 + i * 0.09); },
+  cork: () => { tone('sine', 380, 1500, 0.06, 0.3); noiseHit(0.08, 2200, 0.3, 'bandpass'); noiseHit(0.6, 5000, 0.05, 'highpass', 0.1); },
+  crack: () => { noiseHit(0.05, 3000, 0.45, 'bandpass'); noiseHit(0.08, 1500, 0.3, 'bandpass', 0.05); },
+  kick: () => { tone('sine', 150, 45, 0.18, 0.5); noiseHit(0.03, 4000, 0.06, 'highpass'); },
+  drumroll: () => { for (let i = 0; i < 18; i++) noiseHit(0.05, 900, 0.12 + i * 0.008, 'bandpass', i * 0.07); },
+  horn: () => { tone('sawtooth', 520, 560, 0.35, 0.09); tone('square', 780, 800, 0.35, 0.04); },
+  ding: () => { tone('sine', 1568, 1568, 0.9, 0.18); tone('sine', 2093, 2093, 0.6, 0.08, 0.02); },
+  howl: () => { tone('sawtooth', 300, 620, 0.5, 0.06); tone('sawtooth', 620, 380, 0.9, 0.06, 0.5); },
+  ice: () => { noiseHit(0.35, 6000, 0.05, 'highpass'); },
   piano: pianoNote,
   gamebeep: () => { const n = [660, 880, 990, 1320][Math.floor(Math.random() * 4)]; tone('square', n, n, 0.07, 0.06); tone('square', n * 1.5, n * 1.5, 0.07, 0.05, 0.08); },
   fart: () => fart(0.45, 0.5),
