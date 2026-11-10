@@ -62,7 +62,7 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   await E(() => { const s = game.scene; s.w.stats['got-hens'] = 0; __S.collect(s, 'hens'); __S.collect(s, 'cows'); __S.makeCheese(s); }); 
   const an = await E(() => ({ egg: game.scene.w.stats.eggsCollected, cheese: game.scene.w.stats.cheeseMade })); ok('oua + branza', an.egg > 0 && an.cheese > 0, JSON.stringify(an));
   // angajati
-  await E(() => { const s = game.scene; __S.openStaff(s); document.querySelector('[data-hire]')?.click(); }); await sleep(300); await p.screenshot({ path: 'st_staff.png' });
+  await E(() => { const s = game.scene; __S.openStaff(s); document.querySelector('[data-role]:not(.poor)')?.click(); document.querySelector('[data-hire]')?.click(); }); await sleep(300); await p.screenshot({ path: 'st_staff.png' });
   const hired = await E(() => __S.staffOf(game.scene).length); ok('angajat', hired >= 1, String(hired));
   await E(() => { const s = game.scene; s.w.day++; s.w.stats.lastDay = 0; }); await sleep(2500); await p.screenshot({ path: 'st_raport.png' });
   // --- oras, magazin, contracte, targ
