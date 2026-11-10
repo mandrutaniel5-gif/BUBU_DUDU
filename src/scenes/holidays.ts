@@ -3,7 +3,8 @@
 // sarbatoare din curte, concursul de la lac, targul de Craciun din oras); satenii se aduna la petreceri; atingi
 // si incepe sarbatoarea pe tot ecranul (minigames/holi*.ts), pe ambele telefoane.
 import type { WorldScene } from './world';
-import type { Furn } from '../world/map';
+import { FURNITURE, type Furn } from '../world/map';
+import { CATALOG } from '../world/build';
 import type { CharId } from '../char/draw';
 import { Sfx } from '../engine/sfx';
 import { iso } from '../world/iso';
@@ -75,7 +76,7 @@ export function place(s: S, push: (f: Furn) => void) {
     push({ id: 'st-h-xtree', type: 'xmastree' as any, kind: 'lit', gx: M.gx + 7.5, gy: M.gy + 3.4, w: 1, d: 1, solid: true });
   }
   // --- seara de Craciun: colindatorii la usa voastra
-  if (ev(s, 'craciun') && h >= 17 && h < 23 && !st(s, 'carol-' + y)) push({ id: 'st-h-carol', type: 'carolers' as any, gx: SPOT.carol.gx, gy: SPOT.carol.gy, w: 1, d: 1, solid: false, action: a('st-h-carol', 'Au venit colindătorii!', '⭐') });
+  if (ev(s, 'craciun') && h >= 17 && h < 23 && !st(s, 'carol-' + y)) push({ id: 'st-h-carol', type: 'carolers' as any, ...yardSpot(s, SPOT.carol), w: 1, d: 1, solid: false, action: a('st-h-carol', 'Au venit colindătorii!', '⭐') });
   // --- ziua lui Bubu / Dudu, revelionul: masa cu tortul si ghirlandele din piata
   const bday = ev(s, 'bdaybubu') ? 'bubu' : ev(s, 'bdaydudu') ? 'dudu' : '';
   if (bday && h >= 6) push({ id: 'st-h-party', type: 'partyset' as any, kind: (h >= 17.5 ? 'open-' : 'hidden-') + bday, gx: SPOT.party.gx, gy: SPOT.party.gy, w: 3, d: 1, solid: true, action: a('st-h-party', h >= 17.5 ? `🎂 Petrecerea lui ${bday === 'bubu' ? 'Bubu' : 'Dudu'}` : 'Pregătiri secrete… 🤫', '🎉') });
@@ -86,7 +87,7 @@ export function place(s: S, push: (f: Furn) => void) {
   if (ev(s, 'villwed') && h >= 6 && s.chapter >= 3) push({ id: 'st-h-arch', type: 'wedarch' as any, gx: SPOT.arch.gx, gy: SPOT.arch.gy, w: 0.4, d: 1.4, solid: false, action: a('st-h-arch', h >= 11 && h < 18 ? 'Nunta Inei (11:00 – 18:00)' : 'Nunta Inei: de la 11:00', '💒') });
   // --- masa de sarbatoare din curte (Paste, Martisor, Dragobete, bunicii)
   const tb = tableEvent(s);
-  if (tb) push({ id: 'st-h-table', type: 'festable' as any, kind: tb.kind, gx: SPOT.table.gx, gy: SPOT.table.gy, w: 1, d: 1, solid: true, action: a('st-h-table', tb.label, tb.icon) });
+  if (tb) push({ id: 'st-h-table', type: 'festable' as any, kind: tb.kind, ...yardSpot(s, SPOT.table), w: 1, d: 1, solid: true, action: a('st-h-table', tb.label, tb.icon) });
   // --- zi de lac: concursul de pescuit si patura de picnic
   if (ev(s, 'swim') && h >= 8 && h < 19) {
     if (!st(s, 'contest-' + y)) push({ id: 'st-h-contest', type: 'contest' as any, gx: SPOT.contest.gx, gy: SPOT.contest.gy, w: 2, d: 1, solid: true, action: a('st-h-contest', 'Concursul de pescuit 🏆', '🎣') });
@@ -105,7 +106,19 @@ function tableEvent(s: S): { kind: string; label: string; icon: string } | null 
   if (ev(s, 'grandparents') && h >= 10 && h < 20 && !st(s, 'grand-' + y)) return { kind: 'grand', label: 'Bunicii au venit în vizită!', icon: '👵' };
   return null;
 }
-const treasureSpot = (s: S) => { const r = st(s, 'treasure'); const spots = [[16, 17], [20, 4], [1, 18], [11, 20], [ORIGIN.forest.x + 18, ORIGIN.forest.y + 16]]; const [x, y] = spots[r % spots.length]; return { x, y }; };
+/** un loc liber in curte, cat mai aproape de cel dorit: nu pe florile, razoarele sau constructiile voastre (1.11.2) */
+export function yardSpot(s: S, want: { gx: number; gy: number }): { gx: number; gy: number } {
+  const busy = new Set<string>(), mark = (x0: number, y0: number, w: number, d: number) => { for (let x = Math.floor(x0) - 0; x < Math.ceil(x0 + w); x++) for (let y = Math.floor(y0); y < Math.ceil(y0 + d); y++) busy.add(x + ',' + y); };
+  for (const f of FURNITURE) if (!f.id.startsWith('st-h') && f.gx < 24 && f.gy < 24 && f.gx > -2 && f.gy > -2) mark(f.gx, f.gy, f.w, f.d);
+  for (const k of Object.keys(s.w.plots ?? {})) { const [x, y] = k.split(',').map(Number); mark(x, y, 1, 1); }
+  for (const p of s.w.placed ?? []) { const it = CATALOG.find(c => c.type === p.type); mark(p.gx, p.gy, it?.w ?? 1, it?.d ?? 1); }
+  const open = (x: number, y: number) => !busy.has(x + ',' + y);
+  const free = (x: number, y: number) => open(x, y) && [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([i, j]) => open(x + i, y + j)).length >= 2; // si se poate ajunge la ea
+  const wx = Math.floor(want.gx), wy = Math.floor(want.gy); let best: { gx: number; gy: number } | null = null, bd = 1e9;
+  for (let y = 12; y <= 20; y++) for (let x = 1; x <= 20; x++) { if (!free(x, y)) continue; const d = Math.hypot(x - wx, y - wy); if (d < bd) { bd = d; best = { gx: x + (want.gx - wx), gy: y + (want.gy - wy) }; } }
+  return best ?? want;
+}
+const treasureSpot = (s: S) => { const r = st(s, 'treasure'); const spots = [[16, 17], [20, 4], [1, 18], [11, 20], [ORIGIN.forest.x + 18, ORIGIN.forest.y + 16]]; const [x, y] = spots[r % spots.length]; if (y < 0) return { x, y }; const f = yardSpot(s, { gx: x, gy: y }); return { x: f.gx, y: f.gy }; };
 
 // ====================================================================== cand atingi
 export function action(s: S, id: string, f?: Furn) {
@@ -295,11 +308,15 @@ export function hotMeals(s: S): { key: string; icon: string; name: string; n: nu
 export const genderWord = (id: CharId, m: string, f: string) => g(id, m, f);
 
 /** martisorul primit se vede in piept toata primavara (7 zile) */
+const NO_SHARED: Outfit = { ...NO_OUTFIT };
+const PINNED = new WeakMap<object, { pin: string; out: Outfit }>();
 export function withPin(s: S, who: CharId, o: Outfit | undefined): Outfit | undefined {
-  const c = st(s, 'mpin-' + who); if (!c || !o) return o;
+  const c = st(s, 'mpin-' + who); if (!c) return o;
+  o ??= NO_SHARED; // fara haine: martisorul se vede tot
   if (seasonOf(s.w.day).id !== 'spring' || s.w.day - st(s, 'mday-' + who) > 7) return o;
   const id = CHARMS[c - 1]?.id; if (!id) return o;
-  const k = (o as any).__pinned; if (k && k.pin === id && k.src === o) return k.out;
-  const out = { ...o, pin: id }; (o as any).__pinned = { pin: id, src: o, out }; return out;
+  // 1.11.2: tinut deoparte (WeakMap), nu pe haina: pus pe haina facea o bucla si salvarea / trimiterea dadeau erori la nesfarsit
+  const k = PINNED.get(o); if (k && k.pin === id) return k.out;
+  const out = { ...o, pin: id }; PINNED.set(o, { pin: id, out }); return out;
 }
 export const showName = (id: string) => ({ xmastree: 'împodobitul bradului', colinde: 'colindul', gifts: 'deschisul cadourilor', santa: 'poza cu Moș Crăciun', skate: 'patinajul', carusel: 'tura cu căluțeii', revelion: 'petrecerea de Revelion', bday: 'petrecerea surpriză', paste: 'ciocnitul ouălor', martisor: 'mărțișorul', dragobete: 'Dragobetele', inawed: 'nunta Inei', grand: 'vizita bunicilor', fishcontest: 'concursul de pescuit', picnic: 'picnicul', loz: 'lozul' } as Record<string, string>)[id] ?? 'o sărbătoare';

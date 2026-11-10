@@ -177,6 +177,8 @@ export class WorldScene implements Scene {
     actor.scale = ACTOR_SCALE;
     const pawn: Pawn = { id, actor, gx: 6, gy: 10, path: [], activity: null, pendingInteract: null, control, z: 0, aiT: 2, facingBack: false };
     actor.audible = () => this.snd?.audible(pawn) ?? 1; // sunetele personajului: doar cand e langa tine
+    // 1.11.2: norisorii, textele, inimioarele lui se vad doar cand e langa tine, pe aceeasi harta (nu unde l-ai vazut ultima oara)
+    actor.fxOn = () => pawn === this.me || (this.sameArea() && !this.travel && Math.hypot(pawn.gx - this.me.gx, pawn.gy - this.me.gy) < 22);
     return pawn;
   }
   pawnOf(id: CharId) { return this.me.id === id ? this.me : this.partner; }
@@ -1554,13 +1556,15 @@ export class WorldScene implements Scene {
     else { pa.callBoard = true; pa.path = []; this.hud.toast(`📣 ${pa.actor.spec.name} vine să urce în spate…`); }
     this.me.actor.play('wave'); this.net.sendEvent({ t: 'emote', who: this.myId, anim: 'wave' });
   }
+  /** daca personajul a ajuns intr-un obstacol (coborat de pe vehicul langa un zid / gard / masina), il mutam pe cea mai apropiata dala libera */
+  unstickNow(p: Pawn) { if (p.control === 'remote' || !this.nav.hits(p.gx, p.gy, 0.12)) return; const f = this.nav.freeSpot(p.gx, p.gy, 10); if (f) { p.gx = f.x; p.gy = f.y; p.path = []; } }
   rideOff() {
-    if (this.me.passenger) { this.me.passenger = false; this.me.gx += 0.6; this.me.gy += 0.4; this.hud.setRide(null); return; }
+    if (this.me.passenger) { this.me.passenger = false; this.me.gx += 0.6; this.me.gy += 0.4; this.unstickNow(this.me); this.hud.setRide(null); return; }
     if (!this.me.board) return;
     this.me.board = false; this.me.riding = false;
     if (this.partner.passenger && this.partner.control !== 'remote') { this.partner.passenger = false; this.partner.gx = this.me.gx + 0.6; this.partner.gy = this.me.gy + 0.4; }
     this.partner.callBoard = false;
-    this.me.gy += 0.5;
+    this.me.gy += 0.5; this.unstickNow(this.me); this.unstickNow(this.partner);
     Sfx.play('pop'); this.hud.setRide(null);
   }
   passengerGrace = 0;
@@ -1642,6 +1646,7 @@ export class WorldScene implements Scene {
     const spot = near ? this.nav.standSpot(near.gx, near.gy, near.w, near.d, me.gx, me.gy + 1) : null;
     if (spot) { me.gx = spot.x; me.gy = spot.y; } else if (this.nav.hits(me.gx, me.gy)) { me.gy += 0.8; }
     if (pa.passenger && pa.control !== 'remote') { pa.passenger = false; const q = this.nav.standSpot(Math.floor(me.gx), Math.floor(me.gy), 1, 1, me.gx + 1, me.gy); pa.gx = q?.x ?? me.gx + 0.6; pa.gy = q?.y ?? me.gy + 0.3; pa.z = 0; }
+    this.unstickNow(me); this.unstickNow(pa);
     this.hud.setRide(null);
     Sfx.play(r.kind === 'bus' ? 'bus_doors' : r.kind === 'taxi' ? 'car_door' : 'pop', { vol: 0.5 });
     this.sendCharSync();
@@ -2175,6 +2180,7 @@ export class WorldScene implements Scene {
         const T = d.control === 'remote' && d.remoteTarget ? { x: d.remoteTarget.gx, y: d.remoteTarget.gy } : { x: d.gx, y: d.gy };
         const q = this.nav.standSpot(Math.floor(T.x), Math.floor(T.y), 1, 1, T.x + 1, T.y + 0.5);
         if (q && this.sameArea()) { p.gx = q.x; p.gy = q.y; }
+        this.unstickNow(p);
       } else { p.gx = d.gx; p.gy = d.gy; p.actor.flip = d.actor.flip; p.actor.moving = false; return; }
     }
     if (this.travel || this.ride) { if (!this.ride) p.actor.moving = false; return; }
@@ -2509,8 +2515,11 @@ export class WorldScene implements Scene {
       for (const q of [{ x: f.gx + f.w + 0.45, y: f.gy + f.d / 2 + 0.2 }, { x: f.gx + f.w / 2 + 0.2, y: f.gy + f.d + 0.45 }, { x: f.gx - 0.45, y: f.gy + f.d / 2 + 0.2 }, { x: f.gx + f.w / 2, y: f.gy - 0.45 }]) if (free(q)) return q;
       return null;
     };
+    // 1.11.2: copacii / pietrele / florile pe care le-au ales deja ceilalti angajati nu le mai alegi si tu (mergeau toti la acelasi copac)
+    const taken = new Set<string>(); for (const o of this.walkers) if (o !== v && o.emp && o.job) for (const st2 of o.job.steps.slice(o.job.i)) if (st2.tid) taken.add(st2.tid);
     /** 3 obiecte apropiate unul de altul, alese la intamplare */
-    const three = (list: Furn[]) => {
+    const three = (all: Furn[]) => {
+      const list = all.filter(f => !taken.has(f.id));
       if (!list.length) return [];
       const f0 = list[Math.floor(Math.random() * list.length)];
       return [...list].sort((a, b) => Math.hypot(a.gx - f0.gx, a.gy - f0.gy) - Math.hypot(b.gx - f0.gx, b.gy - f0.gy)).slice(0, 3);
@@ -2521,23 +2530,25 @@ export class WorldScene implements Scene {
     const e = Story.staffOf(this).find(x => x.id === v.eid), k = Math.min(5, e?.skill ?? 1);
     const fast = (d: number) => d * (1.15 - k * 0.07); // cu cat e mai priceput, cu atat lucreaza mai repede
     const idle = (anim?: string): StaffStep[] => P.map(q => ({ x: q.x, y: q.y, anim, dur: rnd(6, 10) }));
+    /** nu e nimic de facut acum: se odihneste la locul lui (fara sa mimeze munca) si spune de ce */
+    const waiting = (why: string): StaffStep[] => P.slice(0, 2).map((q, i) => ({ x: q.x, y: q.y, dur: rnd(8, 12), done: i === 0 ? why : undefined }));
     const nearest = <X extends { x: number; y: number }>(list: X[], n: number) => { const out: X[] = []; let at = { x: v.x, y: v.y }; const left = [...list]; while (out.length < n && left.length) { left.sort((a, b) => Math.hypot(a.x - at.x, a.y - at.y) - Math.hypot(b.x - at.x, b.y - at.y)); const q = left.shift()!; out.push(q); at = q; } return out; };
     switch (role) {
       case 'wood': {
         // in padure (din Capitolul 2) sau in curte: copac dupa copac, de dimineata pana seara; fiecare copac da lemne pe loc
         const trees = F.filter(f => f.action?.id === 'chop' && !this.depleted(f.id) && (forest ? inForest(f) : inYard(f)));
         const st = work(three(trees), 'act_chop', fast(8), fast(10), 'chop');
-        return st.length ? st : idle('act_chop');
+        return st.length ? st : waiting('🌱 toți copacii sunt tăiați, aștept să crească');
       }
       case 'stone': {
         const rocks = F.filter(f => (f.type as string) === 'rock' && !this.depleted(f.id) && (forest ? inForest(f) && f.action?.id === 'mine' : inYard(f)));
         const st = work(three(rocks), 'act_mine', fast(8), fast(10), 'mine');
-        return st.length ? st : idle('act_mine');
+        return st.length ? st : waiting('🪨 n-au mai rămas bolovani, aștept să apară alții');
       }
       case 'picker': {
         const fl = F.filter(f => f.action?.id === 'pick' && !this.depleted(f.id) && (inYard(f) || inForest(f)));
         const st = work(three(fl), 'act_garden', fast(5), fast(7), 'pick');
-        return st.length ? st : idle('act_garden');
+        return st.length ? st : waiting('🌸 am cules toate florile, aștept să crească');
       }
       case 'garden': {
         // ce e de facut in gradina, acum: culege ce e copt, planteaza unde e gol (din semintele voastre), uda ce e uscat
@@ -2611,6 +2622,7 @@ export class WorldScene implements Scene {
         if (S.haul) { if (v.a.anim.id !== 'act_haul_' + S.haul) v.a.play('act_haul_' + S.haul); v.a.moving = false; } else v.a.moving = true;
         return;
       }
+      if (S.tid && (S.fx === 'chop' || S.fx === 'mine' || S.fx === 'pick') && this.depleted(S.tid)) { J.steps = J.steps.slice(0, J.i); J.i = J.steps.length; J.route = null; return; } // taiat intre timp: alt plan
       J.at = true; v.a.moving = false; v.a.stop(); J.t = S.dur ?? 0;
       if (S.anim) v.a.play(S.anim);
       if (S.aim) { const d = iso(S.aim.x - v.x, S.aim.y - v.y); v.a.flip = d.x >= 0 ? 1 : -1; }

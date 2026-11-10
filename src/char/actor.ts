@@ -48,6 +48,8 @@ export class Actor {
 
   /** cat de tare se aud sunetele lui (0 = e in alta zona); il seteaza lumea */
   audible?: () => number;
+  /** efectele vizuale (nori, texte, inimi) se arata? (partenerul pe alta harta: nu) */
+  fxOn?: () => boolean;
   play(id: string, onDone?: () => void) {
     const a = ANIMS[id]; if (!a) return;
     this.anim = a; this.animT = 0; this.lastP = -1; this.onDone = onDone;
@@ -68,6 +70,7 @@ export class Actor {
     const tx = (lx: number) => this.x + lx * this.scale * this.flip;
     const ty = (ly: number) => this.y + ly * this.scale;
     const s = this.scale;
+    if (this.fxOn && !this.fxOn()) { const no = () => { /* nu se vede de aici */ }; return { emit: no, burst: no, hearts: no, fart: no, text: no, shake: no, sound: id => { const v = this.audible?.() ?? 1; if (v > 0.02) Sfx.play(id, { vol: v }); } }; }
     return {
       emit: (k, lx, ly, o = {}) => this.fx.emit(k, tx(lx), ty(ly), { ...o, vx: (o.vx ?? 0) * this.flip * s, vy: (o.vy ?? -20) * s, size: (o.size ?? 1) * s, grav: (o.grav ?? 0) * s }),
       burst: (k, lx, ly, n, sp, spd, o = {}) => {

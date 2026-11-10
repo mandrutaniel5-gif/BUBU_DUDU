@@ -80,7 +80,7 @@ export class MartisorShow extends Show {
     return [
       { id: 'pick', cap: `🎀 Un mărțișor pentru ${this.paName}! Alege talismanul`, hint: 'Alege', max: 30,
         tap: (type, x, y) => { if (type !== 'down') return; const i = this.btns.findIndex(r => this.hit(r, x, y)); if (i >= 0) { this.charm = i; Sfx.play('chimes', { vol: 0.5 }); } },
-        play: () => this.charm >= 0,
+        play: () => { if (this.charm < 0 && this.pt > 28) this.charm = 0; return this.charm >= 0; },
         draw: (c, W, H) => { bg(c, W, H); this.btns = this.buttons(c, CHARMS.map(ch => ({ icon: ch.icon, label: ch.label })), H * 0.34, 120); say(c, 'Fiecare talisman are un rost 🍀❤️', W / 2, H * 0.62, 14, '#7a5a4a'); } },
       { id: 'twist', cap: '', hint: 'Atinge ca să răsucești șnurul alb-roșu', max: 30,
         tap: (type) => { if (type !== 'down') return; this.twists++; Sfx.play('cloth', { vol: 0.5, rate: 1.4 }); if (this.twists === 8 && !this.tangled) { this.tangled = true; Sfx.play('boing'); } if (this.tangled && this.twists >= 12) this.tangled = false; },
