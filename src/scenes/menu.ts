@@ -5,6 +5,7 @@ import { Fx } from '../char/fx';
 import { Sfx } from '../engine/sfx';
 import { isEco } from '../engine/game';
 import { ErrorLog } from '../engine/errors';
+import { Bugs } from '../engine/bugs';
 import pkg from '../../package.json';
 import { Settings, OFFLINE_ROOM, deviceId, type SavedHouse } from '../game/settings';
 import type { Scene, Game } from '../engine/game';
@@ -109,14 +110,17 @@ export class MenuScene implements Scene {
     box.innerHTML = list.map(h => {
       const n = (['bubu', 'dudu'] as CharId[]).filter(w => this.seatState(h, w) === 'busy').length;
       const known = this.seats.has(h.room);
+      // 1.12.1: personajele doar se aleg (cine esti); in casa intri cu butonul mare „▶ Intră”
+      const pick = this.pickOf(h);
       const seat = (w: CharId) => {
-        const st = this.seatState(h, w), mine = h.who === w;
-        const sub = st === 'busy' ? '🟢 e în joc' : mine ? 'tu' : st === 'free' ? 'liber' : '';
-        return `<button data-seat="${w}" data-room="${h.room}" class="${st === 'busy' ? 'busy' : ''} ${mine && st !== 'busy' ? 'mine' : ''}">${ICON[w]} ${NAME[w]}<small>${sub}</small></button>`;
+        const st = this.seatState(h, w);
+        const sub = st === 'busy' ? '🟢 e în joc' : pick === w ? '✔ tu' : 'liber';
+        return `<button data-seat="${w}" data-room="${h.room}" class="${st === 'busy' ? 'busy' : ''} ${pick === w ? 'mine' : ''}">${ICON[w]} ${NAME[w]}<small>${sub}</small></button>`;
       };
       return `<div class="hcard"><div class="hc-top"><b>🏠 ${esc(h.code)}</b><small>${esc(saveInfo(h.room))}</small>
         <span class="hc-n" title="Câți sunteți acum în casă">${known ? `${n}/2` : '·/2'}</span><button class="hc-x" data-forget="${h.room}" title="Scoate casa din listă">✕</button></div>
-        <div class="hc-seats">${seat('bubu')}${seat('dudu')}</div></div>`;
+        <div class="hc-seats">${seat('bubu')}${seat('dudu')}</div>
+        <button class="hc-enter" data-enter="${h.room}" ${pick ? '' : 'disabled'}>${pick ? `▶ Intră ca ${NAME[pick]}` : 'Casa e plină'}</button></div>`;
     }).join('');
   }
 
@@ -128,6 +132,7 @@ export class MenuScene implements Scene {
     if (d.tab) { this.showTab(d.tab as 'online' | 'offline'); return; }
     if (d.who) { Settings.set({ who: d.who as CharId }); this.showTab('offline'); (d.who === 'bubu' ? this.bubu : this.dudu).play('wave'); return; }
     if (d.seat) { this.pickSeat(d.room!, d.seat as CharId); return; }
+    if (d.enter) { const h = (Settings.get().houses ?? []).find(x => x.room === d.enter); const w = h && this.pickOf(h); if (h && w) this.enterHouse(h, w); return; }
     if (d.forget) { this.askForget(d.forget); return; }
     if (d.join2) { this.enterHouse(JSON.parse(d.join2), d.as as CharId); return; }
     const c = b.classList;
@@ -153,6 +158,11 @@ export class MenuScene implements Scene {
     if (c.contains('devlocal')) { Settings.set({ net: { ...Settings.get().net, mode: 'local', room: 'test-local', code: undefined } }); this.game.go('world'); return; }
     if (c.contains('devworld')) { Settings.set({ net: { ...Settings.get().net, mode: 'solo', room: DEV_ROOM, code: undefined } }); this.game.go('world'); return; }
     if (c.contains('devreset')) { if (confirm('Ștergi lumea de test și o iei de la capăt?')) { try { localStorage.removeItem('bd-save-' + DEV_ROOM); } catch { /* */ } b.textContent = '✔ Ștearsă'; } return; }
+    if (c.contains('tester')) { const v = !(localStorage.getItem('bd-tester') === '1'); Bugs.setOn(v); b.textContent = v ? '🐞 Mod tester: pornit' : '🐞 Pornește modul tester'; Sfx.play(v ? 'good' : 'click'); return; }
+    if (c.contains('bugs')) { this.showBugs(); return; }
+    if (c.contains('bugexp')) { Bugs.exportFile(); return; }
+    if (c.contains('bugup')) { b.textContent = 'Se trimite…'; Bugs.upload().then(() => { const n = Bugs.all().filter(r => !r.up).length; b.textContent = n ? `☁️ ${n} n-au ajuns (fără internet sau fără reguli)` : '✔ Toate au ajuns'; }); return; }
+    if (c.contains('bugclr')) { if (confirm('Ștergi toate rapoartele de pe telefon?')) { Bugs.clear(); this.showBugs(); } return; }
     if (c.contains('devoff')) { lockDev(); location.reload(); return; }
     if (c.contains('devok')) { const inp = this.ui.querySelector('[name=devcode]') as HTMLInputElement; if (unlockDev(inp.value)) { Sfx.play('good'); location.reload(); } else { Sfx.play('bad'); inp.value = ''; inp.placeholder = 'Cod greșit'; } return; }
   }
@@ -178,7 +188,14 @@ export class MenuScene implements Scene {
         this.seatState(h, o) !== 'busy' ? `<button data-join2='${esc(JSON.stringify(h))}' data-as="${o}">${ICON[o]} Intră ca ${NAME[o]}</button>` : '');
       Sfx.play('bad'); return;
     }
-    this.enterHouse(h, w);
+    this.picked.set(room, w); this.renderHouses();
+  }
+  /** cine esti in casa asta: ce ai ales acum, altfel ultimul personaj; daca e ocupat, celalalt (null = casa plina) */
+  picked = new Map<string, CharId>();
+  pickOf(h: SavedHouse): CharId | null {
+    const want = this.picked.get(h.room) ?? h.who;
+    if (this.seatState(h, want) !== 'busy') return want;
+    const o = other(want); return this.seatState(h, o) !== 'busy' ? o : null;
   }
   enterHouse(h: SavedHouse, w: CharId) {
     Settings.rememberHouse({ code: h.code, room: h.room, who: w, mode: 'firebase' });
@@ -277,8 +294,10 @@ export class MenuScene implements Scene {
       ${DEV ? `<div class="devbox"><h4>🧪 Modul dezvoltator</h4><p class="sub">Uneltele (totul nelimitat, capitole, zile, sărbători) merg doar în lumea de test: nu se scrie nimic în casele voastre online.</p>
         <div class="row2"><button class="devworld">🧪 Lumea de test</button><button class="devlocal">👥 Test în 2 tab-uri</button></div>
         <div class="row2"><button class="studio">🎬 Studio</button><button class="devreset">🗑️ Șterge lumea de test</button><button class="devoff">🔒 Oprește</button></div></div>` : ''}
+      ${Bugs.on() || Bugs.count() ? `<div class="row2"><button class="bugs">🐞 Rapoarte de la testeri (${Bugs.count()})</button></div>` : ''}
       <p class="vtap">Bubu & Dudu v${pkg.version}</p>
-      <div class="devcode hidden"><input name="devcode" type="password" placeholder="Cod" autocomplete="off" /><button class="devok">OK</button></div>
+      <div class="devcode hidden"><input name="devcode" type="password" placeholder="Cod dezvoltator" autocomplete="off" /><button class="devok">OK</button>
+        <button class="tester">${Bugs.on() ? '🐞 Mod tester: pornit' : '🐞 Pornește modul tester'}</button></div>
       <div class="row2"><button class="xcred">Închide</button></div>`);
     // ascuns: atingi de 5 ori versiunea si apare locul pentru cod
     let taps = 0; const v = this.ui.querySelector('.vtap') as HTMLElement;
@@ -310,6 +329,16 @@ export class MenuScene implements Scene {
       } catch { this.notice('📂 Fișier greșit', 'Fișierul nu e o salvare Bubu & Dudu.'); }
     };
     inp.click();
+  }
+  /** rapoartele adunate (modul tester): poza, ce e gresit, unde; le trimiti ca fisier sau pe internet */
+  showBugs() {
+    const list = Bugs.all().slice().reverse();
+    const e2 = (t: string) => t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
+    const kind = { eroare: '💥 Eroare', auto: '🔎 Găsit automat', tester: '🐞 Tester' } as Record<string, string>;
+    this.dialog(`<h3>🐞 Rapoarte (${list.length})</h3><p class="sub">Modul tester strânge singur erorile și problemele vizuale; testerul adaugă cu 🐞 ce vede. Trimite-mi fișierul (se deschide cu tools/erori.html).</p>
+      <div class="buglist">${list.map(r => `<div class="bi">${r.shot ? `<img src="${r.shot}" alt="">` : ''}<div><b>${kind[r.kind] ?? r.kind} · ${e2(r.cat)}</b>${e2(r.title)}<br><small>${new Date(r.ts).toLocaleString('ro-RO')} · ${e2(String(r.ctx.zona ?? ''))} · cap. ${e2(String(r.ctx.capitol ?? ''))}${r.up ? ' · ☁️' : ''}</small></div></div>`).join('') || '<p class="sub">Niciun raport încă.</p>'}</div>
+      <div class="row2"><button class="bugexp">📤 Trimite fișierul</button><button class="bugup">☁️ Trimite pe internet</button><button class="bugclr">🗑️ Șterge</button></div>
+      <div class="row2"><button class="xcred">Închide</button></div>`);
   }
   showErrors() {
     const list = ErrorLog.all();

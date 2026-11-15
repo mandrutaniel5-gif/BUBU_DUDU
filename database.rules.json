@@ -18,6 +18,11 @@
           ]
         }
       }
+    },
+    "bugs": {
+      "$id": {
+        ".write": "!data.exists() && newData.exists() && newData.hasChildren(['ts', 'kind', 'title'])"
+      }
     }
   }
 }

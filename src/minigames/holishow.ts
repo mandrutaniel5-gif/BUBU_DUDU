@@ -110,7 +110,9 @@ export abstract class Show extends Panel {
   abstract reward(): void;
   endText() { return '💕'; }
   get phase() { return this.phases[Math.min(this.pi, this.phases.length - 1)]; }
-  next() { this.pi++; this.pt = 0; const p = this.phases[this.pi]; if (!p) { this.end(); return; } p.enter?.(); }
+  // 1.12.1: dupa ultimul moment ramanem pe el (pana dispare ecranul de final). Inainte pi trecea de capat si desenul
+  // ultimului moment (care scrie in this.phases[this.pi].cap) dadea eroare: martisorul, patinoarul, caluteii, lozul...
+  next() { if (this.ended) return; if (this.pi >= this.phases.length - 1) { this.end(); return; } this.pi++; this.pt = 0; this.phases[this.pi].enter?.(); }
   goto(id: string) { const i = this.phases.findIndex(p => p.id === id); if (i < 0) return; this.pi = i - 1; this.next(); }
   /** a iesit cu X inainte de final */
   quit = false;

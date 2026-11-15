@@ -27,7 +27,7 @@ const CASES = [
       const phases = []; let n = 0;
       while (s.minigame && n < 9000) {
         n++; const ph = o.phase; if (ph && phases[phases.length - 1] !== ph.id) phases.push(ph.id);
-        if (o.ended) { o.update(0.2); continue; }
+        if (o.ended) { o.update(0.2); o.draw(document.createElement('canvas').getContext('2d'), 844, 390); continue; } // 1.12.1: si desenul de dupa final
         if (ph && !ph.play) { if (o.pt > 0.3) o.next(); }
         else if (n % 2 === 0) { const x = (n * 97) % o.W, y = 40 + (n * 53) % (o.H - 60); o.pointer('down', x, y); o.pointer('move', x + 30, y + 10); o.pointer('up', x + 30, y + 10); if (o.btns?.length) { const bt = o.btns[n % o.btns.length]; o.pointer('down', bt.x + 5, bt.y + 5); } if (o.boxes?.rects?.length) { const bx = o.boxes.rects[n % o.boxes.rects.length]; o.pointer('down', bx.x + bx.w / 2, bx.y + bx.h / 2); } }
         o.update(0.08);

@@ -1,4 +1,5 @@
 import { ErrorLog } from './engine/errors';
+import { Bugs } from './engine/bugs';
 import pkg from '../package.json';
 ErrorLog.ver = pkg.version;
 import './style.css';
@@ -34,6 +35,7 @@ document.getElementById('game')!.addEventListener('touchstart', e => e.preventDe
 document.getElementById('game')!.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 
 const game = new Game(document.getElementById('game') as HTMLCanvasElement);
+Bugs.ver = pkg.version; Bugs.canvas = document.getElementById('game') as HTMLCanvasElement;
 game.scenes.menu = () => new MenuScene(game);
 game.scenes.studio = () => new StudioScene(game);
 game.scenes.sheet = () => new SheetScene(game);

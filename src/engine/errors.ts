@@ -1,4 +1,5 @@
 // Jurnalul de erori: le tinem minte (ultimele 30) ca sa le poti copia din meniu si sa mi le trimiti.
+import { Bugs } from './bugs';
 const KEY = 'bd-errors';
 export interface ErrRec { t: number; msg: string; where: string; ver: string }
 let list: ErrRec[] = [];
@@ -18,6 +19,8 @@ export const ErrorLog = {
     if (list.length > 30) list = list.slice(-30);
     try { localStorage.setItem(KEY, JSON.stringify(list)); } catch { /* */ }
     console.warn('[eroare]', where, e);
+    // modul tester: eroarea intra si in rapoarte, cu poza si ce faceai (o data pe sesiune pentru fiecare eroare)
+    Bugs.add({ kind: 'eroare', cat: 'Eroare de cod', title: msg, note: (where + ' ' + stack).trim() });
     if (toaster && Date.now() - lastToast > 30000) { lastToast = Date.now(); toaster('⚠️ A apărut o eroare. Jocul merge mai departe · Meniu → 📋 Erori'); }
   },
   all() { return list.slice(); },

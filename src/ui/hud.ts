@@ -11,6 +11,7 @@ import { NEEDS, NEED_INFO, SICK_INFO, REQUESTS, clockText, nightAmount } from '.
 import { Sfx } from '../engine/sfx';
 import { ErrorLog } from '../engine/errors';
 import { openDev } from './devpanel';
+import { Bugs } from '../engine/bugs';
 import { moodText, g } from '../game/gender';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
@@ -40,6 +41,7 @@ export class Hud {
     root.className = 'hud';
     const emotes = ANIM_LIST.filter(a => a.kind === 'emote' || a.kind === 'dance' || (a.kind === 'special' && a.who === s.myId));
     root.innerHTML = `
+      ${Bugs.on() ? '<button class="bugbtn" data-a="bug" title="Raportează o problemă">🐞</button>' : ''}
       <div class="card me">
         <div class="name">${me.id === 'bubu' ? '🐼' : '🐻'} ${me.name} <span class="mood"></span></div>
         <div class="needs">${NEEDS.map(n => `<div class="need" data-n="${n}" title="${NEED_INFO[n].label}"><span>${NEED_INFO[n].icon}</span><i><b style="background:${NEED_INFO[n].color}"></b></i></div>`).join('')}</div>
@@ -106,6 +108,7 @@ export class Hud {
       // butoanele de test, la vedere (cerute de proprietar): confirmarea se face in fereastra jocului
       if (a === 'skipch') s.choice('⏭️ Capitolul următor', 'Treceți la capitolul următor? Obiectivele de acum se bifează singure (pentru testare).', [['⏭️', 'Da, capitolul următor', () => s.devSkipChapter()], ['✖', 'Nu acum', () => {}]]);
       if (a === 'dev') openDev(s);
+      if (a === 'bug') this.openBug();
       if (a === 'infinite') { s.setInfinite(!s.infinite); this.toast(s.infinite ? '♾️ Resurse infinite pornite (doar pe acest dispozitiv)' : 'Resurse infinite oprite'); }
       if (b.dataset.emote) s.emote(b.dataset.emote);
       if (b.dataset.pair) s.pairAction(b.dataset.pair);
@@ -335,8 +338,30 @@ export class Hud {
   togglePairs(force?: boolean) { this.els['.emotes'].classList.add('hidden'); if (force) this.els['.pairs'].classList.remove('hidden'); else this.els['.pairs'].classList.toggle('hidden'); }
   closeMenus() { this.els['.emotes'].classList.add('hidden'); this.els['.pairs'].classList.add('hidden'); }
 
-  modal(html: string) { this.closeMenus(); const m = this.els['.modal']; m.innerHTML = `<div class="box"><button class="xclose" data-close aria-label="Închide">✕</button>${html}<button class="close" data-close>Închide</button></div>`; m.classList.remove('hidden'); return m; }
+  modal(html: string) { { const t = /<h3>(.*?)<\/h3>/.exec(html)?.[1]; if (t) Bugs.crumb('fereastra: ' + t.replace(/<[^>]+>/g, '').slice(0, 60)); } this.closeMenus(); const m = this.els['.modal']; m.innerHTML = `<div class="box"><button class="xclose" data-close aria-label="Închide">✕</button>${html}<button class="close" data-close>Închide</button></div>`; m.classList.remove('hidden'); return m; }
   closeModal() { this.els['.modal'].classList.add('hidden'); }
+  /** 🐞 testerul raporteaza o problema: poza de acum, atinge locul pe ea, alege ce e gresit, scrie ce vede */
+  async openBug() {
+    const raw = await Bugs.shot();
+    const CATS = ['Se suprapun', 'Desenat greșit', 'Prin obiecte / în locul greșit', 'Text greșit sau tăiat', 'M-am blocat', 'Nu merge ceva', 'Altceva'];
+    let cat = '', mark: { x: number; y: number } | null = null;
+    const m = this.modal(`<h3>🐞 Raportează o problemă</h3><p class="sub">Atinge pe poză locul cu problema, alege ce e greșit și scrie pe scurt ce vezi.</p>
+      <div class="bugshot">${raw ? `<img src="${raw}" alt=""><i class="bugmark hidden"></i>` : '<p class="sub">(fără poză)</p>'}</div>
+      <div class="bugcats">${CATS.map((c, i) => `<button data-bc="${i}">${c}</button>`).join('')}</div>
+      <textarea class="bugnote" maxlength="600" placeholder="Ce s-a întâmplat? (ex. „Dudu stă în copac lângă fântână”)"></textarea>
+      <button class="bugsend">📤 Trimite raportul</button>`);
+    const img = m.querySelector('.bugshot img') as HTMLImageElement | null, dot = m.querySelector('.bugmark') as HTMLElement | null;
+    img?.addEventListener('click', e => { const r = img.getBoundingClientRect(); mark = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }; if (dot) { dot.classList.remove('hidden'); dot.style.left = mark.x * 100 + '%'; dot.style.top = mark.y * 100 + '%'; } });
+    m.querySelectorAll('[data-bc]').forEach(b => b.addEventListener('click', () => { cat = CATS[+(b as HTMLElement).dataset.bc!]; m.querySelectorAll('[data-bc]').forEach(x => x.classList.toggle('on', x === b)); }));
+    m.querySelector('.bugnote')?.addEventListener('keydown', e => e.stopPropagation());
+    m.querySelector('.bugsend')!.addEventListener('click', async () => {
+      const note = (m.querySelector('.bugnote') as HTMLTextAreaElement).value.trim();
+      if (!cat && !note) { this.toast('🐞 Alege ce e greșit sau scrie ce vezi'); return; }
+      const shot = raw ? await Bugs.shot(mark, raw) : undefined;
+      await Bugs.add({ kind: 'tester', cat: cat || 'Altceva', title: note || cat, note, shot });
+      this.closeModal(); this.toast(`🐞 Mulțumim! Raportul e salvat (${Bugs.count()})`);
+    });
+  }
   /** e deschisa o fereastra (o chemare, un magazin...)? ce vine singur asteapta sa o inchizi */
   modalOpen() { return !this.els['.modal'].classList.contains('hidden'); }
 

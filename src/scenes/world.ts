@@ -1,5 +1,7 @@
 import { DEV } from '../game/dev';
 import { drawDevOverlay } from '../ui/devpanel';
+import { Bugs } from '../engine/bugs';
+import { autoCheck } from '../engine/autocheck';
 import * as Town from './townctl';
 import * as TownUI from '../ui/townui';
 import { VILLAGERS, DECOR, HOURS, isOpen } from '../game/town';
@@ -253,6 +255,11 @@ export class WorldScene implements Scene {
     // abia acum primim ce a trimis partenerul (s-a pastrat de la conectare: versiunea lui, sincronizarea lumii)
     this.net.onEvent = e => this.onRemoteEvent(e);
     this.net.onPresence = (_who, on) => this.setPartnerOnline(on);
+    // colectorul de erori: ce stie jocul in clipa raportului
+    Bugs.ctx = () => ({ zona: this.area, pozitie: `${this.me.gx.toFixed(2)}, ${this.me.gy.toFixed(2)}`, capitol: this.chapter, zi: this.w.day, ora: `${Math.floor(this.w.minutes / 60)}:${String(Math.floor(this.w.minutes % 60)).padStart(2, '0')}`,
+      eu: this.myId, mod: this.net.kind, partener: this.partner.control === 'remote' ? 'online' : 'AI', minijoc: this.minigame?.id ?? '', sarbatoare: this.minigame?.id === 'holiday' ? this.holidayId : '',
+      activitate: this.me.activity?.a.id ?? '', vehicul: this.me.riding ? this.me.rideKind ?? '' : '', fps: Math.round(this.fpsAvg), bani: this.w.money });
+    Bugs.crumb(`a intrat în joc (${this.net.kind}, ${this.area})`);
     this.ready = true;
   }
 
@@ -712,6 +719,7 @@ export class WorldScene implements Scene {
   }
 
   interact(pawn: Pawn, f: Furn) {
+    if (pawn === this.me) Bugs.crumb(`atinge ${f.action?.label ?? f.type} (${f.id})`);
     if (pawn === this.me && this.ride) return; // pe drum nu faci altceva
     if (pawn.riding && !['village', 'v-home', 'forest', 'gohome', 'ridebike', 'ridescooter', 'tripbike', 'tripscooter'].includes(this.actionFor(f)?.id ?? '')) { pawn.riding = false; if (this.partner.passenger && pawn === this.me) { this.partner.passenger = false; this.partner.gx = pawn.gx + 0.6; this.partner.gy = pawn.gy + 0.3; } }
     const act = this.actionFor(f); if (!act) return;
@@ -850,7 +858,7 @@ export class WorldScene implements Scene {
   infinite = (() => { try { return DEV && localStorage.getItem('bd-infinite') === '1'; } catch { return false; } })();
   /** 1.12.0: uneltele dezvoltatorului merg doar in lumea de test / 2 tab-uri: casele online (si partenerul) nu se ating */
   get devWorld() { return DEV && this.net.kind !== 'firebase'; }
-  devSpeed = 1; devOverlay = false; private fpsAvg = 30;
+  devSpeed = 1; devOverlay = false; fpsAvg = 30; private autoT = 0;
   private infT = 0;
   setInfinite(on: boolean) { this.infinite = on; try { localStorage.setItem('bd-infinite', on ? '1' : '0'); } catch { /* fara stocare */ } if (on) this.topUp(); }
   /** umple banii, materialele, ingredientele, semintele si soba (doar ce a scazut, ca sa nu trimitem mereu) */
@@ -1155,6 +1163,7 @@ export class WorldScene implements Scene {
   lastRegion = 'home';
   /** ai intrat intr-o regiune noua (pe jos sau cu vehiculul) */
   onRegion(id: string, prev: string) {
+    Bugs.crumb(`intră în ${id}`);
     if (id === 'village') this.op({ k: 'stat', key: 'villageTrips', delta: 1 });
     if (id === 'city') this.op({ k: 'stat', key: 'cityTrips', delta: 1 });
     if (id === 'forest' && prev !== 'forest') this.op({ k: 'stat', key: 'forestTrips', delta: 1 });
@@ -1437,6 +1446,7 @@ export class WorldScene implements Scene {
   storeMode: '' | 'florarie' = '';
   /** porneste un minijoc fara activitate legata de un obiect */
   startCustom(mini: string) {
+    Bugs.crumb(`pornește ${mini === 'holiday' ? 'sărbătoarea ' + this.holidayId : mini === 'cutscene' ? 'scena ' + this.sceneId : mini}`);
     const M = MINIGAMES[mini]; if (!M) return;
     this.stopActivity(this.me); this.me.path = [];
     const obj: any = new M(this, (score: number) => {
@@ -1925,6 +1935,7 @@ export class WorldScene implements Scene {
 
   // ------------------------------------------------------------------ minijocuri
   startMinigame(id: string, a: Activity, f: Furn) {
+    Bugs.crumb(`minijocul ${id}`);
     const M = MINIGAMES[id];
     this.startActivity(this.me, a, f);
     this.me.activity!.t = -9999; // nu se termina singura
@@ -2018,6 +2029,7 @@ export class WorldScene implements Scene {
         }
       }
       this.checkGoals();
+      if ((this.autoT = (this.autoT + 1) % 3) === 0) try { autoCheck(this, this.fpsAvg); } catch (e) { console.warn(e); } // modul tester: probleme vizuale
       Town.dailyTick(this);
       Story.daily(this);
       Story.staffHour(this);
@@ -2250,6 +2262,8 @@ export class WorldScene implements Scene {
       if (this.stuckT[p.id] < 0.8) continue;
       this.stuckT[p.id] = 0;
       const q = this.nav.freeSpot(p.gx, p.gy);
+      // modul tester: a ajuns intr-un obiect (perete, mobila, gard) — de aici vin „trecutul prin obiecte” si locurile proaste de coborat
+      Bugs.add({ kind: 'auto', cat: 'Prin obiecte', title: `${p.actor.spec.name} a ajuns în interiorul unui obiect la ${p.gx.toFixed(1)}, ${p.gy.toFixed(1)} (${this.area}); jocul l-a scos`, key: `inobj-${p.id}-${Math.round(p.gx)},${Math.round(p.gy)}` });
       if (q) { p.gx = q.x; p.gy = q.y; p.path = []; if (p === this.me) this.sendCharSync(); }
     }
   }

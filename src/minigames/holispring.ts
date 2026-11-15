@@ -110,6 +110,15 @@ export class MartisorShow extends Show {
     s.op({ k: 'stat', key: 'mpin-' + pid, delta: this.charm + 1 - (s.w.stats['mpin-' + pid] ?? 0) }); s.op({ k: 'stat', key: 'mday-' + pid, delta: s.w.day - (s.w.stats['mday-' + pid] ?? 0) });
     s.op({ k: 'need', who: pid, need: 'love', delta: 30 }); s.op({ k: 'need', who: s.myId, need: 'love', delta: 15 });
     s.log(`${s.me.actor.spec.name} i-a făcut lui ${s.partner.actor.spec.name} un mărțișor ${CHARMS[this.charm].icon}`); Hol.memory(s, 'martisor'); s.syncPlaced();
+    // 1.12.1: partenerul jucat de calculator iti face si el unul (cu cel real, fiecare il face la masa din curte)
+    if (s.partner.control !== 'remote' && !(s.w.stats[`mart-${pid}-${y}`] ?? 0)) {
+      const c = (this.charm + 1 + (s.w.day % (CHARMS.length - 1))) % CHARMS.length, me = s.myId;
+      s.op({ k: 'stat', key: `mart-${pid}-${y}`, delta: 1 });
+      s.op({ k: 'stat', key: 'mpin-' + me, delta: c + 1 - (s.w.stats['mpin-' + me] ?? 0) }); s.op({ k: 'stat', key: 'mday-' + me, delta: s.w.day - (s.w.stats['mday-' + me] ?? 0) });
+      s.op({ k: 'need', who: me, need: 'love', delta: 30 });
+      s.log(`${s.partner.actor.spec.name} i-a făcut și ${pid === 'bubu' ? 'ea' : 'el'} lui ${s.me.actor.spec.name} un mărțișor ${CHARMS[c].icon}`);
+      setTimeout(() => { s.partner.actor.play('love'); s.gotMartisor(); }, 1800);
+    }
   }
 }
 

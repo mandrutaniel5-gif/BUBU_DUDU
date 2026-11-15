@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Erori Bubu & Dudu</title>
+<style>
+  :root { --bg:#fff8f0; --card:#fff; --ink:#3a2a22; --muted:#8a7a72; --pink:#ff5c8a; --line:#e8d8cc; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#1e1a19; --card:#2a2423; --ink:#f3e8e2; --muted:#b0a29b; --line:#4a3f3b; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.4 system-ui, sans-serif; }
+  header { padding:16px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; border-bottom:1px solid var(--line); }
+  h1 { font-size:20px; margin:0; flex:1 1 200px; }
+  .filters { display:flex; gap:6px; flex-wrap:wrap; }
+  .filters button, label.file { border:2px solid var(--ink); background:var(--card); color:var(--ink); border-radius:10px; padding:4px 10px; font-weight:700; cursor:pointer; }
+  .filters button.on { background:var(--pink); color:#fff; border-color:var(--pink); }
+  main { padding:16px; display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); }
+  .r { background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .r img { width:100%; display:block; cursor:zoom-in; }
+  .r .b { padding:10px 12px; }
+  .r .k { font-size:12px; font-weight:800; color:var(--pink); }
+  .r h3 { margin:2px 0 6px; font-size:15px; }
+  .r dl { display:grid; grid-template-columns:auto 1fr; gap:2px 8px; font-size:12px; margin:6px 0; }
+  .r dt { color:var(--muted); } .r dd { margin:0; word-break:break-word; }
+  .r details { font-size:12px; color:var(--muted); }
+  .empty { padding:40px 16px; color:var(--muted); }
+  dialog { border:none; padding:0; background:transparent; max-width:96vw; } dialog img { max-width:96vw; max-height:92vh; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🐞 Erori Bubu & Dudu <small id="n"></small></h1>
+  <div class="filters" id="f"></div>
+  <label class="file">📂 Deschide fișierul<input id="in" type="file" accept=".json" multiple hidden></label>
+</header>
+<main id="m"><p class="empty">Deschide fișierul trimis din joc (Meniu → ⚙ Setări → 🐞 Rapoarte → Trimite fișierul) sau exportul din Firebase (nodul <code>bugs</code>).</p></main>
+<dialog id="d"><img id="di" alt=""></dialog>
+<script>
+  const K = { eroare: '💥 Eroare de cod', auto: '🔎 Găsit automat', tester: '🐞 De la tester' };
+  let all = [], filt = '';
+  const esc = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function render() {
+    const list = all.filter(r => !filt || r.kind === filt).sort((a, b) => b.ts - a.ts);
+    document.getElementById('n').textContent = `(${list.length})`;
+    document.getElementById('f').innerHTML = ['', 'tester', 'auto', 'eroare'].map(k => `<button data-k="${k}" class="${k === filt ? 'on' : ''}">${k ? K[k] : 'Toate'} (${k ? all.filter(r => r.kind === k).length : all.length})</button>`).join('');
+    document.getElementById('m').innerHTML = list.map(r => `<article class="r">${r.shot ? `<img src="${r.shot}" alt="">` : ''}<div class="b">
+      <div class="k">${K[r.kind] ?? esc(r.kind)} · ${esc(r.cat)}</div><h3>${esc(r.title)}</h3>${r.note && r.note !== r.title ? `<p>${esc(r.note)}</p>` : ''}
+      <dl><dt>când</dt><dd>${new Date(r.ts).toLocaleString('ro-RO')} · v${esc(r.ver)}</dd>${Object.entries(r.ctx || {}).filter(([, v]) => v !== '' && v != null).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+      ${r.crumbs?.length ? `<details><summary>Ce a făcut înainte (${r.crumbs.length})</summary>${r.crumbs.map(esc).join('<br>')}</details>` : ''}</div></article>`).join('') || '<p class="empty">Niciun raport.</p>';
+  }
+  document.getElementById('f').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filt = b.dataset.k; render(); } });
+  document.getElementById('m').addEventListener('click', e => { if (e.target.tagName === 'IMG') { document.getElementById('di').src = e.target.src; document.getElementById('d').showModal(); } });
+  document.getElementById('d').addEventListener('click', () => document.getElementById('d').close());
+  document.getElementById('in').addEventListener('change', async e => {
+    for (const f of e.target.files) { try { const d = JSON.parse(await f.text()); const reps = d.reports ?? Object.values(d.bugs ?? d); for (const r of reps) if (r && r.id && !all.some(x => x.id === r.id)) all.push(r); } catch { alert('Fișierul ' + f.name + ' nu e un raport Bubu & Dudu'); } }
+    render();
+  });
+</script>
+</body>
+</html>
