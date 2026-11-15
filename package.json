@@ -1,13 +1,12 @@
 {
   "name": "bubu-dudu",
-  "version": "1.11.2",
+  "version": "1.12.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
-    "server": "node server/server.mjs",
     "build:single": "vite build -c vite.single.config.ts",
     "electron": "npm run build && electron .",
     "dist:win": "npm run build && electron-builder --win --x64",
@@ -24,9 +23,6 @@
     "@capacitor/android": "^6.2.3",
     "@capacitor/core": "^6.2.3",
     "@capacitor/ios": "^6.2.3"
-  },
-  "dependencies": {
-    "ws": "^8.22.1"
   },
   "main": "electron/main.cjs",
   "description": "Bubu & Dudu \u2014 joc de familie pentru doi",

@@ -167,7 +167,7 @@ export function deliverQuest(s: WorldScene, q: Quest): string | null {
   if (q.res === 'meals') { let left = q.qty; for (const k of hotMealKeys(s.w.res ?? {})) { const h = Math.min(left, s.w.res?.[k] ?? 0); if (h > 0) { s.op({ k: 'res', res: k, delta: -h }); left -= h; } if (!left) break; } }
   else s.op({ k: 'res', res: q.res, delta: -q.qty });
   s.op({ k: 'money', delta: q.pay });
-  s.op({ k: 'stat', key: 'friend-' + q.who, delta: 1 }); s.op({ k: 'stat', key: 'questsDone', delta: 1 }); s.op({ k: 'hearts', delta: 2 });
+  s.op({ k: 'stat', key: 'friend-' + q.who, delta: 1 }); s.op({ k: 'stat', key: 'questsDone', delta: 1 });
   const list = questsToday(s).map(x => x.id === q.id ? { ...x, done: true } : x);
   s.op({ k: 'town', key: 'quests', value: list });
   const v = VILLAGERS.find(v => v.id === q.who)!;

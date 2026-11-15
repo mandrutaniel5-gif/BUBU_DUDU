@@ -44,11 +44,15 @@ export const dayOfSeason = (day: number) => (((day - 1) % 7) + 7) % 7 + 1;
 export const seasonGrowth = (day: number) => ({ spring: 1.15, summer: 1, autumn: 0.8, winter: 0.35 })[seasonOf(day).id];
 export interface DayEvent { id: string; icon: string; name: string; text: string }
 /** ce se intampla azi (la fel pe ambele telefoane: depinde doar de zi) */
-export function eventsOf(day: number): DayEvent[] {
+/**
+ * Evenimentele zilei. stats = lumea voastra: unele evenimente vin din ce ati facut voi (1.12.0: nunta Inei e la 3 zile
+ * dupa nunta voastra, pentru ca Ina a prins buchetul; inainte era mereu primavara si se intampla inaintea nuntii voastre).
+ */
+export function eventsOf(day: number, stats: Record<string, number> = {}): DayEvent[] {
   const se = seasonOf(day).id, d = dayOfSeason(day), out: DayEvent[] = [];
   if (se === 'spring' && d === 1) out.push({ id: 'martisor', icon: '🌸', name: 'Mărțișorul', text: 'Faceți-vă câte un mărțișor (masa din curte): îl purtați toată primăvara' });
   if (se === 'spring' && d === 5) out.push({ id: 'paste', icon: '🥚', name: 'Paștele', text: 'Vopsiți ouăle și le ciocniți (masa din curte); cozonac de la vecini' });
-  if (se === 'spring' && d === 6) out.push({ id: 'villwed', icon: '💒', name: 'Nunta Inei', text: 'Ina se mărită! De la 11:00 la biserica din sat, apoi hora în piață' });
+  if (stats.inaWedDay && day === stats.inaWedDay) out.push({ id: 'villwed', icon: '💒', name: 'Nunta Inei', text: 'Ina a prins buchetul vostru… și se mărită cu Rex! De la 11:00 la biserica din sat, apoi hora în piață' });
   if (se === 'summer' && d === 2) out.push({ id: 'bdaybubu', icon: '🎂', name: 'Ziua lui Bubu', text: 'Petrecere surpriză în piața satului, la 18:00 🤫' });
   if (se === 'summer' && d === 4) out.push({ id: 'grandparents', icon: '👵', name: 'Vizita bunicilor', text: 'Bunicii vin la voi (10:00 – 20:00): gătiți-le ceva bun' });
   if (se === 'summer' && d === 6) out.push({ id: 'swim', icon: '🏊', name: 'Zi de lac', text: 'Concurs de pescuit cu premii și picnic, la lac (8:00 – 19:00)' });
@@ -60,7 +64,7 @@ export function eventsOf(day: number): DayEvent[] {
   if (day % 28 === 14) out.push({ id: 'fairday', icon: '🎪', name: 'Târgul lunar', text: 'Piața plătește mai bine; negustorul ambulant e în piață' });
   return out;
 }
-export const hasEvent = (s: S, id: string) => eventsOf(s.w.day).some(e => e.id === id);
+export const hasEvent = (s: S, id: string) => eventsOf(s.w.day, s.w.stats).some(e => e.id === id);
 /** furtuna de toamna (ziua evenimentului): 1 = in toi (pana la 12), apoi se domoleste spre seara (0,3); 0 = nu e furtuna */
 export const stormLevel = (s: S) => { if (!hasEvent(s, 'storm')) return 0; const h = s.w.minutes / 60; return h < 12 ? 1 : Math.max(0.3, 1 - (h - 12) / 6 * 0.7); };
 
@@ -139,7 +143,7 @@ function contribute(s: S, id: string) {
 }
 const NEW_FAMILIES = ['familia Ionescu', 'doamna învățătoare Maria', 'brutarul Vasilică', 'familia Moldovan', 'tânărul Andrei, întors de la oraș', 'familia Pop cu trei copii'];
 function finishProject(s: S, p: Project) {
-  s.op({ k: 'stat', key: 'proj-' + p.id, delta: 1 }); s.op({ k: 'stat', key: 'projectsDone', delta: 1 }); s.op({ k: 'hearts', delta: 5 });
+  s.op({ k: 'stat', key: 'proj-' + p.id, delta: 1 }); s.op({ k: 'stat', key: 'projectsDone', delta: 1 });
   const fam = NEW_FAMILIES[(st(s, 'projectsDone') - 1) % NEW_FAMILIES.length];
   s.log(`Satul renaște: ${p.icon} ${p.name}! S-a mutat în sat ${fam} 🏡`);
   s.hud.closeModal(); s.hud.toast(`🎉 ${p.icon} ${p.name}! ${p.text}. S-a mutat în sat ${fam}`);
@@ -553,7 +557,11 @@ export function openChurch(s: S) {
   if (miss.length) { s.hud.toast(`💒 Pentru nuntă mai lipsesc: ${miss.join(', ')}`); return; }
   s.choice('💒 Nunta noastră', 'Totul e gata: rochia, costumul, tortul, lăutarii, invitații. Începem?', [['💒', 'Da! Începe nunta', () => s.playScene('wedding', true)], ['✖', 'Încă puțin', () => {}]]);
 }
-export function weddingDone(s: S) { if (st(s, 'married')) return; s.op({ k: 'stat', key: 'married', delta: 1 }); s.log('Bubu și Dudu s-au căsătorit la biserica din sat! Casă de piatră! 💒💍💕'); }
+export function weddingDone(s: S) {
+  if (st(s, 'married')) return; s.op({ k: 'stat', key: 'married', delta: 1 }); s.log('Bubu și Dudu s-au căsătorit la biserica din sat! Casă de piatră! 💒💍💕');
+  // urmarea: Ina a prins buchetul, iar Rex o cere de nevasta. Nunta lor e peste 3 zile (o data, daca n-ati fost deja la ea)
+  if (!st(s, 'mem-inawed') && !st(s, 'inaWedDay')) { s.op({ k: 'stat', key: 'inaWedDay', delta: s.w.day + 3 }); s.log('Ina a prins buchetul miresei… și Rex a cerut-o de soție! 💐🐶 Nunta lor e peste 3 zile'); }
+}
 export function hireMusic(s: S) { if (st(s, 'weddingMusic')) { s.hud.toast('🎻 Lăutarii sunt deja tocmiți'); return; } if ((s.w.money ?? 0) < 250) { s.hud.toast('🎻 Lăutarii cer 250 de lei'); Sfx.play('bad'); return; } s.op({ k: 'money', delta: -250 }); s.op({ k: 'stat', key: 'weddingMusic', delta: 1 }); Sfx.play('chimes'); s.hud.toast('🎻 Lăutarii vin la nuntă!'); }
 export function buyCake(s: S) { if (st(s, 'weddingCake')) { s.hud.toast('🎂 Tortul e comandat'); return; } if ((s.w.money ?? 0) < 300) { s.hud.toast('🎂 Tortul de nuntă costă 300 de lei'); Sfx.play('bad'); return; } s.op({ k: 'money', delta: -300 }); s.op({ k: 'stat', key: 'weddingCake', delta: 1 }); Sfx.play('good'); s.hud.toast('🎂 Brutarul face cel mai frumos tort din sat!'); }
 function villageWedding(s: S) { if (st(s, 'villwed-' + s.w.day)) return; s.op({ k: 'stat', key: 'villwed-' + s.w.day, delta: 1 }); for (const v of VILLAGERS) s.op({ k: 'stat', key: 'friend-' + v.id, delta: 1 }); s.hud.toast('💒 Ați fost la nunta Inei! Tot satul v-a îndrăgit (+1 prietenie cu toți)'); s.me.actor.play('dance_hop'); Sfx.play('bells'); }
@@ -566,7 +574,7 @@ export const tierOf = (s: S, vid: string) => TIERS.filter(t => st(s, 'friend-' +
 export const tierName = (vid: string, t: number) => t ? TIER_NAMES[t - 1][FEMALE.has(vid) ? 1 : 0] : FEMALE.has(vid) ? 'Necunoscută' : 'Necunoscut';
 export const SECRETS: Record<string, string[]> = {
   leana: ['„Am crescut aici, pe vremea când satul era plin de copii.”', '„Rețeta mea de plăcintă? Mult dor și puțină scorțișoară.”', '„Bunicul vostru drag a construit primul pod. L-ați reparat ca el!”', '„Mi-e dor de nepoți… voi îmi țineți de urât.”', '„Vă las ceaunul meu fermecat: mămăliga iese mereu perfectă.”'],
-  ina: ['„Visez să am o florărie ca a lui Bubu!”', '„Am un iubit la oraș… nu spuneți nimănui!”', '„Ne căsătorim primăvara, la biserica din sat!”', '„Vreau ca voi să fiți nașii noștri… într-o zi.”', '„Sunteți familia pe care mi-am dorit-o.”'],
+  ina: ['„Visez să am o florărie ca a lui Bubu!”', '„Mă plimb cu Rex seara pe lângă lac… nu spuneți nimănui! 🙈”', '„Rex zice că ne luăm când prind eu un buchet de mireasă! 💐”', '„Vreau ca voi să fiți nașii noștri… într-o zi.”', '„Sunteți familia pe care mi-am dorit-o.”'],
   gogu: ['„Am fost tâmplar 40 de ani.”', '„Gardul meu e strâmb de 10 ani. Rușine!”', '„Am o rindea veche, de la tata. E cea mai bună.”', '„Dudu, ai mâini de aur. Ca mine la tinerețe.”', '„Rindeaua e a ta, Dudu. Fă lucruri frumoase cu ea.”'],
   miti: ['„Miau. Peștele e iubirea vieții mele.”', '„Știu un loc secret la lac unde mușcă știuca.”', '„Noaptea mă uit la stele de pe acoperișul Primăriei.”', '„Voi sunteți singurii care nu-mi furați peștele.”', '„Prr… v-am adus cel mai frumos pește al meu.”'],
   rita: ['„Croitoria e locul meu preferat.”', '„Am cusut eu perdelele de la Primărie!”', '„Vreau să plec la oraș… dar satul renaște, rămân!”', '„Bubu, îți cos eu voalul de mireasă dacă vrei.”', '„V-am cusut o pernuță cu B & D. Pentru casa voastră.”'],
@@ -575,7 +583,7 @@ export const SECRETS: Record<string, string[]> = {
 /** recompensa la fiecare treapta noua de prietenie */
 export function checkFriend(s: S, vid: string) {
   const t = tierOf(s, vid), got = st(s, `ftier-${vid}`);
-  if (t > got) { s.op({ k: 'stat', key: `ftier-${vid}`, delta: t - got }); const v = VILLAGERS.find(x => x.id === vid)!; s.op({ k: 'money', delta: 15 * t }); s.op({ k: 'hearts', delta: 3 * t });
+  if (t > got) { s.op({ k: 'stat', key: `ftier-${vid}`, delta: t - got }); const v = VILLAGERS.find(x => x.id === vid)!; s.op({ k: 'money', delta: 15 * t });
     s.hud.toast(`💛 ${v.name}: acum ${tierName(vid, t).toLowerCase()} (${t}/5)! +${15 * t} lei. ${SECRETS[vid]?.[t - 1] ?? ''}`); Sfx.play('levelup'); }
 }
 export function inviteVillager(s: S, vid: string) {
@@ -601,8 +609,8 @@ export function albums(s: S): AlbumDef[] {
 export function openAlbums(s: S) {
   const html = albums(s).map(a => { const n = a.items.filter(i => i.got).length, done = n === a.items.length, claimed = st(s, 'album-' + a.id) > 0;
     return `<h4>${a.icon} ${a.name} · ${n}/${a.items.length}${done ? (claimed ? ' ✅' : ` <button data-alb="${a.id}">🎁 Ia premiul</button>`) : ''}</h4><div class="album">${a.items.map(i => `<span class="${i.got ? 'got' : ''}">${i.got ? '✔' : '?'} ${i.got ? esc(i.name) : '???'}</span>`).join('')}</div>`; }).join('');
-  const m = s.hud.modal(`<h3>📒 Albumele voastre</h3><p class="sub">Strângeți tot: fiecare album complet aduce 150 de lei și 20 💗.</p>${html}`);
-  m.querySelectorAll('[data-alb]').forEach(b => b.addEventListener('click', () => { const id = (b as HTMLElement).dataset.alb!; if (st(s, 'album-' + id)) return; s.op({ k: 'stat', key: 'album-' + id, delta: 1 }); s.op({ k: 'money', delta: 150 }); s.op({ k: 'hearts', delta: 20 }); Sfx.play('victory'); openAlbums(s); }));
+  const m = s.hud.modal(`<h3>📒 Albumele voastre</h3><p class="sub">Strângeți tot: fiecare album complet aduce 150 de lei.</p>${html}`);
+  m.querySelectorAll('[data-alb]').forEach(b => b.addEventListener('click', () => { const id = (b as HTMLElement).dataset.alb!; if (st(s, 'album-' + id)) return; s.op({ k: 'stat', key: 'album-' + id, delta: 1 }); s.op({ k: 'money', delta: 150 }); Sfx.play('victory'); openAlbums(s); }));
 }
 
 // ====================================================================== ZIUA NOUA (dimineata, pe gazda) + PRIMARIA
@@ -614,17 +622,37 @@ export function daily(s: S) {
   const lines = staffDay(s);
   // vanzarile magazinului fara vanzator
   if (st(s, 'shopBuilt') && !staffOf(s).some(e => e.role === 'shop')) { const r = shopSell(s, 6 + st(s, 'vitrina') * 2); if (r) lines.push(`🏪 Magazinul „Bubu & Dudu” a vândut ${r.n} produse: +${r.lei} lei`); }
+  // salvarile de dinainte de 1.12.0 (deja casatoriti, fara nunta Inei): nunta lor vine peste 2 zile
+  if (st(s, 'married') && !st(s, 'inaWedDay') && !st(s, 'mem-inawed')) s.op({ k: 'stat', key: 'inaWedDay', delta: day + 2 });
   // evenimentele zilei
-  const ev = eventsOf(day);
+  const ev = eventsOf(day, s.w.stats);
   for (const e of ev) {
     // 1.11.0: sarbatorile se traiesc (bradul, petrecerea, colindatorii...): dimineata doar va spunem unde si cand
     if (e.id === 'paste') { s.op({ k: 'res', res: 'egg', delta: 6 }); s.op({ k: 'res', res: 'meals', delta: 2 }); }
     if (e.id === 'storm') s.op({ k: 'furn', key: 'roofBroken', value: true });
   }
-  const se = seasonOf(day);
+  // 1.12.0: cartonasul de dimineata il vede si partenerul (inainte doar telefonul gazdei); fiecare il vede din partea lui
+  s.op({ k: 'town', key: 'morningCard', value: { day, lines } });
+  showMorning(s, day, lines);
+}
+/** cartonasul „Buna dimineata”: evenimentele zilei (din partea ta), raportul angajatilor, ce e de facut */
+export function showMorning(s: S, day: number, lines: string[]) {
+  if (morningShown === day) return;
+  // nu peste o fereastra deschisa (ex. chemarea partenerului la o sarbatoare): vine cand o inchizi
+  if (s.hud.modalOpen() || s.minigame) { pendingMorning = { day, lines }; return; }
+  morningShown = day; pendingMorning = null;
+  const se = seasonOf(day), ev = eventsOf(day, s.w.stats).filter(e => Hol.reachable(s, e.id));
   const card = [`${se.icon} ${se.name}, ziua ${dayOfSeason(day)}`, ...ev.map(e => Hol.morning(s, e.id) ?? `${e.icon} ${e.name}: ${e.text}`), ...Hol.morningExtra(s), ...lines, ...todo(s)];
   card.push('📅 Detaliile zilei le vezi oricând: atinge „Ziua ' + day + '” sus');
   s.hud.showLog(card, '☀️ Bună dimineața!');
+}
+let morningShown = -1, pendingMorning: { day: number; lines: string[] } | null = null;
+/** telefonul care nu e gazda: cartonasul vine prin lume (w.town.morningCard) */
+function partnerMorning(s: S) {
+  if (pendingMorning && pendingMorning.day === s.w.day) { showMorning(s, pendingMorning.day, pendingMorning.lines); return; }
+  if (s.isHost) return;
+  const mc = s.w.town?.morningCard as { day: number; lines: string[] } | undefined;
+  if (mc && mc.day === s.w.day && morningShown !== mc.day && !s.minigame) showMorning(s, mc.day, mc.lines ?? []);
 }
 /** ce e de facut azi pentru fiecare (ca sa nu ramaneti fara treaba) */
 export const todoLines = (s: S) => todo(s);
@@ -651,7 +679,7 @@ export function openHallMenu(s: S) {
 /** acoperisul stricat de furtuna (actiune la casa) */
 export function fixRoof(s: S) {
   if (res(s, 'wood') < 5 || res(s, 'plank') < 2) { s.hud.toast('🔨 Pentru acoperiș: 5 lemne și 2 scânduri'); Sfx.play('bad'); return; }
-  s.op({ k: 'res', res: 'wood', delta: -5 }); s.op({ k: 'res', res: 'plank', delta: -2 }); s.op({ k: 'furn', key: 'roofBroken', value: false }); s.op({ k: 'hearts', delta: 5 });
+  s.op({ k: 'res', res: 'wood', delta: -5 }); s.op({ k: 'res', res: 'plank', delta: -2 }); s.op({ k: 'furn', key: 'roofBroken', value: false });
   brief(s.me, 'act_scrub', 2); Sfx.play('hammer'); s.hud.toast(`🔨 ${g(s.myId, 'Ai reparat', 'Ai reparat')} acoperișul! Casa e din nou caldă`);
 }
 
@@ -779,6 +807,7 @@ export function action(s: S, id: string, f: Furn) {
 let acc = 0, lastMin = -1;
 export function tick(s: S, dt: number) {
   acc += dt; if (acc < 1) return; acc = 0;
+  partnerMorning(s);
   const gm = s.w.gameMin ?? 0;
   if (lastMin >= 0 && s.isHost && gm > lastMin) growFields(s, Math.min(120, gm - lastMin));
   lastMin = gm;

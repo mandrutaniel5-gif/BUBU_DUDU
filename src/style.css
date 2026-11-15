@@ -391,3 +391,55 @@ html.h500 .pop { max-height:calc(var(--gh, 100vh) - 132px) !important; }
 .hud .clock .day { cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px; }
 .goals.places li.lock { opacity:.6; }
 .goals.places li small { display:block; }
+
+/* 1.12.0: meniul nou — Online (casele voastre) / Offline */
+.tabs2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
+.tabs2 button { border:3px solid var(--ink); border-radius:16px; background:#fff; font:800 17px "Baloo 2", sans-serif; color:var(--ink); padding:4px 6px; box-shadow:0 3px 0 var(--ink); display:flex; flex-direction:column; align-items:center; line-height:1.1; }
+.tabs2 button small { font-size:11px; font-weight:700; opacity:.65; }
+.tabs2 button.on { background:#ffe1ea; outline:3px solid var(--pink); }
+.pane { margin-top:8px; }
+.sub2 { margin:0 0 6px; font-size:13px; font-weight:700; opacity:.8; text-align:center; }
+.hempty { border:3px dashed var(--ink); border-radius:14px; padding:8px 10px; background:#fff6e6; font-size:13px; line-height:1.35; }
+.houses { display:flex; flex-direction:column; gap:8px; }
+.hcard { border:3px solid var(--ink); border-radius:16px; background:#fff; padding:6px 8px 8px; box-shadow:0 3px 0 var(--ink); }
+.hc-top { display:flex; align-items:center; gap:6px; }
+.hc-top b { font-size:16px; letter-spacing:.5px; white-space:nowrap; }
+.hc-top small { flex:1; min-width:0; font-size:11px; opacity:.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hc-n { font-weight:900; font-size:13px; background:#e9fbe6; border:2px solid var(--ink); border-radius:10px; padding:0 6px; }
+.hc-x { border:2px solid var(--ink); border-radius:10px; background:#fff; font-weight:900; padding:0 6px; color:var(--ink); }
+.hc-seats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
+.hc-seats button { border:3px solid var(--ink); border-radius:14px; background:#fff; font:800 16px "Baloo 2", sans-serif; color:var(--ink); padding:3px 6px; box-shadow:0 3px 0 var(--ink); display:flex; flex-direction:column; align-items:center; line-height:1.15; }
+.hc-seats button small { font-size:11px; font-weight:700; opacity:.7; min-height:12px; }
+.hc-seats button.mine { background:#ffe1ea; outline:3px solid var(--pink); }
+.hc-seats button.busy { background:#eef3ee; opacity:.75; }
+.hbtns button { font-size:15px; }
+.who2.small { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:4px 0; }
+.who2.small label { display:flex; align-items:center; gap:6px; border:3px solid var(--ink); border-radius:12px; padding:4px 8px; font-weight:800; font-size:15px; background:#fff; margin:0; }
+.who2.small label.busy { opacity:.55; }
+.cred-in .row2 button.on { background:#ffe1ea; outline:3px solid var(--pink); }
+details.adv { margin-top:10px; border:2px dashed var(--ink); border-radius:12px; padding:6px 10px; background:#fff; }
+details.adv summary { font-weight:800; cursor:pointer; }
+details.adv label { display:block; font-weight:700; font-size:12px; margin-top:6px; }
+details.adv label.chk { display:flex; gap:6px; align-items:center; }
+details.adv input:not([type=checkbox]) { width:100%; font-family:inherit; font-size:14px; border:3px solid var(--ink); border-radius:12px; padding:4px 8px; box-sizing:border-box; }
+html.h520l .tabs2 button { font-size:15px; padding:2px 4px; } html.h520l .tabs2 button small { display:none; }
+html.h520l .hc-seats button { font-size:14px; padding:1px 4px; }
+html.h520l .hcard { padding:4px 6px 6px; }
+.who2.small input { width:auto !important; margin:0; flex:0 0 auto; }
+.hud .goal .ghint { display:block; font-size:11px; font-weight:700; opacity:.7; line-height:1.15; margin-top:1px; max-width:260px; white-space:normal; }
+html.h520l .hud .goal .ghint { max-width:210px; font-size:10.5px; }
+/* 1.12.0: modul dezvoltator */
+.devbox { margin-top:8px; border:2px dashed var(--ink); border-radius:12px; padding:6px 10px; background:#f3fff0; }
+.devbox h4 { margin:0 0 2px; }
+.devcode { display:flex; gap:6px; justify-content:center; margin-top:4px; } .devcode.hidden { display:none; }
+.devcode input { font-family:inherit; font-size:14px; border:3px solid var(--ink); border-radius:12px; padding:4px 8px; width:160px; }
+.devcode button { border:3px solid var(--ink); border-radius:12px; background:#fff; font-weight:800; padding:4px 12px; }
+.cred-in .vtap { display:block !important; text-align:center; font-size:12px; opacity:.55; margin:8px 0 0; cursor:default; user-select:none; }
+.devpanel .devrow { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0; }
+.devpanel .devrow button { border:2.5px solid var(--ink); border-radius:10px; background:#fff; font:800 12px "Baloo 2", sans-serif; color:var(--ink); padding:3px 8px; }
+.devpanel .devrow button.on { background:#d8f5d0; outline:2px solid #3a9a4a; }
+.devpanel h4 { margin:8px 0 2px; }
+.devpanel .devhol { display:inline-flex; align-items:center; gap:4px; border:1.5px solid #ccc; border-radius:10px; padding:2px 6px; font-size:12px; font-weight:700; }
+.devpanel .devday { display:inline-flex; align-items:center; gap:4px; font-weight:800; font-size:12px; }
+.devpanel .devday input { width:60px; font-family:inherit; border:2.5px solid var(--ink); border-radius:8px; padding:2px 4px; }
+.devpanel .devrow button { flex:0 0 auto; }

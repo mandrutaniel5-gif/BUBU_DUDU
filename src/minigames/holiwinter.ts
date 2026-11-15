@@ -143,7 +143,7 @@ export class XmasTreeShow extends Show {
   reward() {
     const s = this.scene;
     if (this.quit && this.placed < this.need) return;
-    if (Hol.once(s, Hol.yearKey(s, 'xtree'))) { Hol.befriendAll(s, 1); s.op({ k: 'hearts', delta: 15 }); s.log('Ați împodobit bradul satului! Tot satul s-a strâns să-l vadă 🎄✨'); }
+    if (Hol.once(s, Hol.yearKey(s, 'xtree'))) { Hol.befriendAll(s, 1); s.log('Ați împodobit bradul satului! Tot satul s-a strâns să-l vadă 🎄✨'); }
     Hol.memory(s, 'xmastree'); Hol.feel(s, s.myId, { fun: 20, love: 10 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 20, love: 10 });
     s.syncPlaced();
   }
@@ -212,7 +212,7 @@ export class CarolShow extends Show {
     const s = this.scene;
     if (this.spent) s.op({ k: 'money', delta: -this.spent });
     if (this.quit && Object.keys(this.got).length < 2) return;
-    if (Hol.once(s, Hol.yearKey(s, 'carol'))) { for (const vid of Object.keys(this.got)) Hol.befriend(s, vid, 1); s.op({ k: 'res', res: 'meals', delta: 3 }); s.op({ k: 'hearts', delta: 10 }); s.log('Colindătorii au trecut pe la voi cu Steaua ⭐🎶'); }
+    if (Hol.once(s, Hol.yearKey(s, 'carol'))) { for (const vid of Object.keys(this.got)) Hol.befriend(s, vid, 1); s.op({ k: 'res', res: 'meals', delta: 3 }); s.log('Colindătorii au trecut pe la voi cu Steaua ⭐🎶'); }
     Hol.memory(s, 'colinde'); Hol.feel(s, s.myId, { fun: 15, love: 8 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 15, love: 8 }); s.syncPlaced();
   }
 }
@@ -323,7 +323,7 @@ export class SantaShow extends Show {
   snap(_c: CanvasRenderingContext2D, W: number, H: number) { try { const cv = document.createElement('canvas'); cv.width = 320; cv.height = 272; const c2 = cv.getContext('2d')!; c2.scale(320 / W, 272 / (H * 0.85)); this.booth(c2, W, H, 1); this.couple(c2, W, H); this.photo = cv; } catch { /* */ } }
   onNet(d: any) { if (d.ans != null && this.answer < 0) { this.answer = d.ans; this.react(); } if (d.pose != null && this.pose < 0) this.pose = d.pose; }
   endText() { return 'Ho-ho-ho! 🎅'; }
-  reward() { const s = this.scene; if (this.quit && this.pi < 4) return; if (Hol.once(s, Hol.yearKey(s, 'santa'))) { s.op({ k: 'hearts', delta: 10 }); s.log('Ați făcut o poză cu Moș Crăciun la târgul din oraș 🎅📸'); } Hol.memory(s, 'santa'); Hol.feel(s, s.myId, { fun: 20, love: 10 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 20, love: 10 }); }
+  reward() { const s = this.scene; if (this.quit && this.pi < 4) return; if (Hol.once(s, Hol.yearKey(s, 'santa'))) { s.log('Ați făcut o poză cu Moș Crăciun la târgul din oraș 🎅📸'); } Hol.memory(s, 'santa'); Hol.feel(s, s.myId, { fun: 20, love: 10 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 20, love: 10 }); }
 }
 
 // ====================================================================== 5. Patinoarul (ritm: atingi la timp, altfel... pleosc!)
@@ -380,7 +380,7 @@ export class SkateShow extends Show {
   bad(p: { res?: string }) { p.res = 'miss'; this.combo = 0; this.falls.push({ who: 'me', t: this.t }); Sfx.play('jump_land'); this.fx.text(this.W / 2, this.H * 0.45, 'Pleosc! 💫', '#ff4d6d', 1); this.pa.play('laugh'); this.send({ sk: 0 }); }
   onNet(d: any) { if (d.sk === 0) { this.falls.push({ who: 'pa', t: this.t }); this.me.play('laugh'); } if (d.sk === 1) this.paHits++; }
   endText() { return this.hits >= 8 ? 'Patinatori de aur! ⛸️' : 'Ce distracție! ⛸️😂'; }
-  reward() { const s = this.scene, k = this.hits / 12; Hol.memory(s, 'skate'); Hol.feel(s, s.myId, { fun: 15 + Math.round(15 * k), love: 6 + Math.round(8 * k), energy: -6 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 22, love: 10, energy: -6 }); s.op({ k: 'hearts', delta: Math.round(4 + 6 * k) }); }
+  reward() { const s = this.scene, k = this.hits / 12; Hol.memory(s, 'skate'); Hol.feel(s, s.myId, { fun: 15 + Math.round(15 * k), love: 6 + Math.round(8 * k), energy: -6 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 22, love: 10, energy: -6 }); }
 }
 
 // ====================================================================== 6. Caluteii (prinzi inelul de aur)
@@ -422,7 +422,7 @@ export class CarouselShow extends Show {
   }
   onNet(d: any) { if (d.ring) this.paRings++; }
   endText() { return '🎠 Wiii!'; }
-  reward() { const s = this.scene; Hol.memory(s, 'carusel'); if (this.gold) s.op({ k: 'money', delta: 16 }); Hol.feel(s, s.myId, { fun: 20, love: 8 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 20, love: 8 }); s.op({ k: 'hearts', delta: 4 }); }
+  reward() { const s = this.scene; Hol.memory(s, 'carusel'); if (this.gold) s.op({ k: 'money', delta: 16 }); Hol.feel(s, s.myId, { fun: 20, love: 8 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 20, love: 8 }); }
 }
 
 // ====================================================================== 7. Revelionul: dans, numaratoarea, artificiile voastre, dorintele
@@ -485,7 +485,7 @@ export class NewYearShow extends Show {
   endText() { return 'La mulți ani! 🎆🥂'; }
   reward() {
     const s = this.scene; if (this.quit && this.pi < 3) return;
-    if (Hol.once(s, Hol.yearKey(s, 'nye'))) { Hol.befriendAll(s, 1); s.op({ k: 'hearts', delta: 20 }); s.log('Revelion în piața satului: dans, numărătoare și artificii 🎆🥂'); }
+    if (Hol.once(s, Hol.yearKey(s, 'nye'))) { Hol.befriendAll(s, 1); s.log('Revelion în piața satului: dans, numărătoare și artificii 🎆🥂'); }
     Hol.memory(s, 'revelion'); Hol.feel(s, s.myId, { fun: 40, love: 20 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 40, love: 20 });
     // miezul noptii a trecut: ceasul sare la 00:10 (daca e inca seara)
     const gm = s.w.gameMin ?? 0, dayStart = Math.floor(gm / 1440) * 1440; if (gm - dayStart < 1440 - 1 && gm - dayStart > 18 * 60) s.op({ k: 'clock', gameMin: dayStart + 1440 + 10 });

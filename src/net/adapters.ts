@@ -1,5 +1,9 @@
 import type { CharId } from '../char/draw';
 import type { NetAdapter, NetConfig, NetEvent, NetStatus, PlayerState } from './types';
+import { deviceId } from '../game/settings';
+
+/** locul (Bubu / Dudu) e ocupat de ALT telefon, conectat acum (semn de viata in ultimele 2 minute) */
+export function seatTaken(p: any, dev: string, now: number) { return !!p?.online && !!p.dev && p.dev !== dev && now - (Number(p.ts) || 0) < 120000; }
 
 abstract class Base implements NetAdapter {
   abstract kind: string;
@@ -63,86 +67,6 @@ export class LocalTabsAdapter extends Base {
   sendEvent(e: NetEvent) { this.ch?.postMessage({ t: 'ev', who: this.me, e }); }
 }
 
-/** Server propriu (Node.js pe Samsung S10 cu Termux, sau pe orice PC). */
-export class WsAdapter extends Base {
-  kind = 'server';
-  private ws: WebSocket | null = null;
-  private retry = 0; private closing = false;
-  private pendingLoad: ((v: { json: string; ts: number } | null) => void) | null = null;
-  private auto = false;
-  constructor(private url: string) {
-    super();
-    this.auto = !url || /^auto/i.test(url.trim());
-    this.url = WsAdapter.norm(url);
-  }
-  /** accepta si adrese scrise ca https://xxx.trycloudflare.com sau doar 192.168.1.50:8787 */
-  static norm(url: string) {
-    let u = (url || '').trim();
-    if (/^https:\/\//i.test(u)) u = 'wss://' + u.slice(8);
-    else if (/^http:\/\//i.test(u)) u = 'ws://' + u.slice(7);
-    else if (!/^wss?:\/\//i.test(u)) u = (/^(\d|localhost)/.test(u) ? 'ws://' : 'wss://') + u;
-    return u.replace(/\/+$/, '');
-  }
-  /** "automat": adresa serverului de pe S10 e publicata de script in repository (server-url.txt) */
-  static async resolveAuto(): Promise<string | null> {
-    try {
-      const r = await fetch('https://api.github.com/repos/mandrutaniel5-gif/BUBU_DUDU/contents/server-url.txt', { headers: { Accept: 'application/vnd.github.raw+json' }, cache: 'no-store' });
-      if (!r.ok) return null;
-      const t = (await r.text()).trim();
-      let u = ''; try { u = JSON.parse(t).url; } catch { u = t; }
-      return u ? WsAdapter.norm(u) : null;
-    } catch { return null; }
-  }
-  async connect(room: string, me: CharId) {
-    this.room = room; this.me = me; this.closing = false;
-    this.open();
-    // asteptam deschiderea (max 3 s), ca incarcarea salvarii sa vina de pe server
-    await new Promise<void>(res => { const t0 = Date.now(); const iv = setInterval(() => { if (this.ws?.readyState === 1 || Date.now() - t0 > 3000) { clearInterval(iv); res(); } }, 50); });
-  }
-  private async open() {
-    this.setStatus('connecting');
-    if (this.auto) {
-      // la fiecare (re)conectare luam adresa curenta: tunelul isi schimba adresa la repornire
-      const u = await WsAdapter.resolveAuto();
-      if (u) this.url = u;
-      else if (!/^wss?:\/\/./.test(this.url) || /auto/.test(this.url)) { this.setStatus('error', 'Nu găsesc serverul S10 (pornește-l pe telefon)'); const d = Math.min(15000, 2000 * 2 ** this.retry++); setTimeout(() => !this.closing && this.open(), d); return; }
-    }
-    let ws: WebSocket;
-    try { ws = new WebSocket(this.url); } catch (e) { this.setStatus('error', String(e)); return; }
-    this.ws = ws;
-    ws.onopen = () => { this.retry = 0; ws.send(JSON.stringify({ t: 'join', room: this.room, who: this.me })); this.setStatus('online'); };
-    ws.onmessage = (m) => {
-      let d: any; try { d = JSON.parse(m.data); } catch { return; }
-      if (d.t === 'state') this.onState?.(d.s);
-      else if (d.t === 'ev') this.onEvent?.(d.e);
-      else if (d.t === 'presence') this.onPresence?.(d.who, d.online);
-      else if (d.t === 'save') { this.pendingLoad?.(d.data ?? null); this.pendingLoad = null; }
-      else if (d.t === 'denied') { this.closing = true; this.setStatus('error', 'Casa nu există pe serverul ăsta (alege din nou casa din meniu)'); }
-    };
-    ws.onclose = () => {
-      this.ws = null;
-      if (this.closing) return;
-      this.setStatus('error', 'Conexiune pierdută, reîncerc...');
-      const delay = Math.min(15000, 1000 * 2 ** this.retry++);
-      setTimeout(() => !this.closing && this.open(), delay);
-    };
-    ws.onerror = () => { /* onclose se ocupa */ };
-  }
-  private send(o: unknown) { if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(o)); }
-  disconnect() { this.closing = true; this.ws?.close(); this.setStatus('offline'); }
-  sendState(s: PlayerState) { this.send({ t: 'state', s }); }
-  sendEvent(e: NetEvent) { this.send({ t: 'ev', e }); }
-  private lastUp = 0;
-  async saveWorld(json: string, ts: number, force = false) { await super.saveWorld(json, ts); if (force || Date.now() - this.lastUp > 30000) { this.lastUp = Date.now(); this.send({ t: 'save', data: { json, ts } }); } }
-  async loadWorld() {
-    const local = await super.loadWorld();
-    if (this.ws?.readyState !== 1) return local;
-    const remote = await new Promise<{ json: string; ts: number } | null>(res => { this.pendingLoad = res; this.send({ t: 'load' }); setTimeout(() => res(null), 4000); });
-    if (remote && (!local || remote.ts > local.ts)) return remote;
-    return local;
-  }
-}
-
 /** Firebase nu accepta campuri `undefined` (arunca eroare si evenimentul se pierde): le scoatem */
 const clean = <T,>(o: T): T => JSON.parse(JSON.stringify(o));
 
@@ -160,8 +84,14 @@ export class FirebaseAdapter extends Base {
       this.fb = fb; this.db = fb.getDatabase(app);
       const other: CharId = me === 'bubu' ? 'dudu' : 'bubu';
       const meRef = fb.ref(this.db, `rooms/${room}/players/${me}`);
-      await fb.set(meRef, { online: true, ts: Date.now() });
-      fb.onDisconnect(meRef).set({ online: false, ts: Date.now() });
+      // 1.12.0: locul e al unui singur telefon. Daca altcineva e deja Bubu (sau Dudu) in casa asta, nu intri peste el
+      const dev = deviceId(), off = await this.serverOffset();
+      // (citire + scriere, nu tranzactie: tranzactia pe nodul in care scriem apoi pozitia de 10 ori pe secunda strica Firebase-ul)
+      const cur = await this.once(meRef);
+      if (seatTaken(cur, dev, Date.now() + off)) { this.taken = true; this.setStatus('error', `${me === 'bubu' ? 'Bubu' : 'Dudu'} e deja în casă pe alt telefon`); return; }
+      await fb.update(meRef, { online: true, ts: fb.serverTimestamp(), dev });
+      this.dev = dev;
+      fb.onDisconnect(meRef).update({ online: false });
       // nodul partenerului se schimba de ~10 ori pe secunda (pozitia lui); anuntam prezenta doar cand chiar se schimba
       let wasOnline: boolean | null = null;
       this.unsub.push(fb.onValue(fb.ref(this.db, `rooms/${room}/players/${other}`), (snap: any) => {
@@ -173,18 +103,30 @@ export class FirebaseAdapter extends Base {
       const evRef = fb.query(fb.ref(this.db, `rooms/${room}/events`), fb.orderByChild('ts'), fb.startAt(this.startTs - 30000));
       this.unsub.push(fb.onChildAdded(evRef, (snap: any) => { const v = snap.val(); if (!v || v.from === me) return; this.onEvent?.(v.e); fb.remove(snap.ref).catch(() => {}); }));
       // conexiunea reala cu Firebase (online / reconectare)
-      this.unsub.push(fb.onValue(fb.ref(this.db, '.info/connected'), (snap: any) => { if (snap.val() === true) { this.setStatus('online'); fb.set(meRef, { online: true, ts: Date.now() }); fb.onDisconnect(meRef).set({ online: false, ts: Date.now() }); } else this.setStatus('connecting'); }));
+      this.off = off; this.unsub.push(fb.onValue(fb.ref(this.db, '.info/serverTimeOffset'), (s2: any) => { this.off = Number(s2.val()) || 0; }));
+      this.unsub.push(fb.onValue(fb.ref(this.db, '.info/connected'), (snap: any) => { if (snap.val() === true) { this.setStatus('online'); fb.update(meRef, { online: true, ts: fb.serverTimestamp(), dev }); fb.onDisconnect(meRef).update({ online: false }); } else this.setStatus('connecting'); }));
       this.setStatus('online');
     } catch (e) { this.setStatus('error', 'Firebase: ' + (e as Error).message); }
   }
-  disconnect() { this.unsub.forEach(u => u()); this.unsub = []; this.setStatus('offline'); }
+  /** locul lui Bubu / Dudu e luat de alt telefon: jocul nu intra (vezi WorldScene.enter) */
+  taken = false; private dev = ''; private off = 0;
+  now() { return Date.now() + this.off; }
+  private async serverOffset() { try { return Number(await this.once(this.fb.ref(this.db, '.info/serverTimeOffset'))) || 0; } catch { return 0; } }
+  /** valoarea de acum a unui nod (onValue o data; get() crapa in Firebase cand meniul a ascultat inainte camera: „childPathObj.split”) */
+  private once(ref: any): Promise<any> { return new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('timeout')), 8000); this.fb.onValue(ref, (snap: any) => { clearTimeout(t); res(snap.val()); }, (e: Error) => { clearTimeout(t); rej(e); }, { onlyOnce: true }); }); }
+  disconnect() {
+    this.unsub.forEach(u => u()); this.unsub = [];
+    // iesi din casa: locul se elibereaza imediat (nu dupa ce Firebase observa ca s-a rupt conexiunea)
+    if (this.db && !this.taken && this.dev) this.fb.update(this.fb.ref(this.db, `rooms/${this.room}/players/${this.me}`), { online: false }).catch(() => {});
+    this.setStatus('offline');
+  }
   private lastState = 0;
   sendState(s: PlayerState) {
-    if (!this.db || Date.now() - this.lastState < 100) return; // max 10/s
+    if (!this.db || this.taken || Date.now() - this.lastState < 100) return; // max 10/s
     this.lastState = Date.now();
-    this.fb.update(this.fb.ref(this.db, `rooms/${this.room}/players/${this.me}`), { online: true, state: clean(s), ts: Date.now() }).catch(() => { /* offline: urmatoarea */ });
+    this.fb.update(this.fb.ref(this.db, `rooms/${this.room}/players/${this.me}`), { online: true, state: clean(s), ts: this.fb.serverTimestamp() }).catch(() => { /* offline: urmatoarea */ });
   }
-  sendEvent(e: NetEvent) { if (!this.db) return; try { this.fb.push(this.fb.ref(this.db, `rooms/${this.room}/events`), { from: this.me, e: clean(e), ts: Date.now() }).catch(() => { /* offline */ }); } catch (err) { console.warn('eveniment netrimis', err); } }
+  sendEvent(e: NetEvent) { if (!this.db || this.taken) return; try { this.fb.push(this.fb.ref(this.db, `rooms/${this.room}/events`), { from: this.me, e: clean(e), ts: Date.now() }).catch(() => { /* offline */ }); } catch (err) { console.warn('eveniment netrimis', err); } }
   // lumea intreaga se urca in Firebase cel mult o data la 45 s (si imediat la inchidere / minimizare) -> mai putina baterie si date mobile
   private lastUp = 0; private upTimer: ReturnType<typeof setTimeout> | null = null; private pendingUp: { json: string; ts: number } | null = null;
   async saveWorld(json: string, ts: number, force = false) {
@@ -207,7 +149,6 @@ export class FirebaseAdapter extends Base {
 export function makeAdapter(cfg: NetConfig): NetAdapter {
   switch (cfg.mode) {
     case 'local': return new LocalTabsAdapter();
-    case 'server': return new WsAdapter(cfg.serverUrl);
     case 'firebase': return new FirebaseAdapter(cfg.firebase);
     default: return new SoloAdapter();
   }

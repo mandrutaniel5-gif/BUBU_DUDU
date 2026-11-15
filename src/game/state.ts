@@ -45,7 +45,7 @@ export interface WorldState {
   created: number;       // cand s-a mutat cuplul in casa
   minutes: number;       // ora din zi in minute de joc (0..1440)
   day: number;
-  hearts: number;        // moneda jocului
+  hearts: number;        // (1.12.0: scoase din joc; ramane doar in salvarile vechi)
   chars: Record<CharId, CharState>;
   furn: Record<string, unknown>;
   jar: { from: CharId; text: string; ts: number }[];  // Borcanul cu iubire

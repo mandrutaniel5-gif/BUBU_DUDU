@@ -1,5 +1,5 @@
 // Apartamentul: pianul, acvariul, espressorul si consola sunt activitati adevarate (mergi la obiect, animatie, efect);
-// televizorul nu se strica odata cu cel de acasa; perete plin intre baie si bucatarie; frigiderul in colt langa espressor
+// televizorul nu se strica odata cu cel de acasa; peretele dintre baie si bucatarie are usa (1.12.0, x = 13); frigiderul in colt langa espressor
 const { chromium } = require('playwright');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? '  ' + x : ''));
@@ -41,9 +41,9 @@ const ok = (n, c, x = '') => console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? 
   await sleep(2500);
   const second = await E(() => ({ act: game.scene.me.activity?.a.id ?? null, t: window.__toasts.slice(-1)[0] }));
   ok('a doua cafea azi: refuzata cu mesaj', second.act !== 'coffee' && /deja/.test(second.t ?? ''), JSON.stringify(second));
-  // peretele dintre baie si bucatarie e plin; frigiderul, blatul, aragazul si espressorul stau in linie lipite de el
+  // peretele dintre baie si bucatarie: plin, cu o usa la x = 13 (1.12.0); frigiderul, blatul, aragazul si espressorul stau in linie lipite de el
   const wall = await E(() => { const n = game.scene.nav; return [12, 13, 14, 15, 16].map(x => n.edgeBlocked(x, 7, x, 8)); });
-  ok('perete plin intre baie si bucatarie', wall.every(Boolean), JSON.stringify(wall));
+  ok('perete intre baie si bucatarie, cu usa la x = 13', JSON.stringify(wall) === '[true,false,true,true,true]', JSON.stringify(wall));
   const row = await E(() => ['fridge', 'counter', 'stove', 'd-coffee'].map(id => { const f = game.scene.furnList.find(x => x.id === id); return f ? [f.gx, f.gy] : null; }));
   ok('frigiderul in colt (16,8), langa el espressorul pe perete (15,8), cu fata spre camera; aragazul si blatul unde erau', JSON.stringify(row) === JSON.stringify([[16, 8], [16, 11], [16, 10], [15, 8]]), JSON.stringify(row));
   // in baie se ajunge din dormitor, la bucatarie din living

@@ -88,13 +88,15 @@ export class BedtimeGame extends Panel {
     if (d.kiss !== undefined) this.theirKiss = d.kiss;
     if (d.dream !== undefined) this.theirDream = d.dream;
     // partenerul a inchis rutina (X): nu mai astepti dupa el, adormi si tu (somnul merge mai departe la amandoi)
-    if (d.quit && !this.ended) { this.theirQuit = true; this.go('night'); }
+    // (1.12.0: pe loc, fara ecranul de 3 secunde „noapte buna” in care ramaneai blocat)
+    if (d.quit && !this.ended) { this.theirQuit = true; this.removeInput(); this.finish(Math.max(0.5, this.score), `${this.scene.partner.actor.spec.name} a adormit 💤`); this.ended!.t = 0.6; }
   }
   theirQuit = false;
   /** X: ii spunem si partenerului (altfel ramanea singur in rutina, cu timpul oprit) si adormim mai departe */
   abort() {
     if (this.ended) return;
     if (!this.partnerAI) this.send({ quit: true });
+    this.removeInput(); // biletelul deschis ramanea peste joc dupa X
     this.finish(Math.max(0.5, this.score), 'Noapte bună 💤');
     this.ended!.t = 1.6;
   }
@@ -170,7 +172,7 @@ export class BedtimeGame extends Panel {
         if (this.kiss >= 1) { this.go('night'); this.score += 1; Sfx.play('kiss'); this.fx.hearts(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.45, 16); }
         if (this.stepT > 20) this.go('night');
         break;
-      case 'night': if (this.stepT > 3.2) this.finish(1 + this.score, 'Noapte bună 💕'); break;
+      case 'night': if (this.stepT > 3.2) { this.removeInput(); this.finish(1 + this.score, 'Noapte bună 💕'); } break;
     }
   }
   tugDoneT = 0;

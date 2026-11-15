@@ -180,7 +180,7 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 
 - **Casele:** Meniu → 🏠 → „Casă nouă” (alegi parola; jocul dă un cod unic, ex. `LALEA-7K3P`) sau „Intră în casa partenerului” (codul + parola).
   - Camera din baza de date se calculează pe telefon din cod + parolă (SHA-256). Parola nu se trimite și nu se salvează.
-  - Online (Firebase sau serverul S10) se joacă doar într-o casă cu parolă. Bifa „Mută aici progresul de acum” duce salvarea veche în casa nouă.
+  - Online (Firebase) se joacă doar într-o casă cu parolă (serverul S10 a fost scos în 1.12.0). Bifa „Mută aici progresul de acum” duce salvarea veche în casa nouă.
   - Regulile Firebase: `database.rules.json` (vezi `docs/FIREBASE.md`).
 - **Bicicleta / scuterul** cumpărate de unul apar imediat și la celălalt (înainte doar după ce urca pe ele).
 - **iPhone:** sunetul repornește singur după un apel, Siri, ecranul blocat sau altă aplicație (și la prima atingere); merge și cu telefonul pe silențios. Aplicația e marcată ca joc (Game Mode pe iOS 18), pe tot ecranul, fără bara de sus.
@@ -234,7 +234,7 @@ Stau parcate la poartă (acasă) și lângă indicatorul „Spre casă” (în s
 
 **Prieteniile:** 5 trepte cu fiecare sătean (Cunoscut → Prieten → Bun prieten → Prieten apropiat → Prieten de suflet), fiecare cu un secret și un dar.
 
-**Albumele (📒, lângă ⚙):** pești (6 feluri), flori, rețete, haine; un album complet: 150 de lei și 20 💗.
+**Albumele (📒, lângă ⚙):** pești (6 feluri), flori, rețete, haine; un album complet: 150 de lei.
 
 **Sincronizarea:** salvarea poartă ora ultimei schimbări reale; când intră partenerul, telefoanele își compară lumile, iar cel cu lumea mai nouă o trimite întreagă.
 

@@ -15,7 +15,9 @@ export type NetEvent =
   | { t: 'ridecall'; who: CharId; vehicle: string }
   // invitatie: mergem impreuna (autobuz, cinema, restaurant, roata mare...)? celalalt alege
   | { t: 'invite'; who: CharId; id: string; what: string; label: string; icon: string }
-  | { t: 'inviteReply'; who: CharId; id: string; ok: boolean }
+  | { t: 'inviteReply'; who: CharId; id: string; ok: boolean; busy?: boolean }
+  // 1.12.0: sarbatoarea in doi se face doar daca vrea si celalalt (nu mai esti tras in ea)
+  | { t: 'holInvite'; who: CharId; id: string; hol: string; arg: unknown }
   // ce versiune are celalalt (ca sa va spunem daca nu e aceeasi)
   | { t: 'ver'; who: CharId; ver: string }
   // sincronizarea lumii: fiecare spune cand s-a schimbat ultima oara lumea lui; cel cu lumea mai noua o trimite intreaga
@@ -61,6 +63,8 @@ export interface NetAdapter {
   /** salvare in cloud (snapshot complet al lumii) */
   /** salveaza lumea; force = trimite imediat si in cloud (la inchidere / minimizare) */
   saveWorld(json: string, ts: number, force?: boolean): Promise<void>;
+  /** ora comuna (la Firebase: ora serverului), ca sa stim care lume e mai noua chiar daca ceasurile telefoanelor difera */
+  now?(): number;
   loadWorld(): Promise<{ json: string; ts: number } | null>;
   onState?: (s: PlayerState) => void;
   onEvent?: (e: NetEvent) => void;
@@ -69,9 +73,8 @@ export interface NetAdapter {
 }
 
 export interface NetConfig {
-  mode: 'solo' | 'local' | 'server' | 'firebase';
+  mode: 'solo' | 'local' | 'firebase';
   room: string;          // camera: la casele noi „h…” (din cod + parola), la cele vechi un nume (ex. „casuta-noastra”)
   code?: string;         // codul casei (ex. „LALEA-7K3P”), il spuneti partenerului impreuna cu parola
-  serverUrl: string;     // ex. ws://192.168.1.50:8787 sau wss://s10.tailnet.ts.net
   firebase: { apiKey: string; authDomain: string; databaseURL: string; projectId: string; appId: string };
 }

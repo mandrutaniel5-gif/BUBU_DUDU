@@ -466,8 +466,9 @@ function aptWalls(): Wall[] {
   for (let y = 3; y <= 13; y++) W.push({ x: 3, y, dir: 'y', h: 92, kind: 'back', window: y === 5, door: y === 12, color: y <= 7 ? AW : '#fff4dc', lux: true });
   for (let y = 3; y <= 7; y++) if (y !== 6) W.push({ x: 12, y, dir: 'y', h: 26, kind: 'inner', color: '#eadcf5', lux: true });
   for (let x = 3; x <= 11; x++) if (x !== 9) W.push({ x, y: 8, dir: 'x', h: 26, kind: 'inner', color: '#eadcf5', lux: true });
-  // peretele dintre baie si bucatarie (plin: in baie intri din dormitor); bucataria sta lipita de el
-  for (let x = 12; x <= 16; x++) W.push({ x, y: 8, dir: 'x', h: 26, kind: 'inner', color: '#e3f0fa', lux: true });
+  // peretele dintre baie si bucatarie; bucataria sta lipita de el. 1.12.0: usa din baie direct in bucatarie (x = 13),
+  // langa masa, departe de frigider / espressor (in baie se intra si din dormitor, pe usa de la y = 6)
+  for (let x = 12; x <= 16; x++) if (x !== 13) W.push({ x, y: 8, dir: 'x', h: 26, kind: 'inner', color: '#e3f0fa', lux: true });
   for (let x = 3; x <= 16; x++) W.push({ x, y: 14, dir: 'x', h: 10, kind: 'low', color: '#e0d0ea', lux: true });
   for (let y = 3; y <= 13; y++) W.push({ x: 17, y, dir: 'y', h: 10, kind: 'low', color: '#e0d0ea', lux: true });
   return W;

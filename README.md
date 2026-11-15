@@ -27,7 +27,6 @@ Un tag `v1.0.0` pune toate fișierele într-un **Release**.
 npm install
 npm run dev          # http://localhost:5173
 npm run build        # dist/
-npm run server       # server multiplayer + joc pe :8787 (S10: vezi docs/SERVER-S10.md)
 npm run electron     # aplicația de Windows, local
 ```
-Documentație: `docs/LOGICA_JOCULUI.md`, `docs/SERVER-S10.md`, `docs/FIREBASE.md`, `docs/APK.md`.
+Documentație: `docs/LOGICA_JOCULUI.md`, `docs/FIREBASE.md`, `docs/APK.md`.

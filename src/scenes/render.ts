@@ -1,6 +1,5 @@
 // Desenul lumii (scos din world.ts): podeaua, obiectele sortate in adancime, personajele, noaptea, minijocurile.
 import * as Story from './story';
-import { saveCloud, loadCloud } from '../save/cloud';
 import * as Town from './townctl';
 import * as TownUI from '../ui/townui';
 import { VILLAGERS, DECOR, HOURS, isOpen } from '../game/town';
@@ -220,8 +219,9 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
   }
   if (home) for (const [k, p] of Object.entries(scene.w.plots ?? {})) { if (!p.crop) continue; const [x, y] = k.split(',').map(Number); if (!seen(x, y)) continue; items.push({ x0: x + 0.3, y0: y + 0.3, x1: x + 0.7, y1: y + 0.7, draw: () => drawCropPlant(ctx, x, y, p as Plot, scene.w.gameMin ?? 0, scene.time) }); }
   if (home) for (const car of scene.cars) { const cp = carPos(car); if (!seen(cp.x, cp.y)) continue; items.push({ x0: cp.x - 0.5, y0: cp.y - 0.3, x1: cp.x + 0.5, y1: cp.y + 0.3, mx: 80, h: 80, draw: () => drawCar(ctx, car, scene.time) }); }
-  if (home) for (const v of scene.walkers) { if (!seen(v.x, v.y)) continue; items.push({ x0: v.x - 0.2, y0: v.y - 0.2, x1: v.x + 0.2, y1: v.y + 0.2, draw: () => {
-    v.a.draw(ctx);
+  if (home) for (const v of scene.walkers) { if (v.off || !seen(v.x, v.y)) continue; items.push({ x0: v.x - 0.2, y0: v.y - 0.2, x1: v.x + 0.2, y1: v.y + 0.2, draw: () => {
+    if (v.tractor) { const s = iso(v.x, v.y, 0); ctx.save(); ctx.translate(s.x, s.y + 2); ctx.scale(v.a.flip, 1); drawTractorSide(ctx, 0, 0, 0.42, scene.time, { rot: scene.time * 18, bump: Math.abs(Math.sin(scene.time * 14)) * -1.2, logs: 0, driver: v.a.spec, trailer: false }); ctx.restore(); }
+    else v.a.draw(ctx);
     // numele sateanului (cand esti aproape) + inimioare de prietenie
     if (v.name && Math.hypot(v.x - scene.me.gx, v.y - scene.me.gy) < 5) {
       const q = iso(v.x, v.y); const fr = Math.min(5, Math.floor((scene.w.stats['friend-' + v.vid] ?? 0) / 2));

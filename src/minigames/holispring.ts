@@ -6,6 +6,7 @@ import { Actor } from '../char/actor';
 import { NPC_SPECS, type CharId } from '../char/draw';
 import { CHARMS } from '../char/outfit';
 import * as Hol from '../scenes/holidays';
+import { tierOf } from '../scenes/story';
 
 /** curtea voastra (fundal comun) */
 function yardBg(sh: Show, c: CanvasRenderingContext2D, W: number, H: number, sky = '#8fd3ff') {
@@ -68,12 +69,14 @@ export class PasteShow extends Show {
   }
   onNet(d: any) { if (d.paint) { const e = this.theirs[d.paint.i]; if (e) { e.c = d.paint.c; e.pat = d.paint.pat; } } if (d.pow != null && d.r === this.round && this.paPow < 0) this.paPow = d.pow; }
   endText() { return 'Hristos a înviat! 🐣'; }
-  reward() { const s = this.scene; if (this.quit && this.pi < 2) return; if (Hol.once(s, Hol.yearKey(s, 'paste'))) { s.op({ k: 'hearts', delta: 10 }); s.op({ k: 'stat', key: 'easterEggs', delta: 3 }); s.log('Ați vopsit și ați ciocnit ouă de Paște 🥚🐣'); s.syncPlaced(); } Hol.memory(s, 'paste'); Hol.feelBoth(s, { fun: 25, love: 15, hunger: 15 }); }
+  reward() { const s = this.scene; if (this.quit && this.pi < 2) return; if (Hol.once(s, Hol.yearKey(s, 'paste'))) { s.op({ k: 'stat', key: 'easterEggs', delta: 3 }); s.log('Ați vopsit și ați ciocnit ouă de Paște 🥚🐣'); s.syncPlaced(); } Hol.memory(s, 'paste'); Hol.feelBoth(s, { fun: 25, love: 15, hunger: 15 }); }
 }
 
 // ====================================================================== 2. Martisorul (il faci tu pentru partener)
 export class MartisorShow extends Show {
   charm = -1; twists = 0; tangled = false; bow = false; btns: { x: number; y: number; w: number; h: number }[] = [];
+  /** 1.12.0: mărțișorul il faci singur; partenerul apare doar daca e chiar langa tine. Altfel i-l trimiti si el afla (mesaj + il are in piept) */
+  near = this.scene.partnerClose(5);
   build(): Phase[] {
     const rope = (c: CanvasRenderingContext2D, W: number, H: number) => { const x0 = W * 0.3, x1 = W * 0.7, y = H * 0.42, n = Math.max(2, this.twists); for (const [col, off] of [['#fff', 0], ['#e63946', Math.PI]] as const) { c.strokeStyle = O; c.lineWidth = 7; c.beginPath(); for (let i = 0; i <= 60; i++) { const u = i / 60, x = lerp(x0, x1, u), yy = y + Math.sin(u * n * Math.PI + off) * (this.tangled ? 14 + Math.sin(this.t * 9) * 6 : 8); i ? c.lineTo(x, yy) : c.moveTo(x, yy); } c.stroke(); c.strokeStyle = col; c.lineWidth = 4.5; c.stroke(); } };
     const bg = (c: CanvasRenderingContext2D, W: number, H: number) => { yardBg(this, c, W, H); rrect(c, W * 0.2, H * 0.3, W * 0.6, H * 0.34, 14, '#fffaf5'); };
@@ -90,8 +93,14 @@ export class MartisorShow extends Show {
         tap: (type) => { if (type === 'down' && !this.bow) { this.bow = true; Sfx.play('good'); this.burst(this.W / 2, this.H * 0.45, 20, ['#e63946', '#fff', '#ffd23f'], 140, 100, 1); } },
         play: () => this.bow && this.pt > 1.4,
         draw: (c, W, H) => { bg(c, W, H); rope(c, W, H); if (this.bow) { for (const s of [-1, 1]) { c.beginPath(); c.ellipse(W / 2 + s * 18, H * 0.42, 18, 10, s * 0.4, 0, 7); c.fillStyle = s < 0 ? '#e63946' : '#fff'; c.fill(); c.strokeStyle = O; c.lineWidth = 2; c.stroke(); } icon(c, CHARMS[this.charm].icon, W / 2, H * 0.55, 44); } } },
-      { id: 'give', cap: '', dur: 4.4, enter: () => { this.me.play('love'); setTimeout(() => { this.pa.outfit = { ...(this.pa.outfit ?? { head: 'none', face: 'none', neck: 'none' }), pin: CHARMS[this.charm].id }; this.pa.play('shy'); Sfx.play('kiss'); this.fx.hearts(this.W / 2, this.H * 0.6, 16); }, 1200); },
-        draw: (c, W, H) => { yardBg(this, c, W, H); const s = this.sz() * 0.7; this.put(this.me, W * 0.42, H * 0.86, s, 1); this.put(this.pa, W * 0.58, H * 0.86, s, -1); this.me.draw(c); this.pa.draw(c); icon(c, CHARMS[this.charm].icon, W / 2, H * 0.5 - Math.sin(this.t * 3) * 5, 36); this.phases[this.pi].cap = `🎀 Un mărțișor cu ${CHARMS[this.charm].label.toLowerCase()}: ${CHARMS[this.charm].text}! ${this.paName} îl poartă toată primăvara`; } },
+      this.near ? { id: 'give', cap: '', dur: 4.4, enter: () => { this.me.play('love'); setTimeout(() => { this.pa.outfit = { ...(this.pa.outfit ?? { head: 'none', face: 'none', neck: 'none' }), pin: CHARMS[this.charm].id }; this.pa.play('shy'); Sfx.play('kiss'); this.fx.hearts(this.W / 2, this.H * 0.6, 16); }, 1200); },
+        draw: (c, W, H) => { yardBg(this, c, W, H); const s = this.sz() * 0.7; this.put(this.me, W * 0.42, H * 0.86, s, 1); this.put(this.pa, W * 0.58, H * 0.86, s, -1); this.me.draw(c); this.pa.draw(c); icon(c, CHARMS[this.charm].icon, W / 2, H * 0.5 - Math.sin(this.t * 3) * 5, 36); this.phases[this.pi].cap = `🎀 Un mărțișor cu ${CHARMS[this.charm].label.toLowerCase()}: ${CHARMS[this.charm].text}! ${this.paName} îl poartă toată primăvara`; } }
+      // partenerul nu e aici: il pui intr-un plic cu fundita si pleaca la el (il gaseste in piept, cu un mesaj)
+      : { id: 'send', cap: '', dur: 4, enter: () => { this.me.play('love'); setTimeout(() => { Sfx.play('whoosh'); this.me.play('wave'); }, 1300); setTimeout(() => Sfx.play('chimes', { vol: 0.6 }), 2300); },
+        draw: (c, W, H) => { yardBg(this, c, W, H); const s = this.sz() * 0.7; this.put(this.me, W * 0.4, H * 0.86, s, 1); this.me.draw(c);
+          const k = clamp((this.pt - 1.3) / 1.6), x = lerp(W * 0.5, W * 1.08, ease(k)), y = H * 0.5 - Math.sin(k * Math.PI) * H * 0.18 - Math.sin(this.t * 3) * 4;
+          rrect(c, x - 26, y - 17, 52, 34, 6, '#fffaf0'); c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(x - 26, y - 17); c.lineTo(x, y + 2); c.lineTo(x + 26, y - 17); c.stroke(); icon(c, CHARMS[this.charm].icon, x, y + 4, 22); heartPath(c, x + 18, y - 18, 6); c.fillStyle = '#e63946'; c.fill();
+          this.phases[this.pi].cap = k < 1 ? `🎀 Mărțișorul cu ${CHARMS[this.charm].label.toLowerCase()} pleacă la ${this.paName}…` : `💌 ${this.paName} l-a primit și îl poartă în piept toată primăvara!`; } },
     ];
   }
   endText() { return 'Primăvară frumoasă! 🌸'; }
@@ -99,7 +108,7 @@ export class MartisorShow extends Show {
     const s = this.scene, y = Hol.yearOf(s.w.day), pid = s.partner.id; if (this.charm < 0 || (this.quit && !this.bow)) return;
     s.op({ k: 'stat', key: `mart-${s.myId}-${y}`, delta: 1 });
     s.op({ k: 'stat', key: 'mpin-' + pid, delta: this.charm + 1 - (s.w.stats['mpin-' + pid] ?? 0) }); s.op({ k: 'stat', key: 'mday-' + pid, delta: s.w.day - (s.w.stats['mday-' + pid] ?? 0) });
-    s.op({ k: 'need', who: pid, need: 'love', delta: 30 }); s.op({ k: 'need', who: s.myId, need: 'love', delta: 15 }); s.op({ k: 'hearts', delta: 8 });
+    s.op({ k: 'need', who: pid, need: 'love', delta: 30 }); s.op({ k: 'need', who: s.myId, need: 'love', delta: 15 });
     s.log(`${s.me.actor.spec.name} i-a făcut lui ${s.partner.actor.spec.name} un mărțișor ${CHARMS[this.charm].icon}`); Hol.memory(s, 'martisor'); s.syncPlaced();
   }
 }
@@ -137,7 +146,7 @@ export class DragobeteShow extends Show {
   }
   onNet(d: any) { if (d.caught && !this.caught) { this.caught = true; this.caughtT = this.t; } }
   endText() { return 'Dragobete fericit! 💞'; }
-  reward() { const s = this.scene; if (this.quit && !this.caught) return; if (Hol.once(s, Hol.yearKey(s, 'drago'))) { s.op({ k: 'res', res: 'ghiocel', delta: -Math.min(3, s.w.res?.ghiocel ?? 0) }); s.op({ k: 'hearts', delta: 12 }); s.log('Dragobete: ghiocei și un pupic 💞'); s.syncPlaced(); } Hol.memory(s, 'dragobete'); Hol.feelBoth(s, { love: 35, fun: 15 }); }
+  reward() { const s = this.scene; if (this.quit && !this.caught) return; if (Hol.once(s, Hol.yearKey(s, 'drago'))) { s.op({ k: 'res', res: 'ghiocel', delta: -Math.min(3, s.w.res?.ghiocel ?? 0) }); s.log('Dragobete: ghiocei și un pupic 💞'); s.syncPlaced(); } Hol.memory(s, 'dragobete'); Hol.feelBoth(s, { love: 35, fun: 15 }); }
 }
 
 // ====================================================================== 4. Nunta Inei (si a lui Rex!)
@@ -165,8 +174,10 @@ export class InaWedShow extends Show {
   }
   build(): Phase[] {
     const married = (this.scene.w.stats.married ?? 0) > 0;
+    // 1.12.0: nunta Inei vine dupa a voastra (ea a prins buchetul); daca sunteti prieteni apropiati, voi sunteti nasii
+    const nasi = tierOf(this.scene, 'ina') >= 4;
     return [
-      { id: 'in', cap: '💒 Nunta Inei! Și mirele e… Rex?! 🐶💕', dur: 3.6, enter: () => { Sfx.play('bells'); this.ina.play('shy'); this.rex.play('dance_hop'); for (const g of this.guests) g.play('love'); this.bubu.play('dance_hop'); }, draw: (c, W, H) => { this.church(c, W, H); this.cast(c, W, H); } },
+      { id: 'in', cap: married ? `💒 Ina a prins buchetul vostru… și uite! Se mărită cu Rex 🐶💕${nasi ? ' Voi sunteți nașii!' : ''}` : '💒 Nunta Inei! Și mirele e… Rex?! 🐶💕', dur: 3.6, enter: () => { Sfx.play('bells'); this.ina.play('shy'); this.rex.play('dance_hop'); for (const g of this.guests) g.play('love'); this.bubu.play('dance_hop'); }, draw: (c, W, H) => { this.church(c, W, H); this.cast(c, W, H); } },
       { id: 'vows', cap: 'Nea Gogu (oficiant de ocazie): „Rex, o iei pe Ina de soție?” — „HAM!” 🐶', dur: 3.6, enter: () => { this.gogu.play('wave'); setTimeout(() => { this.rex.play('dance_hop'); Sfx.play('dog'); }, 1600); }, draw: (c, W, H) => { this.church(c, W, H); this.cast(c, W, H); } },
       { id: 'ring', cap: '💍 Verighetele! …Rex a scăpat inelul! Prinde-l!', hint: 'Atinge inelul!', max: 10,
         enter: () => { this.ring = { x: this.W * 0.56, y: this.H * 0.6, vx: 260, vy: -320, on: true, by: '' }; Sfx.play('gasp'); this.rex.play('cry'); },
@@ -181,7 +192,7 @@ export class InaWedShow extends Show {
             if (b.y > this.H * 0.72) { const dm = Math.abs(b.x / this.W - this.myX), dp = Math.abs(b.x / this.W - this.paX); b.by = dm < 0.07 ? 'me' : dp < 0.07 ? 'pa' : 'rita'; this.send({ bq: b.by === 'me' ? 'pa' : b.by === 'pa' ? 'me' : 'rita' }); Sfx.play(b.by === 'rita' ? 'giggle' : 'good'); (b.by === 'me' ? this.me : b.by === 'pa' ? this.pa : this.guests[0]).play('dance_hop'); } }
           return !!this.bq.by && this.pt > 1.8; },
         draw: (c, W, H) => { this.church(c, W, H); const s = this.sz() * 0.6; this.put(this.ina, W * 0.44, H * 0.8, s, -1); this.ina.draw(c); this.put(this.me, W * this.myX, H * 0.88, s, 1); this.put(this.pa, W * this.paX, H * 0.88, s, -1); this.me.draw(c); this.pa.draw(c);
-          const b = this.bq; if (!b.by) icon(c, '💐', b.x, b.y, 34); else say(c, b.by === 'rita' ? 'Rita a prins buchetul! 🦊💐' : married ? `${b.by === 'me' ? this.myName : this.paName} a prins buchetul! (deja căsătoriți 😄)` : 'Ați prins buchetul! Următoarea nuntă e a voastră! 😍', W / 2, H * 0.28, 18, '#7a3a5a'); } },
+          const b = this.bq; if (!b.by) icon(c, '💐', b.x, b.y, 34); else say(c, b.by === 'rita' ? 'Rita a prins buchetul! 🦊💐' : married ? `${b.by === 'me' ? this.myName : this.paName} a prins buchetul… și i-l dă Ritei 😄💐` : 'Ați prins buchetul! Următoarea nuntă e a voastră! 😍', W / 2, H * 0.28, 18, '#7a3a5a'); } },
       { id: 'hora', cap: '💃 Hora mare în piața satului! Țineți ritmul', hint: 'Atinge pe ritm, hora se învârte tot mai repede!', max: 15,
         enter: () => { this.beatT = 0; this.beats = 0; this.horaSp = 0.6; Sfx.play('fanfare'); },
         tap: (type) => { if (type !== 'down') return; const ph = (this.beatT % 0.5) / 0.5, d = Math.min(ph, 1 - ph) * 0.5; if (d < 0.1) { this.good++; this.horaSp = Math.min(2.6, this.horaSp + 0.12); this.fx.text(this.W / 2, this.H * 0.3, 'Hop! Hop! 🎶', '#ff4d6d', 0.9); } else this.fx.text(this.W / 2, this.H * 0.3, 'Ups 😅', '#7a5a4a', 0.7); },
@@ -198,7 +209,7 @@ export class InaWedShow extends Show {
   catchRing(by: string) { if (!this.ring.on) return; this.ring.on = false; this.ring.by = by; Sfx.play(by === 'miti' ? 'cat' : 'good'); if (by === 'me') { this.me.play('flex'); this.send({ ring: 1 }); } else if (by === 'pa') this.pa.play('flex'); this.rex.play('love'); }
   onNet(d: any) { if (d.ring) this.catchRing('pa'); if (d.bq && !this.bq.by) { this.bq.by = d.bq; } }
   endText() { return 'Casă de piatră! 💒'; }
-  reward() { const s = this.scene; if (this.quit && this.pi < 3) return; if (Hol.once(s, Hol.yearKey(s, 'inawed'))) { Hol.befriendAll(s, 1); Hol.befriend(s, 'ina', 1); s.op({ k: 'res', res: 'meals', delta: 2 }); s.op({ k: 'hearts', delta: 15 }); s.log('Ați fost la nunta Inei și a lui Rex! Hora a fost de neuitat 💒💃'); s.syncPlaced(); } Hol.memory(s, 'inawed'); Hol.feelBoth(s, { fun: 30, love: 15 }); }
+  reward() { const s = this.scene; if (this.quit && this.pi < 3) return; if (Hol.once(s, Hol.yearKey(s, 'inawed'))) { Hol.befriendAll(s, 1); Hol.befriend(s, 'ina', 1); s.op({ k: 'res', res: 'meals', delta: 2 }); s.log('Ați fost la nunta Inei și a lui Rex! Hora a fost de neuitat 💒💃'); s.syncPlaced(); } Hol.memory(s, 'inawed'); Hol.feelBoth(s, { fun: 30, love: 15 }); }
 }
 void ease; void icon; void Sfx;
 export type { CharId };

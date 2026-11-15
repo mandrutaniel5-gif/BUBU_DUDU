@@ -125,7 +125,7 @@ export class SawmillGame extends Panel {
     if (this.res(o.res) < o.qty || (o.res === 'wood' && this.res('wood') - o.qty < 0)) { this.say(o.res === 'wood' ? `Îți trebuie ${o.qty} lemne 🪵` : `Îți trebuie ${o.qty} scânduri: taie-le la gater 🪚`); Sfx.play('bad'); return; }
     const s = this.scene;
     s.op({ k: 'res', res: o.res, delta: -o.qty }); s.op({ k: 'money', delta: o.pay });
-    s.op({ k: 'stat', key: orderKey(this.day, i), delta: 1 }); s.op({ k: 'stat', key: 'sawOrders', delta: 1 }); s.op({ k: 'hearts', delta: 1 });
+    s.op({ k: 'stat', key: orderKey(this.day, i), delta: 1 }); s.op({ k: 'stat', key: 'sawOrders', delta: 1 });
     s.log(`${s.me.actor.spec.name} a livrat comanda „${o.text}”: +${o.pay} lei 📜`);
     this.coins += o.pay; Sfx.play('register'); Sfx.play('good', { delay: 0.3 }); this.vasile.play('love'); this.hero.play('dance_hop');
     this.fx.text(this.W * 0.5, this.H * 0.3, `Comandă livrată! +${o.pay} lei`, '#2ec4b6', 1.2);

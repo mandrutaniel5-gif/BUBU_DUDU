@@ -10,7 +10,7 @@ import { ANIM_LIST } from '../char/anims';
 import { NEEDS, NEED_INFO, SICK_INFO, REQUESTS, clockText, nightAmount } from '../game/state';
 import { Sfx } from '../engine/sfx';
 import { ErrorLog } from '../engine/errors';
-import { DEV } from '../game/dev';
+import { openDev } from './devpanel';
 import { moodText, g } from '../game/gender';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { CATALOG, RES_INFO, type BuildItem, type Res } from '../world/build';
@@ -45,12 +45,12 @@ export class Hud {
         <div class="needs">${NEEDS.map(n => `<div class="need" data-n="${n}" title="${NEED_INFO[n].label}"><span>${NEED_INFO[n].icon}</span><i><b style="background:${NEED_INFO[n].color}"></b></i></div>`).join('')}</div>
         <div class="sick hidden"></div>
       </div>
-      <div class="clock"><span class="time">09:00</span><span class="day">Ziua 1</span><span class="hearts">💗 0</span><span class="money">💰 0</span><span class="res" data-inv></span></div>
-      <button class="goal" data-a="goals"><b>📜 Obiectiv</b><span class="gtxt"></span></button>
+      <div class="clock"><span class="time">09:00</span><span class="day">Ziua 1</span><span class="money">💰 0</span><span class="res" data-inv></span></div>
+      <button class="goal" data-a="goals"><b>📜 Obiectiv</b><span class="gtxt"></span><small class="ghint"></small></button>
       <div class="card partner">
         <div class="name">${pa.id === 'bubu' ? '🐼' : '🐻'} ${pa.name} <span class="pst">🤖 AI</span></div>
         <div class="pmood"></div>
-        <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="menu">⚙</button>${DEV ? '<button class="mini-btn" data-a="skipch" title="Capitolul următor (test)">⏭</button><button class="mini-btn" data-a="infinite" title="Resurse infinite (test)">♾️</button>' : ''}<button class="mini-btn" data-a="albums" title="Albumele (pești, flori, rețete, haine)">📒</button></div>
+        <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="menu">⚙</button>${s.devWorld ? '<button class="mini-btn" data-a="dev" title="Dezvoltator">🧪</button>' : ''}<button class="mini-btn" data-a="albums" title="Albumele (pești, flori, rețete, haine)">📒</button></div>
       </div>
       <div class="actions">
         <button class="act big" data-a="action"><span class="ic">✋</span><span class="lb">Acțiune</span></button>
@@ -73,7 +73,7 @@ export class Hud {
     `;
     document.getElementById('ui')!.appendChild(root);
     this.root = root;
-    for (const sel of ['.me .mood', '.me .sick', '.clock .time', '.clock .day', '.clock .hearts', '.pst', '.pmood', '.net', '.dot', '[data-a="action"]', '.emotes', '.pairs', '.toasts', '.modal', '.fart .fill', '[data-a="pairs"]']) this.els[sel] = root.querySelector(sel)!;
+    for (const sel of ['.me .mood', '.me .sick', '.clock .time', '.clock .day', '.pst', '.pmood', '.net', '.dot', '[data-a="action"]', '.emotes', '.pairs', '.toasts', '.modal', '.fart .fill', '[data-a="pairs"]']) this.els[sel] = root.querySelector(sel)!;
     root.addEventListener('click', e => {
       if ((e.target as HTMLElement).closest('[data-inv]')) { this.openInventory(); return; }
       if ((e.target as HTMLElement).closest('.clock .day')) { Sfx.unlock(); Sfx.play('click'); this.openDay(); return; }
@@ -105,6 +105,7 @@ export class Hud {
       if (a === 'albums') Story.openAlbums(s);
       // butoanele de test, la vedere (cerute de proprietar): confirmarea se face in fereastra jocului
       if (a === 'skipch') s.choice('⏭️ Capitolul următor', 'Treceți la capitolul următor? Obiectivele de acum se bifează singure (pentru testare).', [['⏭️', 'Da, capitolul următor', () => s.devSkipChapter()], ['✖', 'Nu acum', () => {}]]);
+      if (a === 'dev') openDev(s);
       if (a === 'infinite') { s.setInfinite(!s.infinite); this.toast(s.infinite ? '♾️ Resurse infinite pornite (doar pe acest dispozitiv)' : 'Resurse infinite oprite'); }
       if (b.dataset.emote) s.emote(b.dataset.emote);
       if (b.dataset.pair) s.pairAction(b.dataset.pair);
@@ -180,9 +181,9 @@ export class Hud {
   /** „Ziua X” de sus: sarbatorile si evenimentele de azi, ce urmeaza, ce e de facut — oricand, nu doar dimineata */
   lastMorning: string[] = []; morningDay = -1;
   openDay() {
-    const s = this.s, day = s.w.day, se = Story.seasonOf(day), ev = Story.eventsOf(day);
+    const s = this.s, day = s.w.day, se = Story.seasonOf(day), ev = Story.eventsOf(day, s.w.stats);
     const next: string[] = [];
-    for (let d = day + 1; d <= day + 10 && next.length < 4; d++) for (const e of Story.eventsOf(d)) next.push(`<li><b>${e.icon} ${esc(e.name)}</b><small>${d - day === 1 ? 'mâine' : `în ${d - day} zile (ziua ${d})`} · ${esc(e.text)}</small></li>`);
+    for (let d = day + 1; d <= day + 10 && next.length < 4; d++) for (const e of Story.eventsOf(d, s.w.stats)) next.push(`<li><b>${e.icon} ${esc(e.name)}</b><small>${d - day === 1 ? 'mâine' : `în ${d - day} zile (ziua ${d})`} · ${esc(e.text)}</small></li>`);
     const todo = Story.todoLines(s);
     const rep = this.morningDay === day ? this.lastMorning.slice(1).filter(l => !ev.some(e => l.startsWith(e.icon + ' ' + e.name)) && !todo.includes(l)) : [];
     this.modal(`<h3>📅 Ziua ${day}</h3><p class="sub">${se.icon} ${esc(se.name)}, ziua ${Story.dayOfSeason(day)} · ${clockText(s.w.minutes)}</p>
@@ -280,8 +281,7 @@ export class Hud {
     sk.classList.toggle('hidden', !c.sick);
     if (c.sick) { const t = `${SICK_INFO[c.sick].icon} ${SICK_INFO[c.sick].label}${c.request ? ' · vrei ' + (REQUESTS[c.request]?.icon ?? '') : ''}`; if (sk.dataset.t !== t) { sk.dataset.t = t; sk.innerHTML = `${t} <button class="mini-btn" data-a="bell">🔔 Cheamă</button>`; } }
     this.txt(this.els['.clock .time'], (nightAmount(w.minutes) > 0.5 ? '🌙 ' : '☀️ ') + clockText(w.minutes));
-    { const se = Story.seasonOf(w.day), ev = Story.eventsOf(w.day)[0]; this.txt(this.els['.clock .day'], `${se.icon} Ziua ${w.day}${ev ? ' · ' + ev.icon : ''} 📅`); }
-    this.txt(this.els['.clock .hearts'], `💗 ${w.hearts}`);
+    { const se = Story.seasonOf(w.day), ev = Story.eventsOf(w.day, w.stats)[0]; this.txt(this.els['.clock .day'], `${se.icon} Ziua ${w.day}${ev ? ' · ' + ev.icon : ''} 📅`); }
     this.txt(this.root.querySelector('.clock .money'), `💰 ${w.money ?? 0} lei`);
     const rs = (this.root.querySelector('.clock .res') as HTMLElement); const R = w.res ?? {}; const seeds = Object.keys(CROPS).reduce((a, c) => a + (R[seedKey(c)] ?? 0), 0); const rt = `🪵${R.wood ?? 0} 🪨${R.stone ?? 0} 🥕${catCount(R, 'veg')} 🌸${catCount(R, 'flower')} 🍲${dishCount(R)} 💧${R.water ?? 0} 🌰${seeds} · 🔥${Math.round((w.furn.fire as number) ?? 0)}% 🎒`; this.txt(rs, rt);
     const pc = w.chars[s.partner.id];
@@ -313,9 +313,9 @@ export class Hud {
   }
 
   setNet(st: NetStatus, msg?: string) {
-    const names: Record<string, string> = { solo: 'Solo', local: 'Test 2 tab-uri', server: 'Server', firebase: 'Firebase' };
+    // 1.12.0: jucatorul vede doar Offline / Online (nu Firebase, server...)
     const t = this.s.net.kind;
-    this.els['.net'].textContent = `${names[t] ?? t}: ${st === 'online' ? 'conectat' : st === 'connecting' ? 'se conectează…' : st === 'error' ? 'eroare' : 'offline'}`;
+    this.els['.net'].textContent = t === 'solo' ? 'Offline' : t === 'local' ? 'Test 2 tab-uri' : `Online: ${st === 'online' ? 'conectat' : st === 'connecting' ? 'se conectează…' : st === 'error' ? 'fără legătură' : 'deconectat'}`;
     this.els['.dot'].className = 'dot ' + st;
     if (msg && st === 'error') this.toast('⚠️ ' + msg);
   }
@@ -337,6 +337,8 @@ export class Hud {
 
   modal(html: string) { this.closeMenus(); const m = this.els['.modal']; m.innerHTML = `<div class="box"><button class="xclose" data-close aria-label="Închide">✕</button>${html}<button class="close" data-close>Închide</button></div>`; m.classList.remove('hidden'); return m; }
   closeModal() { this.els['.modal'].classList.add('hidden'); }
+  /** e deschisa o fereastra (o chemare, un magazin...)? ce vine singur asteapta sa o inchizi */
+  modalOpen() { return !this.els['.modal'].classList.contains('hidden'); }
 
   /** ferestrele care vin singure (raportul, capitolul nou) asteapta sa termini minijocul: nu apar peste el */
   whenFree(fn: () => void) { const m = this.s.minigame; if (m && m.id !== 'cutscene') { setTimeout(() => this.whenFree(fn), 800); return; } fn(); }
@@ -358,7 +360,6 @@ export class Hud {
       const ta = m.querySelector('textarea') as HTMLTextAreaElement; const text = ta.value.trim(); if (!text) return;
       s.op({ k: 'jar', from: s.myId, text, ts: Date.now() });
       s.op({ k: 'need', who: s.myId, need: 'love', delta: 10 });
-      s.op({ k: 'hearts', delta: 5 });
       s.log(`${s.me.actor.spec.name} ți-a lăsat un bilețel în Borcanul cu iubire 💌`);
       s.me.actor.play('love'); Sfx.play('good');
       this.openJar();
@@ -471,14 +472,16 @@ export class Hud {
     (this.root.querySelector('.goal b') as HTMLElement).textContent = `📜 ${ch.title.split('·')[0].trim()} · ${n}/${ch.goals.length}`;
     const el = this.root.querySelector('.goal .gtxt') as HTMLElement;
     el.textContent = g ? `${g.icon} ${g.text}` : '🎉 Gata!';
+    // 1.12.0: unde se face (jucatorii noi nu stiau unde e soba, masina de tuns, cheresteaua...)
+    const hint = this.root.querySelector('.goal .ghint') as HTMLElement | null; if (hint) hint.textContent = g && (g as { hint?: string }).hint ? '📍 ' + (g as { hint?: string }).hint : '';
   }
   openGoals() {
     const w = this.s.w; const cur = currentGoal(w); const ch = chapterOf(w);
     const m = this.modal(`<h3>📜 ${ch.title}</h3>
       <p class="sub">${ch.intro} Aveți grijă să nu înghețați 🥶 și să aveți ce mânca 🍲.</p>
-      ${DEV ? `<div class="devrow"><button data-dev="skip">⏭️ Capitolul următor</button><button data-dev="inf" class="${this.s.infinite ? 'on' : ''}">♾️ Resurse infinite: ${this.s.infinite ? 'pornit' : 'oprit'}</button></div>
+      ${this.s.devWorld ? `<div class="devrow"><button data-dev="skip">⏭️ Capitolul următor</button><button data-dev="inf" class="${this.s.infinite ? 'on' : ''}">♾️ Resurse infinite: ${this.s.infinite ? 'pornit' : 'oprit'}</button></div>
       <p class="sub devnote">🧪 Pentru testare. Resursele infinite umplu mereu banii, materialele, ingredientele, semințele și soba (doar pe acest dispozitiv).</p>` : ''}
-      <ul class="goals">${ch.goals.map(g => { const done = !!w.stats['goal-' + g.id]; return `<li class="${done ? 'done' : g === cur ? 'cur' : ''}"><b>${done ? '✅' : g.icon} ${g.text}${g.who ? ` <em class="who ${g.who}">${g.who === 'dudu' ? 'Dudu' : 'Bubu'}</em>` : ''}</b>${!done ? `<small>${g.hint}</small>` : ''}<i>${g.reward.money ? '+' + g.reward.money + ' lei ' : ''}${g.reward.hearts ? '+' + g.reward.hearts + '💗' : ''}</i></li>`; }).join('')}</ul>
+      <ul class="goals">${ch.goals.map(g => { const done = !!w.stats['goal-' + g.id]; return `<li class="${done ? 'done' : g === cur ? 'cur' : ''}"><b>${done ? '✅' : g.icon} ${g.text}${g.who ? ` <em class="who ${g.who}">${g.who === 'dudu' ? 'Dudu' : 'Bubu'}</em>` : ''}</b>${!done ? `<small>${g.hint}</small>` : ''}<i>${g.reward.money ? '+' + g.reward.money + ' lei ' : ''}</i></li>`; }).join('')}</ul>
       <h4>🗺️ Povestea voastră</h4><p class="sub">${CHAPTERS.map(c => (c.id < ch.id ? '✅ ' : c.id === ch.id ? '👉 ' : '🔒 ') + c.title).join('<br>')}</p>
 `);
     m.querySelector('[data-dev="skip"]')?.addEventListener('click', () => { this.closeModal(); this.s.devSkipChapter(); });

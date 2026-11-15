@@ -125,7 +125,7 @@ export class BdayShow extends Show {
     const s = this.scene, y = Hol.yearOf(s.w.day);
     if (this.quit && this.pi < 6) return;
     const shared = Hol.once(s, `bday-${this.who}-${y}`);
-    if (shared) { for (const gf of this.boxes.gifts) Hol.befriend(s, gf.vid, 1); s.op({ k: 'hearts', delta: 20 }); s.log(`Petrecere surpriză pentru ${this.bName} în piața satului! 🎂🎉`); }
+    if (shared) { for (const gf of this.boxes.gifts) Hol.befriend(s, gf.vid, 1); s.log(`Petrecere surpriză pentru ${this.bName} în piața satului! 🎂🎉`); }
     for (const gf of this.boxes.gifts) Hol.applyGift(s, gf, shared);
     // cadoul partenerului: haina de la butic o primeste sarbatoritul (pe telefonul lui)
     if (this.pgItem) Hol.applyGift(s, { vid: '', from: '', box: '', icon: '', label: '', msg: '', to: this.who, item: this.pgItem }, false);
@@ -185,7 +185,7 @@ export class GrandShow extends Show {
   endText() { return 'Bunicii au plecat fericiți! 👵👴💕'; }
   reward() {
     const s = this.scene; if (this.quit && this.pi < 4) return;
-    if (Hol.once(s, Hol.yearKey(s, 'grand'))) { s.op({ k: 'money', delta: 60 + this.rating * 20 }); s.op({ k: 'res', res: 'meals', delta: 3 }); s.op({ k: 'res', res: 'egg', delta: 6 }); s.op({ k: 'stat', key: 'grandStory', delta: 1 }); s.op({ k: 'hearts', delta: 15 }); s.log('Bunicii au fost în vizită! 👵👴'); }
+    if (Hol.once(s, Hol.yearKey(s, 'grand'))) { s.op({ k: 'money', delta: 60 + this.rating * 20 }); s.op({ k: 'res', res: 'meals', delta: 3 }); s.op({ k: 'res', res: 'egg', delta: 6 }); s.op({ k: 'stat', key: 'grandStory', delta: 1 }); s.log('Bunicii au fost în vizită! 👵👴'); }
     Hol.memory(s, 'grand'); Hol.feelBoth(s, { love: 25, fun: 20, hunger: 25 });
   }
 }
@@ -267,7 +267,7 @@ export class FishContestShow extends Show {
     const s = this.scene; if (this.myFish) s.op({ k: 'res', res: 'fish', delta: this.myFish });
     if (this.quit && this.pi < 2) return;
     const order = Object.entries(this.score).sort((a, b) => b[1] - a[1]), place = order.findIndex(([k]) => k === 'me' || k === 'pa');
-    if (Hol.once(s, Hol.yearKey(s, 'contest'))) { const lei = [200, 100, 50, 0][place] ?? 0; if (lei) s.op({ k: 'money', delta: lei }); if (place === 0) s.op({ k: 'stat', key: 'trophies', delta: 1 }); s.op({ k: 'hearts', delta: 8 }); s.log(place === 0 ? 'Ați câștigat concursul de pescuit de la lac! 🏆🎣' : `Concursul de pescuit: locul ${place + 1} 🎣`); s.syncPlaced(); }
+    if (Hol.once(s, Hol.yearKey(s, 'contest'))) { const lei = [200, 100, 50, 0][place] ?? 0; if (lei) s.op({ k: 'money', delta: lei }); if (place === 0) s.op({ k: 'stat', key: 'trophies', delta: 1 }); s.log(place === 0 ? 'Ați câștigat concursul de pescuit de la lac! 🏆🎣' : `Concursul de pescuit: locul ${place + 1} 🎣`); s.syncPlaced(); }
     Hol.memory(s, 'fishcontest'); Hol.feel(s, s.myId, { fun: 25, energy: -8 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 25 });
   }
 }
@@ -311,7 +311,7 @@ export class PicnicShow extends Show {
   }
   onNet(d: any) { if (d.ant) { const a = this.ants.find(q => !q.dead && q.x > this.W * 0.5); if (a) a.dead = this.t; } }
   endText() { return '🧺 Ce picnic frumos!'; }
-  reward() { const s = this.scene; Hol.memory(s, 'picnic'); Hol.feelBoth(s, { hunger: 30, fun: 25, love: 20, energy: 8 }); s.op({ k: 'hearts', delta: 6 }); }
+  reward() { const s = this.scene; Hol.memory(s, 'picnic'); Hol.feelBoth(s, { hunger: 30, fun: 25, love: 20, energy: 8 }); }
 }
 
 // ====================================================================== 5. Lozul norocos (negustorul ambulant)

@@ -5,7 +5,6 @@
 //   (SHA-256) numele camerei din baza de date, de 40 de caractere. Fara parola nu ai cum sa afli camera.
 // - In cloud, la houses/<amprenta codului> sta doar „codul exista” (ca sa nu se dea de doua ori).
 //   Camera, la rooms/<cheia din cod + parola>, are meta = { v: 2 } (asa stim ca parola e buna).
-// - Pe serverul propriu (S10) se intampla la fel, prin mesajele 'house' (vezi server/server.mjs).
 import { BUILTIN_FIREBASE } from '../game/settings';
 import type { NetConfig } from './types';
 
@@ -99,49 +98,37 @@ async function fbJoin(cfg: NetConfig['firebase'], code: string, pass: string): P
   return { ok: true, code: c, room };
 }
 
-// ------------------------------------------------------------------ serverul nostru (S10 / PC)
-function wsAsk(url: string, msg: object): Promise<any> {
-  return new Promise((res, rej) => {
-    let ws: WebSocket; try { ws = new WebSocket(url); } catch { rej(new Error('Adresa serverului nu e bună.')); return; }
-    const t = setTimeout(() => { try { ws.close(); } catch { /* */ } rej(new Error('Serverul nu răspunde. E pornit și are ultima versiune (git pull)?')); }, 8000);
-    ws.onopen = () => ws.send(JSON.stringify({ t: 'house', ...msg }));
-    ws.onmessage = m => { try { const d = JSON.parse(m.data); if (d.t === 'house') { clearTimeout(t); ws.close(); res(d); } } catch { /* */ } };
-    ws.onerror = () => { clearTimeout(t); rej(new Error('Serverul nu răspunde. E pornit?')); };
-  });
-}
-async function wsCreate(url: string, pass: string, seed?: { json: string; ts: number } | null): Promise<HouseResult> {
-  for (let tries = 0; tries < 6; tries++) {
-    const code = newCode(), room = roomOf(code, pass);
-    const r = await wsAsk(url, { op: 'create', key: codeKey(code), room, save: seed?.json ? { json: seed.json, ts: Date.now() } : undefined });
-    if (r.old) return { ok: false, msg: 'Serverul are o versiune veche. Actualizează-l (git pull) și pornește-l din nou.' };
-    if (r.ok) return { ok: true, code, room };
-  }
-  return { ok: false, msg: 'Nu am putut face un cod nou. Mai încearcă o dată.' };
-}
-async function wsJoin(url: string, code: string, pass: string): Promise<HouseResult> {
-  const c = normCode(code), room = roomOf(c, pass);
-  const r = await wsAsk(url, { op: 'join', key: codeKey(c), room });
-  if (r.old) return { ok: false, msg: 'Serverul are o versiune veche. Actualizează-l (git pull) și pornește-l din nou.' };
-  if (r.ok) return { ok: true, code: c, room };
-  return { ok: false, msg: r.why === 'pass' ? 'Parola nu e bună pentru casa asta.' : `Nu există nicio casă cu codul ${c} pe server.` };
+// ------------------------------------------------------------------ cine e acum in casa (meniul: 0/2, 1/2, 2/2)
+export type Seats = Record<'bubu' | 'dudu', { online: boolean; dev?: string; ts?: number } | null>;
+/** urmareste locurile din casele din lista (doar Firebase); cb(room, locuri, ora serverului) la fiecare schimbare */
+export function watchSeats(rooms: string[], cb: (room: string, seats: Seats, now: () => number) => void): () => void {
+  let stop = false; const offs: (() => void)[] = [];
+  (async () => {
+    try {
+      const { fb, db } = await timeout(fbDb(null as any), 8000, NET_ERR);
+      if (stop) return;
+      let off = 0; try { off = Number((await fb.get(fb.ref(db, '.info/serverTimeOffset'))).val()) || 0; } catch { /* */ }
+      const now = () => Date.now() + off;
+      for (const room of rooms) offs.push(fb.onValue(fb.ref(db, `rooms/${room}/players`), (snap: any) => { const v = snap.val() ?? {}; cb(room, { bubu: v.bubu ?? null, dudu: v.dudu ?? null }, now); }));
+    } catch { /* fara internet: nu stim cine e in casa */ }
+  })();
+  return () => { stop = true; offs.forEach(u => u()); };
 }
 
 // ------------------------------------------------------------------ ce foloseste meniul
 /** casa noua (cod unic). seed = progresul de pana acum, mutat in casa noua */
-export async function createHouse(net: NetConfig, serverUrl: string, pass: string, seed?: { json: string; ts: number } | null): Promise<HouseResult> {
+export async function createHouse(net: NetConfig, pass: string, seed?: { json: string; ts: number } | null): Promise<HouseResult> {
   if (!passOk(pass)) return { ok: false, msg: 'Parola trebuie să aibă cel puțin 4 caractere.' };
   try {
-    if (net.mode === 'server') return await wsCreate(serverUrl, pass, seed);
     if (net.mode === 'solo' || net.mode === 'local') { const code = newCode(); return { ok: true, code, room: roomOf(code, pass) }; }
     return await fbCreate(net.firebase, pass, seed);
   } catch (e) { return { ok: false, msg: (e as Error).message || NET_ERR }; }
 }
 /** intri in casa partenerului (codul si parola de la el / ea) */
-export async function joinHouse(net: NetConfig, serverUrl: string, code: string, pass: string): Promise<HouseResult> {
+export async function joinHouse(net: NetConfig, code: string, pass: string): Promise<HouseResult> {
   if (!codeOk(code)) return { ok: false, msg: 'Codul arată așa: LALEA-7K3P (un cuvânt, liniuță, 4 litere sau cifre).' };
   if (!passOk(pass)) return { ok: false, msg: 'Parola are cel puțin 4 caractere.' };
   try {
-    if (net.mode === 'server') return await wsJoin(serverUrl, code, pass);
     if (net.mode === 'solo' || net.mode === 'local') { const c = normCode(code); return { ok: true, code: c, room: roomOf(c, pass) }; }
     return await fbJoin(net.firebase, code, pass);
   } catch (e) { return { ok: false, msg: (e as Error).message || NET_ERR }; }

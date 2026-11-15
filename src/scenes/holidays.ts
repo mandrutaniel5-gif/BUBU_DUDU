@@ -20,7 +20,17 @@ const st = (s: S, k: string) => s.w.stats[k] ?? 0;
 const res = (s: S, k: string) => s.w.res?.[k] ?? 0;
 export const yearOf = (day: number) => Math.floor((day - 1) / 28);
 const hr = (s: S) => s.w.minutes / 60;
-const ev = (s: S, id: string) => eventsOf(s.w.day).some(e => e.id === id);
+const ev = (s: S, id: string) => eventsOf(s.w.day, s.w.stats).some(e => e.id === id);
+/**
+ * 1.12.0: sarbatoarea e acolo unde puteti ajunge? Masa din curte cere curtea deschisa (Capitolul 1), petrecerile din sat
+ * cer podul reparat. Inainte, in prima zi a unui joc nou (1 Martie) va chema la masa din curte cu usile casei inca incuiate.
+ */
+export function reachable(s: S, id: string) {
+  if (['martisor', 'paste', 'dragobete', 'grandparents', 'swim', 'storm'].includes(id)) return s.chapter >= 1;
+  if (['bdaybubu', 'bdaydudu', 'revelion', 'villwed', 'fairday', 'craciun'].includes(id)) return s.bridgeFixed();
+  return true;
+}
+const evr = (s: S, id: string) => ev(s, id) && reachable(s, id);
 const winter = (s: S) => seasonOf(s.w.day).id === 'winter';
 /** craciunul de anul asta a trecut deja (sau e azi)? */
 const afterXmas = (s: S) => winter(s) && dayOfSeason(s.w.day) >= 3;
@@ -76,11 +86,11 @@ export function place(s: S, push: (f: Furn) => void) {
     push({ id: 'st-h-xtree', type: 'xmastree' as any, kind: 'lit', gx: M.gx + 7.5, gy: M.gy + 3.4, w: 1, d: 1, solid: true });
   }
   // --- seara de Craciun: colindatorii la usa voastra
-  if (ev(s, 'craciun') && h >= 17 && h < 23 && !st(s, 'carol-' + y)) push({ id: 'st-h-carol', type: 'carolers' as any, ...yardSpot(s, SPOT.carol), w: 1, d: 1, solid: false, action: a('st-h-carol', 'Au venit colindătorii!', '⭐') });
+  if (evr(s, 'craciun') && h >= 17 && h < 23 && !st(s, 'carol-' + y)) push({ id: 'st-h-carol', type: 'carolers' as any, ...yardSpot(s, SPOT.carol), w: 1, d: 1, solid: false, action: a('st-h-carol', 'Au venit colindătorii!', '⭐') });
   // --- ziua lui Bubu / Dudu, revelionul: masa cu tortul si ghirlandele din piata
-  const bday = ev(s, 'bdaybubu') ? 'bubu' : ev(s, 'bdaydudu') ? 'dudu' : '';
+  const bday = evr(s, 'bdaybubu') ? 'bubu' : evr(s, 'bdaydudu') ? 'dudu' : '';
   if (bday && h >= 6) push({ id: 'st-h-party', type: 'partyset' as any, kind: (h >= 17.5 ? 'open-' : 'hidden-') + bday, gx: SPOT.party.gx, gy: SPOT.party.gy, w: 3, d: 1, solid: true, action: a('st-h-party', h >= 17.5 ? `🎂 Petrecerea lui ${bday === 'bubu' ? 'Bubu' : 'Dudu'}` : 'Pregătiri secrete… 🤫', '🎉') });
-  if (ev(s, 'revelion') && h >= 18) push({ id: 'st-h-party', type: 'partyset' as any, kind: 'revelion', gx: SPOT.party.gx, gy: SPOT.party.gy, w: 3, d: 1, solid: true, action: a('st-h-party', h >= 21 ? 'Petrecerea de Revelion!' : 'Revelionul: de la 21:00', '🎆') });
+  if (evr(s, 'revelion') && h >= 18) push({ id: 'st-h-party', type: 'partyset' as any, kind: 'revelion', gx: SPOT.party.gx, gy: SPOT.party.gy, w: 3, d: 1, solid: true, action: a('st-h-party', h >= 21 ? 'Petrecerea de Revelion!' : 'Revelionul: de la 21:00', '🎆') });
   // --- targul lunar: caruta negustorului ambulant
   if (ev(s, 'fairday') && h >= 6 && h < 20 && s.chapter >= 3) push({ id: 'st-h-caravan', type: 'caravan' as any, gx: SPOT.caravan.gx, gy: SPOT.caravan.gy, w: 2, d: 2, solid: true, action: a('st-h-caravan', 'Negustorul ambulant', '🧳') });
   // --- nunta Inei: arcada cu flori la biserica
@@ -89,7 +99,7 @@ export function place(s: S, push: (f: Furn) => void) {
   const tb = tableEvent(s);
   if (tb) push({ id: 'st-h-table', type: 'festable' as any, kind: tb.kind, ...yardSpot(s, SPOT.table), w: 1, d: 1, solid: true, action: a('st-h-table', tb.label, tb.icon) });
   // --- zi de lac: concursul de pescuit si patura de picnic
-  if (ev(s, 'swim') && h >= 8 && h < 19) {
+  if (evr(s, 'swim') && h >= 8 && h < 19) {
     if (!st(s, 'contest-' + y)) push({ id: 'st-h-contest', type: 'contest' as any, gx: SPOT.contest.gx, gy: SPOT.contest.gy, w: 2, d: 1, solid: true, action: a('st-h-contest', 'Concursul de pescuit 🏆', '🎣') });
     push({ id: 'st-h-picnic', type: 'picnic' as any, gx: SPOT.picnic.gx, gy: SPOT.picnic.gy, w: 2, d: 1.4, solid: false, action: a('st-h-picnic', 'Picnic pe malul lacului', '🧺') });
   }
@@ -100,6 +110,7 @@ export function place(s: S, push: (f: Furn) => void) {
 }
 function tableEvent(s: S): { kind: string; label: string; icon: string } | null {
   const h = hr(s), y = Y(s);
+  if (s.chapter < 1) return null; // masa din curte: curtea se deschide in Capitolul 1
   if (ev(s, 'paste') && h >= 6 && !st(s, 'paste-' + y)) return { kind: 'paste', label: 'Ciocnim ouă roșii!', icon: '🥚' };
   if (ev(s, 'martisor') && h >= 6 && !st(s, `mart-${s.myId}-${y}`)) return { kind: 'martisor', label: `Fă-i un mărțișor lui ${s.partner.actor.spec.name}`, icon: '🎀' };
   if (ev(s, 'dragobete') && h >= 6 && !st(s, 'drago-' + y)) return { kind: 'drago', label: res(s, 'ghiocel') >= 3 ? `Dă-i ghioceii lui ${s.partner.actor.spec.name}` : 'Dragobete: culegeți ghiocei din pădure', icon: '🤍' };

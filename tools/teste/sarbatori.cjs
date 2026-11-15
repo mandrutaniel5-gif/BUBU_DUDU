@@ -16,7 +16,7 @@ const CASES = [
   await p.goto('http://localhost:5173/?skipload&dev&who=bubu&mode=solo&room=sb' + Date.now() + '#world'); await p.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 });
   await sleep(800);
   const E = (f, a) => p.evaluate(f, a);
-  await E(() => { const s = game.scene; for (let i = 0; i < 6; i++) s.devSkipChapter(); s.op({ k: 'money', delta: 3000 }); for (const v of ['leana', 'ina', 'gogu', 'miti', 'rita', 'rex']) s.w.stats['friend-' + v] = 9; s.w.res.flower = 6; s.w.res.ghiocel = 3; s.w.res.dish_ciorba = 2; s.syncPlaced(); });
+  await E(() => { const s = game.scene; for (let i = 0; i < 6; i++) s.devSkipChapter(); s.op({ k: 'money', delta: 3000 }); for (const v of ['leana', 'ina', 'gogu', 'miti', 'rita', 'rex']) s.w.stats['friend-' + v] = 9; s.w.res.flower = 6; s.w.res.ghiocel = 3; s.w.res.dish_ciorba = 2; s.w.stats.inaWedDay = 6; s.syncPlaced(); }); // 1.12.0: nunta Inei vine dupa a voastra (aici: ziua 6)
   await sleep(2000); await E(() => game.scene.hud.closeModal());
   for (const [id, day, h, obj, arg] of CASES) {
     const seen = await E(([day, h, obj]) => { const s = game.scene; s.w.gameMin = (day - 1) * 1440 + h * 60; s.w.minutes = h * 60; s.w.day = day; s.syncPlaced(); return s.furnList.some(f => f.id === obj); }, [day, h, obj]);
@@ -62,10 +62,14 @@ const CASES = [
   const ctx2 = await b.newContext({ viewport: { width: 844, height: 390 } }); const room = 'sb2' + Date.now(); const errs2 = [];
   const open = async who => { const q = await ctx2.newPage(); q.on('pageerror', e => errs2.push(who + ': ' + e)); await q.goto(`http://localhost:5173/?skipload&dev&who=${who}&mode=local&room=${room}#world`); await q.waitForFunction(() => game.scene?.ready, null, { timeout: 30000 }); return q; };
   const D = await open('dudu'), B = await open('bubu'); await D.waitForTimeout(3000);
+  await B.waitForFunction(() => game.scene.partnerOnline, null, { timeout: 15000 }).catch(() => {}); await D.waitForFunction(() => game.scene.partnerOnline, null, { timeout: 15000 }).catch(() => {});
   for (const q of [D, B]) await q.evaluate(() => { const s = game.scene; s.w.stats.chapter = 5; s.w.gameMin = 23 * 1440 + 600; s.w.minutes = 600; s.w.day = 24; s.syncPlaced(); document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); });
   await B.evaluate(() => game.scene.playHoliday('xmastree')); await D.waitForTimeout(1500);
+  // 1.12.0: Dudu nu mai e tras automat: primeste invitatia si apasa „Vin!”
+  ok('în doi: Dudu primește invitația (nu e tras automat)', await D.evaluate(() => !game.scene.minigame && /te cheamă/.test(document.querySelector('.modal:not(.hidden)')?.innerText ?? '')));
+  await D.evaluate(() => { const m = [...document.querySelectorAll('.modal:not(.hidden)')].find(x => /te cheamă/.test(x.innerText)); m?.querySelector('[data-ch="0"]')?.click(); }); await D.waitForTimeout(1500);
   const dj = await D.evaluate(() => ({ mini: game.scene.minigame?.id, show: game.scene.holidayId, remote: game.scene.minigame?.obj.remote }));
-  ok('în doi: Bubu pornește bradul, Dudu intră automat în aceeași sărbătoare', dj.mini === 'holiday' && dj.show === 'xmastree' && dj.remote === true, JSON.stringify(dj));
+  ok('în doi: după „Vin!” sunt amândoi în aceeași sărbătoare', dj.mini === 'holiday' && dj.show === 'xmastree' && dj.remote === true && await B.evaluate(() => game.scene.minigame?.id === 'holiday'), JSON.stringify(dj));
   await B.evaluate(() => { const o = game.scene.minigame.obj; o.next(); }); await D.evaluate(() => { const o = game.scene.minigame.obj; o.next(); }); await B.waitForTimeout(300);
   await B.evaluate(() => { const o = game.scene.minigame.obj; const G = { cx: o.W * 0.4 }; for (let i = 0; i < 3; i++) { o.tool = i; o.pointer('down', G.cx + (i - 1) * 30, o.H * 0.55); } });
   await D.waitForTimeout(1500);

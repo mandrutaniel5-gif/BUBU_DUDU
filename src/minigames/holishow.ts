@@ -59,6 +59,8 @@ export abstract class Show extends Panel {
   bubu: Actor; dudu: Actor; me: Actor; pa: Actor; guests: Actor[] = [];
   confetti: Confetto[] = []; sparks: Spark[] = [];
   partnerAI: boolean; heard = false;
+  /** 1.12.0: partenerul (real) n-a venit: nu apare in scena si nu joaca nimeni pentru el */
+  solo: boolean; partnerLeft = false;
   flash = 0;
   constructor(scene: WorldScene, done: (s: number) => void) {
     super(scene, done, '', '');
@@ -66,7 +68,9 @@ export abstract class Show extends Panel {
     this.bubu = new Actor('bubu', this.fx); this.dudu = new Actor('dudu', this.fx);
     this.bubu.outfit = scene.w.chars.bubu.outfit; this.dudu.outfit = scene.w.chars.dudu.outfit;
     this.me = scene.myId === 'bubu' ? this.bubu : this.dudu; this.pa = this.me === this.bubu ? this.dudu : this.bubu;
-    this.partnerAI = scene.partner.control !== 'remote';
+    this.solo = scene.holSolo; scene.holSolo = false;
+    this.partnerAI = scene.partner.control !== 'remote' && !this.solo;
+    if (this.solo) this.pa.draw = () => { /* nu e aici */ };
   }
   /** satenii (in ordinea lor), imbracati de sarbatoare */
   villagers(dress: 'none' | 'party' | 'winter' | 'wedding' = 'none'): Actor[] {
@@ -87,11 +91,16 @@ export abstract class Show extends Panel {
   get myName() { return this.name(this.scene.myId); }
   get paName() { return this.name(this.scene.partner.id); }
   /** partenerul joaca singur (AI) daca nu e la telefon sau n-a dat semn in sarbatoarea asta */
-  get aiPlays() { return this.partnerAI || (!this.heard && this.t > 4); }
+  get aiPlays() { return !this.solo && !this.partnerLeft && (this.partnerAI || (!this.heard && this.t > 4)); }
 
   // ------------------------------------------------------------------ retea
-  send(d: object) { if (!this.partnerAI) this.scene.net.sendEvent({ t: 'mini', who: this.scene.myId, data: { k: 'hol', show: this.id, ...d } }); }
-  net(d: any) { if (!d || d.k !== 'hol' || (d.show && d.show !== this.id)) return; this.heard = true; this.onNet(d); }
+  send(d: object) { if (!this.partnerAI && !this.solo) this.scene.net.sendEvent({ t: 'mini', who: this.scene.myId, data: { k: 'hol', show: this.id, ...d } }); }
+  net(d: any) {
+    if (!d || d.k !== 'hol' || (d.show && d.show !== this.id) || this.solo) return;
+    // 1.12.0: partenerul a apasat X: se termina si la tine, pe loc (nu mai astepti dupa cineva care a plecat)
+    if (d.quit) { if (!this.ended) { this.partnerLeft = true; this.quit = this.pi < this.phases.length - 1; this.end(); const en = this.ended as { t: number } | null; if (en) en.t = Math.max(en.t, 0.4); } return; }
+    this.heard = true; this.onNet(d);
+  }
   onNet(_d: any) { /* in fiecare sarbatoare */ }
 
   // ------------------------------------------------------------------ desfasurare
@@ -105,8 +114,8 @@ export abstract class Show extends Panel {
   goto(id: string) { const i = this.phases.findIndex(p => p.id === id); if (i < 0) return; this.pi = i - 1; this.next(); }
   /** a iesit cu X inainte de final */
   quit = false;
-  end() { if (this.ended) return; try { this.reward(); } catch (e) { console.error(e); } this.finish(1, this.quit ? 'Altă dată 🙂' : this.endText()); }
-  abort() { if (!this.ended && this.pi < this.phases.length - 1) this.quit = true; this.end(); }
+  end() { if (this.ended) return; try { this.reward(); } catch (e) { console.error(e); } this.finish(1, this.partnerLeft && this.quit ? `${this.paName} a ieșit 🙂` : this.quit ? 'Altă dată 🙂' : this.endText()); }
+  abort() { if (this.ended) return; if (this.pi < this.phases.length - 1) this.quit = true; this.send({ quit: 1 }); this.end(); }
   tick(dt: number) {
     this.pt += dt;
     this.bubu.update(dt); this.dudu.update(dt); for (const g of this.guests) g.update(dt);
