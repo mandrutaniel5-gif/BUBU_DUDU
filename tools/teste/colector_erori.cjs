@@ -7,7 +7,7 @@ let fails = 0; const ok = (n, c, x = '') => { if (!c) fails++; console.log((c ? 
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 844, height: 390 } })).newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto('http://localhost:5173/?skipload#menu'); await sleep(1500);
+  await p.goto('http://localhost:5173/?skipload&name=Tester#menu'); await sleep(1500);
   await p.click('.more'); for (let i = 0; i < 5; i++) await p.click('.vtap');
   await p.click('.devcode .tester'); ok('modul tester pornit (fara cod)', await p.evaluate(() => localStorage.getItem('bd-tester') === '1'));
   await p.click('.cred .xcred'); await p.click('[data-tab=offline]'); await p.click('button.play');

@@ -275,11 +275,19 @@ export const iconImg = (e: string, cls = 'di') => hasIcon(e) ? `<img class="${cl
 const KEYS = Object.keys(D).sort((a, b) => b.length - a.length).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 const RX = new RegExp('(' + KEYS.join('|') + ')️?', 'gu');
 
+/** 1.13.0: filtrul de text (numele alese de jucatori in locul lui „Bubu” / „Dudu”), pe canvas si in pagina; vezi game/names.ts */
+let textFilter: ((t: string) => string) | null = null;
+export function setTextFilter(f: ((t: string) => string) | null) { textFilter = f; if (f && typeof document !== 'undefined') iconizeNode(document.body); }
+const tf = (t: string) => (textFilter ? textFilter(t) : t);
 /** inlocuieste emoji-urile din nodurile text ale unui element */
 export function iconizeNode(root: Node) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const todo: Text[] = [];
-  for (let n = walker.nextNode(); n; n = walker.nextNode()) { const t = n as Text; RX.lastIndex = 0; if (RX.test(t.data)) todo.push(t); }
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const t = n as Text;
+    if (textFilter && !(t.parentNode as HTMLElement | null)?.closest?.('textarea,input,script,style')) { const f = textFilter(t.data); if (f !== t.data) t.data = f; }
+    RX.lastIndex = 0; if (RX.test(t.data)) todo.push(t);
+  }
   for (const t of todo) {
     const p = t.parentNode; if (!p || (p as HTMLElement).closest?.('textarea,input,script,style')) continue;
     const frag = document.createDocumentFragment();
@@ -313,7 +321,8 @@ export function iconizeDom() {
 }
 
 const P2 = CanvasRenderingContext2D.prototype;
-const origFill = P2.fillText, origStroke = P2.strokeText;
+const origFill = P2.fillText, origStroke = P2.strokeText, origMeasure = P2.measureText;
+P2.measureText = function (this: C, text: string) { return origMeasure.call(this, tf(String(text))); } as any;
 function fontPx(c: C) { const m = /(\d+(?:\.\d+)?)px/.exec(c.font); return m ? +m[1] : 16; }
 function layout(c: C, text: string, x: number, size: number) {
   const parts: (string | { e: string })[] = []; let last = 0; RX.lastIndex = 0; let m: RegExpExecArray | null;
@@ -339,12 +348,12 @@ function draw(c: C, text: string, x: number, y: number, size: number, fill: bool
 }
 /** toate textele scrise pe canvas care contin emoji-uri cunoscute le deseneaza ca iconite */
 P2.fillText = function (this: C, text: string, x: number, y: number, maxW?: number) {
-  const s = String(text); RX.lastIndex = 0;
+  const s = tf(String(text)); RX.lastIndex = 0;
   if (!RX.test(s)) return maxW === undefined ? origFill.call(this, s, x, y) : origFill.call(this, s, x, y, maxW);
   draw(this, s, x, y, fontPx(this), true);
 } as any;
 P2.strokeText = function (this: C, text: string, x: number, y: number, maxW?: number) {
-  const s = String(text); RX.lastIndex = 0;
+  const s = tf(String(text)); RX.lastIndex = 0;
   if (!RX.test(s)) return maxW === undefined ? origStroke.call(this, s, x, y) : origStroke.call(this, s, x, y, maxW);
   draw(this, s, x, y, fontPx(this), false);
 } as any;

@@ -47,6 +47,7 @@ game.scenes.world = () => {
 (window as any).game = game;
 // parametri URL (utili la test): ?who=dudu&mode=local&room=test
 const q = new URLSearchParams(location.search);
+if (q.get('name')) Settings.set({ myName: q.get('name')! }); // teste: numele jucatorului
 if (q.get('who') || q.get('mode') || q.get('room')) {
   const cur = Settings.get();
   const qw = q.get('who'); // doar bubu / dudu (altfel ajungea netrecut prin filtru in HTML-ul meniului)

@@ -460,3 +460,8 @@ html.h520l .hc-enter { font-size:15px; padding:2px; margin-top:4px; }
 .buglist .bi { display:flex; gap:8px; align-items:flex-start; border:2px solid var(--ink); border-radius:10px; padding:4px; background:#fff; font-size:12px; }
 .buglist .bi img { width:96px; border-radius:6px; flex:0 0 auto; }
 .buglist .bi b { display:block; }
+/* 1.13.0: numele ales de jucator */
+.menu-card .myname { display:flex; align-items:center; gap:8px; font-weight:800; font-size:13px; margin:6px 0 0; }
+.menu-card .myname input { flex:1; min-width:0; padding:3px 8px; font-size:15px; }
+.menu-card .myname input.need { outline:3px solid #ff4d6d; background:#fff0f3; }
+html.h520l .menu-card .myname { margin-top:3px; font-size:12px; } html.h520l .menu-card .myname input { padding:1px 6px; font-size:14px; }

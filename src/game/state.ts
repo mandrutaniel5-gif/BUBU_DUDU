@@ -36,6 +36,8 @@ export interface CharState {
   outfit?: { head: string; face: string; neck: string };
   owned?: string[];          // ce cere bolnavul: soup / medicine / compress / kiss / water
   gx: number; gy: number;
+  /** numele ales de jucator (1.13.0); pe ecran inlocuieste „Bubu” / „Dudu” */
+  name?: string;
 }
 
 export interface WorldState {

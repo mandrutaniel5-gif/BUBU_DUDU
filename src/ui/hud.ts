@@ -43,14 +43,14 @@ export class Hud {
     root.innerHTML = `
       ${Bugs.on() ? '<button class="bugbtn" data-a="bug" title="Raportează o problemă">🐞</button>' : ''}
       <div class="card me">
-        <div class="name">${me.id === 'bubu' ? '🐼' : '🐻'} ${me.name} <span class="mood"></span></div>
+        <div class="name">${me.id === 'bubu' ? '🐼' : '🐻'} <span class="nm">${me.name}</span> <span class="mood"></span></div>
         <div class="needs">${NEEDS.map(n => `<div class="need" data-n="${n}" title="${NEED_INFO[n].label}"><span>${NEED_INFO[n].icon}</span><i><b style="background:${NEED_INFO[n].color}"></b></i></div>`).join('')}</div>
         <div class="sick hidden"></div>
       </div>
       <div class="clock"><span class="time">09:00</span><span class="day">Ziua 1</span><span class="money">💰 0</span><span class="res" data-inv></span></div>
       <button class="goal" data-a="goals"><b>📜 Obiectiv</b><span class="gtxt"></span><small class="ghint"></small></button>
       <div class="card partner">
-        <div class="name">${pa.id === 'bubu' ? '🐼' : '🐻'} ${pa.name} <span class="pst">🤖 AI</span></div>
+        <div class="name">${pa.id === 'bubu' ? '🐼' : '🐻'} <span class="nm">${pa.name}</span> <span class="pst">🤖 AI</span></div>
         <div class="pmood"></div>
         <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="menu">⚙</button>${s.devWorld ? '<button class="mini-btn" data-a="dev" title="Dezvoltator">🧪</button>' : ''}<button class="mini-btn" data-a="albums" title="Albumele (pești, flori, rețete, haine)">📒</button></div>
       </div>
@@ -361,6 +361,11 @@ export class Hud {
       await Bugs.add({ kind: 'tester', cat: cat || 'Altceva', title: note || cat, note, shot });
       this.closeModal(); this.toast(`🐞 Mulțumim! Raportul e salvat (${Bugs.count()})`);
     });
+  }
+  /** numele de pe cartonase (cand isi alege partenerul numele sau intra in joc) */
+  renameCards() {
+    const set = (sel: string, t: string) => { const e = this.root.querySelector(sel) as HTMLElement | null; if (e && e.textContent !== t) e.textContent = t; };
+    set('.card.me .nm', this.s.me.actor.spec.name); set('.card.partner .nm', this.s.partner.actor.spec.name);
   }
   /** e deschisa o fereastra (o chemare, un magazin...)? ce vine singur asteapta sa o inchizi */
   modalOpen() { return !this.els['.modal'].classList.contains('hidden'); }

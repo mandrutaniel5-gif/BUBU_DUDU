@@ -5,7 +5,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 let fails = 0; const ok = (n, c, x = '') => { if (!c) fails++; console.log((c ? 'OK  ' : 'FAIL') + ' ' + n + (x ? '  ' + x : '')); };
 (async () => {
   const b = await chromium.launch(); const errs = [];
-  const phone = async () => { const c = await b.newContext({ viewport: { width: 844, height: 390 } }); const p = await c.newPage(); p.on('pageerror', e => errs.push(e.message)); await p.goto('http://localhost:5173/?skipload#menu'); await sleep(1500); return p; };
+  let nPhone = 0;
+  const phone = async () => { const c = await b.newContext({ viewport: { width: 844, height: 390 } }); const p = await c.newPage(); p.on('pageerror', e => errs.push(e.message)); await p.goto('http://localhost:5173/?skipload&name=Tester' + (++nPhone) + '#menu'); await sleep(1500); return p; };
   const A = await phone(), B = await phone(), C = await phone();
   // A: casa noua, ca Bubu
   await A.click('.h-new'); await A.check('[name=hwho][value=bubu]'); await A.fill('[name=hpass]', 'test1234'); await A.click('.h-create');
@@ -17,7 +18,7 @@ let fails = 0; const ok = (n, c, x = '') => { if (!c) fails++; console.log((c ? 
   await B.click('.h-joinopen'); await B.fill('[name=hcode]', code); await B.fill('[name=hjpass]', 'test1234'); await B.click('.h-join');
   await B.waitForSelector('[data-join2]', { timeout: 20000 }); await sleep(800);
   const opts = await B.$$eval('[data-join2]', x => x.map(b => b.dataset.as));
-  ok('B: poate intra doar ca Dudu (Bubu e in joc)', opts.length === 1 && opts[0] === 'dudu', opts.join(','));
+  ok('B: poate intra doar ca el / ursulet (locul ei e in joc)', opts.length === 1 && opts[0] === 'dudu', opts.join(','));
   await B.screenshot({ path: 'loc_alege.png' });
   await B.click('[data-join2]'); await B.waitForFunction(() => game.scene?.ready, null, { timeout: 60000 }); await sleep(4000);
   ok('A si B se vad', await A.evaluate(() => game.scene.partnerOnline) && await B.evaluate(() => game.scene.partnerOnline));
@@ -36,7 +37,7 @@ let fails = 0; const ok = (n, c, x = '') => { if (!c) fails++; console.log((c ? 
   await A.evaluate(() => game.go('menu')); await sleep(3000);
   await C.click('.cred .xcred').catch(() => {}); await sleep(1500);
   const seatsC = await C.$$eval('.hc-seats button', x => x.map(b => b.innerText.replace(/\n/g, ' ')));
-  ok('dupa ce A iese: Bubu e liber', seatsC.some(t => /Bubu/.test(t) && !/în joc/.test(t)), seatsC.join(' / '));
+  ok('dupa ce A iese: Bubu e liber', seatsC.some(t => /panda|Tester1/.test(t) && !/în joc/.test(t)), seatsC.join(' / '));
   // curatenie: golim camera de test
   const D = await phone(); await D.evaluate(async r => { const [{ getApps, initializeApp }, fb] = await Promise.all([import('/node_modules/.vite/deps/firebase_app.js'), import('/node_modules/.vite/deps/firebase_database.js')]); const app = getApps()[0] ?? initializeApp({ databaseURL: 'https://bubu-dudu-76256-default-rtdb.europe-west1.firebasedatabase.app' }); await fb.remove(fb.ref(fb.getDatabase(app), 'rooms/' + r)); }, room).catch(e => console.log('curatenie:', e.message.slice(0, 80)));
   ok('fara erori', !errs.length, errs.slice(0, 3).join(' / '));

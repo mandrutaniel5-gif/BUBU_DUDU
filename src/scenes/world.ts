@@ -1,6 +1,7 @@
 import { DEV } from '../game/dev';
 import { drawDevOverlay } from '../ui/devpanel';
 import { Bugs } from '../engine/bugs';
+import { setNames, cleanName } from '../game/names';
 import { autoCheck } from '../engine/autocheck';
 import * as Town from './townctl';
 import * as TownUI from '../ui/townui';
@@ -255,6 +256,11 @@ export class WorldScene implements Scene {
     // abia acum primim ce a trimis partenerul (s-a pastrat de la conectare: versiunea lui, sincronizarea lumii)
     this.net.onEvent = e => this.onRemoteEvent(e);
     this.net.onPresence = (_who, on) => this.setPartnerOnline(on);
+    // 1.13.0: numele alese (al tau din meniu; in Offline si al partenerului). Merg in lume, deci partenerul il vede
+    { const st = Settings.get(), mine = cleanName(st.myName);
+      if (mine) this.w.chars[this.myId].name = mine;
+      if (this.net.kind !== 'firebase' && cleanName(st.partnerName)) this.w.chars[this.partner.id].name = cleanName(st.partnerName);
+      this.applyNames(); this.sendCharSync(); }
     // colectorul de erori: ce stie jocul in clipa raportului
     Bugs.ctx = () => ({ zona: this.area, pozitie: `${this.me.gx.toFixed(2)}, ${this.me.gy.toFixed(2)}`, capitol: this.chapter, zi: this.w.day, ora: `${Math.floor(this.w.minutes / 60)}:${String(Math.floor(this.w.minutes % 60)).padStart(2, '0')}`,
       eu: this.myId, mod: this.net.kind, partener: this.partner.control === 'remote' ? 'online' : 'AI', minijoc: this.minigame?.id ?? '', sarbatoare: this.minigame?.id === 'holiday' ? this.holidayId : '',
@@ -264,6 +270,7 @@ export class WorldScene implements Scene {
   }
 
   exit() {
+    setNames(null);
     this.snd.stop();
     this.save(true);
     resetAreas();
@@ -393,6 +400,12 @@ export class WorldScene implements Scene {
   }
   /** aplica local si trimite partenerului */
   op(o: WorldOp) { this.applyLocal(o); this.net.sendEvent({ t: 'op', op: o }); if (o.k !== 'need' && o.k !== 'clock' && o.k !== 'npcs') { this.dirty = true; this.w.mod = this.now(); } }
+  /** numele de pe ecran = cele din lume (al partenerului vine cand intra el) */
+  private namesKey = '';
+  applyNames() {
+    // numele tau vine mereu de pe telefonul tau (dupa o sincronizare, lumea partenerului avea copia lui veche)
+    const mine = cleanName(Settings.get().myName); if (mine && this.w.chars[this.myId] && this.w.chars[this.myId].name !== mine) { this.w.chars[this.myId].name = mine; this.lastCharSync = ''; }
+    const b = this.w.chars.bubu?.name ?? '', d = this.w.chars.dudu?.name ?? '', k = b + '|' + d; if (k === this.namesKey) return; this.namesKey = k; setNames({ bubu: b, dudu: d }); this.hud?.renameCards?.(); }
   /** ora lumii (1.12.0: online = ora serverului; ceasul gresit al unui telefon nu mai face ca lumea lui veche sa para „mai noua”) */
   now() { return this.net.now?.() ?? Date.now(); }
   applyLocal(o: WorldOp) {
@@ -2076,6 +2089,7 @@ export class WorldScene implements Scene {
         this.sendCharSync();
       }
     }
+    this.applyNames();
     for (const p of [this.me, this.partner]) { p.actor.mood = moodFrom(this.w.chars[p.id]); p.actor.outfit = Hol.withPin(this, p.id, this.w.chars[p.id].outfit); }
     this.sickT -= dt;
     if (this.sickT <= 0) {

@@ -9,6 +9,8 @@ export const OFFLINE_ROOM = 'offline';
 export interface SettingsData {
   who: CharId;
   net: NetConfig;
+  /** numele tau (1.13.0) si, in jocul Offline, numele partenerului jucat de calculator */
+  myName?: string; partnerName?: string;
   /** casele voastre (1.12.0) */
   houses?: SavedHouse[];
   dayMinutes: number;   // cate minute reale dureaza o zi in joc
