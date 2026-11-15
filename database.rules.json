@@ -21,7 +21,8 @@
     },
     "bugs": {
       "$id": {
-        ".write": "!data.exists() && newData.exists() && newData.hasChildren(['ts', 'kind', 'title'])"
+        ".write": "!data.exists() && newData.exists()",
+        ".validate": "newData.hasChildren(['id', 'ts', 'kind', 'title']) && newData.child('ts').isNumber() && newData.child('kind').isString() && newData.child('kind').val().matches(/^(eroare|auto|tester)$/) && newData.child('title').isString() && newData.child('title').val().length <= 300 && (!newData.child('shot').exists() || (newData.child('shot').isString() && newData.child('shot').val().beginsWith('data:image/jpeg;base64,') && newData.child('shot').val().length < 400000))"
       }
     }
   }

@@ -336,7 +336,7 @@ export class MenuScene implements Scene {
     const e2 = (t: string) => t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
     const kind = { eroare: '💥 Eroare', auto: '🔎 Găsit automat', tester: '🐞 Tester' } as Record<string, string>;
     this.dialog(`<h3>🐞 Rapoarte (${list.length})</h3><p class="sub">Modul tester strânge singur erorile și problemele vizuale; testerul adaugă cu 🐞 ce vede. Trimite-mi fișierul (se deschide cu tools/erori.html).</p>
-      <div class="buglist">${list.map(r => `<div class="bi">${r.shot ? `<img src="${r.shot}" alt="">` : ''}<div><b>${kind[r.kind] ?? r.kind} · ${e2(r.cat)}</b>${e2(r.title)}<br><small>${new Date(r.ts).toLocaleString('ro-RO')} · ${e2(String(r.ctx.zona ?? ''))} · cap. ${e2(String(r.ctx.capitol ?? ''))}${r.up ? ' · ☁️' : ''}</small></div></div>`).join('') || '<p class="sub">Niciun raport încă.</p>'}</div>
+      <div class="buglist">${list.map(r => `<div class="bi">${/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(r.shot ?? '') ? `<img src="${r.shot}" alt="">` : ''}<div><b>${kind[r.kind] ?? r.kind} · ${e2(r.cat)}</b>${e2(r.title)}<br><small>${new Date(r.ts).toLocaleString('ro-RO')} · ${e2(String(r.ctx.zona ?? ''))} · cap. ${e2(String(r.ctx.capitol ?? ''))}${r.up ? ' · ☁️' : ''}</small></div></div>`).join('') || '<p class="sub">Niciun raport încă.</p>'}</div>
       <div class="row2"><button class="bugexp">📤 Trimite fișierul</button><button class="bugup">☁️ Trimite pe internet</button><button class="bugclr">🗑️ Șterge</button></div>
       <div class="row2"><button class="xcred">Închide</button></div>`);
   }

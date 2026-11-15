@@ -37,15 +37,17 @@
 <script>
   const K = { eroare: '💥 Eroare de cod', auto: '🔎 Găsit automat', tester: '🐞 De la tester' };
   let all = [], filt = '';
+  // rapoartele pot veni de oriunde (bugs/ in Firebase): doar poze data:image curate, restul textului e escapat
+  const okShot = s => typeof s === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(s);
   const esc = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function render() {
     const list = all.filter(r => !filt || r.kind === filt).sort((a, b) => b.ts - a.ts);
     document.getElementById('n').textContent = `(${list.length})`;
     document.getElementById('f').innerHTML = ['', 'tester', 'auto', 'eroare'].map(k => `<button data-k="${k}" class="${k === filt ? 'on' : ''}">${k ? K[k] : 'Toate'} (${k ? all.filter(r => r.kind === k).length : all.length})</button>`).join('');
-    document.getElementById('m').innerHTML = list.map(r => `<article class="r">${r.shot ? `<img src="${r.shot}" alt="">` : ''}<div class="b">
-      <div class="k">${K[r.kind] ?? esc(r.kind)} · ${esc(r.cat)}</div><h3>${esc(r.title)}</h3>${r.note && r.note !== r.title ? `<p>${esc(r.note)}</p>` : ''}
-      <dl><dt>când</dt><dd>${new Date(r.ts).toLocaleString('ro-RO')} · v${esc(r.ver)}</dd>${Object.entries(r.ctx || {}).filter(([, v]) => v !== '' && v != null).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
-      ${r.crumbs?.length ? `<details><summary>Ce a făcut înainte (${r.crumbs.length})</summary>${r.crumbs.map(esc).join('<br>')}</details>` : ''}</div></article>`).join('') || '<p class="empty">Niciun raport.</p>';
+    document.getElementById('m').innerHTML = list.map(r => `<article class="r">${okShot(r.shot) ? `<img src="${esc(r.shot)}" alt="">` : ''}<div class="b">
+      <div class="k">${Object.hasOwn(K, r.kind) ? K[r.kind] : esc(r.kind)} · ${esc(r.cat)}</div><h3>${esc(r.title)}</h3>${r.note && r.note !== r.title ? `<p>${esc(r.note)}</p>` : ''}
+      <dl><dt>când</dt><dd>${esc(new Date(Number(r.ts)).toLocaleString('ro-RO'))} · v${esc(r.ver)}</dd>${Object.entries(r.ctx || {}).filter(([, v]) => v !== '' && v != null).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+      ${Array.isArray(r.crumbs) && r.crumbs.length ? `<details><summary>Ce a făcut înainte (${r.crumbs.length})</summary>${r.crumbs.map(esc).join('<br>')}</details>` : ''}</div></article>`).join('') || '<p class="empty">Niciun raport.</p>';
   }
   document.getElementById('f').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filt = b.dataset.k; render(); } });
   document.getElementById('m').addEventListener('click', e => { if (e.target.tagName === 'IMG') { document.getElementById('di').src = e.target.src; document.getElementById('d').showModal(); } });
