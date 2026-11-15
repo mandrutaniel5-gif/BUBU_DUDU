@@ -47,7 +47,8 @@ game.scenes.world = () => {
 const q = new URLSearchParams(location.search);
 if (q.get('who') || q.get('mode') || q.get('room')) {
   const cur = Settings.get();
-  Settings.set({ who: (q.get('who') as any) ?? cur.who, net: { ...cur.net, mode: (q.get('mode') as any) ?? cur.net.mode, room: q.get('room') ?? cur.net.room } });
+  const qw = q.get('who'); // doar bubu / dudu (altfel ajungea netrecut prin filtru in HTML-ul meniului)
+  Settings.set({ who: qw === 'bubu' || qw === 'dudu' ? qw : cur.who, net: { ...cur.net, mode: (q.get('mode') as any) ?? cur.net.mode, room: q.get('room') ?? cur.net.room } });
 }
 Sfx.setMuted(Settings.get().muted);
 const start = location.hash.slice(1);

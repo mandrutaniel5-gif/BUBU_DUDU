@@ -16,7 +16,7 @@ import { seatTaken } from '../net/adapters';
 const NAME: Record<CharId, string> = { bubu: 'Bubu', dudu: 'Dudu' } as Record<CharId, string>;
 const ICON: Record<CharId, string> = { bubu: '🐼', dudu: '🐻' } as Record<CharId, string>;
 const other = (w: CharId): CharId => (w === 'bubu' ? 'dudu' : 'bubu');
-const esc = (t: string) => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' } as Record<string, string>)[c]);
+const esc = (t: string) => t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
 /** ce scrie pe cartonasul casei (din salvarea de pe telefon): capitolul si ziua */
 function saveInfo(room: string): string {
   try { const raw = localStorage.getItem('bd-save-' + room); if (!raw) return 'Încă n-ați jucat pe telefonul ăsta'; const w = JSON.parse(JSON.parse(raw).json); return `Capitolul ${w?.stats?.chapter ?? 0} · Ziua ${w?.day ?? 1}`; }

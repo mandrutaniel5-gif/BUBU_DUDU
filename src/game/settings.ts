@@ -49,6 +49,8 @@ export const Settings = {
       delete (cur!.net as { serverUrl?: string }).serverUrl;
       // fara config propriu -> Firebase-ul nostru
       if (!cur!.net.firebase?.databaseURL) cur!.net.firebase = { ...BUILTIN_FIREBASE };
+      if (cur!.who !== 'bubu' && cur!.who !== 'dudu') cur!.who = 'bubu';
+      cur!.houses = cur!.houses?.map(h => ({ ...h, who: h.who === 'dudu' ? 'dudu' : 'bubu' }));
       migrateHouses(cur!);
     }
     return cur!;
