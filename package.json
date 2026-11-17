@@ -29,7 +29,7 @@
   "author": "ACM Code",
   "build": {
     "appId": "ro.casutanoastra.bubududu",
-    "productName": "Us",
+    "productName": "Twogether",
     "directories": {
       "output": "release"
     },
@@ -58,7 +58,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "Us",
+      "shortcutName": "Twogether",
       "artifactName": "BubuDudu-Setup-${version}.${ext}"
     },
     "portable": {
