@@ -35,7 +35,7 @@ import { drawItem, MAX_LVL } from '../world/items';
 import { CROPS, WET_MIN, plotStage, catCount, catPick, seedKey, drawPlotSoil, drawCropPlant, type Plot } from '../world/garden';
 import { ROAD_Y } from '../world/map';
 import { HOUSE, floorAt, AREAS, setArea } from '../world/map';
-import { irisWipe, drawScooterSide, drawTandemSide, drawStairsScene, drawBusSide, drawTaxiSide, drawTractorSide } from '../world/vehicles';
+import { irisWipe, drawScooterSide, drawTandemSide, drawStairsScene, drawBusSide, drawTaxiSide, drawTractorSide, RIDE_OUTFIT } from '../world/vehicles';
 import { VILLAGE_PATHS } from '../world/village';
 import { drawCritter, CRITTER_NAMES, type Critter, type CritterKind } from '../world/forest';
 import { ACTIVITIES, type Activity } from '../game/activities';
@@ -165,7 +165,6 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
   // decoruri pe sol (cele vii; celelalte sunt deja in podea)
   for (const f of visible) if (scene.isDecor(f) && !isBaked(f) && inHouse(f.gx, f.gy, f.gx + f.w, f.gy + f.d)) { try { paint(f); } catch (e) { ErrorLog.add(e, 'desen decor'); } }
   if (!ch0 && home) for (const [k, p] of Object.entries(scene.w.plots ?? {})) { const [x, y] = k.split(',').map(Number); if (seen(x, y)) drawPlotSoil(ctx, x, y, p as Plot, scene.w.gameMin ?? 0, scene.time); }
-  if (!ch0 && home) for (const k in scene.w.grass ?? {}) { const [x, y] = k.split(',').map(Number); if (seen(x, y)) drawTallGrass(ctx, x, y, scene.w.grass![k], scene.time); }
   if (scene.build?.item) drawGhost(ctx, scene.build.item, scene.build.gx, scene.build.gy, scene.canPlace(scene.build.item, scene.build.gx, scene.build.gy) && scene.canAfford(scene.build.item), scene.time);
   // indicator obiect apropiat
   const near = scene.ride ? null : scene.nearestFurn(scene.me);
@@ -191,6 +190,8 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
   lap('decor+inel');
   // sortare in adancime: obiectele vii, personajele, masinile, satenii...
   const items: DItem[] = [];
+  // 1.14.1: iarba inalta se sorteaza in adancime (desenata pe podea trecea prin copacii din fata ei)
+  if (!ch0 && home) for (const k in scene.w.grass ?? {}) { const [x, y] = k.split(',').map(Number); if (!seen(x, y)) continue; const lv = scene.w.grass![k]; items.push({ x0: x + 0.15, y0: y + 0.15, x1: x + 0.85, y1: y + 0.85, mx: 40, h: 40, draw: () => drawTallGrass(ctx, x, y, lv, scene.time) }); }
   const onBike = (scene.me.riding && scene.me.rideKind === 'bike') || (scene.sameArea() && scene.partner.riding && scene.partner.rideKind === 'bike');
   const onScoot = (scene.me.riding && scene.me.rideKind === 'scooter') || (scene.sameArea() && scene.partner.riding && scene.partner.rideKind === 'scooter');
   const onTractor = (scene.me.riding && scene.me.rideKind === 'tractor') || (scene.sameArea() && scene.partner.riding && scene.partner.rideKind === 'tractor');
@@ -385,6 +386,7 @@ export function drawPawn(scene: WorldScene, ctx: CanvasRenderingContext2D, p: Pa
     const opt = { rot: p.actor.moving ? scene.time * 18 : 0, bump, driver: p.actor.spec, passenger: other.passenger && scene.sameArea() ? other.actor.spec : undefined };
     // praful din spatele rotilor cand merge repede pe drum
     if (p.actor.moving && p.rideKind !== 'bike') for (let i = 0; i < 4; i++) { const q = (scene.time * 1.6 + i / 4) % 1; ctx.globalAlpha = 0.35 * (1 - q); ctx.fillStyle = '#e6d3b0'; ctx.beginPath(); ctx.arc(-30 - q * 60, 2 - q * 10, 4 + q * 9, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+    RIDE_OUTFIT[p.id] = p.actor.outfit; if (other.passenger) RIDE_OUTFIT[other.id] = other.actor.outfit;
     if (p.rideKind === 'bike') drawTandemSide(ctx, 0, 0, 0.5, scene.time, opt);
     else if (p.rideKind === 'tractor') drawTractorSide(ctx, 0, 0, 0.42, scene.time, { ...opt, logs: p.fieldOp ? 0 : Math.min(9, Math.floor((scene.w.res?.wood ?? 0) / 2)), trailer: !p.fieldOp });
     else if (p.rideKind === 'bus') drawBusSide(ctx, 0, 0, 0.38, scene.time, opt);
@@ -394,7 +396,14 @@ export function drawPawn(scene: WorldScene, ctx: CanvasRenderingContext2D, p: Pa
   } else {
     const atTable = p.activity?.a.id === 'eat' && p.activity.furn?.type === 'table';
     if (atTable) { isoBox(ctx, p.gx - 0.26, p.gy - 0.34, 0.52, 0.1, 44, boxOf('#a0703f')); isoBox(ctx, p.gx - 0.26, p.gy - 0.26, 0.52, 0.46, 14, boxOf('#c98e5f')); }
-    p.actor.draw(ctx);
+    // 1.14.1: la calusei personajul sta sub acoperis (inainte iesea prin umbreluta)
+    const car = p.activity?.a.place === 'ride' && p.activity.furn?.type === ('carousel' as any) ? p.activity.furn : null;
+    if (car) {
+      const q = iso(car.gx + 1, car.gy + 1); ctx.save(); ctx.beginPath(); ctx.rect(q.x - 600, q.y - 600, 1200, 1200);
+      ctx.moveTo(q.x, q.y - 102); for (let i = 0; i <= 16; i++) { const a = Math.PI - i * Math.PI / 16; ctx.lineTo(q.x + Math.cos(a) * 56, q.y - 66 + Math.sin(a) * 23); } ctx.closePath(); ctx.clip('evenodd');
+    }
+    if (car) { const s0 = p.actor.scale; p.actor.scale = s0 * 0.72; p.actor.draw(ctx); p.actor.scale = s0; ctx.restore(); }
+    else p.actor.draw(ctx);
   }
   if (p.activity?.a.place === 'sofa') { // spatarul canapelei acopera spatele personajului
     const f = p.activity.furn;

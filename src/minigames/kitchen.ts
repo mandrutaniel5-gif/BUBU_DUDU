@@ -145,7 +145,7 @@ export class CookGame extends Panel {
     for (let gx = x; gx < x + w; gx += 36) { ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h * 0.62); ctx.stroke(); }
     for (let gy = y; gy < y + h * 0.62; gy += 36) { ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke(); }
     // eroul in spatele blatului
-    this.hero.scale = Math.min(1.25, h / 420); this.hero.x = x + w * 0.22; this.hero.y = y + h * 0.66; this.hero.flip = 1; this.hero.draw(ctx);
+    this.hero.scale = Math.min(1.25, h / 420); this.hero.x = x + w * 0.22; this.hero.y = y + h * 0.66; this.hero.flip = 1; this.hero.pose.back = false; this.hero.draw(ctx);
     const cy = y + h * 0.64;
     ctx.fillStyle = '#c98e5f'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(x - 4, cy, w + 8, h * 0.4, 6); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#e8c39a'; ctx.fillRect(x, cy + 3, w, 10);

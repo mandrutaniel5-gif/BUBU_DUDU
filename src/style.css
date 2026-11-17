@@ -465,3 +465,6 @@ html.h520l .hc-enter { font-size:15px; padding:2px; margin-top:4px; }
 .menu-card .myname input { flex:1; min-width:0; padding:3px 8px; font-size:15px; }
 .menu-card .myname input.need { outline:3px solid #ff4d6d; background:#fff0f3; }
 html.h520l .menu-card .myname { margin-top:3px; font-size:12px; } html.h520l .menu-card .myname input { padding:1px 6px; font-size:14px; }
+/* 1.14.1: ferestrele incap si cand ecranul e foarte mic (tastatura deschisa pe telefon intors) */
+@supports (height: 1dvh) { .modal .box { max-height: min(86vh, 86dvh); } }
+@media (max-height: 320px) { .modal { align-items: flex-start; padding: 6px; } .modal .box { max-height: calc(100dvh - 12px); padding: 8px 12px; } .bugshot { width: fit-content; margin: 4px auto; } .bugshot img { width: auto; max-width: 100%; max-height: 28dvh; } }

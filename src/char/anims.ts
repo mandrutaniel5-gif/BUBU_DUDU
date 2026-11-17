@@ -626,15 +626,32 @@ def({
 });
 
 // ---- angajatii (cu fata spre noi, intorsi lateral spre copac / piatra)
+/** 1.14.1: leganarea toporului. 0..0.42 ia avant (toporul sus, peste cap), 0.42..0.56 loveste spre dreapta (copacul),
+ *  0.56..0.66 tine lovitura (corpul se turteste putin), apoi revine. Folosita in lume (act_chop) si in minijoc (chop_swing). */
+function axeSwing(P: Pose, p: number) {
+  const up = ease(seg(p, 0, 0.42)), down = ease(seg(p, 0.42, 0.56)), back = ease(seg(p, 0.66, 1));
+  P.armR = p < 0.42 ? lerp(1.4, 2.75, up) : p < 0.66 ? lerp(2.75, 1.15, down) : lerp(1.15, 1.4, back);
+  P.armL = p < 0.42 ? lerp(0.5, 2.4, up) : p < 0.66 ? lerp(2.4, 0.35, down) : lerp(0.35, 0.5, back);
+  P.propR = 'axe'; P.propRotR = p < 0.42 ? lerp(0.2, -0.6, up) : p < 0.66 ? lerp(-0.6, 0.55, down) : lerp(0.55, 0.2, back);
+  const lean = p < 0.42 ? -0.1 * up : p < 0.66 ? lerp(-0.1, 0.17, down) : lerp(0.17, 0, back);
+  P.rot = lean; P.headRot = lean * 0.6; P.hip = lean * 18;
+  const hit = p >= 0.54 && p < 0.68;
+  P.sy = hit ? 0.93 : p < 0.42 ? 1 + 0.03 * up : 1; P.sx = hit ? 1.05 : 1; P.dy = hit ? 2 : p < 0.42 ? -2 * up : 0;
+  P.eyes = p < 0.42 ? 'dot' : hit ? 'strain' : 'happy'; P.brows = p < 0.56 ? 'angry' : 'none'; P.mouth = hit ? 'grin' : p < 0.42 ? 'flat' : 'w';
+}
 def({
-  id: 'act_chop', label: 'Taie', icon: '🪓', who: 'both', kind: 'base', dur: 0.8, loop: true,
-  pose(P, t) {
-    const c = Math.sin(t * Math.PI * 2 / 0.8), hit = c < -0.7;
-    P.armL = P.armR = 1.9 + c * 0.9; P.rot = c * 0.08; P.headRot = c * 0.06;
-    P.sy = hit ? 0.95 : 1; P.dy = hit ? 1.5 : 0; P.eyes = hit ? 'strain' : 'happy'; P.mouth = hit ? 'flat' : 'w'; P.sweat = 0.6;
-    P.propR = 'axe'; P.propRotR = 0.2;
-  },
-  tick(f, t, _p, dt) { if (every(t, dt, 0.8, 0.55)) { f.burst('drop', 34, -30, 5, 1.4, 70, { grav: 220, max: 0.45, color: '#c98e5f' }); f.sound('bonk'); } },
+  id: 'act_chop', label: 'Taie', icon: '🪓', who: 'both', kind: 'base', dur: 1, loop: true,
+  pose(P, _t, p) { axeSwing(P, p); P.sweat = 0.5; },
+  tick(f, t, _p, dt) { if (every(t, dt, 1, 0.56)) { f.burst('drop', 40, -26, 7, 1.6, 90, { grav: 260, max: 0.5, color: '#c98e5f' }); f.sound('chop'); f.shake(1.5); } },
+});
+/** minijocul „Taie lemne”: o singura lovitura, si statul cu toporul pe umar intre lovituri */
+def({
+  id: 'chop_swing', label: 'Lovitură', icon: '🪓', who: 'both', kind: 'base', dur: 0.62,
+  pose(P, _t, p) { axeSwing(P, p); },
+});
+def({
+  id: 'chop_ready', label: 'Toporul pe umăr', icon: '🪓', who: 'both', kind: 'base', dur: 2, loop: true,
+  pose(P, t) { P.armR = 1.4 + wave(t, 0.5, 0.05); P.armL = 0.5; P.propR = 'axe'; P.propRotR = 0.2; P.eyes = 'dot'; P.mouth = 'w'; P.headRot = wave(t, 0.5, 0.03); },
 });
 // sparge piatra cu tarnacopul (scantei gri)
 def({

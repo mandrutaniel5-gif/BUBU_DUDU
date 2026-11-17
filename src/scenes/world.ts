@@ -187,7 +187,7 @@ export class WorldScene implements Scene {
   pawnOf(id: CharId) { return this.me.id === id ? this.me : this.partner; }
   /** (teste) mergi direct intr-o regiune a lumii (in joc nu exista teleportare: se merge pe drum) */
   debugGo(region: string, company?: 'solo' | 'duo') {
-    const at: Record<string, { x: number; y: number }> = { home: { x: 6.5, y: 13.5 }, forest: { x: ORIGIN.forest.x + 4.5, y: ORIGIN.forest.y + 22.5 }, village: { x: 101.5, y: 25.2 }, city: { x: 209.5, y: 27.5 } };
+    const at: Record<string, { x: number; y: number }> = { home: { x: 5.5, y: 13.6 }, forest: { x: ORIGIN.forest.x + 4.5, y: ORIGIN.forest.y + 22.5 }, village: { x: 101.5, y: 25.2 }, city: { x: 209.5, y: 27.5 } };
     if (region === 'apartment') { this.goArea('apartment', company); return; }
     const p = at[region]; if (!p) return;
     if (this.space !== 'world') this.switchArea('world');
@@ -2450,7 +2450,7 @@ export class WorldScene implements Scene {
     p.activity.t += dt;
     if (p.activity.a.place === 'ride' && p.activity.furn) {
       const f = p.activity.furn, a = p.activity.t * 1.5 + (p === this.me ? 0 : Math.PI), cx = f.gx + f.w / 2, cy = f.gy + f.d / 2;
-      p.gx = cx + Math.cos(a) * 0.72; p.gy = cy + Math.sin(a) * 0.72; p.z = 16 + Math.sin(p.activity.t * 3.2) * 6;
+      p.gx = cx + Math.cos(a) * 0.72; p.gy = cy + Math.sin(a) * 0.72; p.z = 6 + Math.sin(p.activity.t * 3.2) * 4;
       const tg = iso(-Math.sin(a), Math.cos(a)); p.actor.flip = tg.x >= 0 ? 1 : -1; p.facingBack = tg.y < 0;
       if (Math.floor(p.activity.t * 2) !== Math.floor((p.activity.t - dt) * 2) && Math.random() < 0.25) { const q = iso(p.gx, p.gy, p.z + 70); this.fx.emit('note', q.x, q.y, { vy: -30, max: 1 }); }
     }

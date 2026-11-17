@@ -16,7 +16,7 @@ export class ChopGame extends Panel {
     this.marker = sweep(this.t, 0.8 + this.hits * 0.08);
     this.swing = Math.max(0, this.swing - dt * 5);
     if (this.fall > 0) { this.fall += dt * 1.4; if (this.fall > 1.4) this.finish(1 + Math.max(0, 3 - this.miss) * 0.3, 'TIMBEEER! 🪵🪵🪵'); }
-    if (!this.hero.busy) this.hero.play('idle');
+    if (!this.hero.busy) this.hero.play('chop_ready');
   }
   hit() {
     if (this.fall || this.ended) return;
@@ -25,9 +25,9 @@ export class ChopGame extends Panel {
       this.hits++; this.tilt = this.hits / this.need * 0.15; Sfx.play('chop'); this.shake = 6;
       this.fx.burst('drop', b.x + b.w * 0.55, b.y + b.h * 0.7, 8, 2, 160, { grav: 400, max: 0.7, color: '#c98e5f' });
       this.fx.text(b.x + b.w * 0.6, b.y + b.h * 0.45, ['TOC!', 'POC!', 'ZDANG!', 'TRANC!'][this.hits % 4], '#8b5e34', 1.1);
-      this.hero.play(this.scene.myId === 'dudu' ? 'flex' : 'wave');
+      this.hero.play('chop_swing');
       if (this.hits >= this.need) { this.fall = 0.01; Sfx.play('tree_fall', { delay: 0.15 }); Sfx.play('wood_drop', { delay: 0.9 }); Sfx.play('leaves', { delay: 0.8, vol: 0.6 }); }
-    } else { this.miss++; Sfx.play('whoosh'); Sfx.play('bad', { vol: 0.6 }); this.fx.text(b.x + b.w * 0.6, b.y + b.h * 0.45, 'Ups! Ratat 😅', '#e63946', 0.9); this.hero.play('dizzy'); }
+    } else { this.miss++; Sfx.play('whoosh'); Sfx.play('bad', { vol: 0.6 }); this.fx.text(b.x + b.w * 0.6, b.y + b.h * 0.45, 'Ups! Ratat 😅', '#e63946', 0.9); this.hero.play('chop_swing', () => this.hero.play('dizzy')); }
   }
   pointer(t: string) { if (t === 'down') this.hit(); }
   key(k: string, d: boolean) { if (d && (k === ' ' || k === 'e')) this.hit(); }
@@ -42,12 +42,8 @@ export class ChopGame extends Panel {
     for (const [dx, dy, r, c] of [[-50, -h * 0.5, 50, '#6cbf6c'], [50, -h * 0.52, 50, '#6cbf6c'], [0, -h * 0.65, 60, '#7fd07f'], [-20, -h * 0.75, 40, '#8fdc8f']] as const) { ctx.beginPath(); ctx.arc(dx, dy, r, 0, 7); ctx.fillStyle = c; ctx.fill(); ctx.stroke(); }
     ctx.restore();
     // eroul cu toporul
-    this.hero.scale = 1.5; this.hero.x = x + w * 0.28; this.hero.y = ty; this.hero.flip = 1;
+    this.hero.scale = Math.min(1.5, h / 260); this.hero.x = x + w * 0.36; this.hero.y = ty; this.hero.flip = 1;
     this.hero.draw(ctx);
-    ctx.save(); ctx.translate(x + w * 0.28 + 34, ty - 34); ctx.rotate(-0.9 + this.swing * 1.5);
-    ctx.fillStyle = '#c99a5b'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(-4, -60, 8, 70, 4); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#c0c6cc'; ctx.beginPath(); ctx.moveTo(4, -60); ctx.lineTo(30, -68); ctx.quadraticCurveTo(36, -52, 30, -36); ctx.lineTo(4, -44); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.restore();
     // indicatorul
     const bx = x + 40, bw = w - 80, by = y + 56;
     ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by, bw, 24, 12); ctx.fill(); ctx.stroke();
