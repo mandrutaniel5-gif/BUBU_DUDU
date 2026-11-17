@@ -1,5 +1,5 @@
 // Hamsterii (1.14.0): personajele jucatorilor. Ea („bubu”): alba, cu pata piersicie pe crestet si fundita roz.
-// El („dudu”): auriu, cu bot si burtica albe, papion albastru si creionul de mester dupa ureche.
+// El („dudu”): auriu, cu bot si burtica albe, papion albastru.
 // Primesc aceeasi Pose ca vechii ursuleti, deci toate animatiile merg la fel. Unitatile de aici sunt „de desen”
 // (capul are ~120 de unitati latime); HS le aduce la marimea veche a personajelor (talpile in 0, crestetul pe la -100).
 // Blana (forma, umbre, fire, model) se deseneaza o singura data in imagini pastrate (sprite), la rezolutia de care e nevoie;
@@ -161,15 +161,6 @@ function drawBowId(c: CanvasRenderingContext2D, x: number, rot: number) {
   c.beginPath(); c.roundRect(-5, -6, 10, 12, 4); c.fillStyle = '#ff5c88'; c.fill(); c.lineWidth = 2.4; c.strokeStyle = O; c.stroke();
   c.restore();
 }
-function drawPencil(c: CanvasRenderingContext2D, side: number) {
-  c.save(); c.translate(side * 46, -42); c.rotate(side * 0.62); c.scale(-side * 0.62, 0.62);
-  c.beginPath(); c.rect(-44, -5.5, 84, 11); c.fillStyle = '#ffd34d'; c.fill();
-  c.fillStyle = '#f2b92e'; c.fillRect(-44, 1.8, 84, 3.7); c.fillStyle = '#fff1a8'; c.fillRect(-44, -4.5, 84, 2);
-  c.lineWidth = 2.6; c.strokeStyle = O; c.strokeRect(-44, -5.5, 84, 11);
-  c.beginPath(); c.moveTo(-44, -5.5); c.lineTo(-60, 0); c.lineTo(-44, 5.5); c.closePath(); c.fillStyle = '#f6d3a4'; c.fill(); c.stroke();
-  c.beginPath(); c.moveTo(-54.5, -1.9); c.lineTo(-60, 0); c.lineTo(-54.5, 1.9); c.closePath(); c.fillStyle = '#4a4040'; c.fill();
-  c.restore();
-}
 export function drawBowtieId(c: CanvasRenderingContext2D, col1 = '#7db4ff', col2 = '#3f73da') {
   c.save(); c.translate(0, -55);
   for (const side of [-1, 1]) {
@@ -305,7 +296,6 @@ function drawHead(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, t: number, 
   if (!hide.ears) for (const side of [-1, 1]) drawEar(ctx, L, side, 'back', p.earWiggle, back);
   blit(ctx, headSprite(id, back, k));
   if (p.sickTint > 0) { ctx.save(); ctx.clip(geo(id).headP); ctx.fillStyle = `rgba(150,210,120,${0.42 * p.sickTint})`; ctx.fillRect(-80, -70, 160, 140); ctx.restore(); }
-  if (!head && id === 'dudu') drawPencil(ctx, back ? -1 : 1);
   if (!hide.ears) for (const side of [-1, 1]) drawEar(ctx, L, side, 'front', p.earWiggle, back);
   if (!back) {
     drawFace(ctx, id, p, t);

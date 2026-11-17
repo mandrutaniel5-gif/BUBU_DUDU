@@ -37,7 +37,7 @@ export const SPECS: Record<CharId, CharSpec> = {
     id: 'bubu', name: 'Bubu', body: '#fffaf4', shade: '#e8d3c6', ear: '#fff3ea',
     earInner: '#ffc0cf', cheek: '#ff9fb8', outline: '#4a2a22', tail: '#fffaf4', accessory: 'none',
   },
-  // „dudu” = El: hamsterul auriu, cu bot alb, papion albastru si creion dupa ureche
+  // „dudu” = El: hamsterul auriu, cu bot alb si papion albastru
   dudu: {
     id: 'dudu', name: 'Dudu', body: '#f3a95d', shade: '#d98b3f', ear: '#ec9b4d',
     earInner: '#ffc0a6', cheek: '#ff8f84', outline: '#4a2a22', tail: '#f3a95d', accessory: 'none',

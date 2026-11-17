@@ -288,9 +288,8 @@ function drawHamProfile(c: CanvasRenderingContext2D, id: 'bubu' | 'dudu', t: num
   const ea = id === 'bubu';
   const body = ea ? '#fffaf4' : '#f3a95d', shadeC = ea ? '#e8d3c6' : '#d98b3f', ear = ea ? '#fff3ea' : '#ec9b4d', earIn = ea ? '#ffc0cf' : '#ffc0a6';
   const fill = (col: string | CanvasGradient, lw = 2.4) => { c.fillStyle = col; c.fill(); c.strokeStyle = O; c.lineWidth = lw; c.stroke(); };
-  // urechea din spate (si creionul lui de mester)
+  // urechea din spate
   c.beginPath(); c.ellipse(-14, -27, 9, 8.6, -0.3, 0, 7); fill(ear);
-  if (!ea) { c.save(); c.translate(-4, -28); c.rotate(-0.75); c.beginPath(); c.rect(-20, -3, 30, 6); fill('#ffd34d', 1.8); c.beginPath(); c.moveTo(-20, -3); c.lineTo(-28, 0); c.lineTo(-20, 3); c.closePath(); fill('#f6d3a4', 1.8); c.restore(); }
   // capul: rotund, cu obrazul plin si botul in fata
   const head = () => { c.beginPath(); c.moveTo(-31, 4); c.bezierCurveTo(-32, -32, 24, -34, 31, -4); c.bezierCurveTo(35, 6, 33, 14, 26, 20); c.bezierCurveTo(18, 29, -2, 31, -14, 27); c.bezierCurveTo(-26, 23, -31, 15, -31, 4); c.closePath(); };
   head(); c.fillStyle = body; c.fill();

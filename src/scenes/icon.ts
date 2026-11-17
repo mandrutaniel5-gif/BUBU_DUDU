@@ -16,7 +16,7 @@ export class IconScene implements Scene {
     this.a.pose.headOnly = this.b.pose.headOnly = true; this.a.pose.rot = 0.15; this.b.pose.rot = -0.15;
     this.a.pose.blush = this.b.pose.blush = 1.3;
     this.a.scale = this.b.scale = sc;
-    this.a.x = w / 2 - 30 * sc; this.b.x = w / 2 + 30 * sc; this.a.y = this.b.y = h / 2 + 20 * sc; this.b.flip = 1; // el nu in oglinda: creionul ramane in afara
+    this.a.x = w / 2 - 30 * sc; this.b.x = w / 2 + 30 * sc; this.a.y = this.b.y = h / 2 + 20 * sc; this.b.flip = 1; // el nu in oglinda (lumina vine din aceeasi parte)
     this.a.draw(ctx); this.b.draw(ctx);
     ctx.fillStyle = '#ff4d6d'; ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 2.5 * sc / 2;
     const x = w / 2, y = h / 2 - 38 * sc, k = 13 * sc;
