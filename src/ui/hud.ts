@@ -43,14 +43,14 @@ export class Hud {
     root.innerHTML = `
       ${Bugs.on() ? '<button class="bugbtn" data-a="bug" title="Raportează o problemă">🐞</button>' : ''}
       <div class="card me">
-        <div class="name">${me.id === 'bubu' ? '🐼' : '🐻'} <span class="nm">${me.name}</span> <span class="mood"></span></div>
+        <div class="name">🐹 <span class="nm">${me.name}</span> <span class="mood"></span></div>
         <div class="needs">${NEEDS.map(n => `<div class="need" data-n="${n}" title="${NEED_INFO[n].label}"><span>${NEED_INFO[n].icon}</span><i><b style="background:${NEED_INFO[n].color}"></b></i></div>`).join('')}</div>
         <div class="sick hidden"></div>
       </div>
       <div class="clock"><span class="time">09:00</span><span class="day">Ziua 1</span><span class="money">💰 0</span><span class="res" data-inv></span></div>
       <button class="goal" data-a="goals"><b>📜 Obiectiv</b><span class="gtxt"></span><small class="ghint"></small></button>
       <div class="card partner">
-        <div class="name">${pa.id === 'bubu' ? '🐼' : '🐻'} <span class="nm">${pa.name}</span> <span class="pst">🤖 AI</span></div>
+        <div class="name">🐹 <span class="nm">${pa.name}</span> <span class="pst">🤖 AI</span></div>
         <div class="pmood"></div>
         <div class="netline"><i class="dot"></i><span class="net">solo</span> <button class="mini-btn" data-a="menu">⚙</button>${s.devWorld ? '<button class="mini-btn" data-a="dev" title="Dezvoltator">🧪</button>' : ''}<button class="mini-btn" data-a="albums" title="Albumele (pești, flori, rețete, haine)">📒</button></div>
       </div>
@@ -385,7 +385,7 @@ export class Hud {
       <p class="sub">Scrie-i ceva frumos lui ${s.partner.actor.spec.name}. Rămâne aici pentru totdeauna 💕</p>
       <textarea maxlength="280" placeholder="Te iubesc pentru că…"></textarea>
       <button class="send">Trimite 💌</button>
-      <div class="jar">${items.map(j => `<div class="note ${j.from}"><b>${j.from === 'bubu' ? '🐼 Bubu' : '🐻 Dudu'}</b><span>${esc(j.text)}</span><small>${new Date(j.ts).toLocaleString('ro-RO')}</small></div>`).join('') || '<p class="sub">Încă e gol… fii primul/prima! 🥺</p>'}</div>`);
+      <div class="jar">${items.map(j => `<div class="note ${j.from}"><b>${j.from === 'bubu' ? '🐹 Bubu' : '🐹 Dudu'}</b><span>${esc(j.text)}</span><small>${new Date(j.ts).toLocaleString('ro-RO')}</small></div>`).join('') || '<p class="sub">Încă e gol… fii primul/prima! 🥺</p>'}</div>`);
     m.querySelector('.send')!.addEventListener('click', () => {
       const ta = m.querySelector('textarea') as HTMLTextAreaElement; const text = ta.value.trim(); if (!text) return;
       s.op({ k: 'jar', from: s.myId, text, ts: Date.now() });

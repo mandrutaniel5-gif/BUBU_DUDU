@@ -5,6 +5,7 @@ import { Fx } from '../char/fx';
 import { Sfx } from '../engine/sfx';
 import type { Scene, Game } from '../engine/game';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
+import { GAME_NAME } from '../game/names';
 
 interface PairAct { id: string; label: string; icon: string; a: 'bubu' | 'dudu'; aAnim: string; bAnim: string; bDelay: number; gap: number; }
 const PAIRS: PairAct[] = [
@@ -42,19 +43,19 @@ export class StudioScene implements Scene {
     const moods: [Mood, string, string][] = [['happy', '😊', 'Fericit'], ['love', '🥰', 'Îndrăgostit'], ['sad', '😢', 'Trist'], ['angry', '😠', 'Furios'], ['sulky', '😒', 'Bosumflat'], ['sleepy', '😪', 'Obosit'], ['hungry', '🤤', 'Flămând'], ['sick', '🤒', 'Bolnav']];
     this.ui.innerHTML = `
       <div class="topbar">
-        <div class="title">🐼 Bubu & Dudu 🐻 <small>Studio animații</small></div>
+        <div class="title">🐹 ${GAME_NAME} 🐹 <small>Studio animații</small></div>
         <div class="who">
           <button class="tg on" data-who="both">Amândoi</button>
-          <button class="tg" data-who="bubu">Bubu 🐼</button>
-          <button class="tg" data-who="dudu">Dudu 🐻</button>
+          <button class="tg" data-who="bubu">Ea 🐹</button>
+          <button class="tg" data-who="dudu">El 🐹</button>
         </div>
         <button class="tg" data-act="play">🏠 Meniu</button>
       </div>
       <div class="panel">
         ${sec('Emote-uri', common.map(a => btn(`data-anim="${a.id}"`, a.icon, a.label)).join(''))}
         ${sec('Dansuri', dances.map(a => btn(`data-anim="${a.id}"`, a.icon, a.label, 'dance')).join('') + btn('data-anim="stop"', '⏹', 'Stop'))}
-        ${sec('Speciale Bubu 🐼', bs.map(a => btn(`data-anim="${a.id}" data-force="bubu"`, a.icon, a.label, 'bubu')).join(''))}
-        ${sec('Speciale Dudu 🐻', ds.map(a => btn(`data-anim="${a.id}" data-force="dudu"`, a.icon, a.label, 'dudu')).join(''))}
+        ${sec('Speciale Ea 🐹', bs.map(a => btn(`data-anim="${a.id}" data-force="bubu"`, a.icon, a.label, 'bubu')).join(''))}
+        ${sec('Speciale El 🐹', ds.map(a => btn(`data-anim="${a.id}" data-force="dudu"`, a.icon, a.label, 'dudu')).join(''))}
         ${sec('Împreună 💞', PAIRS.map(p => btn(`data-pair="${p.id}"`, p.icon, p.label, 'pair')).join(''))}
         ${sec('Garderobă 👗', ITEMS.map(i => btn(`data-item="${i.id}"`, i.icon, i.label, 'mood')).join(''))}
         ${sec('Stare (emoție de bază)', moods.map(([m, i, l]) => btn(`data-mood="${m}"`, i, l, 'mood')).join(''))}

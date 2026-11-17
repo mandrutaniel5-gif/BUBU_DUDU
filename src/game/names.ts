@@ -1,11 +1,11 @@
-// Numele alese de jucatori (1.13.0). In cod personajele raman „bubu” (panda, ea) si „dudu” (ursuletul, el): id-urile,
+// Numele alese de jucatori (1.13.0). In cod personajele raman „bubu” (ea, hamsterita alba) si „dudu” (el, hamsterul auriu): id-urile,
 // salvarile si genul gramatical (g() din gender.ts) nu se schimba. Pe ecran, oriunde scrie „Bubu” / „Dudu” (texte, jurnal,
 // ferestre, canvas, salvari vechi), apare numele ales: filtrul sta in stratul de text din ui/icons.ts (canvas + pagina).
 import { SPECS } from '../char/draw';
 import { setTextFilter } from '../ui/icons';
 
 /** pana isi alege fiecare numele */
-export const DEFAULT_NAME = { bubu: 'Panda', dudu: 'Ursu' } as const;
+export const DEFAULT_NAME = { bubu: 'Pufi', dudu: 'Ghem' } as const;
 /** numele jocului (aplicatia, meniul, fisierele). Se schimba doar aici */
 export const GAME_NAME = 'Twogether';
 /** doar litere, cifre, spatiu, cratima, punct; cel mult 14 caractere (numele ajung si in HTML) */

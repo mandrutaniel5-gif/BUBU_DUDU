@@ -348,7 +348,7 @@ def({
   tick(f, t, _p, dt) { if (every(t, dt, 0.6)) f.emit('note', (Math.random() - 0.5) * 60, -100, { vx: (Math.random() - 0.5) * 30, vy: -40, max: 1.3 }); },
 });
 
-// ---------------------------------------------------------------- speciale Bubu (panda)
+// ---------------------------------------------------------------- speciale Bubu (ea)
 def({
   id: 'pan', label: 'Tigaia!', icon: '🍳', who: 'bubu', kind: 'special', dur: 2.6,
   pose(P, t, p) {

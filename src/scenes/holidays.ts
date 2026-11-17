@@ -198,7 +198,7 @@ function dig(s: S) {
 }
 
 // ====================================================================== negustorul ambulant (targul lunar)
-export const MERCHANT_ITEMS = ['mustata', 'monoclu', 'cowboy', 'ochelari'];
+export const MERCHANT_ITEMS = ['mustata', 'monoclu', 'cowboy', 'ochelari', 'stele'];
 function openMerchant(s: S) {
   const c = s.w.chars[s.myId]; c.owned ??= []; c.outfit ??= { ...NO_OUTFIT };
   const lines = ['„Marfă din Babilon, aproape nouă!”', '„Vă las mai ieftin, că sunteți drăguți!”', '„Am de toate: și ce trebuie, și ce nu trebuie!”', '„Elixirul ăsta l-a băut și bunicul. Acum are 104 ani!”'];

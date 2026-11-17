@@ -15,7 +15,7 @@ import { SpriteCache, cacheable, layered } from '../world/sprites';
 import { worldMapImage, topMapImage } from '../ui/minimap';
 import { ORIGIN, REGION_BY_ID, regionAt, MAIN_ROAD, FOREST_TRACK, STOPS, polyLen, pointAt, projectOn, subLine, type Pt } from '../world/layout';
 import { fillTextIcons } from '../ui/icons';
-// Scena principala: casa izometrica, cei doi ursuleti, nevoi, activitati, multiplayer.
+// Scena principala: casa izometrica, cei doi hamsteri, nevoi, activitati, multiplayer.
 import { Actor } from '../char/actor';
 import { ANIMS, ANIM_LIST } from '../char/anims';
 import { Fx } from '../char/fx';
@@ -388,7 +388,7 @@ export class WorldScene implements Scene {
         this.hud.toast(`${e.vehicle === 'bike' ? '🚲' : '🛵'} ${nm} te așteaptă pe ${e.vehicle === 'bike' ? 'bicicletă' : 'scuter'}! Atinge-${e.vehicle === 'bike' ? 'o' : 'l'} ca să urci în spate`);
         Sfx.play('kiss'); break;
       }
-      case 'chat': this.hud.toast(`${e.who === 'bubu' ? '🐼' : '🐻'} ${e.text}`); break;
+      case 'chat': this.hud.toast(`🐹 ${e.text}`); break;
       case 'mini': this.onMiniEvent(e.who, e.data); break;
       case 'act': {
         const p = this.pawnOf(e.who); if (p.control !== 'remote') break;

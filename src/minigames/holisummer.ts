@@ -273,7 +273,7 @@ export class FishContestShow extends Show {
 }
 
 // ====================================================================== 4. Picnic pe malul lacului
-const CLOUDS = [{ icon: '🐻', me: 'Un ursuleț! Seamănă cu tine 🐻', pa: 'Mie îmi pare o pizza 🍕' }, { icon: '❤️', me: 'O inimă! ❤️', pa: 'Sau un fund… 🍑 hihi' }, { icon: '🐼', me: 'O panda! 🐼', pa: 'Ce drăguță… ca tine 😳' }, { icon: '🐟', me: 'Un pește!', pa: 'Miți l-ar mânca 🐱' }, { icon: '🍦', me: 'O înghețată! 🍦', pa: 'Acum mi-e foame…' }];
+const CLOUDS = [{ icon: '🐹', me: 'Un hamster pufos! Seamănă cu tine 🐹', pa: 'Mie îmi pare o pizza 🍕' }, { icon: '❤️', me: 'O inimă! ❤️', pa: 'Sau un fund… 🍑 hihi' }, { icon: '🐼', me: 'O panda! 🐼', pa: 'Ce drăguță… ca tine 😳' }, { icon: '🐟', me: 'Un pește!', pa: 'Miți l-ar mânca 🐱' }, { icon: '🍦', me: 'O înghețată! 🍦', pa: 'Acum mi-e foame…' }];
 export class PicnicShow extends Show {
   ants: { x: number; y: number; vx: number; vy: number; dead: number }[] = []; stolen = 0; shooed = 0; antT = 0; rexT = -1; clouds: { x: number; y: number; k: number; shape: number; t: number }[] = []; aiT = 2;
   scene3(c: CanvasRenderingContext2D, W: number, H: number) {

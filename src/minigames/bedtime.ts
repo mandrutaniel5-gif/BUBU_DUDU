@@ -29,8 +29,8 @@ const DREAMS = [{ icon: '🌊', label: 'La mare' }, { icon: '🌲', label: 'La m
 function seeded(seed: number) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 const AI_MSG: Record<string, string[]> = {
-  bubu: ['Ești cel mai pufos urs din lume 🐻💕', 'Mulțumesc că m-ai făcut să râd azi', 'Te iubesc mai mult decât bubble tea 🧋', 'Cu tine e acasă 🏡', 'Chiar și când sforăi, te iubesc 😴💗'],
-  dudu: ['Ești cea mai frumoasă panda 🐼💕', 'Îmi place cum râzi', 'Te iubesc mai mult decât mâncarea… aproape 🍔😳', 'Mulțumesc că ai grijă de mine', 'Ești soarele meu chiar și noaptea 🌙'],
+  bubu: ['Ești cel mai pufos hamster din lume 🐹💕', 'Mulțumesc că m-ai făcut să râd azi', 'Te iubesc mai mult decât bubble tea 🧋', 'Cu tine e acasă 🏡', 'Chiar și când sforăi, te iubesc 😴💗'],
+  dudu: ['Ești cea mai frumoasă hamsteriță 🐹💕', 'Îmi place cum râzi', 'Te iubesc mai mult decât mâncarea… aproape 🍔😳', 'Mulțumesc că ai grijă de mine', 'Ești soarele meu chiar și noaptea 🌙'],
 };
 
 export class BedtimeGame extends Panel {

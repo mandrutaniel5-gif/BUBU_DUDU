@@ -15,14 +15,14 @@ import type { CharId } from '../char/draw';
 import { createHouse, joinHouse, normCode, watchSeats, type Seats } from '../net/house';
 import { seatTaken } from '../net/adapters';
 
-// 1.13.0: personajele nu mai au nume fixe. Pana se stie numele (din salvare), scrie cine e: ea (panda) / el (ursuletul)
-const ROLE: Record<CharId, string> = { bubu: 'Ea (panda)', dudu: 'El (ursulețul)' } as Record<CharId, string>;
+// 1.13.0: personajele nu mai au nume fixe. Pana se stie numele (din salvare), scrie cine e: ea (hamsterita alba) / el (hamsterul auriu)
+const ROLE: Record<CharId, string> = { bubu: 'Ea (hamsterița)', dudu: 'El (hamsterul)' } as Record<CharId, string>;
 /** numele din salvarea casei de pe telefonul asta (al tau si al partenerului, daca a intrat vreodata) */
 function houseNames(room: string): Partial<Record<CharId, string>> {
   try { const raw = localStorage.getItem('bd-save-' + room); if (!raw) return {}; const w = JSON.parse(JSON.parse(raw).json); return { bubu: cleanName(w?.chars?.bubu?.name), dudu: cleanName(w?.chars?.dudu?.name) }; } catch { return {}; }
 }
 const label = (w: CharId, room?: string) => (room && houseNames(room)[w]) || ROLE[w];
-const ICON: Record<CharId, string> = { bubu: '🐼', dudu: '🐻' } as Record<CharId, string>;
+const ICON: Record<CharId, string> = { bubu: '🐹', dudu: '🐹' } as Record<CharId, string>;
 const other = (w: CharId): CharId => (w === 'bubu' ? 'dudu' : 'bubu');
 const esc = (t: string) => t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
 /** ce scrie pe cartonasul casei (din salvarea de pe telefon): capitolul si ziua */
@@ -69,8 +69,8 @@ export class MenuScene implements Scene {
         <div class="pane p-offline">
           <p class="sub2">Joci pe telefonul ăsta. Partenerul e jucat de calculator.</p>
           <div class="who2">
-            <button data-who="bubu">🐼<b>Ea</b><small>panda</small></button>
-            <button data-who="dudu">🐻<b>El</b><small>ursulețul</small></button>
+            <button data-who="bubu">🐹<b>Ea</b><small>hamsterița albă</small></button>
+            <button data-who="dudu">🐹<b>El</b><small>hamsterul auriu</small></button>
           </div>
           <label class="myname">Numele partenerului <input name="pname" maxlength="14" placeholder="ex. Mihai" value="${esc(cleanName(s.partnerName))}" /></label>
           <button class="play">▶ Joacă</button>

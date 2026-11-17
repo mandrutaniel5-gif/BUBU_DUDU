@@ -40,6 +40,16 @@ export const ITEMS: Item[] = [
   { id: 'monoclu', slot: 'face', label: 'Monoclu de boier', icon: '🧐', price: 60, shop: 'targ' },
   { id: 'ochelari', slot: 'face', label: 'Ochelari rotunzi', icon: '🤓', price: 45, shop: 'targ' },
   { id: 'cowboy', slot: 'head', label: 'Pălărie de cowboy', icon: '🤠', price: 80, shop: 'targ' },
+  // 1.14.0: haine noi pentru hamsteri
+  { id: 'pijama', slot: 'body', label: 'Pijama cu stele', icon: '🌙', price: 55, shop: 'sat' },
+  { id: 'sort', slot: 'body', label: 'Șorț de bucătărie', icon: '🍰', price: 30, shop: 'sat' },
+  { id: 'casca', slot: 'head', label: 'Cască de meșter', icon: '⛑️', price: 45, shop: 'sat' },
+  { id: 'agrafa', slot: 'head', label: 'Agrafă-căpșună', icon: '🍓', price: 15, shop: 'sat' },
+  { id: 'hanorac', slot: 'body', label: 'Hanorac cu glugă', icon: '🧥', price: 90, shop: 'oras' },
+  { id: 'geaca', slot: 'body', label: 'Geacă pufoasă de iarnă', icon: '🧣', price: 120, shop: 'oras' },
+  { id: 'bereta', slot: 'head', label: 'Beretă de pictor', icon: '🎨', price: 55, shop: 'oras' },
+  { id: 'colier', slot: 'neck', label: 'Colier de perle', icon: '📿', price: 80, shop: 'oras' },
+  { id: 'stele', slot: 'face', label: 'Ochelari-stea', icon: '🤩', price: 40, shop: 'targ' },
 ];
 // accesoriile vechi se gasesc tot la Croitoria din sat (coroana: la oras)
 for (const it of ITEMS) if (!it.shop) it.shop = it.id === 'crown' ? 'oras' : 'sat';

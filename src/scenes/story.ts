@@ -666,7 +666,7 @@ function todo(s: S): string[] {
   const fp = Object.values(parcelsOf(s)); if (fp.some(p => p.stage === 'ripe')) d.push('recoltează câmpul copt'); else if (fp.some(p => p.owned && p.stage !== 'sown')) d.push('lucrează parcelele');
   if (s.w.furn.roofBroken) d.push('repară acoperișul după furtună');
   if (s.chapter >= VILLAGE_CHAPTER && PROJECTS.some(p => !projectDone(s, p.id))) b.push('contribuie la un proiect al satului');
-  return [b.length ? `🐼 Bubu azi: ${b.slice(0, 3).join(', ')}` : '', d.length ? `🐻 Dudu azi: ${d.slice(0, 3).join(', ')}` : ''].filter(Boolean);
+  return [b.length ? `🐹 Bubu azi: ${b.slice(0, 3).join(', ')}` : '', d.length ? `🐹 Dudu azi: ${d.slice(0, 3).join(', ')}` : ''].filter(Boolean);
 }
 /** Primaria: afacerile (vechi), proiectele satului, oamenii de munca, nunta */
 export function openHallMenu(s: S) {

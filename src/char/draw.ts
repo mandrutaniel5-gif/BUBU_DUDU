@@ -1,5 +1,6 @@
 import type { Pose, EyeType, MouthType, PropType } from './pose';
 import { drawHeadItem, drawFaceItem, drawNeckItem, drawBodyItem, drawPin, type Outfit } from './outfit';
+import { drawHamster } from './hamster';
 
 export type CharId = 'bubu' | 'dudu';
 
@@ -30,15 +31,16 @@ export const NPC_SPECS: Record<string, CharSpec> = {
 };
 
 export const SPECS: Record<CharId, CharSpec> = {
-  // Bubu = panda (fata): alba si dolofana, urechi maro-inchis, obrajori roz
+  // 1.14.0: amandoi sunt hamsteri, desenati in hamster.ts (culorile de aici le folosesc doar butoanele si iconitele)
+  // „bubu” = Ea: hamsterita alba, cu pata piersicie si fundita roz
   bubu: {
-    id: 'bubu', name: 'Bubu', body: '#ffffff', shade: '#efe6e3', ear: '#4a2a22',
-    earInner: null, cheek: '#f9bdbd', outline: '#4a2a22', tail: '#4a2a22', accessory: 'none',
+    id: 'bubu', name: 'Bubu', body: '#fffaf4', shade: '#e8d3c6', ear: '#fff3ea',
+    earInner: '#ffc0cf', cheek: '#ff9fb8', outline: '#4a2a22', tail: '#fffaf4', accessory: 'none',
   },
-  // Dudu = ursuletul (baiatul): maro deschis-rozaliu, urechi cu interior inchis, obrajori galbui
+  // „dudu” = El: hamsterul auriu, cu bot alb, papion albastru si creion dupa ureche
   dudu: {
-    id: 'dudu', name: 'Dudu', body: '#dba68a', shade: '#c8917a', ear: '#dba68a',
-    earInner: '#4a2a22', cheek: '#f9c47f', outline: '#4a2a22', tail: '#c8917a', accessory: 'none',
+    id: 'dudu', name: 'Dudu', body: '#f3a95d', shade: '#d98b3f', ear: '#ec9b4d',
+    earInner: '#ffc0a6', cheek: '#ff8f84', outline: '#4a2a22', tail: '#f3a95d', accessory: 'none',
   },
 };
 
@@ -81,6 +83,8 @@ export function drawCharacter(
   ctx: CanvasRenderingContext2D, spec: CharSpec, p: Pose,
   x: number, y: number, scale: number, flip: 1 | -1, time: number, outfit?: Outfit,
 ) {
+  // personajele jucatorilor sunt hamsteri (1.14.0); satenii raman desenati ca pana acum
+  if (spec.id === 'bubu' || spec.id === 'dudu') { drawHamster(ctx, spec.id, p, x, y, scale, flip, time, outfit); return; }
   curOutfit = outfit;
   const O = spec.outline;
   ctx.save();
@@ -400,7 +404,7 @@ function drawMouth(ctx: CanvasRenderingContext2D, type: MouthType, y: number, O:
   }
 }
 
-function drawTears(ctx: CanvasRenderingContext2D, ex: number, ey: number, amt: number, t: number) {
+export function drawTears(ctx: CanvasRenderingContext2D, ex: number, ey: number, amt: number, t: number) {
   ctx.fillStyle = 'rgba(110,190,255,0.85)';
   for (const s of [-1, 1]) {
     const x = s * ex;
@@ -415,7 +419,7 @@ function drawTears(ctx: CanvasRenderingContext2D, ex: number, ey: number, amt: n
   }
 }
 
-function drawVein(ctx: CanvasRenderingContext2D, x: number, y: number, a: number, t: number) {
+export function drawVein(ctx: CanvasRenderingContext2D, x: number, y: number, a: number, t: number) {
   const s = (0.8 + 0.25 * Math.abs(Math.sin(t * 8))) * a;
   ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
   ctx.strokeStyle = '#e8283d'; ctx.lineWidth = 2.6;
@@ -427,7 +431,7 @@ function drawVein(ctx: CanvasRenderingContext2D, x: number, y: number, a: number
   ctx.restore();
 }
 
-function drawSweat(ctx: CanvasRenderingContext2D, x: number, y: number, a: number, t: number) {
+export function drawSweat(ctx: CanvasRenderingContext2D, x: number, y: number, a: number, t: number) {
   const dy = (t * 12) % 8;
   ctx.save(); ctx.translate(x, y + dy * a); ctx.scale(a, a);
   ctx.beginPath(); ctx.moveTo(0, -7); ctx.quadraticCurveTo(5, 1, 0, 3); ctx.quadraticCurveTo(-5, 1, 0, -7);
@@ -435,7 +439,7 @@ function drawSweat(ctx: CanvasRenderingContext2D, x: number, y: number, a: numbe
   ctx.restore();
 }
 
-function drawDizzy(ctx: CanvasRenderingContext2D, a: number, t: number) {
+export function drawDizzy(ctx: CanvasRenderingContext2D, a: number, t: number) {
   for (let i = 0; i < 3; i++) {
     const ang = t * 4 + i * (Math.PI * 2 / 3);
     const x = Math.cos(ang) * 26, y = -30 + Math.sin(ang) * 7;
