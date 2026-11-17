@@ -315,24 +315,36 @@ export function drawCountryType(c: CanvasRenderingContext2D, f: Furn, t: number,
       c.restore(); return true;
     }
     case 'church': {
-      const wall = '#fff8ef', roof = '#8a4a3a', H = 64;
-      isoBox(c, gx, gy + 1, w, d - 1, H, { top: shade(wall, 0.95), left: wall, right: shade(wall, 0.88) });
-      const r0 = iso(gx, gy + 1 + (d - 1) / 2, H + 38), r1 = iso(gx + w, gy + 1 + (d - 1) / 2, H + 38);
-      quad(c, [iso(gx, gy + 1, H), iso(gx + w, gy + 1, H), r1, r0], shade(roof, 0.85));
-      quad(c, [iso(gx + w, gy + 1, H), iso(gx + w, gy + d, H), r1], shade(wall, 0.85));
-      quad(c, [iso(gx - 0.1, gy + d + 0.12, H - 3), iso(gx + w + 0.1, gy + d + 0.12, H - 3), r1, r0], roof);
-      // ferestrele inalte cu vitralii
-      for (const u of [0.18, 0.82]) { const P = (z: number, du = 0) => iso(gx + w * u + du, gy + d, z); quad(c, [P(18, -0.12), P(18, 0.12), P(46, 0.12), P(46, -0.12)], night > 0.4 ? '#ffe680' : ['#ff9ab8', '#7ab8ff'][u > 0.5 ? 1 : 0]); }
-      // clopotnita in fata
-      const tx = gx + w / 2 - 0.7, ty = gy + d - 1.4;
-      isoBox(c, tx, ty, 1.4, 1.4, 104, { top: '#fff', left: '#f4ede2', right: '#e2d8c8' });
-      const bell = iso(tx + 0.7, ty + 1.4, 82); c.fillStyle = '#3a2a22'; c.beginPath(); c.roundRect(bell.x - 7, bell.y - 12, 14, 18, 6); c.fill();
-      const sw = Math.sin(t * 2) * 0.15; c.save(); c.translate(bell.x, bell.y - 10); c.rotate(sw); c.fillStyle = '#ffd23f'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-5, 12); c.quadraticCurveTo(-5, 0, 0, 0); c.quadraticCurveTo(5, 0, 5, 12); c.closePath(); c.fill(); c.stroke(); c.restore();
-      const tip = iso(tx + 0.7, ty + 0.7, 150);
-      quad(c, [iso(tx, ty + 1.4, 104), iso(tx + 1.4, ty + 1.4, 104), tip], '#8a4a3a'); quad(c, [iso(tx + 1.4, ty, 104), iso(tx + 1.4, ty + 1.4, 104), tip], '#6a3a2a');
+      // 1.14.1: redesenata. Coama acoperisului merge din fata (intrarea, spre noi-stanga) spre spate, asa ca vezi panta
+      // din dreapta intreaga si frontonul fatadei; inainte coama era pe lat si jumatate din biserica parea fara acoperis.
+      const wall = '#fff8ef', roof = '#8a4a3a', H = 58, R = 46, lit = night > 0.4;
+      const mx = gx + w / 2, ov = 0.14;
+      isoBox(c, gx, gy, w, d, H, { top: shade(wall, 0.95), left: wall, right: shade(wall, 0.88) });
+      // ferestrele inalte cu vitralii, pe peretele din dreapta
+      for (const u of [0.22, 0.5, 0.78]) {
+        const P = (z: number, dv: number) => iso(gx + w, gy + d * u + dv, z);
+        c.beginPath(); const a = P(14, -0.16), b = P(14, 0.16), top = P(44, 0); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); const b2 = P(36, 0.16), a2 = P(36, -0.16); c.lineTo(b2.x, b2.y); c.quadraticCurveTo(top.x, top.y, a2.x, a2.y); c.closePath();
+        c.fillStyle = lit ? '#ffe680' : ['#ff9ab8', '#7ab8ff', '#ffd23f'][Math.round(u * 4) % 3]; c.fill(); c.strokeStyle = O; c.lineWidth = 1.6; c.stroke();
+        const m0 = P(14, 0), m1 = P(38, 0); c.beginPath(); c.moveTo(m0.x, m0.y); c.lineTo(m1.x, m1.y); c.lineWidth = 1; c.stroke();
+      }
+      // acoperisul: panta din stanga (din spate, se vede doar marginea), frontonul, panta din dreapta
+      const rb = iso(mx, gy - ov, H + R), rf = iso(mx, gy + d + ov, H + R);
+      quad(c, [iso(gx - ov, gy - ov, H - 4), iso(gx - ov, gy + d + ov, H - 4), rf, rb], shade(roof, 0.7));
+      quad(c, [iso(gx, gy + d, H), iso(gx + w, gy + d, H), iso(mx, gy + d, H + R)], wall);
+      const ro = iso(mx, gy + d, H + R * 0.42); c.beginPath(); c.arc(ro.x, ro.y, 9, 0, 7); c.fillStyle = lit ? '#ffe680' : '#ffb3c8'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.8; c.stroke();
+      for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; c.beginPath(); c.moveTo(ro.x, ro.y); c.lineTo(ro.x + Math.cos(a) * 9, ro.y + Math.sin(a) * 9); c.lineWidth = 1; c.stroke(); }
+      quad(c, [iso(gx + w + ov, gy - ov, H - 4), iso(gx + w + ov, gy + d + ov, H - 4), rf, rb], roof);
+      c.strokeStyle = 'rgba(0,0,0,0.18)'; c.lineWidth = 1.2; for (let k = 1; k < 6; k++) { const v = k / 6; const a = iso(mx + (w / 2 + ov) * v, gy - ov, H + R - (R + 4) * v), b = iso(mx + (w / 2 + ov) * v, gy + d + ov, H + R - (R + 4) * v); c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); }
+      // clopotnita in fata intrarii, cu usa arcuita si crucea aurie
+      const tw = 1.3, tx = mx - tw / 2, ty = gy + d - 0.35, TH = H + R + 26;
+      isoBox(c, tx, ty, tw, tw, TH, { top: '#fff', left: '#f7f0e6', right: '#e6dccd' });
+      const bw = iso(tx + tw / 2, ty + tw, TH - 26); c.fillStyle = '#3a2a22'; c.beginPath(); c.roundRect(bw.x - 8, bw.y - 14, 16, 20, 7); c.fill();
+      const sw = Math.sin(t * 2) * 0.15; c.save(); c.translate(bw.x, bw.y - 11); c.rotate(sw); c.fillStyle = '#ffd23f'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-6, 13); c.quadraticCurveTo(-6, 0, 0, 0); c.quadraticCurveTo(6, 0, 6, 13); c.closePath(); c.fill(); c.stroke(); c.restore();
+      const tip = iso(tx + tw / 2, ty + tw / 2, TH + 44);
+      quad(c, [iso(tx - 0.08, ty + tw + 0.08, TH), iso(tx + tw + 0.08, ty + tw + 0.08, TH), tip], roof); quad(c, [iso(tx + tw + 0.08, ty - 0.08, TH), iso(tx + tw + 0.08, ty + tw + 0.08, TH), tip], shade(roof, 0.78));
       c.strokeStyle = '#ffd23f'; c.lineWidth = 3; c.beginPath(); c.moveTo(tip.x, tip.y); c.lineTo(tip.x, tip.y - 16); c.moveTo(tip.x - 6, tip.y - 10); c.lineTo(tip.x + 6, tip.y - 10); c.stroke();
-      // usa arcuita
-      const dp = iso(tx + 0.7, ty + 1.4, 0); c.fillStyle = '#8a5d32'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(dp.x - 8, dp.y); c.lineTo(dp.x - 8, dp.y - 18); c.quadraticCurveTo(dp.x, dp.y - 30, dp.x + 8, dp.y - 18); c.lineTo(dp.x + 8, dp.y); c.closePath(); c.fill(); c.stroke();
+      const dp = iso(tx + tw / 2, ty + tw, 0); c.fillStyle = '#8a5d32'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(dp.x - 9, dp.y); c.lineTo(dp.x - 9, dp.y - 20); c.quadraticCurveTo(dp.x, dp.y - 33, dp.x + 9, dp.y - 20); c.lineTo(dp.x + 9, dp.y); c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(dp.x, dp.y); c.lineTo(dp.x, dp.y - 26); c.lineWidth = 1.2; c.stroke(); c.fillStyle = '#ffd23f'; for (const s2 of [-1, 1]) { c.beginPath(); c.arc(dp.x + s2 * 3, dp.y - 11, 1.4, 0, 7); c.fill(); }
       return true;
     }
     case 'sawmill': {
