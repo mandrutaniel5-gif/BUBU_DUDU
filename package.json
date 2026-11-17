@@ -26,10 +26,10 @@
   },
   "main": "electron/main.cjs",
   "description": "Bubu & Dudu \u2014 joc de familie pentru doi",
-  "author": "Bubu & Dudu",
+  "author": "ACM Code",
   "build": {
     "appId": "ro.casutanoastra.bubududu",
-    "productName": "Bubu & Dudu",
+    "productName": "Us",
     "directories": {
       "output": "release"
     },
@@ -58,7 +58,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "Bubu & Dudu",
+      "shortcutName": "Us",
       "artifactName": "BubuDudu-Setup-${version}.${ext}"
     },
     "portable": {

@@ -7,11 +7,13 @@ const path = require('path');
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
 app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-accelerated-2d-canvas');
+// salvarile raman in folderul vechi si dupa ce aplicatia s-a redenumit „Us” (altfel jucatorii ar pierde progresul)
+app.setPath('userData', path.join(app.getPath('appData'), 'Bubu & Dudu'));
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280, height: 800, minWidth: 800, minHeight: 500,
-    title: 'Bubu & Dudu', backgroundColor: '#ffeacc', autoHideMenuBar: true,
+    title: 'Us', backgroundColor: '#ffeacc', autoHideMenuBar: true,
     icon: path.join(__dirname, '..', 'dist', 'icon-512.png'),
     webPreferences: { contextIsolation: true, sandbox: true, backgroundThrottling: true },
   });

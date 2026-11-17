@@ -23,7 +23,7 @@ export async function showLoading(): Promise<void> {
   set(0.3, 'Desenăm iconițele…'); await tick();
   preloadIcons(k => set(0.3 + k * 0.3));
 
-  set(0.62, 'Îi trezim pe Bubu și Dudu…'); await tick();
+  set(0.62, 'Îi trezim pe cei doi…'); await tick();
   const cv = document.createElement('canvas'); cv.width = cv.height = 256; const c = cv.getContext('2d')!;
   const specs = [SPECS.bubu, SPECS.dudu, ...Object.values(NPC_SPECS)];
   for (let i = 0; i < specs.length; i++) { c.clearRect(0, 0, 256, 256); drawCharacter(c, specs[i], basePose(), 128, 220, 1, 1, 0); set(0.62 + (i + 1) / specs.length * 0.28); if (i % 2) await tick(); }

@@ -7,7 +7,7 @@ import { setTextFilter } from '../ui/icons';
 /** pana isi alege fiecare numele */
 export const DEFAULT_NAME = { bubu: 'Panda', dudu: 'Ursu' } as const;
 /** numele jocului (aplicatia, meniul, fisierele). Se schimba doar aici */
-export const GAME_NAME = 'Bubu & Dudu';
+export const GAME_NAME = 'Us';
 /** doar litere, cifre, spatiu, cratima, punct; cel mult 14 caractere (numele ajung si in HTML) */
 export function cleanName(s: string | undefined | null): string {
   return String(s ?? '').normalize('NFC').replace(/[^\p{L}\p{N} .-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 14);

@@ -7,6 +7,7 @@
 // Rapoartele stau pe telefon (Meniu → ⚙ Setări → 🐞 Rapoarte: trimiti fisierul) si se urca in Firebase la bugs/
 // (daca regulile din database.rules.json sunt puse in consola). Le citesti cu tools/erori.html.
 import { BUILTIN_FIREBASE } from '../game/settings';
+import { GAME_NAME } from '../game/names';
 
 export interface BugRep {
   id: string; ts: number; ver: string; kind: 'eroare' | 'auto' | 'tester'; cat: string; title: string; note?: string;
@@ -89,7 +90,7 @@ export const Bugs = {
     const name = `BubuDudu-erori-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.json`;
     const blob = new Blob([JSON.stringify({ app: 'bubu-dudu-erori', ver: Bugs.ver, reports: list })], { type: 'application/json' });
     const file = new File([blob], name, { type: 'application/json' }); const nav = navigator as any;
-    if (nav.canShare?.({ files: [file] })) nav.share({ files: [file], title: 'Erori Bubu & Dudu' }).catch(() => {});
+    if (nav.canShare?.({ files: [file] })) nav.share({ files: [file], title: 'Erori ' + GAME_NAME }).catch(() => {});
     else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
   },
 };

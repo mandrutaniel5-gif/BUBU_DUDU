@@ -72,8 +72,8 @@ with open(plist_p, 'rb') as f:
     pl = plistlib.load(f)
 pl['CFBundleShortVersionString'] = ver
 pl['CFBundleVersion'] = build
-pl['CFBundleName'] = 'Bubu & Dudu'
-pl['CFBundleDisplayName'] = 'Bubu & Dudu'
+pl['CFBundleName'] = 'Us'
+pl['CFBundleDisplayName'] = 'Us'
 with open(plist_p, 'wb') as f:
     plistlib.dump(pl, f)
 pbx = root.parent / 'App.xcodeproj' / 'project.pbxproj'
