@@ -1,5 +1,5 @@
 // Hainele hamsterilor (1.14.0), desenate pe forma lor, din fata si din spate.
-// Unitati de desen (vezi hamster.ts): talpile in 0, corpul are centrul in (0,-42) si raza ~50x42, barbia e pe la y -52.
+// Unitati de desen (vezi hamster.ts, HS = 0.54): talpile in 0, corpul are centrul in (0,-42) si raza ~50x42, barbia e pe la y -52.
 // Capul: centrul in (0,0), raza ~60x54, crestetul pe la -54, urechile in (+-36,-44).
 import { heartPath, starPath } from './draw';
 import { drawPin } from './outfit';
@@ -479,5 +479,5 @@ export function drawNeckWear(c: C, id: string, back: boolean, t: number) {
 
 /** martisorul prins in piept (desenul vechi, adus la marimea hamsterului) */
 export function drawPinWear(c: C, id: string, t: number) {
-  c.save(); c.translate(-24, -40); c.scale(1 / 0.64, 1 / 0.64); c.translate(12, 16); drawPin(c, id, t); c.restore();
+  c.save(); c.translate(-24, -40); c.scale(1 / 0.54, 1 / 0.54); c.translate(12, 16); drawPin(c, id, t); c.restore();
 }

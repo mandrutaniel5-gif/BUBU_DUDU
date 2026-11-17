@@ -9,7 +9,7 @@ import type { Outfit } from './outfit';
 import { drawProp, heartPath, starPath, drawVein, drawSweat, drawDizzy } from './draw';
 import { drawBodyWear, drawHeadWear, drawFaceWear, drawNeckWear, drawPinWear, sleeveOf, wearHides } from './hamwear';
 
-export const HS = 0.64;
+export const HS = 0.54; // 1.14.1: mai mici (la 0.64 erau prea mari langa mobila)
 const O = '#4a2a22';
 const TAU = Math.PI * 2;
 export type HamId = 'bubu' | 'dudu';

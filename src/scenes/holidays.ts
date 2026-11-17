@@ -327,7 +327,8 @@ export function withPin(s: S, who: CharId, o: Outfit | undefined): Outfit | unde
   if (seasonOf(s.w.day).id !== 'spring' || s.w.day - st(s, 'mday-' + who) > 7) return o;
   const id = CHARMS[c - 1]?.id; if (!id) return o;
   // 1.11.2: tinut deoparte (WeakMap), nu pe haina: pus pe haina facea o bucla si salvarea / trimiterea dadeau erori la nesfarsit
-  const k = PINNED.get(o); if (k && k.pin === id) return k.out;
+  // 1.14.1: copia se reimprospateaza din hainele de acum (garderoba schimba obiectul pe loc; copia veche ramanea cu hainele de dinainte)
+  const k = PINNED.get(o); if (k) { Object.assign(k.out, o); k.out.pin = id; k.pin = id; return k.out; }
   const out = { ...o, pin: id }; PINNED.set(o, { pin: id, out }); return out;
 }
 export const showName = (id: string) => ({ xmastree: 'împodobitul bradului', colinde: 'colindul', gifts: 'deschisul cadourilor', santa: 'poza cu Moș Crăciun', skate: 'patinajul', carusel: 'tura cu căluțeii', revelion: 'petrecerea de Revelion', bday: 'petrecerea surpriză', paste: 'ciocnitul ouălor', martisor: 'mărțișorul', dragobete: 'Dragobetele', inawed: 'nunta Inei', grand: 'vizita bunicilor', fishcontest: 'concursul de pescuit', picnic: 'picnicul', loz: 'lozul' } as Record<string, string>)[id] ?? 'o sărbătoare';
