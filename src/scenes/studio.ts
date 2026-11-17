@@ -167,7 +167,7 @@ export class StudioScene implements Scene {
     ctx.font = `800 ${Math.round(14 * s.scale / 1.5)}px "Baloo 2", sans-serif`; ctx.textAlign = 'center';
     for (const a of [this.bubu, this.dudu]) {
       ctx.fillStyle = a.id === 'bubu' ? '#3a2a22' : '#7a4a2a';
-      ctx.fillText(a.spec.name, a.x, s.cy + 30 * s.scale);
+      ctx.fillText(a.spec.id === 'bubu' ? 'Ea' : 'El', a.x, s.cy + 30 * s.scale);
     }
     ctx.restore();
   }

@@ -240,7 +240,7 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
       ctx.fillStyle = O; for (const dx of [-4, 4]) { ctx.beginPath(); ctx.arc(c.x + dx, c.y - 34, 1.8, 0, 7); ctx.fill(); }
       ctx.fillStyle = '#ff8c42'; ctx.beginPath(); ctx.moveTo(c.x, c.y - 31); ctx.lineTo(c.x + 9, c.y - 29); ctx.lineTo(c.x, c.y - 28); ctx.fill();
       ctx.fillStyle = '#e63946'; ctx.fillRect(c.x - 10, c.y - 24, 20, 4);
-      ctx.fillStyle = '#2a2222'; ctx.beginPath(); ctx.arc(c.x - 7, c.y - 44, 4, 0, 7); ctx.arc(c.x + 7, c.y - 44, 4, 0, 7); ctx.fill(); // urechi de panda :)
+      for (const dx of [-7, 7]) { ctx.fillStyle = '#f7c9a5'; ctx.beginPath(); ctx.arc(c.x + dx, c.y - 43, 4.2, 0, 7); ctx.fill(); ctx.fillStyle = '#ffc0cf'; ctx.beginPath(); ctx.arc(c.x + dx, c.y - 42.5, 2.2, 0, 7); ctx.fill(); } // urechiuse de hamster :)
       return true;
     }
     case 'gazebo': {

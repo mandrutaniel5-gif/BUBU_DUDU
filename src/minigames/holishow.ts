@@ -165,18 +165,22 @@ export abstract class Show extends Panel {
   burst(x: number, y: number, n: number, cols: string[], speed = 160, grav = 60, life = 1.4, r = 2.6) {
     for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + Math.random() * 0.2, v = speed * (0.6 + Math.random() * 0.5); this.sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, c: cols[i % cols.length], life: life * (0.7 + Math.random() * 0.5), max: life, r, grav }); }
   }
-  /** artificii in forma de ceva (inima, stea, floare, panda, ursulet) */
+  /** artificii in forma de ceva (inima, stea, floare, hamster, floarea-soarelui) */
   shape(x: number, y: number, kind: string, cols: string[], size = 70) {
     const pts: [number, number][] = [];
     const N = 46;
     if (kind === 'heart') for (let i = 0; i < N; i++) { const t = (i / N) * Math.PI * 2; pts.push([16 * Math.sin(t) ** 3 / 16, -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 16]); }
     else if (kind === 'star') for (let i = 0; i < N; i++) { const t = (i / N) * Math.PI * 2, r = (i % (N / 5)) / (N / 5); const R = 0.45 + 0.55 * Math.abs(1 - 2 * r); pts.push([Math.cos(t - Math.PI / 2) * R, Math.sin(t - Math.PI / 2) * R]); }
     else if (kind === 'flower') for (let i = 0; i < N; i++) { const t = (i / N) * Math.PI * 2, R = 0.55 + 0.45 * Math.abs(Math.cos(t * 2.5)); pts.push([Math.cos(t) * R, Math.sin(t) * R]); }
-    else if (kind === 'panda' || kind === 'bear') {
-      for (let i = 0; i < 30; i++) { const t = (i / 30) * Math.PI * 2; pts.push([Math.cos(t) * 0.8, Math.sin(t) * 0.7 + 0.1]); }
-      for (const sx of [-1, 1]) for (let i = 0; i < 8; i++) { const t = (i / 8) * Math.PI * 2; pts.push([sx * 0.62 + Math.cos(t) * 0.22, -0.55 + Math.sin(t) * 0.22]); }
-      if (kind === 'panda') for (const sx of [-1, 1]) for (let i = 0; i < 6; i++) { const t = (i / 6) * Math.PI * 2; pts.push([sx * 0.3 + Math.cos(t) * 0.14, -0.02 + Math.sin(t) * 0.17]); }
-      else for (let i = 0; i < 6; i++) { const t = (i / 6) * Math.PI * 2; pts.push([Math.cos(t) * 0.22, 0.28 + Math.sin(t) * 0.14]); }
+    else if (kind === 'hamster') {
+      // capul rotund cu obraji plini, doua urechiuse mici sus, ochii si nasucul
+      for (let i = 0; i < 34; i++) { const t = (i / 34) * Math.PI * 2; const cheek = 0.12 * Math.max(0, Math.sin(t)) * Math.abs(Math.cos(t)); pts.push([Math.cos(t) * (0.8 + cheek), Math.sin(t) * 0.68 + 0.1]); }
+      for (const sx of [-1, 1]) for (let i = 0; i < 7; i++) { const t = (i / 7) * Math.PI * 2; pts.push([sx * 0.52 + Math.cos(t) * 0.17, -0.58 + Math.sin(t) * 0.16]); }
+      for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) { const t = (i / 4) * Math.PI * 2; pts.push([sx * 0.32 + Math.cos(t) * 0.07, 0.02 + Math.sin(t) * 0.09]); }
+      for (let i = 0; i < 4; i++) { const t = (i / 4) * Math.PI * 2; pts.push([Math.cos(t) * 0.06, 0.26 + Math.sin(t) * 0.05]); }
+    } else if (kind === 'sunflower') {
+      for (let i = 0; i < 36; i++) { const t = (i / 36) * Math.PI * 2, R = 0.62 + 0.38 * Math.abs(Math.cos(t * 6)); pts.push([Math.cos(t) * R, Math.sin(t) * R]); }
+      for (let i = 0; i < 12; i++) { const t = (i / 12) * Math.PI * 2; pts.push([Math.cos(t) * 0.3, Math.sin(t) * 0.3]); }
     } else for (let i = 0; i < N; i++) { const t = (i / N) * Math.PI * 2; pts.push([Math.cos(t), Math.sin(t)]); }
     pts.forEach(([px, py], i) => this.sparks.push({ x, y, vx: px * size * 1.6, vy: py * size * 1.6, c: cols[i % cols.length], life: 1.9, max: 1.9, r: 3.4, grav: 14 }));
     for (let i = 0; i < 14; i++) { const a = Math.random() * 7, v = 30 + Math.random() * 40; this.sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, c: '#fff', life: 0.6, max: 0.6, r: 1.6, grav: 0 }); }

@@ -426,8 +426,8 @@ export class CarouselShow extends Show {
 }
 
 // ====================================================================== 7. Revelionul: dans, numaratoarea, artificiile voastre, dorintele
-const FW_KINDS = [{ k: 'heart', icon: '💗', label: 'Inimă' }, { k: 'star', icon: '⭐', label: 'Stea' }, { k: 'flower', icon: '🌸', label: 'Floare' }, { k: 'panda', icon: '🐼', label: 'Panda' }, { k: 'bear', icon: '🐻', label: 'Ursuleț' }, { k: 'circle', icon: '✨', label: 'Sclipici' }];
-const FW_COLS = [['#ff4d6d', '#ff9ab8', '#fff'], ['#ffd23f', '#fff4b0', '#fff'], ['#c77dff', '#ff9ab8', '#ffd23f'], ['#fff', '#2b2b33', '#fff'], ['#c8917a', '#ffd9c2', '#fff'], ['#4cc9f0', '#7cc576', '#ffd23f']];
+const FW_KINDS = [{ k: 'heart', icon: '💗', label: 'Inimă' }, { k: 'star', icon: '⭐', label: 'Stea' }, { k: 'flower', icon: '🌸', label: 'Floare' }, { k: 'hamster', icon: '🐹', label: 'Hamster' }, { k: 'sunflower', icon: '🌻', label: 'Floarea-soarelui' }, { k: 'circle', icon: '✨', label: 'Sclipici' }];
+const FW_COLS = [['#ff4d6d', '#ff9ab8', '#fff'], ['#ffd23f', '#fff4b0', '#fff'], ['#c77dff', '#ff9ab8', '#ffd23f'], ['#fff', '#f3a95d', '#ffd0da'], ['#ffd23f', '#f3a95d', '#7a4a26'], ['#4cc9f0', '#7cc576', '#ffd23f']];
 const WISHES = [{ icon: '💕', label: 'Mereu împreună' }, { icon: '✈️', label: 'O vacanță' }, { icon: '🏡', label: 'Casă mai mare' }, { icon: '💰', label: 'Bani mulți' }, { icon: '🐶', label: 'Un cățel' }];
 export class NewYearShow extends Show {
   beatT = 0; beats = 0; good = 0; combo = 0; num = 10; shout = 0; kind = 0; rockets: { x: number; y: number; tx: number; ty: number; k: number; t: number }[] = []; fired = 0; aiT = 1;

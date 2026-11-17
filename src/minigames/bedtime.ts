@@ -18,8 +18,8 @@ const POSES = [
 
 /** povesti de seara (3 pagini fiecare) */
 const STORIES: { title: string; pages: [string, string][] }[] = [
-  { title: 'Ursulețul care nu putea dormi', pages: [['🌙', 'A fost odată un ursuleț care număra stelele ca să adoarmă.'], ['⭐', 'Într-o noapte, o stea a coborât și i-a spus: „Te ajut eu”.'], ['🛏️', 'L-a învelit cu o rază caldă… și ursulețul a adormit zâmbind.']] },
-  { title: 'Panda și norișorul', pages: [['☁️', 'Un norișor rătăcit plângea deasupra pădurii de bambus.'], ['🌳', 'O panda mică i-a făcut loc lângă ea, pe o creangă.'], ['☀️', 'Dimineața, norișorul i-a dăruit un curcubeu doar al ei.']] },
+  { title: 'Hamsterul care nu putea dormi', pages: [['🌙', 'A fost odată un hamster care număra stelele ca să adoarmă.'], ['⭐', 'Într-o noapte, o stea a coborât și i-a spus: „Te ajut eu”.'], ['🛏️', 'L-a învelit cu o rază caldă… și hamsterul a adormit zâmbind, cu obrajii plini.']] },
+  { title: 'Hamsterița și norișorul', pages: [['☁️', 'Un norișor rătăcit plângea deasupra câmpului de floarea-soarelui.'], ['🌻', 'O hamsteriță mică i-a făcut loc lângă ea, în culcușul ei pufos.'], ['☀️', 'Dimineața, norișorul i-a dăruit un curcubeu doar al ei.']] },
   { title: 'Căsuța din poiană', pages: [['🏡', 'Într-o poiană era o căsuță cu ferestre roz.'], ['🔥', 'Seara, cei doi locatari făceau focul și beau ceai.'], ['💕', 'Și oricât de rece era afară, înăuntru era mereu cald.']] },
   { title: 'Licuriciul curajos', pages: [['🌲', 'Un licurici mic se temea de întunericul din pădure.'], ['✨', 'Până a aflat că el e lumina pe care o așteaptă ceilalți.'], ['🌙', 'De atunci zboară în fiecare noapte, să nu se teamă nimeni.']] },
   { title: 'Scrisoarea pierdută', pages: [['💌', 'Vântul a luat o scrisoare de dragoste și a dus-o departe.'], ['🐦', 'O vrabie a găsit-o și a zburat trei zile cu ea în cioc.'], ['💗', 'A lăsat-o la fereastra potrivită, exact înainte de culcare.']] },

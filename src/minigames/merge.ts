@@ -569,7 +569,7 @@ export class MergeGame extends Panel {
     for (const side of [-1, 1]) {
       const px = W / 2 + side * (W * 0.36), py = cy + H * 0.05 + 6 - this.paw * 10 * (side > 0 ? 1 : 0.6);
       ctx.fillStyle = spec.body; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(px, py, 26, 16, 0, 0, 7); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = spec.id === 'dudu' ? '#ecc39a' : '#ffd3dd'; ctx.beginPath(); ctx.ellipse(px, py + 3, 9, 6, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = spec.id === 'dudu' ? '#ffd3cf' : '#ffd0da'; ctx.beginPath(); ctx.ellipse(px, py + 3, 9, 6, 0, 0, 7); ctx.fill();
       for (const k of [-10, 0, 10]) { ctx.beginPath(); ctx.ellipse(px + k, py - 7, 3, 2.4, 0, 0, 7); ctx.fill(); }
     }
     // produsul tras

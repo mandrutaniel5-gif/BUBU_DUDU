@@ -220,7 +220,8 @@ export function irisWipe(c: CanvasRenderingContext2D, w: number, h: number, open
  */
 export function drawDriverSide(c: CanvasRenderingContext2D, spec: CharSpec, x: number, y: number, s: number, t: number, steer: number, drive: boolean, wheel = true) {
   const body = spec.body, dark = spec.shade, isDudu = spec.id === 'dudu';
-  const pad = isDudu ? '#c8917a' : '#4a2a22';
+  const ham = spec.id === 'bubu' || spec.id === 'dudu';
+  const pad = ham ? (isDudu ? '#f59a92' : '#ff9fb6') : '#4a2a22';
   const bob = Math.sin(t * 9) * 0.8;
   c.save(); c.translate(x, y + bob); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round';
   const fill = (col: string, lw = 2.4) => { c.fillStyle = col; c.fill(); c.strokeStyle = O; c.lineWidth = lw; c.stroke(); };
@@ -247,6 +248,7 @@ export function drawDriverSide(c: CanvasRenderingContext2D, spec: CharSpec, x: n
   c.beginPath(); c.arc(-15, -4, 5, 0, 7); fill(spec.tail, 1.8); // codita
   // capul din profil: mare si rotund (ca la stickere), fata spre dreapta
   c.save(); c.translate(6, -56); c.rotate(-0.04 + steer * 0.12);
+  if (ham) { drawHamProfile(c, spec.id as 'bubu' | 'dudu', t); c.restore(); c.restore(); if (drive && wheel) drawWheelSide(c, x, y, s, bob, steer); return; }
   const earCol = spec.ear, inner = spec.earInner;
   // urechea din spate
   c.beginPath(); c.ellipse(-16, -26, 10, 10, 0, 0, 7); fill(earCol);
@@ -269,13 +271,62 @@ export function drawDriverSide(c: CanvasRenderingContext2D, spec: CharSpec, x: n
   c.restore();
   c.restore();
   // volanul (desenat peste labute), doar pentru sofer
-  if (drive && wheel) {
+  if (drive && wheel) drawWheelSide(c, x, y, s, bob, steer);
+}
+function drawWheelSide(c: CanvasRenderingContext2D, x: number, y: number, s: number, bob: number, steer: number) {
+  {
     c.save(); c.translate(x + 29 * s, y - 27 * s + bob);
     c.strokeStyle = '#333'; c.lineWidth = 3.5; c.beginPath(); c.moveTo(0, 0); c.lineTo(10, 30); c.stroke(); // coloana
     c.rotate(-0.45); c.lineWidth = 3.5; c.beginPath(); c.ellipse(0, 0, 4, 13, 0, 0, 7); c.stroke();
     c.save(); c.rotate(steer * 2); c.lineWidth = 2; c.beginPath(); c.moveTo(0, -12); c.lineTo(0, 12); c.stroke(); c.restore();
     c.restore();
   }
+}
+
+/** capul de hamster din profil (spre dreapta), in coordonatele capului vechi: centru ~ (0,0), barbia ~ +28 */
+function drawHamProfile(c: CanvasRenderingContext2D, id: 'bubu' | 'dudu', t: number) {
+  const ea = id === 'bubu';
+  const body = ea ? '#fffaf4' : '#f3a95d', shadeC = ea ? '#e8d3c6' : '#d98b3f', ear = ea ? '#fff3ea' : '#ec9b4d', earIn = ea ? '#ffc0cf' : '#ffc0a6';
+  const fill = (col: string | CanvasGradient, lw = 2.4) => { c.fillStyle = col; c.fill(); c.strokeStyle = O; c.lineWidth = lw; c.stroke(); };
+  // urechea din spate (si creionul lui de mester)
+  c.beginPath(); c.ellipse(-14, -27, 9, 8.6, -0.3, 0, 7); fill(ear);
+  if (!ea) { c.save(); c.translate(-4, -28); c.rotate(-0.75); c.beginPath(); c.rect(-20, -3, 30, 6); fill('#ffd34d', 1.8); c.beginPath(); c.moveTo(-20, -3); c.lineTo(-28, 0); c.lineTo(-20, 3); c.closePath(); fill('#f6d3a4', 1.8); c.restore(); }
+  // capul: rotund, cu obrazul plin si botul in fata
+  const head = () => { c.beginPath(); c.moveTo(-31, 4); c.bezierCurveTo(-32, -32, 24, -34, 31, -4); c.bezierCurveTo(35, 6, 33, 14, 26, 20); c.bezierCurveTo(18, 29, -2, 31, -14, 27); c.bezierCurveTo(-26, 23, -31, 15, -31, 4); c.closePath(); };
+  head(); c.fillStyle = body; c.fill();
+  c.save(); head(); c.clip();
+  if (ea) { c.fillStyle = '#f7c9a5'; c.globalAlpha = 0.85; c.beginPath(); c.ellipse(-8, -24, 20, 11, -0.2, 0, 7); c.fill(); c.globalAlpha = 1; }
+  else { c.fillStyle = '#fffaf1'; c.beginPath(); c.ellipse(18, 14, 18, 15, -0.2, 0, 7); c.fill(); c.beginPath(); c.ellipse(-2, 22, 18, 9, 0, 0, 7); c.fill(); }
+  c.fillStyle = shadeC; c.globalAlpha = 0.35; c.beginPath(); c.ellipse(-6, 30, 32, 9, 0, 0, 7); c.fill();
+  c.fillStyle = '#ffffff'; c.globalAlpha = 0.45; c.beginPath(); c.ellipse(-10, -20, 10, 4.5, -0.4, 0, 7); c.fill(); c.globalAlpha = 1;
+  c.restore();
+  head(); c.strokeStyle = O; c.lineWidth = 2.7; c.stroke();
+  // urechea din fata, cu interiorul roz
+  c.beginPath(); c.ellipse(2, -29, 10, 9.5, 0.25, 0, 7); fill(ear);
+  c.fillStyle = earIn; c.beginPath(); c.ellipse(2.5, -28, 6, 5.6, 0.25, 0, 7); c.fill();
+  if (ea) { // fundita roz
+    c.save(); c.translate(-12, -30); c.rotate(-0.4);
+    for (const s of [-1, 1]) { c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(s * 3, -8, s * 13, -8, s * 12, 0); c.bezierCurveTo(s * 13, 7, s * 3, 7, 0, 0); c.closePath(); fill('#ff7aa2', 1.8); }
+    c.beginPath(); c.arc(0, 0, 2.6, 0, 7); fill('#ff4d8a', 1.6); c.restore();
+  }
+  // obrajorul
+  const g = c.createRadialGradient(13, 13, 1, 13, 13, 10); g.addColorStop(0, ea ? 'rgba(255,159,184,0.9)' : 'rgba(255,143,132,0.9)'); g.addColorStop(1, 'rgba(255,159,184,0)');
+  c.fillStyle = g; c.beginPath(); c.ellipse(13, 13, 10, 8.5, 0, 0, 7); c.fill();
+  // ochiul lucios (clipeste)
+  const blink = (t % 3.6) < 0.12;
+  c.strokeStyle = O; c.lineWidth = 2.4;
+  if (blink) { c.beginPath(); c.arc(17, 0, 4.4, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke(); }
+  else {
+    c.fillStyle = '#2a160f'; c.beginPath(); c.ellipse(17, 0, 4.6, 5.6, 0, 0, 7); c.fill();
+    c.fillStyle = '#fff'; c.beginPath(); c.ellipse(15.6, -1.8, 1.9, 2, 0, 0, 7); c.fill(); c.beginPath(); c.arc(18.6, 2.2, 0.9, 0, 7); c.fill();
+    if (ea) { c.lineWidth = 1.6; c.beginPath(); c.moveTo(20, -4); c.lineTo(23, -6.5); c.moveTo(21.5, -1.5); c.lineTo(24.5, -2.5); c.stroke(); }
+  }
+  // nasucul roz, mustatile, gura cu dintisori
+  c.fillStyle = ea ? '#ff8aa5' : '#e8757d'; c.beginPath(); c.ellipse(32, 4, 3.2, 2.6, 0, 0, 7); c.fill(); c.lineWidth = 1.4; c.strokeStyle = O; c.stroke();
+  c.strokeStyle = 'rgba(74,42,34,0.3)'; c.lineWidth = 1; for (const k of [-2, 1.5]) { c.beginPath(); c.moveTo(26, 8 + k); c.lineTo(38, 6 + k * 2); c.stroke(); }
+  c.strokeStyle = O; c.lineWidth = 1.8; c.beginPath(); c.moveTo(31, 7); c.quadraticCurveTo(30, 11, 26.5, 11); c.stroke();
+  c.fillStyle = '#fff'; c.beginPath(); c.roundRect(27.5, 11, 3.4, 3.6, 1); c.fill(); c.lineWidth = 1.1; c.stroke();
+  if (!ea) { c.save(); c.translate(6, 31); for (const s of [-1, 1]) { c.beginPath(); c.moveTo(0, 0); c.lineTo(s * 8, -5); c.lineTo(s * 8, 5); c.closePath(); fill('#4f86e8', 1.6); } c.beginPath(); c.arc(0, 0, 2.4, 0, 7); fill('#3f73da', 1.4); c.restore(); }
 }
 
 function simpleWheel(c: CanvasRenderingContext2D, x: number, y: number, r: number, rot: number, tire = '#2b2b33', rim = '#e5e5e5') {
