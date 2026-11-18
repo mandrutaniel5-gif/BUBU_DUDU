@@ -5,6 +5,7 @@ import { Sfx } from '../engine/sfx';
 import { iconCanvas } from '../ui/icons';
 import { RECIPE, RECIPES, consumeList, ingIcon, type Recipe } from '../game/food';
 import type { WorldScene } from '../scenes/world';
+import { $t } from '../i18n';
 
 const O = '#3a2a22';
 const CHOP = new Set(['carrot', 'potato', 'tomato', 'cabbage', 'mushroom', 'veg', 'meat', 'fish', 'lemon', 'strawberry', 'berry', 'cheese', 'tulip', 'rose', 'sunflower', 'flower']);
@@ -22,7 +23,7 @@ export class CookGame extends Panel {
   knife = 0; spoon = 0; misses = 0;
   constructor(scene: WorldScene, done: (s: number) => void) {
     const rc = RECIPE[scene.cookRecipe ?? ''] ?? RECIPES[0];
-    super(scene, done, `${rc.icon} ${rc.name}`, rc.method === 'boil' || rc.method === 'cold' ? 'Atinge ingredientele (taie-le), apoi amestecă în cerc' : rc.method === 'oven' ? 'Atinge ingredientele, apoi scoate tava când e aurie' : 'Atinge ingredientele, apoi întoarce când e aurie');
+    super(scene, done, `${rc.icon} ${rc.name}`, rc.method === 'boil' || rc.method === 'cold' ? $t('Atinge ingredientele (taie-le), apoi amestecă în cerc') : rc.method === 'oven' ? $t('Atinge ingredientele, apoi scoate tava când e aurie') : $t('Atinge ingredientele, apoi întoarce când e aurie'));
     this.rc = rc; this.recipe = rc.id;
     const list = consumeList(scene.w.res ?? {}, rc);
     const flat: string[] = []; for (const [k, n] of list) for (let i = 0; i < n; i++) flat.push(k);
@@ -59,13 +60,13 @@ export class CookGame extends Panel {
     const m = this.rc.method;
     if (m === 'boil' || m === 'cold') {
       this.idle += dt;
-      if (m === 'boil' && this.idle > 2.6) { this.idle = 0; this.stuck++; this.fx.text(P.x, P.y - 70, 'Se prinde de fund! Amestecă! 😱', '#e63946', 0.8); Sfx.play('bad', { vol: 0.5 }); this.shake = 4; }
+      if (m === 'boil' && this.idle > 2.6) { this.idle = 0; this.stuck++; this.fx.text(P.x, P.y - 70, $t('Se prinde de fund! Amestecă! 😱'), '#e63946', 0.8); Sfx.play('bad', { vol: 0.5 }); this.shake = 4; }
       if (this.stir >= 1) this.serve(Math.max(0.2, 1 - this.stuck * 0.18));
     } else {
       // tigaie / cuptor: se rumeneste; atinge cand e auriu
       this.brown += dt * (m === 'oven' ? 0.22 : 0.34);
       if (this.flipT > 0) this.flipT = Math.max(0, this.flipT - dt * 2.2);
-      if (this.brown > 1.35) { this.fx.text(P.x, P.y - 70, 'S-a ars! 🔥', '#6d4c41', 1.1); this.fx.burst('puff', P.x, P.y - 20, 12, 3, 60, { color: '#555' }); Sfx.play('cough', { vol: 0.6 }); this.take(0.1); }
+      if (this.brown > 1.35) { this.fx.text(P.x, P.y - 70, $t('S-a ars! 🔥'), '#6d4c41', 1.1); this.fx.burst('puff', P.x, P.y - 20, 12, 3, 60, { color: '#555' }); Sfx.play('cough', { vol: 0.6 }); this.take(0.1); }
     }
   }
   plop(k: string) {
@@ -83,7 +84,7 @@ export class CookGame extends Panel {
     const m = this.rc.method;
     this.sideQ.push(q);
     const P = this.pot;
-    this.fx.text(P.x, P.y - 80, q > 0.8 ? 'Aurie, perfect! ✨' : q > 0.5 ? 'Bună!' : q > 0.2 ? 'Cam crudă / prea rumenă…' : 'Ups…', q > 0.8 ? '#2ec4b6' : q > 0.4 ? '#ff9f1c' : '#e63946', 0.9);
+    this.fx.text(P.x, P.y - 80, q > 0.8 ? $t('Aurie, perfect! ✨') : q > 0.5 ? $t('Bună!') : q > 0.2 ? $t('Cam crudă / prea rumenă…') : $t('Ups…'), q > 0.8 ? '#2ec4b6' : q > 0.4 ? '#ff9f1c' : '#e63946', 0.9);
     if (m === 'oven' || this.side >= 1) { this.serve(this.sideQ.reduce((a, b) => a + b, 0) / this.sideQ.length); return; }
     this.side++; this.brown = 0; this.flipT = 1; Sfx.play('whoosh'); Sfx.play('pan', { vol: 0.25, delay: 0.3 }); this.hero.play('wave');
   }
@@ -93,7 +94,7 @@ export class CookGame extends Panel {
     Sfx.play('clink'); if (q > 0.6) { Sfx.play('good', { vol: 0.6, delay: 0.2 }); this.hero.play('laugh'); } else this.hero.play('shy');
     const P = this.pot; this.fx.hearts(P.x, P.y - 40, q > 0.8 ? 8 : 4);
     const extra = q > 0.8 ? 1 : 0;
-    this.finish(1 + q, q > 0.8 ? `${this.rc.name}: PERFECT! +${this.rc.portions + extra} porții 💕` : q > 0.45 ? `${this.rc.name} gata! +${this.rc.portions} porții` : `Se poate mânca… 😅 +${this.rc.portions} porții`);
+    this.finish(1 + q, q > 0.8 ? $t('{0}: PERFECT! +{1} porții 💕', this.rc.name, this.rc.portions + extra) : q > 0.45 ? $t('{0} gata! +{1} porții', this.rc.name, this.rc.portions) : $t('Se poate mânca… 😅 +{0} porții', this.rc.portions));
   }
   tapItem(x: number, y: number) {
     const s = Math.min(64, this.box.w * 0.11);
@@ -178,19 +179,19 @@ export class CookGame extends Panel {
     // indicatorul de sus
     const bx = x + 40, bw = w - 80, by = y + 52;
     ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = O;
-    if (this.phase === 'prep') { const left = this.items.filter(i => !i.inPot && !i.fly).length; ctx.fillText(left ? `Pregătește ingredientele: ${this.items.length - left}/${this.items.length}` : 'Le punem la gătit…', x + w / 2, by + 14); }
+    if (this.phase === 'prep') { const left = this.items.filter(i => !i.inPot && !i.fly).length; ctx.fillText(left ? $t('Pregătește ingredientele: {0}/{1}', this.items.length - left, this.items.length) : $t('Le punem la gătit…'), x + w / 2, by + 14); }
     else if (this.phase === 'cook') {
       ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by, bw, 24, 12); ctx.fill(); ctx.stroke();
       if (m === 'boil' || m === 'cold') {
         ctx.fillStyle = '#9be38f'; ctx.beginPath(); ctx.roundRect(bx + 3, by + 3, (bw - 6) * this.stir, 18, 9); ctx.fill();
-        ctx.fillStyle = O; ctx.fillText(m === 'cold' ? 'Amestecă în cerc! 🥄' : this.stuck ? 'Amestecă mereu, să nu se prindă! 🥄' : 'Amestecă în cerc cu lingura 🥄', x + w / 2, by + 46);
+        ctx.fillStyle = O; ctx.fillText(m === 'cold' ? $t('Amestecă în cerc! 🥄') : this.stuck ? $t('Amestecă mereu, să nu se prindă! 🥄') : $t('Amestecă în cerc cu lingura 🥄'), x + w / 2, by + 46);
       } else {
         // zona aurie
         const z0 = 0.86 - 0.18, z1 = 0.86 + 0.18;
         ctx.fillStyle = '#ffe08a'; ctx.beginPath(); ctx.roundRect(bx + bw * z0 / 1.35, by + 3, bw * (z1 - z0) / 1.35, 18, 9); ctx.fill();
         ctx.fillStyle = '#6d4c41'; ctx.beginPath(); ctx.roundRect(bx + bw * 1.15 / 1.35, by + 3, bw * 0.2 / 1.35 - 3, 18, 9); ctx.fill();
         const mx = bx + bw * Math.min(1.35, this.brown) / 1.35; ctx.fillStyle = '#ff4d6d'; ctx.fillRect(mx - 2, by - 4, 4, 32);
-        ctx.fillStyle = O; ctx.fillText(m === 'oven' ? 'Scoate tava când e aurie! (atinge)' : this.side ? 'Și pe partea cealaltă… atinge la auriu!' : 'Întoarce când e aurie! (atinge)', x + w / 2, by + 46);
+        ctx.fillStyle = O; ctx.fillText(m === 'oven' ? $t('Scoate tava când e aurie! (atinge)') : this.side ? $t('Și pe partea cealaltă… atinge la auriu!') : $t('Întoarce când e aurie! (atinge)'), x + w / 2, by + 46);
       }
     } else { const ic = iconCanvas(this.rc.icon, 160); if (ic) { const s2 = Math.min(110, h * 0.22); ctx.drawImage(ic, x + w / 2 - s2 / 2, y + h * 0.16, s2, s2); } }
   }

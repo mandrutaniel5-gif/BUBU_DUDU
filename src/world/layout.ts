@@ -9,6 +9,7 @@
 // Fiecare zona veche (casa, padurea, satul, orasul) e pusa intreaga la locul ei (ORIGIN), cu
 // coordonatele ei de acum + offset. Casa ramane la (0,0), deci tot ce era salvat acasa ramane valabil.
 
+import { $t } from '../i18n';
 export interface Pt { x: number; y: number }
 
 /** marginile lumii [x0, x1) x [y0, y1) */
@@ -36,14 +37,14 @@ export const at = (o: Pt, x: number, y: number): Pt => ({ x: o.x + x, y: o.y + y
 /** regiunile lumii (pentru "unde sunt?", ambianta, harta). Prima care contine punctul castiga. */
 export interface Region { id: string; name: string; icon: string; x0: number; y0: number; x1: number; y1: number }
 export const REGIONS: Region[] = [
-  { id: 'forest', name: 'Pădurea', icon: '🌲', x0: -24, y0: -48, x1: 64, y1: -8 },
-  { id: 'home', name: 'Acasă', icon: '🏡', x0: -8, y0: -8, x1: 44, y1: 34 },
-  { id: 'village', name: 'Satul', icon: '🏘️', x0: 98, y0: -8, x1: 150, y1: 54 },
-  { id: 'city', name: 'Orașul', icon: '🏙️', x0: 176, y0: -14, x1: 252, y1: 72 },
-  { id: 'lake', name: 'Lacul', icon: '🏞️', x0: 44, y0: -8, x1: 98, y1: 35 },
-  { id: 'woods', name: 'Pădurea de pe deal', icon: '🌲', x0: 64, y0: -48, x1: 176, y1: -8 },
+  { id: 'forest', name: $t('Pădurea'), icon: '🌲', x0: -24, y0: -48, x1: 64, y1: -8 },
+  { id: 'home', name: $t('Acasă'), icon: '🏡', x0: -8, y0: -8, x1: 44, y1: 34 },
+  { id: 'village', name: $t('Satul'), icon: '🏘️', x0: 98, y0: -8, x1: 150, y1: 54 },
+  { id: 'city', name: $t('Orașul'), icon: '🏙️', x0: 176, y0: -14, x1: 252, y1: 72 },
+  { id: 'lake', name: $t('Lacul'), icon: '🏞️', x0: 44, y0: -8, x1: 98, y1: 35 },
+  { id: 'woods', name: $t('Pădurea de pe deal'), icon: '🌲', x0: 64, y0: -48, x1: 176, y1: -8 },
 ];
-export const COUNTRY: Region = { id: 'country', name: 'Câmpia', icon: '🌾', x0: WORLD.x0, y0: WORLD.y0, x1: WORLD.x1, y1: WORLD.y1 };
+export const COUNTRY: Region = { id: 'country', name: $t('Câmpia'), icon: '🌾', x0: WORLD.x0, y0: WORLD.y0, x1: WORLD.x1, y1: WORLD.y1 };
 export function regionAt(x: number, y: number): Region {
   for (const r of REGIONS) if (x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1) return r;
   return COUNTRY;
@@ -72,11 +73,11 @@ export const FOREST_TRACK: Pt[] = [{ x: 20, y: -3.5 }, { x: 20, y: -12.5 }, { x:
 /** destinatiile bicicletei si ale scuterului, de-a lungul drumului mare (ordinea de pe drum) */
 export interface Dest { id: string; name: string; icon: string; x: number; y: number; park: { gx: number; gy: number } }
 export const DESTS: Dest[] = [
-  { id: 'home', name: 'Acasă', icon: '🏡', x: 4, y: 25, park: { gx: 4, gy: 23 } },
-  { id: 'sawmill', name: 'Cheresteaua', icon: '🪚', x: 30, y: 25, park: { gx: 25, gy: 22 } },
-  { id: 'lake', name: 'Lacul', icon: '🏞️', x: 80, y: 37, park: { gx: 79, gy: 35 } },
-  { id: 'village', name: 'Satul', icon: '🏘️', x: 101.5, y: 25, park: { gx: 99, gy: 27 } },
-  { id: 'city', name: 'Orașul', icon: '🏙️', x: 196.5, y: 25, park: { gx: 196, gy: 27 } },
+  { id: 'home', name: $t('Acasă'), icon: '🏡', x: 4, y: 25, park: { gx: 4, gy: 23 } },
+  { id: 'sawmill', name: $t('Cheresteaua'), icon: '🪚', x: 30, y: 25, park: { gx: 25, gy: 22 } },
+  { id: 'lake', name: $t('Lacul'), icon: '🏞️', x: 80, y: 37, park: { gx: 79, gy: 35 } },
+  { id: 'village', name: $t('Satul'), icon: '🏘️', x: 101.5, y: 25, park: { gx: 99, gy: 27 } },
+  { id: 'city', name: $t('Orașul'), icon: '🏙️', x: 196.5, y: 25, park: { gx: 196, gy: 27 } },
 ];
 export const DEST_BY_ID: Record<string, Dest> = Object.fromEntries(DESTS.map(d => [d.id, d]));
 /** opririle (pe drum) */

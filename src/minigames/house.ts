@@ -3,6 +3,7 @@ import { Panel } from './base';
 import { Sfx } from '../engine/sfx';
 import type { WorldScene } from '../scenes/world';
 import { drawItem } from '../world/items';
+import { $t } from '../i18n';
 
 const O = '#3a2a22';
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
@@ -27,7 +28,7 @@ export class FridgeCleanGame extends Panel {
   stains: { x: number; y: number; d: number }[] = [];
   phase: 'sort' | 'wipe' = 'sort'; mistakes = 0; down = false; lx = 0; ly = 0;
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, '🧊 Curăță frigiderul', 'Atinge mâncarea STRICATĂ ca s-o arunci. Nu arunca ce e bun!');
+    super(s, d, $t('🧊 Curăță frigiderul'), $t('Atinge mâncarea STRICATĂ ca s-o arunci. Nu arunca ce e bun!'));
     const good = ['veg:0', 'sweet:2', 'drink:0', 'veg:1', 'sweet:3'];
     const spots: [number, number][] = [];
     for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) spots.push([0.25 + c * 0.17, 0.3 + r * 0.2]);
@@ -38,8 +39,8 @@ export class FridgeCleanGame extends Panel {
   }
   tick(dt: number) {
     for (const it of this.items) if (it.gone > 0) it.gone += dt * 2;
-    if (this.phase === 'sort' && this.items.filter(i => i.bad && !i.gone).length === 0) { this.phase = 'wipe'; this.help = 'Acum șterge petele cu buretele (trage cu degetul)'; this.fx.text(this.box.x + this.box.w / 2, this.box.y + 70, 'Gata gunoiul! Acum petele 🧽', '#2ec4b6', 1); }
-    if (this.phase === 'wipe' && this.stains.every(s => s.d <= 0)) this.finish(1.5 - this.mistakes * 0.2, 'Frigider strălucitor! ✨🧊');
+    if (this.phase === 'sort' && this.items.filter(i => i.bad && !i.gone).length === 0) { this.phase = 'wipe'; this.help = $t('Acum șterge petele cu buretele (trage cu degetul)'); this.fx.text(this.box.x + this.box.w / 2, this.box.y + 70, $t('Gata gunoiul! Acum petele 🧽'), '#2ec4b6', 1); }
+    if (this.phase === 'wipe' && this.stains.every(s => s.d <= 0)) this.finish(1.5 - this.mistakes * 0.2, $t('Frigider strălucitor! ✨🧊'));
   }
   pointer(type: string, x: number, y: number) {
     const B = this.box;
@@ -48,8 +49,8 @@ export class FridgeCleanGame extends Panel {
       for (const it of this.items) {
         if (it.gone) continue;
         if (Math.hypot(x - (B.x + it.x * B.w), y - (B.y + it.y * B.h)) < 30) {
-          if (it.bad) { it.gone = 0.01; Sfx.play('squelch'); this.fx.text(x, y - 30, ['Bleah!', 'Puah!', 'La gunoi!', 'Iiiu!'][Math.floor(Math.random() * 4)], '#7cb342', 0.9); }
-          else { this.mistakes++; Sfx.play('bad'); this.shake = 4; this.fx.text(x, y - 30, 'E bun! Nu-l arunca 😱', '#e63946', 0.9); }
+          if (it.bad) { it.gone = 0.01; Sfx.play('squelch'); this.fx.text(x, y - 30, ['Bleah!', 'Puah!', $t('La gunoi!'), 'Iiiu!'][Math.floor(Math.random() * 4)], '#7cb342', 0.9); }
+          else { this.mistakes++; Sfx.play('bad'); this.shake = 4; this.fx.text(x, y - 30, $t('E bun! Nu-l arunca 😱'), '#e63946', 0.9); }
           return;
         }
       }
@@ -63,7 +64,7 @@ export class FridgeCleanGame extends Panel {
       for (const s of this.stains) if (Math.hypot(x - (B.x + s.x * B.w), y - (B.y + s.y * B.h)) < 55 && s.d > 0) {
         s.d -= Math.min(d, 40) / 260;
         if (Math.random() < 0.35) this.fx.emit('sparkle', x, y, { vy: -25, max: 0.5, size: 0.6 });
-        if (s.d <= 0) { Sfx.play('good'); this.fx.text(B.x + s.x * B.w, B.y + s.y * B.h - 20, 'Curat! ✨', '#2ec4b6', 0.8); }
+        if (s.d <= 0) { Sfx.play('good'); this.fx.text(B.x + s.x * B.w, B.y + s.y * B.h - 20, $t('Curat! ✨'), '#2ec4b6', 0.8); }
       }
     }
   }
@@ -110,7 +111,7 @@ export class FridgeCleanGame extends Panel {
     }
     // cosul de gunoi
     ctx.fillStyle = '#8e9aaf'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + w * 0.88, y + h * 0.78); ctx.lineTo(x + w * 0.98, y + h * 0.78); ctx.lineTo(x + w * 0.96, y + h * 0.95); ctx.lineTo(x + w * 0.9, y + h * 0.95); ctx.closePath(); ctx.fill(); ctx.stroke();
-    T(ctx, this.phase === 'sort' ? `Stricate rămase: ${this.items.filter(i => i.bad && !i.gone).length}` : `Pete: ${this.stains.filter(s => s.d > 0).length}`, x + w / 2, y + 48, 15);
+    T(ctx, this.phase === 'sort' ? $t('Stricate rămase: {0}', this.items.filter(i => i.bad && !i.gone).length) : $t('Pete: {0}', this.stains.filter(s => s.d > 0).length), x + w / 2, y + 48, 15);
   }
 }
 
@@ -118,13 +119,13 @@ export class FridgeCleanGame extends Panel {
 export class TubScrubGame extends Panel {
   grime: { x: number; y: number; r: number; d: number }[] = []; down = false; lx = 0; ly = 0; foam: { x: number; y: number; r: number; t: number }[] = []; dur = 30;
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, '🛁 Spală cada', 'Freacă petele de murdărie cu peria (trage cu degetul)');
+    super(s, d, $t('🛁 Spală cada'), $t('Freacă petele de murdărie cu peria (trage cu degetul)'));
     for (let i = 0; i < 9; i++) this.grime.push({ x: rnd(0.22, 0.78), y: rnd(0.45, 0.72), r: rnd(18, 32), d: 1 });
   }
   tick(dt: number) {
     this.foam.forEach(f => (f.t += dt)); this.foam = this.foam.filter(f => f.t < 3);
-    if (this.grime.every(g => g.d <= 0)) this.finish(1 + (this.dur - this.t) / this.dur, 'Cada sclipește! 🛁✨');
-    else if (this.t > this.dur) this.finish(this.grime.filter(g => g.d <= 0).length >= 6 ? 0.6 : 0, 'Mai e de frecat… 😅');
+    if (this.grime.every(g => g.d <= 0)) this.finish(1 + (this.dur - this.t) / this.dur, $t('Cada sclipește! 🛁✨'));
+    else if (this.t > this.dur) this.finish(this.grime.filter(g => g.d <= 0).length >= 6 ? 0.6 : 0, $t('Mai e de frecat… 😅'));
   }
   pointer(type: string, x: number, y: number) {
     const B = this.box;
@@ -164,28 +165,28 @@ export class TvFixGame extends Panel {
   drag: { i: number; x: number; y: number } | null = null;
   phase: 'wires' | 'smack' = 'wires'; signal = 0; smacks = 0;
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, '📺 Repară televizorul', 'Leagă firele la culoarea potrivită (trage din stânga în dreapta)');
+    super(s, d, $t('📺 Repară televizorul'), $t('Leagă firele la culoarea potrivită (trage din stânga în dreapta)'));
     this.sockets = [0, 1, 2].sort(() => Math.random() - 0.5);
   }
   pos(side: 'L' | 'R', i: number) { const B = this.box; return { x: B.x + B.w * (side === 'L' ? 0.14 : 0.86), y: B.y + B.h * (0.62 + i * 0.1) }; }
   tick(dt: number) {
-    if (this.phase === 'wires' && this.linked.every(Boolean)) { this.phase = 'smack'; this.help = 'Încă se strică imaginea… dă-i o palmă pe lateral când clipește VERDE! 😤'; }
-    if (this.phase === 'smack') { this.signal = Math.max(0, this.signal - dt * 0.15); if (this.signal >= 1) this.finish(1.5, 'Merge televizorul! 📺🎉'); }
+    if (this.phase === 'wires' && this.linked.every(Boolean)) { this.phase = 'smack'; this.help = $t('Încă se strică imaginea… dă-i o palmă pe lateral când clipește VERDE! 😤'); }
+    if (this.phase === 'smack') { this.signal = Math.max(0, this.signal - dt * 0.15); if (this.signal >= 1) this.finish(1.5, $t('Merge televizorul! 📺🎉')); }
   }
   get glow() { return Math.sin(this.t * 3.2) > 0.55; }
   pointer(type: string, x: number, y: number) {
     if (this.phase === 'smack') {
       if (type !== 'down') return;
       this.smacks++; this.shake = 8; Sfx.play('metal_hit', { vol: 0.7 });
-      if (this.glow) { this.signal += 0.36; this.fx.text(x, y - 30, 'PAF! 📶', '#2ec4b6', 1.1); }
-      else { this.signal = Math.max(0, this.signal - 0.1); this.fx.text(x, y - 30, 'Prea devreme!', '#e63946', 0.9); }
+      if (this.glow) { this.signal += 0.36; this.fx.text(x, y - 30, $t('PAF! 📶'), '#2ec4b6', 1.1); }
+      else { this.signal = Math.max(0, this.signal - 0.1); this.fx.text(x, y - 30, $t('Prea devreme!'), '#e63946', 0.9); }
       return;
     }
     if (type === 'down') { for (const i of [0, 1, 2]) { const p = this.pos('L', i); if (!this.linked[i] && Math.hypot(x - p.x, y - p.y) < 30) { this.drag = { i, x, y }; Sfx.play('click'); } } }
     if (type === 'move' && this.drag) { this.drag.x = x; this.drag.y = y; }
     if (type === 'up' && this.drag) {
       const i = this.drag.i; this.drag = null;
-      for (const k of [0, 1, 2]) { const p = this.pos('R', k); if (Math.hypot(x - p.x, y - p.y) < 36) { if (this.sockets[k] === i) { this.linked[i] = true; Sfx.play('good'); this.fx.burst('sparkle', p.x, p.y, 8, 6.28, 90, { color: this.colors[i] }); } else { Sfx.play('bad'); this.shake = 4; this.fx.text(p.x, p.y - 30, 'Bzzzt! ⚡', '#ffb703', 1); this.fx.burst('star', p.x, p.y, 5, 6.28, 120, { max: 0.5 }); } } }
+      for (const k of [0, 1, 2]) { const p = this.pos('R', k); if (Math.hypot(x - p.x, y - p.y) < 36) { if (this.sockets[k] === i) { this.linked[i] = true; Sfx.play('good'); this.fx.burst('sparkle', p.x, p.y, 8, 6.28, 90, { color: this.colors[i] }); } else { Sfx.play('bad'); this.shake = 4; this.fx.text(p.x, p.y - 30, $t('Bzzzt! ⚡'), '#ffb703', 1); this.fx.burst('star', p.x, p.y, 5, 6.28, 120, { max: 0.5 }); } } }
     }
   }
   key(k: string, d: boolean) {

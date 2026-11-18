@@ -14,9 +14,10 @@ import type { NetConfig } from '../net/types';
 import type { CharId } from '../char/draw';
 import { createHouse, joinHouse, normCode, watchSeats, type Seats } from '../net/house';
 import { seatTaken } from '../net/adapters';
+import { $t } from '../i18n';
 
 // 1.13.0: personajele nu mai au nume fixe. Pana se stie numele (din salvare), scrie cine e: ea (hamsterita alba) / el (hamsterul auriu)
-const ROLE: Record<CharId, string> = { bubu: 'Ea (hamsterița)', dudu: 'El (hamsterul)' } as Record<CharId, string>;
+const ROLE: Record<CharId, string> = { bubu: $t('Ea (hamsterița)'), dudu: $t('El (hamsterul)') } as Record<CharId, string>;
 /** numele din salvarea casei de pe telefonul asta (al tau si al partenerului, daca a intrat vreodata) */
 function houseNames(room: string): Partial<Record<CharId, string>> {
   try { const raw = localStorage.getItem('bd-save-' + room); if (!raw) return {}; const w = JSON.parse(JSON.parse(raw).json); return { bubu: cleanName(w?.chars?.bubu?.name), dudu: cleanName(w?.chars?.dudu?.name) }; } catch { return {}; }
@@ -27,7 +28,7 @@ const other = (w: CharId): CharId => (w === 'bubu' ? 'dudu' : 'bubu');
 const esc = (t: string) => t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
 /** ce scrie pe cartonasul casei (din salvarea de pe telefon): capitolul si ziua */
 function saveInfo(room: string): string {
-  try { const raw = localStorage.getItem('bd-save-' + room); if (!raw) return 'Încă n-ați jucat pe telefonul ăsta'; const w = JSON.parse(JSON.parse(raw).json); return `Capitolul ${w?.stats?.chapter ?? 0} · Ziua ${w?.day ?? 1}`; }
+  try { const raw = localStorage.getItem('bd-save-' + room); if (!raw) return $t('Încă n-ați jucat pe telefonul ăsta'); const w = JSON.parse(JSON.parse(raw).json); return `Capitolul ${w?.stats?.chapter ?? 0} · Ziua ${w?.day ?? 1}`; }
   catch { return ''; }
 }
 
@@ -56,28 +57,28 @@ export class MenuScene implements Scene {
     this.ui.innerHTML = `
       <div class="menu-card">
         <h1>${GAME_NAME.includes(' & ') ? GAME_NAME.split(' & ').map(esc).join(' <span>&</span> ') : esc(GAME_NAME)}</h1>
-        <p class="tag">Căsuța noastră 🏡💕</p>
-        <label class="myname">Numele tău <input name="myname" maxlength="14" autocomplete="nickname" placeholder="ex. Ana" value="${esc(cleanName(s.myName))}" /></label>
+        <p class="tag">${$t('Căsuța noastră 🏡💕')}</p>
+        <label class="myname">${$t('Numele tău')} <input name="myname" maxlength="14" autocomplete="nickname" placeholder="ex. Ana" value="${esc(cleanName(s.myName))}" /></label>
         <div class="tabs2">
-          <button data-tab="online">🌍 Online<small>cu partenerul</small></button>
-          <button data-tab="offline">📴 Offline<small>singur, fără internet</small></button>
+          <button data-tab="online">${$t('🌍 Online')}<small>${$t('cu partenerul')}</small></button>
+          <button data-tab="offline">${$t('📴 Offline')}<small>${$t('singur, fără internet')}</small></button>
         </div>
         <div class="pane p-online">
           <div class="houses"></div>
-          <div class="row2 hbtns"><button class="h-new">✨ Casă nouă</button><button class="h-joinopen">🔑 Intră la partener</button></div>
+          <div class="row2 hbtns"><button class="h-new">${$t('✨ Casă nouă')}</button><button class="h-joinopen">${$t('🔑 Intră la partener')}</button></div>
         </div>
         <div class="pane p-offline">
-          <p class="sub2">Joci pe telefonul ăsta. Partenerul e jucat de calculator.</p>
+          <p class="sub2">${$t('Joci pe telefonul ăsta. Partenerul e jucat de calculator.')}</p>
           <div class="who2">
-            <button data-who="bubu">🐹<b>Ea</b><small>hamsterița albă</small></button>
-            <button data-who="dudu">🐹<b>El</b><small>hamsterul auriu</small></button>
+            <button data-who="bubu">🐹<b>${$t('Ea')}</b><small>${$t('hamsterița albă')}</small></button>
+            <button data-who="dudu">🐹<b>${$t('El')}</b><small>${$t('hamsterul auriu')}</small></button>
           </div>
-          <label class="myname">Numele partenerului <input name="pname" maxlength="14" placeholder="ex. Mihai" value="${esc(cleanName(s.partnerName))}" /></label>
-          <button class="play">▶ Joacă</button>
-          <div class="row2"><button class="reset">🔄 Joc nou (Offline)</button></div>
+          <label class="myname">${$t('Numele partenerului')} <input name="pname" maxlength="14" placeholder="ex. Mihai" value="${esc(cleanName(s.partnerName))}" /></label>
+          <button class="play">${$t('▶ Joacă')}</button>
+          <div class="row2"><button class="reset">${$t('🔄 Joc nou (Offline)')}</button></div>
         </div>
-        <div class="row2"><button class="export" title="Salvează progresul într-un fișier">💾 Salvează</button><button class="import" title="Încarcă progresul dintr-un fișier">📂 Încarcă</button><button class="more">⚙ Setări</button></div>
-        <p class="ver">v${pkg.version} · făcut cu 💕 pentru noi doi</p>
+        <div class="row2"><button class="export" title="Salvează progresul într-un fișier">${$t('💾 Salvează')}</button><button class="import" title="Încarcă progresul dintr-un fișier">${$t('📂 Încarcă')}</button><button class="more">${$t('⚙ Setări')}</button></div>
+        <p class="ver">${$t('v{0} · făcut cu 💕 pentru noi doi', pkg.version)}</p>
       </div>`;
     document.getElementById('ui')!.appendChild(this.ui);
     this.showTab(this.tab);
@@ -87,7 +88,7 @@ export class MenuScene implements Scene {
     this.ui.querySelector('[name=pname]')!.addEventListener('input', e => Settings.set({ partnerName: cleanName((e.target as HTMLInputElement).value) }));
     Sfx.setMuted(s.muted);
     // mesaj lasat de joc (ex. „Bubu e deja in casa pe alt telefon”)
-    try { const m = sessionStorage.getItem('bd-menu-msg'); if (m) { sessionStorage.removeItem('bd-menu-msg'); setTimeout(() => this.notice('🚪 Locul e ocupat', m), 200); } } catch { /* */ }
+    try { const m = sessionStorage.getItem('bd-menu-msg'); if (m) { sessionStorage.removeItem('bd-menu-msg'); setTimeout(() => this.notice($t('🚪 Locul e ocupat'), m), 200); } } catch { /* */ }
   }
   exit() { this.unwatch?.(); this.unwatch = null; this.ui.remove(); }
 
@@ -116,7 +117,7 @@ export class MenuScene implements Scene {
     const box = this.ui.querySelector('.houses') as HTMLElement | null; if (!box) return;
     const list = Settings.get().houses ?? [];
     if (!list.length) {
-      box.innerHTML = `<div class="hempty"><b>Nu aveți încă o casă.</b><br>Unul dintre voi apasă <b>✨ Casă nouă</b> și îi spune celuilalt codul și parola. Celălalt apasă <b>🔑 Intră la partener</b>.</div>`;
+      box.innerHTML = `<div class="hempty"><b>${$t('Nu aveți încă o casă.')}</b><br>${$t('Unul dintre voi apasă')} <b>${$t('✨ Casă nouă')}</b> ${$t('și îi spune celuilalt codul și parola. Celălalt apasă')} <b>${$t('🔑 Intră la partener')}</b>.</div>`;
       return;
     }
     box.innerHTML = list.map(h => {
@@ -126,13 +127,13 @@ export class MenuScene implements Scene {
       const pick = this.pickOf(h);
       const seat = (w: CharId) => {
         const st = this.seatState(h, w);
-        const sub = st === 'busy' ? '🟢 e în joc' : pick === w ? '✔ tu' : 'liber';
+        const sub = st === 'busy' ? $t('🟢 e în joc') : pick === w ? $t('✔ tu') : $t('liber');
         return `<button data-seat="${w}" data-room="${h.room}" class="${st === 'busy' ? 'busy' : ''} ${pick === w ? 'mine' : ''}">${ICON[w]} ${esc(label(w, h.room))}<small>${sub}</small></button>`;
       };
       return `<div class="hcard"><div class="hc-top"><b>🏠 ${esc(h.code)}</b><small>${esc(saveInfo(h.room))}</small>
         <span class="hc-n" title="Câți sunteți acum în casă">${known ? `${n}/2` : '·/2'}</span><button class="hc-x" data-forget="${h.room}" title="Scoate casa din listă">✕</button></div>
         <div class="hc-seats">${seat('bubu')}${seat('dudu')}</div>
-        <button class="hc-enter" data-enter="${h.room}" ${pick ? '' : 'disabled'}>${pick ? `▶ Intră ca ${esc(pick === h.who && cleanName(Settings.get().myName) ? cleanName(Settings.get().myName) : label(pick, h.room))}` : 'Casa e plină'}</button></div>`;
+        <button class="hc-enter" data-enter="${h.room}" ${pick ? '' : 'disabled'}>${pick ? $t('▶ Intră ca {0}', esc(pick === h.who && cleanName(Settings.get().myName) ? cleanName(Settings.get().myName) : label(pick, h.room))) : $t('Casa e plină')}</button></div>`;
     }).join('');
   }
 
@@ -159,7 +160,7 @@ export class MenuScene implements Scene {
     if (c.contains('more')) { this.showSettings(); return; }
     if (c.contains('credits')) { this.showCredits(); return; }
     if (c.contains('errs')) { this.showErrors(); return; }
-    if (c.contains('errcopy')) { const t = `${GAME_NAME} v${pkg.version} · ${navigator.userAgent}\n` + ErrorLog.text(); navigator.clipboard?.writeText(t).then(() => { b.textContent = '✔ Copiat'; }).catch(() => { b.textContent = 'Ține apăsat pe text → Copiază'; }); return; }
+    if (c.contains('errcopy')) { const t = `${GAME_NAME} v${pkg.version} · ${navigator.userAgent}\n` + ErrorLog.text(); navigator.clipboard?.writeText(t).then(() => { b.textContent = '✔ Copiat'; }).catch(() => { b.textContent = $t('Ține apăsat pe text → Copiază'); }); return; }
     if (c.contains('errclear')) { ErrorLog.clear(); this.showErrors(); return; }
     if (c.contains('eco')) { const on = !isEco(); Settings.set({ eco: on }); b.textContent = on ? '🔋 Eco: pornit' : '⚡ Eco: oprit'; dispatchEvent(new Event('resize')); return; }
     if (c.contains('mute')) { const m = !Settings.get().muted; Settings.set({ muted: m }); Sfx.setMuted(m); b.textContent = m ? '🔇 Sunet: oprit' : '🔊 Sunet: pornit'; return; }
@@ -169,14 +170,14 @@ export class MenuScene implements Scene {
     if (c.contains('reset')) { this.resetOffline(b); return; }
     if (c.contains('devlocal')) { Settings.set({ net: { ...Settings.get().net, mode: 'local', room: 'test-local', code: undefined } }); this.game.go('world'); return; }
     if (c.contains('devworld')) { Settings.set({ net: { ...Settings.get().net, mode: 'solo', room: DEV_ROOM, code: undefined } }); this.game.go('world'); return; }
-    if (c.contains('devreset')) { if (confirm('Ștergi lumea de test și o iei de la capăt?')) { try { localStorage.removeItem('bd-save-' + DEV_ROOM); } catch { /* */ } b.textContent = '✔ Ștearsă'; } return; }
-    if (c.contains('tester')) { const v = !(localStorage.getItem('bd-tester') === '1'); Bugs.setOn(v); b.textContent = v ? '🐞 Mod tester: pornit' : '🐞 Pornește modul tester'; Sfx.play(v ? 'good' : 'click'); return; }
+    if (c.contains('devreset')) { if (confirm($t('Ștergi lumea de test și o iei de la capăt?'))) { try { localStorage.removeItem('bd-save-' + DEV_ROOM); } catch { /* */ } b.textContent = $t('✔ Ștearsă'); } return; }
+    if (c.contains('tester')) { const v = !(localStorage.getItem('bd-tester') === '1'); Bugs.setOn(v); b.textContent = v ? $t('🐞 Mod tester: pornit') : $t('🐞 Pornește modul tester'); Sfx.play(v ? 'good' : 'click'); return; }
     if (c.contains('bugs')) { this.showBugs(); return; }
     if (c.contains('bugexp')) { Bugs.exportFile(); return; }
-    if (c.contains('bugup')) { b.textContent = 'Se trimite…'; Bugs.upload().then(() => { const n = Bugs.all().filter(r => !r.up).length; b.textContent = n ? `☁️ ${n} n-au ajuns (fără internet sau fără reguli)` : '✔ Toate au ajuns'; }); return; }
-    if (c.contains('bugclr')) { if (confirm('Ștergi toate rapoartele de pe telefon?')) { Bugs.clear(); this.showBugs(); } return; }
+    if (c.contains('bugup')) { b.textContent = 'Se trimite…'; Bugs.upload().then(() => { const n = Bugs.all().filter(r => !r.up).length; b.textContent = n ? $t('☁️ {0} n-au ajuns (fără internet sau fără reguli)', n) : $t('✔ Toate au ajuns'); }); return; }
+    if (c.contains('bugclr')) { if (confirm($t('Ștergi toate rapoartele de pe telefon?'))) { Bugs.clear(); this.showBugs(); } return; }
     if (c.contains('devoff')) { lockDev(); location.reload(); return; }
-    if (c.contains('devok')) { const inp = this.ui.querySelector('[name=devcode]') as HTMLInputElement; if (unlockDev(inp.value)) { Sfx.play('good'); location.reload(); } else { Sfx.play('bad'); inp.value = ''; inp.placeholder = 'Cod greșit'; } return; }
+    if (c.contains('devok')) { const inp = this.ui.querySelector('[name=devcode]') as HTMLInputElement; if (unlockDev(inp.value)) { Sfx.play('good'); location.reload(); } else { Sfx.play('bad'); inp.value = ''; inp.placeholder = $t('Cod greșit'); } return; }
   }
 
   // ------------------------------------------------------------------ Offline
@@ -187,9 +188,9 @@ export class MenuScene implements Scene {
     this.game.go('world');
   }
   resetOffline(b: HTMLButtonElement) {
-    if (!confirm('Începi un joc nou Offline?\n\nSe șterge progresul Offline de pe telefonul ăsta și o iei de la Capitolul 0. Casele voastre online nu se schimbă.')) return;
+    if (!confirm($t('Începi un joc nou Offline?\n\nSe șterge progresul Offline de pe telefonul ăsta și o iei de la Capitolul 0. Casele voastre online nu se schimbă.'))) return;
     try { localStorage.removeItem('bd-save-' + OFFLINE_ROOM); } catch { /* */ }
-    Sfx.play('good'); b.textContent = '✔ Șters!'; setTimeout(() => (b.textContent = '🔄 Joc nou (Offline)'), 1500);
+    Sfx.play('good'); b.textContent = $t('✔ Șters!'); setTimeout(() => (b.textContent = '🔄 Joc nou (Offline)'), 1500);
   }
 
   // ------------------------------------------------------------------ Online: intri intr-o casa din lista
@@ -197,8 +198,8 @@ export class MenuScene implements Scene {
     const h = (Settings.get().houses ?? []).find(x => x.room === room); if (!h) return;
     if (this.seatState(h, w) === 'busy') {
       const o = other(w);
-      this.notice(`${ICON[w]} ${esc(label(w, h.room))} e deja în casă`, `Cineva joacă acum cu personajul ăsta în casa ${h.code}. Doi oameni nu pot fi același personaj.`,
-        this.seatState(h, o) !== 'busy' ? `<button data-join2='${esc(JSON.stringify(h))}' data-as="${o}">${ICON[o]} Intră ca ${esc(label(o, h.room))}</button>` : '');
+      this.notice($t('{0} {1} e deja în casă', ICON[w], esc(label(w, h.room))), $t('Cineva joacă acum cu personajul ăsta în casa {0}. Doi oameni nu pot fi același personaj.', h.code),
+        this.seatState(h, o) !== 'busy' ? `<button data-join2='${esc(JSON.stringify(h))}' data-as="${o}">${$t('{0} Intră ca {1}', ICON[o], esc(label(o, h.room)))}</button>` : '');
       Sfx.play('bad'); return;
     }
     this.picked.set(room, w); this.renderHouses();
@@ -214,7 +215,7 @@ export class MenuScene implements Scene {
   needName(): boolean {
     if (cleanName(Settings.get().myName)) return false;
     const inp = this.ui.querySelector('[name=myname]') as HTMLInputElement; this.ui.querySelector('.cred')?.remove();
-    inp.classList.add('need'); inp.focus(); inp.placeholder = 'Scrie-ți numele aici'; Sfx.play('bad');
+    inp.classList.add('need'); inp.focus(); inp.placeholder = $t('Scrie-ți numele aici'); Sfx.play('bad');
     return true;
   }
   enterHouse(h: SavedHouse, w: CharId) {
@@ -228,7 +229,7 @@ export class MenuScene implements Scene {
   playHouse() { const h = (Settings.get().houses ?? [])[0]; if (h) this.enterHouse(h, h.who); }
   askForget(room: string) {
     const h = (Settings.get().houses ?? []).find(x => x.room === room); if (!h) return;
-    if (!confirm(`Scoți casa ${h.code} din listă?\n\nProgresul rămâne în cloud: intrați din nou oricând cu codul și parola.`)) return;
+    if (!confirm($t('Scoți casa {0} din listă?\n\nProgresul rămâne în cloud: intrați din nou oricând cu codul și parola.', h.code))) return;
     Settings.forgetHouse(room); this.seats.delete(room); this.watch(); this.renderHouses();
   }
 
@@ -239,39 +240,39 @@ export class MenuScene implements Scene {
     d.innerHTML = `<div class="cred-in">${html}</div>`;
     this.ui.appendChild(d); return d;
   }
-  notice(title: string, text: string, extra = '') { this.dialog(`<h3>${title}</h3><p class="sub">${text}</p><div class="row2">${extra}<button class="xcred">Închide</button></div>`); }
+  notice(title: string, text: string, extra = '') { this.dialog(`<h3>${title}</h3><p class="sub">${text}</p><div class="row2">${extra}<button class="xcred">${$t('Închide')}</button></div>`); }
   private whoPick(name: string, sel: CharId, busy: Partial<Record<CharId, boolean>> = {}) {
-    return `<div class="who2 small">${(['bubu', 'dudu'] as CharId[]).map(w => `<label class="${busy[w] ? 'busy' : ''}"><input type="radio" name="${name}" value="${w}" ${sel === w && !busy[w] ? 'checked' : ''} ${busy[w] ? 'disabled' : ''}/> ${ICON[w]} ${ROLE[w]}${busy[w] ? ' <small>🟢 e în joc</small>' : ''}</label>`).join('')}</div>`;
+    return `<div class="who2 small">${(['bubu', 'dudu'] as CharId[]).map(w => `<label class="${busy[w] ? 'busy' : ''}"><input type="radio" name="${name}" value="${w}" ${sel === w && !busy[w] ? 'checked' : ''} ${busy[w] ? 'disabled' : ''}/> ${ICON[w]} ${ROLE[w]}${busy[w] ? ` <small>${$t('🟢 e în joc')}</small>` : ''}</label>`).join('')}</div>`;
   }
   showCreate() {
     const hasOffline = (() => { try { return !!localStorage.getItem('bd-save-' + OFFLINE_ROOM); } catch { return false; } })();
-    this.dialog(`<h3>✨ Casă nouă</h3>
-      <p class="sub">Casa e lumea voastră comună. Jocul îi dă un cod; voi alegeți parola. Partenerul intră cu același cod și aceeași parolă.</p>
-      <div class="house-box"><label>Cine ești tu în casa asta?</label>${this.whoPick('hwho', Settings.get().who)}
-        <label>Alege o parolă (cel puțin 4 caractere)<input name="hpass" type="password" autocomplete="new-password" maxlength="40" /></label>
-        ${hasOffline ? `<label class="chk"><input type="checkbox" name="hmove" /> Mută aici progresul din jocul Offline</label>` : ''}
-        <button type="button" class="h-create">✨ Creează casa</button></div>
-      <p class="house-msg"></p><div class="row2"><button class="xcred">Închide</button></div>`, 'house');
+    this.dialog(`<h3>${$t('✨ Casă nouă')}</h3>
+      <p class="sub">${$t('Casa e lumea voastră comună. Jocul îi dă un cod; voi alegeți parola. Partenerul intră cu același cod și aceeași parolă.')}</p>
+      <div class="house-box"><label>${$t('Cine ești tu în casa asta?')}</label>${this.whoPick('hwho', Settings.get().who)}
+        <label>${$t('Alege o parolă (cel puțin 4 caractere)')}<input name="hpass" type="password" autocomplete="new-password" maxlength="40" /></label>
+        ${hasOffline ? `<label class="chk"><input type="checkbox" name="hmove" /> ${$t('Mută aici progresul din jocul Offline')}</label>` : ''}
+        <button type="button" class="h-create">${$t('✨ Creează casa')}</button></div>
+      <p class="house-msg"></p><div class="row2"><button class="xcred">${$t('Închide')}</button></div>`, 'house');
   }
   showJoin() {
-    this.dialog(`<h3>🔑 Intră în casa partenerului</h3>
-      <p class="sub">Scrie codul și parola pe care ți le-a dat partenerul. Casa rămâne apoi în listă: data viitoare doar o atingi.</p>
-      <div class="house-box"><label>Codul casei<input name="hcode" placeholder="LALEA-7K3P" maxlength="14" autocapitalize="characters" /></label>
-        <label>Parola<input name="hjpass" type="password" autocomplete="current-password" maxlength="40" /></label>
-        <button type="button" class="h-join">🔑 Caută casa</button></div>
-      <p class="house-msg"></p><div class="row2"><button class="xcred">Închide</button></div>`, 'house');
+    this.dialog(`<h3>${$t('🔑 Intră în casa partenerului')}</h3>
+      <p class="sub">${$t('Scrie codul și parola pe care ți le-a dat partenerul. Casa rămâne apoi în listă: data viitoare doar o atingi.')}</p>
+      <div class="house-box"><label>${$t('Codul casei')}<input name="hcode" placeholder="LALEA-7K3P" maxlength="14" autocapitalize="characters" /></label>
+        <label>${$t('Parola')}<input name="hjpass" type="password" autocomplete="current-password" maxlength="40" /></label>
+        <button type="button" class="h-join">${$t('🔑 Caută casa')}</button></div>
+      <p class="house-msg"></p><div class="row2"><button class="xcred">${$t('Închide')}</button></div>`, 'house');
   }
   /** casa e gata: codul mare, de spus partenerului, si un singur buton: intrati in joc */
   showReady(code: string, sub: string) {
-    this.dialog(`<h3>✅ Casa e gata!</h3><div class="house-code">${esc(code)}</div><p class="sub">${sub}</p>
-      <div class="row2"><button type="button" class="h-copy">📋 Copiază codul</button><button type="button" class="h-play">▶ Intrăm în joc</button></div>`, 'house');
+    this.dialog(`<h3>${$t('✅ Casa e gata!')}</h3><div class="house-code">${esc(code)}</div><p class="sub">${sub}</p>
+      <div class="row2"><button type="button" class="h-copy">${$t('📋 Copiază codul')}</button><button type="button" class="h-play">${$t('▶ Intrăm în joc')}</button></div>`, 'house');
   }
   private houseMsg(t: string, ok = false) { const m = this.ui.querySelector('.house-msg') as HTMLElement | null; if (m) { m.textContent = t; m.classList.toggle('ok', ok); } }
   private async doCreate(b: HTMLButtonElement) {
     const pass = (this.ui.querySelector('[name=hpass]') as HTMLInputElement).value;
     const who = ((this.ui.querySelector('[name=hwho]:checked') as HTMLInputElement | null)?.value ?? Settings.get().who) as CharId;
     const move = (this.ui.querySelector('[name=hmove]') as HTMLInputElement | null)?.checked ?? false;
-    b.disabled = true; this.houseMsg('Se face casa…');
+    b.disabled = true; this.houseMsg($t('Se face casa…'));
     const net: NetConfig = { ...Settings.get().net, mode: 'firebase' };
     let seed: { json: string; ts: number } | null = null;
     if (move) { try { const raw = localStorage.getItem('bd-save-' + OFFLINE_ROOM); if (raw) seed = JSON.parse(raw); } catch { /* */ } }
@@ -283,11 +284,11 @@ export class MenuScene implements Scene {
     Settings.set({ who, net: { ...Settings.get().net, code: r.code } });
     Sfx.play('good');
     const o = other(who);
-    this.showReady(r.code, `Spune-i ${o === 'dudu' ? 'partenerului' : 'partenerei'} codul și parola: ${o === 'dudu' ? 'el apasă' : 'ea apasă'} „🔑 Intră la partener”. Casa rămâne în lista voastră.`);
+    this.showReady(r.code, $t('Spune-i {0} codul și parola: {1} „🔑 Intră la partener”. Casa rămâne în lista voastră.', o === 'dudu' ? 'partenerului' : 'partenerei', o === 'dudu' ? $t('el apasă') : $t('ea apasă')));
   }
   private async doJoin(b: HTMLButtonElement) {
     const code = normCode((this.ui.querySelector('[name=hcode]') as HTMLInputElement).value), pass = (this.ui.querySelector('[name=hjpass]') as HTMLInputElement).value;
-    b.disabled = true; this.houseMsg('Caut casa…');
+    b.disabled = true; this.houseMsg($t('Caut casa…'));
     const r = await joinHouse({ ...Settings.get().net, mode: 'firebase' }, code, pass);
     b.disabled = false;
     if (!r.ok) { this.houseMsg('❌ ' + r.msg); Sfx.play('bad'); return; }
@@ -299,27 +300,27 @@ export class MenuScene implements Scene {
       const busy = { bubu: this.seatState(h, 'bubu') === 'busy', dudu: this.seatState(h, 'dudu') === 'busy' } as Record<CharId, boolean>;
       const free = (['bubu', 'dudu'] as CharId[]).filter(w => !busy[w]);
       const pref = free.includes(Settings.get().who) ? Settings.get().who : free[0];
-      if (!free.length) { this.notice('🏠 Casa e plină', `În casa ${h.code} sunt deja amândoi. Casa a rămas în listă: intrați când se eliberează un loc.`); this.showTab('online'); return; }
-      this.dialog(`<h3>🏠 Casa ${esc(h.code)}</h3><p class="sub">Cine ești tu? ${busy.bubu || busy.dudu ? 'Locul ocupat e al partenerului, care e acum în joc.' : ''}</p>
+      if (!free.length) { this.notice($t('🏠 Casa e plină'), $t('În casa {0} sunt deja amândoi. Casa a rămas în listă: intrați când se eliberează un loc.', h.code)); this.showTab('online'); return; }
+      this.dialog(`<h3>${$t('🏠 Casa {0}', esc(h.code))}</h3><p class="sub">${$t('Cine ești tu? {0}', busy.bubu || busy.dudu ? $t('Locul ocupat e al partenerului, care e acum în joc.') : '')}</p>
         <div class="row2">${free.map(w => `<button data-join2='${esc(JSON.stringify(h))}' data-as="${w}" class="${w === pref ? 'on' : ''}">${ICON[w]} Intru ca ${esc(label(w, h.room))}</button>`).join('')}</div>
-        <div class="row2"><button class="xcred">Mai târziu</button></div>`, 'house');
+        <div class="row2"><button class="xcred">${$t('Mai târziu')}</button></div>`, 'house');
     };
     this.showTab('online');
-    this.houseMsg('Mă uit cine e în casă…'); setTimeout(ask, 1200);
+    this.houseMsg($t('Mă uit cine e în casă…')); setTimeout(ask, 1200);
   }
   showSettings() {
     const s = Settings.get();
-    this.dialog(`<h3>⚙ Setări</h3>
+    this.dialog(`<h3>${$t('⚙ Setări')}</h3>
       <div class="row2"><button class="mute">${s.muted ? '🔇 Sunet: oprit' : '🔊 Sunet: pornit'}</button><button class="eco" title="Economisire baterie: mai puține cadre pe secundă când stați">${isEco() ? '🔋 Eco: pornit' : '⚡ Eco: oprit'}</button></div>
-      <div class="row2"><button class="errs" title="Erorile jocului (le poți copia și trimite)">📋 Erori (${ErrorLog.all().length})</button><button class="credits">📜 Credite</button></div>
-      ${DEV ? `<div class="devbox"><h4>🧪 Modul dezvoltator</h4><p class="sub">Uneltele (totul nelimitat, capitole, zile, sărbători) merg doar în lumea de test: nu se scrie nimic în casele voastre online.</p>
-        <div class="row2"><button class="devworld">🧪 Lumea de test</button><button class="devlocal">👥 Test în 2 tab-uri</button></div>
-        <div class="row2"><button class="studio">🎬 Studio</button><button class="devreset">🗑️ Șterge lumea de test</button><button class="devoff">🔒 Oprește</button></div></div>` : ''}
-      ${Bugs.on() || Bugs.count() ? `<div class="row2"><button class="bugs">🐞 Rapoarte de la testeri (${Bugs.count()})</button></div>` : ''}
+      <div class="row2"><button class="errs" title="Erorile jocului (le poți copia și trimite)">${$t('📋 Erori ({0})', ErrorLog.all().length)}</button><button class="credits">${$t('📜 Credite')}</button></div>
+      ${DEV ? `<div class="devbox"><h4>${$t('🧪 Modul dezvoltator')}</h4><p class="sub">${$t('Uneltele (totul nelimitat, capitole, zile, sărbători) merg doar în lumea de test: nu se scrie nimic în casele voastre online.')}</p>
+        <div class="row2"><button class="devworld">${$t('🧪 Lumea de test')}</button><button class="devlocal">${$t('👥 Test în 2 tab-uri')}</button></div>
+        <div class="row2"><button class="studio">${$t('🎬 Studio')}</button><button class="devreset">${$t('🗑️ Șterge lumea de test')}</button><button class="devoff">${$t('🔒 Oprește')}</button></div></div>` : ''}
+      ${Bugs.on() || Bugs.count() ? `<div class="row2"><button class="bugs">${$t('🐞 Rapoarte de la testeri ({0})', Bugs.count())}</button></div>` : ''}
       <p class="vtap">${esc(GAME_NAME)} v${pkg.version}</p>
-      <div class="devcode hidden"><input name="devcode" type="password" placeholder="Cod dezvoltator" autocomplete="off" /><button class="devok">OK</button>
-        <button class="tester">${Bugs.on() ? '🐞 Mod tester: pornit' : '🐞 Pornește modul tester'}</button></div>
-      <div class="row2"><button class="xcred">Închide</button></div>`);
+      <div class="devcode hidden"><input name="devcode" type="password" placeholder="Cod dezvoltator" autocomplete="off" /><button class="devok">${$t('OK')}</button>
+        <button class="tester">${Bugs.on() ? $t('🐞 Mod tester: pornit') : $t('🐞 Pornește modul tester')}</button></div>
+      <div class="row2"><button class="xcred">${$t('Închide')}</button></div>`);
     // ascuns: atingi de 5 ori versiunea si apare locul pentru cod
     let taps = 0; const v = this.ui.querySelector('.vtap') as HTMLElement;
     v.addEventListener('click', () => { if (++taps >= 5 && !DEV) this.ui.querySelector('.devcode')!.classList.remove('hidden'); });
@@ -328,14 +329,14 @@ export class MenuScene implements Scene {
   exportSave(b: HTMLButtonElement) {
     const room = this.tab === 'offline' ? OFFLINE_ROOM : ((Settings.get().houses ?? [])[0]?.room ?? OFFLINE_ROOM);
     const raw = localStorage.getItem(`bd-save-${room}`);
-    if (!raw) { this.notice('💾 Nimic de salvat', 'Încă nu există o salvare pe telefonul ăsta. Intră în joc o dată.'); return; }
+    if (!raw) { this.notice($t('💾 Nimic de salvat'), $t('Încă nu există o salvare pe telefonul ăsta. Intră în joc o dată.')); return; }
     const blob = new Blob([JSON.stringify({ app: 'bubu-dudu', room, save: JSON.parse(raw) })], { type: 'application/json' });
     const name = `BubuDudu-salvare-${room === OFFLINE_ROOM ? 'offline' : ((Settings.get().houses ?? [])[0]?.code ?? 'casa')}-${new Date().toISOString().slice(0, 10)}.json`;
     const file = new File([blob], name, { type: 'application/json' });
     const nav = navigator as any;
     if (nav.canShare?.({ files: [file] })) nav.share({ files: [file], title: 'Salvare ' + GAME_NAME }).catch(() => {});
     else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
-    b.textContent = '✔ Salvat'; setTimeout(() => (b.textContent = '💾 Salvează'), 1600);
+    b.textContent = '✔ Salvat'; setTimeout(() => (b.textContent = $t('💾 Salvează')), 1600);
   }
   /** fisierul intra in jocul Offline; de acolo il mutati intr-o casa noua („Muta aici progresul din Offline”) */
   importSave() {
@@ -346,8 +347,8 @@ export class MenuScene implements Scene {
         const d = JSON.parse(await f.text()); const save = d.save ?? d; if (!save?.json) throw new Error('format');
         localStorage.setItem('bd-save-' + OFFLINE_ROOM, JSON.stringify({ json: save.json, ts: Date.now() }));
         this.showTab('offline');
-        this.notice('📂 Salvarea a fost încărcată', 'A intrat în jocul <b>Offline</b>. Ca s-o jucați în doi: Online → ✨ Casă nouă → bifează „Mută aici progresul din Offline”.');
-      } catch { this.notice('📂 Fișier greșit', 'Fișierul nu e o salvare ' + esc(GAME_NAME) + '.'); }
+        this.notice($t('📂 Salvarea a fost încărcată'), `${$t('A intrat în jocul')} <b>${$t('Offline')}</b>${$t('. Ca s-o jucați în doi: Online → ✨ Casă nouă → bifează „Mută aici progresul din Offline”.')}`);
+      } catch { this.notice($t('📂 Fișier greșit'), $t('Fișierul nu e o salvare ') + esc(GAME_NAME) + '.'); }
     };
     inp.click();
   }
@@ -355,32 +356,32 @@ export class MenuScene implements Scene {
   showBugs() {
     const list = Bugs.all().slice().reverse();
     const e2 = (t: string) => t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
-    const kind = { eroare: '💥 Eroare', auto: '🔎 Găsit automat', tester: '🐞 Tester' } as Record<string, string>;
-    this.dialog(`<h3>🐞 Rapoarte (${list.length})</h3><p class="sub">Modul tester strânge singur erorile și problemele vizuale; testerul adaugă cu 🐞 ce vede. Trimite-mi fișierul (se deschide cu tools/erori.html).</p>
-      <div class="buglist">${list.map(r => `<div class="bi">${/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(r.shot ?? '') ? `<img src="${r.shot}" alt="">` : ''}<div><b>${kind[r.kind] ?? r.kind} · ${e2(r.cat)}</b>${e2(r.title)}<br><small>${new Date(r.ts).toLocaleString('ro-RO')} · ${e2(String(r.ctx.zona ?? ''))} · cap. ${e2(String(r.ctx.capitol ?? ''))}${r.up ? ' · ☁️' : ''}</small></div></div>`).join('') || '<p class="sub">Niciun raport încă.</p>'}</div>
-      <div class="row2"><button class="bugexp">📤 Trimite fișierul</button><button class="bugup">☁️ Trimite pe internet</button><button class="bugclr">🗑️ Șterge</button></div>
-      <div class="row2"><button class="xcred">Închide</button></div>`);
+    const kind = { eroare: '💥 Eroare', auto: $t('🔎 Găsit automat'), tester: '🐞 Tester' } as Record<string, string>;
+    this.dialog(`<h3>${$t('🐞 Rapoarte ({0})', list.length)}</h3><p class="sub">${$t('Modul tester strânge singur erorile și problemele vizuale; testerul adaugă cu 🐞 ce vede. Trimite-mi fișierul (se deschide cu tools/erori.html).')}</p>
+      <div class="buglist">${list.map(r => `<div class="bi">${/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(r.shot ?? '') ? `<img src="${r.shot}" alt="">` : ''}<div><b>${kind[r.kind] ?? r.kind} · ${e2(r.cat)}</b>${e2(r.title)}<br><small>${new Date(r.ts).toLocaleString('ro-RO')} · ${e2(String(r.ctx.zona ?? ''))} · cap. ${e2(String(r.ctx.capitol ?? ''))}${r.up ? ' · ☁️' : ''}</small></div></div>`).join('') || `<p class="sub">${$t('Niciun raport încă.')}</p>`}</div>
+      <div class="row2"><button class="bugexp">${$t('📤 Trimite fișierul')}</button><button class="bugup">${$t('☁️ Trimite pe internet')}</button><button class="bugclr">${$t('🗑️ Șterge')}</button></div>
+      <div class="row2"><button class="xcred">${$t('Închide')}</button></div>`);
   }
   showErrors() {
     const list = ErrorLog.all();
     const e2 = (t: string) => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } as Record<string, string>)[c]);
-    this.dialog(`<h3>📋 Erori</h3><p class="sub">Versiunea jocului: <b>v${pkg.version}</b>. ${list.length ? 'Copiază lista și trimite-mi-o, ca să le repar.' : 'Nicio eroare. 🎉'}</p>
+    this.dialog(`<h3>${$t('📋 Erori')}</h3><p class="sub">${$t('Versiunea jocului:')} <b>v${pkg.version}</b>. ${list.length ? $t('Copiază lista și trimite-mi-o, ca să le repar.') : $t('Nicio eroare. 🎉')}</p>
       ${list.length ? `<pre class="errlist">${e2(ErrorLog.text())}</pre>` : ''}
-      <div class="row2">${list.length ? '<button class="errcopy">📋 Copiază</button><button class="errclear">🗑️ Șterge</button>' : ''}<button class="xcred">Închide</button></div>`);
+      <div class="row2">${list.length ? `<button class="errcopy">${$t('📋 Copiază')}</button><button class="errclear">${$t('🗑️ Șterge')}</button>` : ''}<button class="xcred">${$t('Închide')}</button></div>`);
   }
   showCredits() {
-    this.dialog(`<h3>📜 Credite</h3>
-      <p><b>${esc(GAME_NAME)}</b> · joc făcut cu 💕 · logo ACM / Code</p>
-      <h4>🔊 Sunete (înregistrări reale)</h4>
+    this.dialog(`<h3>${$t('📜 Credite')}</h3>
+      <p><b>${esc(GAME_NAME)}</b> ${$t('· joc făcut cu 💕 · logo ACM / Code')}</p>
+      <h4>${$t('🔊 Sunete (înregistrări reale)')}</h4>
       <ul>
-        <li><b>Oculus Audio Pack</b> © Meta Platforms, Inc. — licență <b>CC BY 4.0</b> (tăiate, normalizate, convertite)</li>
-        <li><b>TerminalFart</b> © 2026 Electric Wolfe Marshmallow Hypertext — Apache License 2.0</li>
-        <li>Kenney (RPG Audio, Impact Sounds) — CC0</li>
-        <li>Free-SFX (EternityForest), SFX Kit (Wyzowl), CC0 Public Domain Sounds (lavenderdotpet) — CC0</li>
-        <li>Înregistrări Freesound CC0: felix.blume, lizelle, siteflight, yetcop, smand, guiller1220, legnalegna55, richwise, RutgerMuller, Sheyvan și alții</li>
+        <li><b>${$t('Oculus Audio Pack')}</b> ${$t('© Meta Platforms, Inc. — licență')} <b>${$t('CC BY 4.0')}</b> ${$t('(tăiate, normalizate, convertite)')}</li>
+        <li><b>${$t('TerminalFart')}</b> ${$t('© 2026 Electric Wolfe Marshmallow Hypertext — Apache License 2.0')}</li>
+        <li>${$t('Kenney (RPG Audio, Impact Sounds) — CC0')}</li>
+        <li>${$t('Free-SFX (EternityForest), SFX Kit (Wyzowl), CC0 Public Domain Sounds (lavenderdotpet) — CC0')}</li>
+        <li>${$t('Înregistrări Freesound CC0: felix.blume, lizelle, siteflight, yetcop, smand, guiller1220, legnalegna55, richwise, RutgerMuller, Sheyvan și alții')}</li>
       </ul>
-      <p class="sub">Lista completă, sunet cu sunet: docs/SUNETE.md</p>
-      <button class="xcred">Închide</button>`);
+      <p class="sub">${$t('Lista completă, sunet cu sunet: docs/SUNETE.md')}</p>
+      <button class="xcred">${$t('Închide')}</button>`);
   }
 
   update(dt: number) {

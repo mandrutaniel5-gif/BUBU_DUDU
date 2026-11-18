@@ -4,11 +4,12 @@ import { Actor } from '../char/actor';
 import { Sfx } from '../engine/sfx';
 import type { WorldScene } from '../scenes/world';
 import { g } from '../game/gender';
+import { $t } from '../i18n';
 
 export class SnoreGame extends Panel {
   sleeper: Actor; breath = 0; pinches = 0; wake = 0; hand = 0;
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, '😴 Astupă-i nasul!', `Atinge când bula de la nas e MICĂ (inspiră). ${g(scene.partner.id, 'Nu-l trezi', 'N-o trezi')}!`);
+    super(scene, done, $t('😴 Astupă-i nasul!'), $t('Atinge când bula de la nas e MICĂ (inspiră). {0}!', g(scene.partner.id, $t('Nu-l trezi'), $t('N-o trezi'))));
     this.sleeper = new Actor(scene.partner.id, this.fx);
     this.sleeper.play('act_sleepbed');
   }
@@ -18,7 +19,7 @@ export class SnoreGame extends Panel {
     this.breath = (Math.sin(this.t * speed * Math.PI) + 1) / 2; // 0 = inspira (bula mica), 1 = sforait
     this.hand = Math.max(0, this.hand - dt * 3);
     this.wake = Math.max(0, this.wake - dt * 0.15);
-    if (this.breath > 0.96 && Math.random() < dt * 8) { this.shake = 6; Sfx.play('snore', { rate: this.scene.myId === 'bubu' ? 0.9 : 1.2 }); this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.3, 'HRRRR-PSHHH', '#6a4c93', 1.1); }
+    if (this.breath > 0.96 && Math.random() < dt * 8) { this.shake = 6; Sfx.play('snore', { rate: this.scene.myId === 'bubu' ? 0.9 : 1.2 }); this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.3, $t('HRRRR-PSHHH'), '#6a4c93', 1.1); }
     if (!this.sleeper.busy) this.sleeper.play('act_sleepbed');
   }
   pinch() {
@@ -26,12 +27,12 @@ export class SnoreGame extends Panel {
     this.hand = 1;
     const b = this.box;
     if (this.breath < 0.3) {
-      this.pinches++; Sfx.play('pop'); this.fx.text(b.x + b.w / 2, b.y + b.h * 0.35, ['Mmmf…', '…', 'Liniște! 🤫'][Math.min(2, this.pinches - 1)], '#2ec4b6', 1);
-      if (this.pinches >= 3) this.finish(1.5, 'Liniște în sfârșit 🤫💤');
+      this.pinches++; Sfx.play('pop'); this.fx.text(b.x + b.w / 2, b.y + b.h * 0.35, ['Mmmf…', '…', $t('Liniște! 🤫')][Math.min(2, this.pinches - 1)], '#2ec4b6', 1);
+      if (this.pinches >= 3) this.finish(1.5, $t('Liniște în sfârșit 🤫💤'));
     } else {
       this.wake += 0.45; Sfx.play('bad'); this.shake = 4;
-      this.fx.text(b.x + b.w / 2, b.y + b.h * 0.35, 'Hmm?! 😠', '#e63946', 1);
-      if (this.wake >= 1) { this.sleeper.play('angry'); this.finish(0, g(this.scene.partner.id, 'L-ai trezit! 😤', 'Ai trezit-o! 😤')); }
+      this.fx.text(b.x + b.w / 2, b.y + b.h * 0.35, $t('Hmm?! 😠'), '#e63946', 1);
+      if (this.wake >= 1) { this.sleeper.play('angry'); this.finish(0, g(this.scene.partner.id, $t('L-ai trezit! 😤'), $t('Ai trezit-o! 😤'))); }
     }
   }
   pointer(type: string) { if (type === 'down') this.pinch(); }
@@ -51,6 +52,6 @@ export class SnoreGame extends Panel {
     // bara de trezire
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(x + 40, y + 50, w - 80, 16, 8); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#e63946'; ctx.beginPath(); ctx.roundRect(x + 42, y + 52, (w - 84) * Math.min(1, this.wake), 12, 6); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`Se trezește…  ·  Ciupituri: ${this.pinches}/3`, x + w / 2, y + 86);
+    ctx.fillStyle = '#fff'; ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText($t('Se trezește…  ·  Ciupituri: {0}/3', this.pinches), x + w / 2, y + 86);
   }
 }

@@ -4,34 +4,35 @@ import { Sfx } from '../engine/sfx';
 import type { WorldScene } from '../scenes/world';
 import { drawCharacter, heartPath } from '../char/draw';
 import { basePose } from '../char/pose';
+import { $t } from '../i18n';
 
 const O = '#4a2a22';
 const QUESTIONS: { q: string; a: string[]; ok: number }[] = [
-  { q: 'Ce îi trebuie unei plante ca să crească?', a: ['Apă și soare 🌞💧', 'Ciocolată 🍫', 'Muzică rock 🎸'], ok: 0 },
-  { q: 'Din ce se face pâinea?', a: ['Din lapte', 'Din făină 🌾', 'Din pietre'], ok: 1 },
-  { q: 'Ce pui pe foc ca să nu îngheți?', a: ['Zăpadă ❄️', 'Lemne 🪵', 'Apă'], ok: 1 },
-  { q: 'Ce culoare are o roșie coaptă?', a: ['Albastră', 'Roșie 🍅', 'Violet'], ok: 1 },
-  { q: 'Cine trezește satul dimineața?', a: ['Cocoșul 🐓', 'Peștele', 'Luna'], ok: 0 },
-  { q: 'Ce faci când partenerul e bolnav?', a: ['Îl lași singur', 'Îi faci supă și îl îngrijești 🍲', 'Te uiți la TV'], ok: 1 },
-  { q: 'Cu ce uzi grădina?', a: ['Cu apă din fântână 🪣', 'Cu suc', 'Cu nisip'], ok: 0 },
-  { q: 'Ce aduce îngrășământul?', a: ['Plantele cresc mai repede ✨', 'Plantele zboară', 'Nimic'], ok: 0 },
-  { q: 'Ce animal face miere?', a: ['Vaca', 'Albina 🐝', 'Ariciul'], ok: 1 },
-  { q: 'Câte ore are o zi?', a: ['12', '24 ⏰', '100'], ok: 1 },
-  { q: 'Ce e o ie?', a: ['O bluză tradițională românească 👚', 'Un fel de supă', 'O pasăre'], ok: 0 },
-  { q: 'Ce faci după ce culegi legumele?', a: ['Le arunci', 'Le gătești sau le vinzi 🥕', 'Le îngropi iar'], ok: 1 },
+  { q: $t('Ce îi trebuie unei plante ca să crească?'), a: [$t('Apă și soare 🌞💧'), $t('Ciocolată 🍫'), $t('Muzică rock 🎸')], ok: 0 },
+  { q: $t('Din ce se face pâinea?'), a: [$t('Din lapte'), $t('Din făină 🌾'), $t('Din pietre')], ok: 1 },
+  { q: $t('Ce pui pe foc ca să nu îngheți?'), a: [$t('Zăpadă ❄️'), 'Lemne 🪵', $t('Apă')], ok: 1 },
+  { q: $t('Ce culoare are o roșie coaptă?'), a: [$t('Albastră'), $t('Roșie 🍅'), 'Violet'], ok: 1 },
+  { q: $t('Cine trezește satul dimineața?'), a: [$t('Cocoșul 🐓'), $t('Peștele'), 'Luna'], ok: 0 },
+  { q: $t('Ce faci când partenerul e bolnav?'), a: [$t('Îl lași singur'), $t('Îi faci supă și îl îngrijești 🍲'), $t('Te uiți la TV')], ok: 1 },
+  { q: $t('Cu ce uzi grădina?'), a: [$t('Cu apă din fântână 🪣'), $t('Cu suc'), $t('Cu nisip')], ok: 0 },
+  { q: $t('Ce aduce îngrășământul?'), a: [$t('Plantele cresc mai repede ✨'), $t('Plantele zboară'), 'Nimic'], ok: 0 },
+  { q: $t('Ce animal face miere?'), a: ['Vaca', 'Albina 🐝', 'Ariciul'], ok: 1 },
+  { q: $t('Câte ore are o zi?'), a: ['12', '24 ⏰', '100'], ok: 1 },
+  { q: $t('Ce e o ie?'), a: [$t('O bluză tradițională românească 👚'), $t('Un fel de supă'), $t('O pasăre')], ok: 0 },
+  { q: $t('Ce faci după ce culegi legumele?'), a: ['Le arunci', $t('Le gătești sau le vinzi 🥕'), $t('Le îngropi iar')], ok: 1 },
 ];
 
 export class QuizGame extends Panel {
   qs = [...QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 4);
   i = 0; good = 0; answered = -1; wait = 0;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🏫 Lecția doamnei învățătoare', 'Alege răspunsul corect'); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('🏫 Lecția doamnei învățătoare'), $t('Alege răspunsul corect')); }
   tick(dt: number) {
     if (this.wait > 0) { this.wait -= dt; if (this.wait <= 0) { this.answered = -1; this.i++; if (this.i >= this.qs.length) this.end(); } }
   }
   end() {
     const s = this.scene;
     s.op({ k: 'stat', key: 'school', delta: 1 }); s.op({ k: 'money', delta: this.good * 5 }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: 10 });
-    this.finish(this.good ? 1 + this.good * 0.2 : 0.3, this.good >= 3 ? `Nota 10! ⭐ +${this.good * 5} lei` : `${this.good}/4 corecte · +${this.good * 5} lei`);
+    this.finish(this.good ? 1 + this.good * 0.2 : 0.3, this.good >= 3 ? $t('Nota 10! ⭐ +{0} lei', this.good * 5) : $t('{0}/4 corecte · +{1} lei', this.good, this.good * 5));
   }
   btn(k: number) { const B = this.box; return { x: B.x + 40, y: B.y + B.h * 0.42 + k * 74, w: B.w - 80, h: 60 }; }
   pointer(type: string, x: number, y: number) {
@@ -50,7 +51,7 @@ export class QuizGame extends Panel {
     const q = this.qs[Math.min(this.i, this.qs.length - 1)];
     ctx.font = '800 19px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(q.q, x + w / 2, y + 50 + h * 0.15);
-    ctx.font = '700 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#cfe8dc'; ctx.fillText(`Întrebarea ${Math.min(this.i + 1, this.qs.length)}/${this.qs.length} · ✅ ${this.good}`, x + w / 2, y + 66);
+    ctx.font = '700 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#cfe8dc'; ctx.fillText($t('Întrebarea {0}/{1} · ✅ {2}', Math.min(this.i + 1, this.qs.length), this.qs.length, this.good), x + w / 2, y + 66);
     q.a.forEach((txt, k) => {
       const b = this.btn(k); const st = this.answered < 0 ? 'none' : k === q.ok ? 'ok' : k === this.answered ? 'bad' : 'none';
       ctx.fillStyle = st === 'ok' ? '#c8f2c0' : st === 'bad' ? '#ffd0d0' : '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, 16); ctx.fill(); ctx.stroke();
@@ -66,7 +67,7 @@ export class FerrisGame extends Panel {
   k = 0; kissed = false; holding = false; kissT = 0; duo: boolean;
   birds = Array.from({ length: 5 }, (_, i) => ({ x: Math.random(), y: 0.12 + Math.random() * 0.25, s: 0.6 + Math.random() * 0.5, ph: i }));
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, '🎡 Roata mare', s.duo ? 'Sus de tot, ține apăsat pentru un pupic 💕' : 'Sus de tot, ține apăsat și pune-ți o dorință ✨');
+    super(s, d, '🎡 Roata mare', s.duo ? $t('Sus de tot, ține apăsat pentru un pupic 💕') : $t('Sus de tot, ține apăsat și pune-ți o dorință ✨'));
     this.duo = s.duo;
   }
   get top() { return this.k > 0.4 && this.k < 0.6; }
@@ -80,8 +81,8 @@ export class FerrisGame extends Panel {
       s.op({ k: 'need', who: s.myId, need: 'love', delta: love }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: this.duo ? 15 : 20 });
       if (this.duo && s.partner.control !== 'remote') s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love });
       s.op({ k: 'stat', key: 'ferris', delta: 1 });
-      s.log(this.duo ? (this.kissed ? 'Un pupic în vârful roții mari 🎡💕' : 'O tură cu roata mare 🎡') : `${s.me.actor.spec.name} s-a dat în roata mare 🎡${this.kissed ? ' și și-a pus o dorință ✨' : ''}`);
-      this.finish(this.kissed ? 2 : 1, this.kissed ? (this.duo ? 'Cel mai frumos pupic 💕' : 'Dorința s-a auzit ✨') : 'Ce priveliște! ☀️');
+      s.log(this.duo ? (this.kissed ? $t('Un pupic în vârful roții mari 🎡💕') : $t('O tură cu roata mare 🎡')) : $t('{0} s-a dat în roata mare 🎡{1}', s.me.actor.spec.name, this.kissed ? $t(' și și-a pus o dorință ✨') : ''));
+      this.finish(this.kissed ? 2 : 1, this.kissed ? (this.duo ? $t('Cel mai frumos pupic 💕') : $t('Dorința s-a auzit ✨')) : $t('Ce priveliște! ☀️'));
     }
   }
   pointer(t: string) { this.holding = t === 'down' ? true : t === 'up' ? false : this.holding; }
@@ -154,7 +155,7 @@ export class FerrisGame extends Panel {
     if (!this.duo && this.top) { const st = (t * 0.6) % 1; ctx.strokeStyle = `rgba(255,255,220,${1 - st})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + w * (0.15 + st * 0.3), y + h * (0.08 + st * 0.12)); ctx.lineTo(x + w * (0.1 + st * 0.3), y + h * (0.06 + st * 0.12)); ctx.stroke(); }
     if (this.kissed && this.top) for (let i = 0; i < 3; i++) { const fa = t * 2 + i * 2.1, fr = 30 + ((t * 40 + i * 30) % 60); ctx.strokeStyle = ['#ff4d6d', '#ffd23f', '#7ab8ff'][i]; ctx.lineWidth = 2.5; for (let r = 0; r < 8; r++) { const aa = r * Math.PI / 4 + fa; ctx.beginPath(); ctx.moveTo(x + w * (0.22 + i * 0.28) + Math.cos(aa) * fr * 0.6, y + h * 0.18 + Math.sin(aa) * fr * 0.6); ctx.lineTo(x + w * (0.22 + i * 0.28) + Math.cos(aa) * fr, y + h * 0.18 + Math.sin(aa) * fr); ctx.stroke(); } }
     ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.textAlign = 'center';
-    const msg = this.top ? (this.kissed ? (this.duo ? '💕 Pupic în vârful roții!' : '✨ Dorința e pusă!') : (this.duo ? 'Sunteți sus! Ține apăsat 💕' : 'Ești sus! Ține apăsat ✨')) : k < 0.4 ? 'Urcăm…' : 'Coborâm…';
+    const msg = this.top ? (this.kissed ? (this.duo ? $t('💕 Pupic în vârful roții!') : $t('✨ Dorința e pusă!')) : (this.duo ? $t('Sunteți sus! Ține apăsat 💕') : $t('Ești sus! Ține apăsat ✨'))) : k < 0.4 ? $t('Urcăm…') : $t('Coborâm…');
     ctx.strokeText(msg, cx, y + 58); ctx.fillText(msg, cx, y + 58);
   }
 }

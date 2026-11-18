@@ -1,5 +1,6 @@
 // Produsele tarabei, desenate (nu emoji). Fiecare nivel arata mai bogat.
 import { heartPath, starPath } from '../char/draw';
+import { $t } from '../i18n';
 
 const O = '#3a2a22';
 type C = CanvasRenderingContext2D;
@@ -34,13 +35,13 @@ function cup(c: C, x: number, y: number, w: number, h: number, fill: string) {
 }
 
 export const ITEM_NAMES: Record<string, string[]> = {
-  flower: ['Floricică', 'Două flori', 'Buchețel', 'Buchet mare', 'Coș cu flori', 'Coroniță'],
-  veg: ['Morcov', 'Legătură de morcovi', 'Coș cu legume', 'Ladă de legume', 'Oala cu ciorbă'],
-  sweet: ['Făină', 'Aluat', 'Biscuiți', 'Brioșă', 'Tort'],
-  drink: ['Lămâie', 'Limonadă', 'Bubble tea', 'Cocktail de fructe'],
+  flower: [$t('Floricică'), $t('Două flori'), $t('Buchețel'), 'Buchet mare', $t('Coș cu flori'), $t('Coroniță')],
+  veg: ['Morcov', $t('Legătură de morcovi'), $t('Coș cu legume'), $t('Ladă de legume'), $t('Oala cu ciorbă')],
+  sweet: [$t('Făină'), 'Aluat', $t('Biscuiți'), $t('Brioșă'), 'Tort'],
+  drink: [$t('Lămâie'), $t('Limonadă'), 'Bubble tea', $t('Cocktail de fructe')],
   // florăria lui Bubu (doar flori): florile din grădină și plantele în ghiveci
-  garden: ['Lalea', 'Trei lalele', 'Buchet în hârtie', 'Aranjament în vază', 'Buchet de mireasă'],
-  pot: ['Răsad', 'Ghiveci înflorit', 'Jardinieră', 'Coș suspendat'],
+  garden: ['Lalea', 'Trei lalele', $t('Buchet în hârtie'), $t('Aranjament în vază'), $t('Buchet de mireasă')],
+  pot: [$t('Răsad'), $t('Ghiveci înflorit'), $t('Jardinieră'), $t('Coș suspendat')],
 };
 export const MAX_LVL: Record<string, number> = { flower: 5, veg: 4, sweet: 4, drink: 3, garden: 4, pot: 3 };
 
@@ -101,7 +102,7 @@ export function drawItem(c: C, code: string, x: number, y: number, s: number, t 
       }
       break;
     case 'sweet':
-      if (l === 0) { R(c, -14, -14, 28, 32, 8, '#f5ead6'); c.fillStyle = '#c9a678'; c.fillRect(-14, -10, 28, 4); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.fillText('FĂINĂ', 0, 8); }
+      if (l === 0) { R(c, -14, -14, 28, 32, 8, '#f5ead6'); c.fillStyle = '#c9a678'; c.fillRect(-14, -10, 28, 4); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.fillText($t('FĂINĂ'), 0, 8); }
       else if (l === 1) { E(c, 0, 4, 18, 13, '#fbe1b4'); E(c, -5, 0, 5, 3, '#fff4dd', false); R(c, -20, 14, 40, 6, 3, '#d9a273'); }
       else if (l === 2) { for (const [dx, dy] of [[-9, 4], [9, 4], [0, -6]]) { E(c, dx, dy, 11, 9, '#e8b46a'); for (let k = 0; k < 3; k++) E(c, dx - 4 + k * 4, dy - 1 + (k % 2) * 3, 1.6, 1.6, '#6b3e1f', false); } }
       else if (l === 3) {

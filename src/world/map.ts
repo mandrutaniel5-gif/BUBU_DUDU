@@ -1,5 +1,6 @@
 import { RESOURCE_NODES } from './build';
 import { WORLD, WORLD_W, WORLD_H, ORIGIN, CORE_W, CORE_H } from './layout';
+import { $t } from '../i18n';
 // Harta casei si a curtii.
 export type Floor = 'forest' | 'road' | 'grass' | 'path' | 'wood' | 'pinkwood' | 'tileblue' | 'checker' | 'dirt' | 'water' | 'sand' | 'asphalt' | 'sidewalk' | 'void' | 'bridge' | 'field' | 'meadow' | 'cobble' | 'parquet' | 'marble' | 'marblecheck' | 'carpet';
 export const FLOORS: Floor[] = ['void', 'grass', 'forest', 'road', 'path', 'wood', 'pinkwood', 'tileblue', 'checker', 'dirt', 'water', 'sand', 'asphalt', 'sidewalk', 'bridge', 'field', 'meadow', 'cobble', 'parquet', 'marble', 'marblecheck', 'carpet'];
@@ -84,32 +85,32 @@ export const FURNITURE: Furn[] = [
   { id: 'ns1', type: 'nightstand', gx: 5, gy: 2, w: 1, d: 1, solid: true, action: act('lamp', 'Lampa', '💡') },
   { id: 'ward', type: 'wardrobe', gx: 2, gy: 5, w: 1, d: 1, solid: true, action: act('dress', 'Garderoba', '👗') },
   { id: 'rugB', type: 'rug', gx: 5, gy: 4, w: 2, d: 2, solid: false, color: '#ffb6c9' },
-  { id: 'plantB', type: 'plant', gx: 7, gy: 2, w: 1, d: 1, solid: true, action: act('water_plant', 'Udă floarea', '🪴') },
+  { id: 'plantB', type: 'plant', gx: 7, gy: 2, w: 1, d: 1, solid: true, action: act('water_plant', $t('Udă floarea'), '🪴') },
   // baie
   { id: 'toilet', type: 'toilet', gx: 9, gy: 2, w: 1, d: 1, solid: true, action: act('toilet', 'Toaleta', '🚽') },
-  { id: 'tub', type: 'bathtub', gx: 11, gy: 2, w: 2, d: 1, solid: true, action: act('bath', 'Baie cu spumă', '🛁') },
-  { id: 'sink', type: 'sink', gx: 13, gy: 4, w: 1, d: 1, solid: true, action: act('teeth', 'Spălat pe dinți', '🪥') },
+  { id: 'tub', type: 'bathtub', gx: 11, gy: 2, w: 2, d: 1, solid: true, action: act('bath', $t('Baie cu spumă'), '🛁') },
+  { id: 'sink', type: 'sink', gx: 13, gy: 4, w: 1, d: 1, solid: true, action: act('teeth', $t('Spălat pe dinți'), '🪥') },
   { id: 'washer', type: 'washer', gx: 13, gy: 2, w: 1, d: 1, solid: true, action: act('laundry', 'Rufe', '🧺') },
   // bucatarie
   // frigiderul in coltul bucatariei; aragazul si blatul cu vasele pe peretele din dreapta
   { id: 'fridge', type: 'fridge', gx: 13, gy: 6, w: 1, d: 1, solid: true, action: act('snack', 'Frigiderul', '🧊') },
-  { id: 'stove', type: 'stove', gx: 13, gy: 8, w: 1, d: 1, solid: true, action: act('cook', 'Gătește', '🍳') },
-  { id: 'counter', type: 'counter', gx: 13, gy: 9, w: 1, d: 1, solid: true, action: act('dishes', 'Spălat vase', '🍽️') },
+  { id: 'stove', type: 'stove', gx: 13, gy: 8, w: 1, d: 1, solid: true, action: act('cook', $t('Gătește'), '🍳') },
+  { id: 'counter', type: 'counter', gx: 13, gy: 9, w: 1, d: 1, solid: true, action: act('dishes', $t('Spălat vase'), '🍽️') },
   { id: 'table', type: 'table', gx: 10, gy: 9, w: 2, d: 1, solid: true, action: act('eat', 'Masa', '🍰') },
   // sufragerie
   { id: 'rugL', type: 'rug', gx: 3, gy: 8, w: 3, d: 3, solid: false, color: '#c9e4ff' },
   { id: 'sofa', type: 'sofa', gx: 5, gy: 9, w: 1, d: 2, solid: true, action: act('cuddle', 'Canapeaua', '🛋️') },
   { id: 'tv', type: 'tv', gx: 2, gy: 9, w: 1, d: 2, solid: true, action: act('tv', 'Televizor', '📺') },
-  { id: 'shelf', type: 'bookshelf', gx: 2, gy: 7, w: 1, d: 1, solid: true, action: act('read', 'Citește', '📚') },
-  { id: 'plantL', type: 'plant', gx: 2, gy: 11, w: 1, d: 1, solid: true, action: act('water_plant', 'Udă floarea', '🪴') },
+  { id: 'shelf', type: 'bookshelf', gx: 2, gy: 7, w: 1, d: 1, solid: true, action: act('read', $t('Citește'), '📚') },
+  { id: 'plantL', type: 'plant', gx: 2, gy: 11, w: 1, d: 1, solid: true, action: act('water_plant', $t('Udă floarea'), '🪴') },
   // curte
   { id: 'mat', type: 'doormat', gx: 5, gy: 12, w: 1, d: 1, solid: false },
   { id: 'tree1', type: 'tree', gx: 18, gy: 11, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
   { id: 'tree2', type: 'tree', gx: 9, gy: 18, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
   { id: 'tree3', type: 'tree', gx: 1, gy: 13, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
   { id: 'tree4', type: 'tree', gx: 17, gy: 4, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
-  { id: 'bench', type: 'bench', gx: 2, gy: 14, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța', '🌅') },
-  { id: 'mail', type: 'mailbox', gx: 6, gy: 13, w: 1, d: 1, solid: true, action: act('mail', 'Cutia poștală', '💌') },
+  { id: 'bench', type: 'bench', gx: 2, gy: 14, w: 2, d: 1, solid: true, action: act('bench', $t('Băncuța'), '🌅') },
+  { id: 'mail', type: 'mailbox', gx: 6, gy: 13, w: 1, d: 1, solid: true, action: act('mail', $t('Cutia poștală'), '💌') },
   { id: 'fl1', type: 'flowers', gx: 7, gy: 14, w: 1, d: 1, solid: false },
   { id: 'fl2', type: 'flowers', gx: 13, gy: 12, w: 1, d: 1, solid: false },
   { id: 'fl3', type: 'flowers', gx: 0, gy: 11, w: 1, d: 1, solid: false },
@@ -117,11 +118,11 @@ export const FURNITURE: Furn[] = [
   { id: 'bush2', type: 'bush', gx: 8, gy: 15, w: 1, d: 1, solid: true },
   ...RESOURCE_NODES,
   // supravietuire si economie
-  { id: 'well', type: 'well', gx: 14, gy: 14, w: 1, d: 1, solid: true, action: act('drawwater', 'Scoate apă din fântână', '🪣') },
+  { id: 'well', type: 'well', gx: 14, gy: 14, w: 1, d: 1, solid: true, action: act('drawwater', $t('Scoate apă din fântână'), '🪣') },
   { id: 'laptop', type: 'laptop', gx: 6, gy: 2, w: 1, d: 1, solid: true, action: act('online', 'Laptopul (magazin online)', '💻') },
   { id: 'fireplace', type: 'fireplace', gx: 7, gy: 7, w: 1, d: 1, solid: true, action: act('stove', 'Soba', '🔥') },
-  { id: 'shed', type: 'mower', gx: 16, gy: 13, w: 1, d: 1, solid: true, action: act('mow', 'Mașina de tuns iarba', '✂️') },
-  { id: 'stand', type: 'stand', gx: 7, gy: 23, w: 2, d: 1, solid: true, action: act('stand', 'Taraba lui Bubu', '🧺') },
+  { id: 'shed', type: 'mower', gx: 16, gy: 13, w: 1, d: 1, solid: true, action: act('mow', $t('Mașina de tuns iarba'), '✂️') },
+  { id: 'stand', type: 'stand', gx: 7, gy: 23, w: 2, d: 1, solid: true, action: act('stand', $t('Taraba lui Bubu'), '🧺') },
   { id: 'gateway', type: 'signpost', gx: 3, gy: 23, w: 1, d: 1, solid: true, action: act('village', 'Spre sat', '🏘️') },
 ];
 

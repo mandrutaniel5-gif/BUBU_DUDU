@@ -11,6 +11,7 @@ import { drawCharacter, heartPath, type CharSpec } from '../char/draw';
 import { basePose } from '../char/pose';
 import { nightAmount } from '../game/state';
 import { catCount, catPick, type CropCat } from '../world/garden';
+import { $t } from '../i18n';
 
 /** de unde vine fiecare produs: o categorie din gradina (cat:...) sau o lista de chei din inventar */
 const SRC_KEYS: Record<string, string[]> = {
@@ -25,15 +26,15 @@ const pickKey = (res: Record<string, number>, src: string) => src.startsWith('ca
 export interface ChainInfo { id: string; src: string; srcLabel: string; where: string }
 /** produsele tarabei de acasa si sursa lor reala din inventar */
 export const CHAIN_INFO: ChainInfo[] = [
-  { id: 'flower', src: 'cat:flower', srcLabel: 'Flori', where: 'culege sau crește în grădină 🌸' },
-  { id: 'veg', src: 'cat:veg', srcLabel: 'Legume', where: 'crește-le în grădină 🥕' },
-  { id: 'sweet', src: 'flour', srcLabel: 'Făină', where: 'magazinul online 🛒' },
-  { id: 'drink', src: 'lemon', srcLabel: 'Lămâi', where: 'magazinul online 🛒' },
+  { id: 'flower', src: 'cat:flower', srcLabel: 'Flori', where: $t('culege sau crește în grădină 🌸') },
+  { id: 'veg', src: 'cat:veg', srcLabel: 'Legume', where: $t('crește-le în grădină 🥕') },
+  { id: 'sweet', src: 'flour', srcLabel: $t('Făină'), where: $t('magazinul online 🛒') },
+  { id: 'drink', src: 'lemon', srcLabel: $t('Lămâi'), where: $t('magazinul online 🛒') },
 ];
 /** florăria lui Bubu vinde DOAR flori: de câmp și din grădină (din 1.10.0 fără răsaduri: se vindeau în pierdere și încurcau) */
 export const FLORIST_CHAINS: ChainInfo[] = [
-  { id: 'flower', src: 'wild', srcLabel: 'Flori de câmp', where: 'culege-le din curte și de lângă drum 🌸' },
-  { id: 'garden', src: 'gflower', srcLabel: 'Flori din grădină', where: 'crește lalele, trandafiri sau floarea-soarelui 🌷' },
+  { id: 'flower', src: 'wild', srcLabel: $t('Flori de câmp'), where: $t('culege-le din curte și de lângă drum 🌸') },
+  { id: 'garden', src: 'gflower', srcLabel: $t('Flori din grădină'), where: $t('crește lalele, trandafiri sau floarea-soarelui 🌷') },
 ];
 /** ce poate cere un client: lanturile pentru care ai (sau ai avut) resursa */
 export function orderableChains(res: Record<string, number>, stats: Record<string, number>, florist = false) {
@@ -114,7 +115,7 @@ export class MergeGame extends Panel {
   slotW() { return (this.W - 40) / (this.chains.length + 1); }
   seenNpc = new Set<string>();
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, scene.storeMode === 'florarie' ? '💐 Florăria lui Bubu' : '🧺 Taraba lui Bubu', '');
+    super(scene, done, scene.storeMode === 'florarie' ? $t('💐 Florăria lui Bubu') : $t('🧺 Taraba lui Bubu'), '');
     this.which = scene.storeMode === 'florarie' ? 'florist' : 'stall';
     const saved = scene.w.boards?.[this.which];
     if (saved) this.b = decBoard(saved);
@@ -134,7 +135,7 @@ export class MergeGame extends Panel {
     if (n) this.commit();
     const r = this.scene.w.res ?? {};
     for (const k of Object.keys(r)) if (k.startsWith('prod_pot_') && r[k] > 0) { n += r[k] * 2 ** +k.split('_')[2]; this.scene.op({ k: 'res', res: k, delta: -r[k] }); }
-    if (n) { this.scene.op({ k: 'res', res: 'seed_tulip', delta: n }); this.scene.hud.toast(`🌰 Răsadurile nu se mai vând la florărie: ai primit înapoi ${n} semințe de lalele (pune-le în grădină)`); }
+    if (n) { this.scene.op({ k: 'res', res: 'seed_tulip', delta: n }); this.scene.hud.toast($t('🌰 Răsadurile nu se mai vând la florărie: ai primit înapoi {0} semințe de lalele (pune-le în grădină)', n)); }
   }
   /** trimite tejgheaua (s-a schimbat ceva pe ea) */
   commit() { const enc = encBoard(this.b.cells); this.lastEnc = enc; this.scene.op({ k: 'board', which: this.which, enc }); }
@@ -143,17 +144,17 @@ export class MergeGame extends Panel {
     const it = this.b.cells[i]; if (!it) return;
     this.b.cells[i] = null; this.commit();
     this.scene.op({ k: 'res', res: prodKey(it), delta: 1 });
-    Sfx.play('cloth', { vol: 0.6 }); this.fx.text(this.W - 70, this.layout().genY - 10, 'În inventar 🎒', '#2ec4b6', 0.8);
+    Sfx.play('cloth', { vol: 0.6 }); this.fx.text(this.W - 70, this.layout().genY - 10, $t('În inventar 🎒'), '#2ec4b6', 0.8);
   }
   /** pui pe tejghea un produs din inventar */
   putFromBag(key: string) {
     const code = prodCode(key); if (!code || (this.scene.w.res?.[key] ?? 0) < 1) return;
-    const i = this.b.cells.findIndex(c => !c); if (i < 0) { this.fx.text(this.W / 2, this.counterY + 30, 'Tejgheaua e plină! 🙂', '#e63946', 0.9); Sfx.play('bad'); return; }
+    const i = this.b.cells.findIndex(c => !c); if (i < 0) { this.fx.text(this.W / 2, this.counterY + 30, $t('Tejgheaua e plină! 🙂'), '#e63946', 0.9); Sfx.play('bad'); return; }
     this.b.cells[i] = code; this.pop[i] = 1; this.commit();
     this.scene.op({ k: 'res', res: key, delta: -1 }); Sfx.play('pop');
   }
   bagProds() { const r = this.scene.w.res ?? {}; return Object.keys(r).filter(k => k.startsWith('prod_') && r[k] > 0 && (this.which === 'florist' ? FLORIST_CHAINS.some(c => k.startsWith('prod_' + c.id + '_')) : CHAIN_INFO.some(c => k.startsWith('prod_' + c.id + '_')))).sort(); }
-  abort() { this.scene.sendCharSync(); this.finish(this.served > 0 ? 1 : 0.2, this.served ? `Ai câștigat ${this.earned} lei! 💰` : 'Taraba se închide 👋'); }
+  abort() { this.scene.sendCharSync(); this.finish(this.served > 0 ? 1 : 0.2, this.served ? $t('Ai câștigat {0} lei! 💰', this.earned) : $t('Taraba se închide 👋')); }
   tick(dt: number) {
     const enc = this.scene.w.boards?.[this.which];
     if (enc && enc !== this.lastEnc && !this.drag) { this.b = decBoard(enc); this.lastEnc = enc; }
@@ -210,11 +211,11 @@ export class MergeGame extends Panel {
     const ci = this.chains[k]; if (!ci) return;
     const msg = (t: string) => { this.fx.text(this.W / 2, this.counterY + 30, t, '#e63946', 0.9); Sfx.play('bad'); };
     const r = this.scene.w.res ?? {};
-    if (have(r, ci.src) < 1) return msg(`N-ai ${ci.srcLabel.toLowerCase()} — ${ci.where}`);
+    if (have(r, ci.src) < 1) return msg($t('N-ai {0} — {1}', ci.srcLabel.toLowerCase(), ci.where));
     const c = this.scene.w.chars[this.scene.myId];
-    if (c.needs.energy < 6) return msg(`${g(this.scene.myId, 'Ești prea obosit', 'Ești prea obosită')} 😴`);
+    if (c.needs.energy < 6) return msg(`${g(this.scene.myId, $t('Ești prea obosit'), $t('Ești prea obosită'))} 😴`);
     const empty = this.b.cells.map((v, i) => v ? -1 : i).filter(i => i >= 0);
-    if (!empty.length) return msg('Tava e plină! Unește ceva 🙂');
+    if (!empty.length) return msg($t('Tava e plină! Unește ceva 🙂'));
     const i = empty[0];
     this.b.cells[i] = `${ci.id}:0`; this.pop[i] = 1; Sfx.play('leaves', { vol: 0.4, rate: 1.4 }); this.paw = 1; this.commit();
     const key = pickKey(r, ci.src)!;
@@ -226,7 +227,7 @@ export class MergeGame extends Panel {
   deliver(npcId: string) {
     const npc = this.scene.shopNpcs().find(n => n.id === npcId); if (!npc || npc.state !== 'wait') return;
     const idx: number[] = [];
-    for (const want of npc.wants) { const i = this.b.cells.findIndex((v, k) => v === want && !idx.includes(k)); if (i < 0) { Sfx.play('bad'); this.fx.text(this.W / 2, this.counterY - 20, 'Încă nu ai ce cere ' + (npc.spec?.name.split(' ')[1] ?? 'clientul'), '#e63946', 0.9); npc.actor?.play('puppy'); return; } idx.push(i); }
+    for (const want of npc.wants) { const i = this.b.cells.findIndex((v, k) => v === want && !idx.includes(k)); if (i < 0) { Sfx.play('bad'); this.fx.text(this.W / 2, this.counterY - 20, $t('Încă nu ai ce cere ') + (npc.spec?.name.split(' ')[1] ?? 'clientul'), '#e63946', 0.9); npc.actor?.play('puppy'); return; } idx.push(i); }
     for (const i of idx) this.b.cells[i] = null;
     this.commit();
     let pay = npc.pay;
@@ -238,7 +239,7 @@ export class MergeGame extends Panel {
     this.served++; this.earned += pay; this.paw = 1;
     Sfx.play('register');
     const p = this.npcScreen(npc);
-    this.fx.text((p.fx - this.cam) * this.W, this.counterY - this.H * 0.25, `+${pay} lei${grassy ? ' (curte netunsă -20%)' : ''}`, '#2ec4b6', 1.1);
+    this.fx.text((p.fx - this.cam) * this.W, this.counterY - this.H * 0.25, $t('+{0} lei{1}', pay, grassy ? $t(' (curte netunsă -20%)') : ''), '#2ec4b6', 1.1);
     this.fx.hearts((p.fx - this.cam) * this.W, this.counterY - this.H * 0.2, 6);
     this.scene.sendCharSync();
   }
@@ -286,7 +287,7 @@ export class MergeGame extends Panel {
     const B = this.invBox(), r = this.scene.w.res ?? {}, list = this.bagProds();
     ctx.fillStyle = 'rgba(40,20,30,.35)'; ctx.fillRect(0, 0, this.W, this.H);
     ctx.fillStyle = '#fff8f0'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(B.x, B.y, B.w, B.h, 18); ctx.fill(); ctx.stroke();
-    ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.fillText(list.length ? '🎒 Atinge un produs ca să-l pui pe tejghea' : '🎒 N-ai produse în inventar · trage unul aici de pe tejghea', B.x + B.w / 2, B.y + 24);
+    ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'center'; ctx.fillText(list.length ? $t('🎒 Atinge un produs ca să-l pui pe tejghea') : $t('🎒 N-ai produse în inventar · trage unul aici de pe tejghea'), B.x + B.w / 2, B.y + 24);
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(B.x + B.w - 20, B.y + 20, 13, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = O; ctx.fillText('✕', B.x + B.w - 20, B.y + 25);
     list.forEach((k, i) => { const c = this.invCell(i), code = prodCode(k)!; if (c.y + c.h > B.y + B.h) return; ctx.fillStyle = '#fbe7cc'; ctx.beginPath(); ctx.roundRect(c.x, c.y, c.w, c.h, 10); ctx.fill(); ctx.stroke(); drawItem(ctx, code, c.x + c.w / 2, c.y + 28, 40, this.t); ctx.font = '800 11px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.fillText(`×${r[k]}`, c.x + c.w / 2, c.y + c.h - 8); });
   }
@@ -424,7 +425,7 @@ export class MergeGame extends Panel {
     ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(dx - dw / 2 + dw * (1 - open * 0.75) - 7, dy0 + (floorTop - dy0) * 0.6, 3, 0, 7); ctx.fill();
     { const sw = Math.sin(this.t * 18) * this.bell * 0.6; ctx.save(); ctx.translate(dx, dy0 - 6); ctx.rotate(sw); ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-7, 14); ctx.quadraticCurveTo(-7, 2, 0, 2); ctx.quadraticCurveTo(7, 2, 7, 14); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 16, 2.5, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore(); }
     // firma de pe perete
-    { const x = W * 0.8 + par(0.2), y = H * 0.075; ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x - 78, y, 156, 30, 15); ctx.fill(); ctx.stroke(); ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ff4d6d'; ctx.fillText('Florăria lui Bubu', x, y + 16); }
+    { const x = W * 0.8 + par(0.2), y = H * 0.075; ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x - 78, y, 156, 30, 15); ctx.fill(); ctx.stroke(); ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ff4d6d'; ctx.fillText($t('Florăria lui Bubu'), x, y + 16); }
     // rafturile cu flori (dreapta) si cosul suspendat
     const sx0 = W * 0.66 + par(0.2), sx1 = W * 0.97 + par(0.2), ss = Math.min(40, H * 0.065);
     [[H * 0.17, ['garden:2', 'pot:0', 'flower:3', 'garden:1']], [H * 0.27, ['pot:1', 'garden:3', 'flower:2', 'pot:2']]].forEach(([y, items]) => {
@@ -472,7 +473,7 @@ export class MergeGame extends Panel {
   drawFloristTools(ctx: CanvasRenderingContext2D, W: number, cy: number) {
     // tablita cu creta (in locul cartonasului de la taraba)
     ctx.fillStyle = '#3d4a45'; ctx.strokeStyle = '#a0703f'; ctx.lineWidth = 5; ctx.beginPath(); ctx.roundRect(22, cy - 44, 132, 38, 6); ctx.fill(); ctx.stroke();
-    ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; ctx.fillText('Buchete proaspete', 88, cy - 31); ctx.font = '700 10px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffd6e4'; ctx.fillText('făcute de Bubu 💕', 88, cy - 16);
+    ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; ctx.fillText($t('Buchete proaspete'), 88, cy - 31); ctx.font = '700 10px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffd6e4'; ctx.fillText($t('făcute de Bubu 💕'), 88, cy - 16);
     // sulul de hartie
     const rx = W * 0.3; ctx.fillStyle = '#f2e3c6'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(rx - 34, cy - 18, 68, 16, 8); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#e8d3ad'; ctx.beginPath(); ctx.ellipse(rx + 34, cy - 10, 5, 8, 0, 0, 7); ctx.fill(); ctx.stroke();
     // panglica pe mosor si foarfeca
@@ -492,7 +493,7 @@ export class MergeGame extends Panel {
     const pk = Math.max(0, 1 - n.t / 120);
     ctx.fillStyle = '#eee'; ctx.fillRect(x - bw / 2 + 8, y - 14, bw - 16, 5); ctx.fillStyle = pk > 0.4 ? '#7cc576' : '#e63946'; ctx.fillRect(x - bw / 2 + 8, y - 14, (bw - 16) * pk, 5);
     ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = can ? '#2a7a3a' : '#7a5a4a';
-    ctx.fillText(`${n.spec?.name ?? ''} · ${n.pay} lei`, x, y - bh + 12);
+    ctx.fillText($t('{0} · {1} lei', n.spec?.name ?? '', n.pay), x, y - bh + 12);
     this.hits.push({ id: n.id, x, y: y - bh / 2, r: Math.max(bw, bh) / 1.6 });
   }
 
@@ -522,9 +523,9 @@ export class MergeGame extends Panel {
     const jx = W - 54, jy = cy - 2;
     ctx.fillStyle = '#e3f6ffcc'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(jx - 20, jy - 40, 40, 42, 8); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#ffd23f'; for (let i = 0; i < Math.min(8, 1 + Math.floor((this.scene.w.money ?? 0) / 25)); i++) { ctx.beginPath(); ctx.ellipse(jx - 8 + (i % 3) * 8, jy - 6 - Math.floor(i / 3) * 6, 6, 3, 0, 0, 7); ctx.fill(); ctx.stroke(); }
-    ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = O; ctx.fillText(`${this.scene.w.money ?? 0} lei`, jx, jy - 50);
+    ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = O; ctx.fillText($t('{0} lei', this.scene.w.money ?? 0), jx, jy - 50);
     if (!fl) { ctx.fillStyle = '#fff8ef'; ctx.beginPath(); ctx.roundRect(24, cy - 32, 120, 28, 6); ctx.fill(); ctx.stroke(); }
-    if (!fl) { ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText('Taraba lui Bubu', 84, cy - 18); }
+    if (!fl) { ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText($t('Taraba lui Bubu'), 84, cy - 18); }
     // tava cu produse
     const L = this.layout(); const q = this.queue();
     ctx.fillStyle = fl ? '#e9c9bd' : '#c48b5c'; ctx.strokeStyle = O; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(L.gx - 10, L.gy - 10, L.cs * COLS + 20, L.cs * ROWS + 20, 14); ctx.fill(); ctx.stroke();
@@ -563,7 +564,7 @@ export class MergeGame extends Panel {
     { const bx = 20 + this.chains.length * w4, by = L.genY, n = this.bagProds().reduce((a, k) => a + (r[k] ?? 0), 0), hot = this.drag && this.drag.y > L.genY - 20 && this.drag.x > bx;
       ctx.fillStyle = hot ? '#ffe1ea' : fl ? '#ffb3c7' : '#8fb8de'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by + L.crateH * 0.22, w4 - 10, L.crateH * 0.75, 12); ctx.fill(); ctx.stroke();
       const ic = iconCanvas('🎒', 96); if (ic) ctx.drawImage(ic, bx + (w4 - 10) / 2 - L.crateH * 0.25, by + L.crateH * 0.24, L.crateH * 0.5, L.crateH * 0.5);
-      ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(`Inventar${n ? ' ×' + n : ''}`, bx + (w4 - 10) / 2, by + L.crateH * 0.86); }
+      ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText($t('Inventar{0}', n ? ' ×' + n : ''), bx + (w4 - 10) / 2, by + L.crateH * 0.86); }
     // labutele mele sprijinite pe tejghea
     const spec = this.scene.me.actor.spec;
     for (const side of [-1, 1]) {
@@ -574,7 +575,7 @@ export class MergeGame extends Panel {
     }
     // produsul tras
     if (this.drag) { const it = this.b.cells[this.drag.from]; if (it) drawItem(ctx, it, this.drag.x, this.drag.y, L.cs * 1.1, this.t); }
-    if (!q.length) { ctx.font = '700 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 4; const tt = this.scene.w.minutes / 60 >= 20 || this.scene.w.minutes / 60 < 7 ? 'E noapte, clienții vin dimineață 🌙' : fl ? 'Pregătește buchete… clopoțelul sună când intră cineva 🔔' : 'Pregătește produse… vin clienți pe drum 🚶'; ctx.strokeText(tt, W / 2, cy - 14); ctx.fillText(tt, W / 2, cy - 14); }
+    if (!q.length) { ctx.font = '700 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 4; const tt = this.scene.w.minutes / 60 >= 20 || this.scene.w.minutes / 60 < 7 ? $t('E noapte, clienții vin dimineață 🌙') : fl ? $t('Pregătește buchete… clopoțelul sună când intră cineva 🔔') : $t('Pregătește produse… vin clienți pe drum 🚶'); ctx.strokeText(tt, W / 2, cy - 14); ctx.fillText(tt, W / 2, cy - 14); }
     if (this.invOpen) this.drawInv(ctx);
     heartPath(ctx, 0, 0, 0); // (pastreaza importul)
     void basePose;

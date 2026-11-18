@@ -6,15 +6,16 @@ import { Sfx } from '../engine/sfx';
 import type { Scene, Game } from '../engine/game';
 import { ITEMS, NO_OUTFIT } from '../char/outfit';
 import { GAME_NAME } from '../game/names';
+import { $t } from '../i18n';
 
 interface PairAct { id: string; label: string; icon: string; a: 'bubu' | 'dudu'; aAnim: string; bAnim: string; bDelay: number; gap: number; }
 const PAIRS: PairAct[] = [
-  { id: 'hug', label: 'Îmbrățișare', icon: '🤗', a: 'bubu', aAnim: 'hugpose', bAnim: 'hugpose', bDelay: 0, gap: 42 },
-  { id: 'kiss', label: 'Pupic', icon: '💋', a: 'dudu', aAnim: 'kisspose', bAnim: 'kisspose', bDelay: 0, gap: 50 },
-  { id: 'slapD', label: 'Palmă la fund (Dudu)', icon: '🍑', a: 'dudu', aAnim: 'slap', bAnim: 'slapped', bDelay: 0.48, gap: 60 },
-  { id: 'slapB', label: 'Palmă la fund (Bubu)', icon: '🍑', a: 'bubu', aAnim: 'slap', bAnim: 'slapped', bDelay: 0.48, gap: 60 },
-  { id: 'bonk', label: 'Tigaia în cap', icon: '🍳', a: 'bubu', aAnim: 'pan', bAnim: 'dizzy', bDelay: 1.2, gap: 70 },
-  { id: 'fartatk', label: 'Atac cu pârț', icon: '☁️', a: 'dudu', aAnim: 'fartback', bAnim: 'faint', bDelay: 1.0, gap: 64 },
+  { id: 'hug', label: $t('Îmbrățișare'), icon: '🤗', a: 'bubu', aAnim: 'hugpose', bAnim: 'hugpose', bDelay: 0, gap: 42 },
+  { id: 'kiss', label: $t('Pupic'), icon: '💋', a: 'dudu', aAnim: 'kisspose', bAnim: 'kisspose', bDelay: 0, gap: 50 },
+  { id: 'slapD', label: $t('Palmă la fund (Dudu)'), icon: '🍑', a: 'dudu', aAnim: 'slap', bAnim: 'slapped', bDelay: 0.48, gap: 60 },
+  { id: 'slapB', label: $t('Palmă la fund (Bubu)'), icon: '🍑', a: 'bubu', aAnim: 'slap', bAnim: 'slapped', bDelay: 0.48, gap: 60 },
+  { id: 'bonk', label: $t('Tigaia în cap'), icon: '🍳', a: 'bubu', aAnim: 'pan', bAnim: 'dizzy', bDelay: 1.2, gap: 70 },
+  { id: 'fartatk', label: $t('Atac cu pârț'), icon: '☁️', a: 'dudu', aAnim: 'fartback', bAnim: 'faint', bDelay: 1.0, gap: 64 },
 ];
 
 export class StudioScene implements Scene {
@@ -40,25 +41,25 @@ export class StudioScene implements Scene {
     const dances = ANIM_LIST.filter(a => a.kind === 'dance');
     const bs = ANIM_LIST.filter(a => a.who === 'bubu');
     const ds = ANIM_LIST.filter(a => a.who === 'dudu');
-    const moods: [Mood, string, string][] = [['happy', '😊', 'Fericit'], ['love', '🥰', 'Îndrăgostit'], ['sad', '😢', 'Trist'], ['angry', '😠', 'Furios'], ['sulky', '😒', 'Bosumflat'], ['sleepy', '😪', 'Obosit'], ['hungry', '🤤', 'Flămând'], ['sick', '🤒', 'Bolnav']];
+    const moods: [Mood, string, string][] = [['happy', '😊', 'Fericit'], ['love', '🥰', $t('Îndrăgostit')], ['sad', '😢', 'Trist'], ['angry', '😠', 'Furios'], ['sulky', '😒', 'Bosumflat'], ['sleepy', '😪', 'Obosit'], ['hungry', '🤤', $t('Flămând')], ['sick', '🤒', 'Bolnav']];
     this.ui.innerHTML = `
       <div class="topbar">
-        <div class="title">🐹 ${GAME_NAME} 🐹 <small>Studio animații</small></div>
+        <div class="title">🐹 ${GAME_NAME} 🐹 <small>${$t('Studio animații')}</small></div>
         <div class="who">
-          <button class="tg on" data-who="both">Amândoi</button>
-          <button class="tg" data-who="bubu">Ea 🐹</button>
-          <button class="tg" data-who="dudu">El 🐹</button>
+          <button class="tg on" data-who="both">${$t('Amândoi')}</button>
+          <button class="tg" data-who="bubu">${$t('Ea 🐹')}</button>
+          <button class="tg" data-who="dudu">${$t('El 🐹')}</button>
         </div>
-        <button class="tg" data-act="play">🏠 Meniu</button>
+        <button class="tg" data-act="play">${$t('🏠 Meniu')}</button>
       </div>
       <div class="panel">
         ${sec('Emote-uri', common.map(a => btn(`data-anim="${a.id}"`, a.icon, a.label)).join(''))}
         ${sec('Dansuri', dances.map(a => btn(`data-anim="${a.id}"`, a.icon, a.label, 'dance')).join('') + btn('data-anim="stop"', '⏹', 'Stop'))}
-        ${sec('Speciale Ea 🐹', bs.map(a => btn(`data-anim="${a.id}" data-force="bubu"`, a.icon, a.label, 'bubu')).join(''))}
-        ${sec('Speciale El 🐹', ds.map(a => btn(`data-anim="${a.id}" data-force="dudu"`, a.icon, a.label, 'dudu')).join(''))}
-        ${sec('Împreună 💞', PAIRS.map(p => btn(`data-pair="${p.id}"`, p.icon, p.label, 'pair')).join(''))}
-        ${sec('Garderobă 👗', ITEMS.map(i => btn(`data-item="${i.id}"`, i.icon, i.label, 'mood')).join(''))}
-        ${sec('Stare (emoție de bază)', moods.map(([m, i, l]) => btn(`data-mood="${m}"`, i, l, 'mood')).join(''))}
+        ${sec($t('Speciale Ea 🐹'), bs.map(a => btn(`data-anim="${a.id}" data-force="bubu"`, a.icon, a.label, 'bubu')).join(''))}
+        ${sec($t('Speciale El 🐹'), ds.map(a => btn(`data-anim="${a.id}" data-force="dudu"`, a.icon, a.label, 'dudu')).join(''))}
+        ${sec($t('Împreună 💞'), PAIRS.map(p => btn(`data-pair="${p.id}"`, p.icon, p.label, 'pair')).join(''))}
+        ${sec($t('Garderobă 👗'), ITEMS.map(i => btn(`data-item="${i.id}"`, i.icon, i.label, 'mood')).join(''))}
+        ${sec($t('Stare (emoție de bază)'), moods.map(([m, i, l]) => btn(`data-mood="${m}"`, i, l, 'mood')).join(''))}
       </div>`;
     document.getElementById('ui')!.appendChild(this.ui);
     let who: 'both' | 'bubu' | 'dudu' = 'both';
@@ -167,7 +168,7 @@ export class StudioScene implements Scene {
     ctx.font = `800 ${Math.round(14 * s.scale / 1.5)}px "Baloo 2", sans-serif`; ctx.textAlign = 'center';
     for (const a of [this.bubu, this.dudu]) {
       ctx.fillStyle = a.id === 'bubu' ? '#3a2a22' : '#7a4a2a';
-      ctx.fillText(a.spec.id === 'bubu' ? 'Ea' : 'El', a.x, s.cy + 30 * s.scale);
+      ctx.fillText(a.spec.id === 'bubu' ? $t('Ea') : $t('El'), a.x, s.cy + 30 * s.scale);
     }
     ctx.restore();
   }

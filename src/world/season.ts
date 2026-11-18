@@ -4,6 +4,7 @@
 import { iso, isoBox, boxOf, shade, tilePath } from './iso';
 import type { Furn } from './map';
 import { fillTextIcons } from '../ui/icons';
+import { $t } from '../i18n';
 
 const O = '#3a2a22';
 const rnd = (i: number) => { const v = Math.sin(i * 91.7 + 7.3) * 43758.5; return v - Math.floor(v); };
@@ -92,7 +93,7 @@ export function drawStoryType(c: CanvasRenderingContext2D, f: Furn, t: number): 
       q([iso(gx, gy, 46), iso(gx, gy + d, 46), r1, r0], '#7a3a30'); q([iso(gx, gy + d, 46), iso(gx + w, gy + d, 46), r1], '#fff1d6'); q([iso(gx + w + 0.1, gy - 0.1, 44), iso(gx + w + 0.1, gy + d + 0.1, 44), r1, r0], '#a0473e');
       const P = (u: number, z: number) => iso(gx + u * w, gy + d, z); q([P(0.35, 0), P(0.65, 0), P(0.65, 32), P(0.35, 32)], '#8a5d32');
       const a = P(0.35, 0), b = P(0.65, 32), a2 = P(0.65, 0), b2 = P(0.35, 32); c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.moveTo(a2.x, a2.y); c.lineTo(b2.x, b2.y); c.stroke();
-      const sp = P(0.5, 40); c.font = '800 9px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.fillStyle = O; fillTextIcons(c, '🧀 Lăptăria', sp.x, sp.y, 9);
+      const sp = P(0.5, 40); c.font = '800 9px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.fillStyle = O; fillTextIcons(c, $t('🧀 Lăptăria'), sp.x, sp.y, 9);
       return true;
     }
     case 'beehive': {
@@ -106,14 +107,14 @@ export function drawStoryType(c: CanvasRenderingContext2D, f: Furn, t: number): 
     case 'roofdamage': {
       const p = iso(gx + 0.5, gy + 0.5, 120 + Math.sin(t * 3) * 3);
       c.fillStyle = '#ffffff'; c.strokeStyle = '#e63946'; c.lineWidth = 3; c.beginPath(); c.roundRect(p.x - 70, p.y - 14, 140, 26, 12); c.fill(); c.stroke();
-      c.font = '800 11px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#e63946'; fillTextIcons(c, '⛈️ Acoperișul e stricat!', p.x, p.y, 11); c.textBaseline = 'alphabetic';
+      c.font = '800 11px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#e63946'; fillTextIcons(c, $t('⛈️ Acoperișul e stricat!'), p.x, p.y, 11); c.textBaseline = 'alphabetic';
       return true;
     }
     case 'lotsign': { // tablita „De vanzare” la gardul padurii
       const p = iso(gx + 0.5, gy + 0.5), b = iso(gx + 0.5, gy + 0.5, 46);
       c.strokeStyle = O; c.lineWidth = 6; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(b.x, b.y); c.stroke(); c.strokeStyle = '#a0703f'; c.lineWidth = 3.5; c.stroke();
       c.fillStyle = '#fff8ef'; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.roundRect(b.x - 44, b.y - 30, 88, 30, 6); c.fill(); c.stroke();
-      c.font = '800 10px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#2f7a45'; fillTextIcons(c, '🌲 De vânzare', b.x, b.y - 20, 10);
+      c.font = '800 10px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#2f7a45'; fillTextIcons(c, $t('🌲 De vânzare'), b.x, b.y - 20, 10);
       c.fillStyle = '#c0573e'; c.font = '800 9px "Baloo 2", sans-serif'; c.fillText(String((f as any).price ?? '') + ' lei', b.x, b.y - 8); c.textBaseline = 'alphabetic';
       return true;
     }
@@ -122,7 +123,7 @@ export function drawStoryType(c: CanvasRenderingContext2D, f: Furn, t: number): 
       const a = iso(gx, gy, 52), b = iso(gx + w, gy, 52), cc = iso(gx + w, gy + d + 0.4, 40), dd = iso(gx, gy + d + 0.4, 40);
       for (let i = 0; i < 6; i++) { const u0 = i / 6, u1 = (i + 1) / 6; c.beginPath(); c.moveTo(a.x + (b.x - a.x) * u0, a.y + (b.y - a.y) * u0); c.lineTo(a.x + (b.x - a.x) * u1, a.y + (b.y - a.y) * u1); c.lineTo(dd.x + (cc.x - dd.x) * u1, dd.y + (cc.y - dd.y) * u1); c.lineTo(dd.x + (cc.x - dd.x) * u0, dd.y + (cc.y - dd.y) * u0); c.closePath(); c.fillStyle = i % 2 ? '#fff' : '#ff7aa2'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.2; c.stroke(); }
       const p = iso(gx + w / 2, gy + 0.5, 70 + Math.sin(t * 2) * 3); c.fillStyle = '#fff8ef'; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.roundRect(p.x - 56, p.y - 12, 112, 22, 8); c.fill(); c.stroke();
-      c.font = '800 10px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#ff4d8d'; fillTextIcons(c, '🎪 Târgul orașului', p.x, p.y - 1, 10); c.textBaseline = 'alphabetic';
+      c.font = '800 10px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#ff4d8d'; fillTextIcons(c, $t('🎪 Târgul orașului'), p.x, p.y - 1, 10); c.textBaseline = 'alphabetic';
       return true;
     }
   }

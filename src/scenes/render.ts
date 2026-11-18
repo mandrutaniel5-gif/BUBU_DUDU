@@ -49,6 +49,7 @@ import { isWorldStatic } from '../world/map';
 import { screenBox } from '../world/cull';
 import { ACTOR_SCALE } from './world';
 import { setSeason, season } from '../world/seasonlook';
+import { $t } from '../i18n';
 
 export function drawNpc(scene: WorldScene, ctx: CanvasRenderingContext2D, n: Npc) {
   if (!n.actor) return;
@@ -81,7 +82,7 @@ export function drawTravel(scene: WorldScene, ctx: CanvasRenderingContext2D, w: 
 }
 
 export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
-  if (!scene.ready) { const { w, h } = scene.game; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#c09a62'; ctx.font = '700 15px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Se încarcă salvarea…', w / 2, h / 2); return; }
+  if (!scene.ready) { const { w, h } = scene.game; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#c09a62'; ctx.font = '700 15px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText($t('Se încarcă salvarea…'), w / 2, h / 2); return; }
   const { w, h } = scene.game;
   const night = nightAmount(scene.w.minutes);
   const apt = scene.space === 'apartment';
@@ -327,8 +328,8 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
     const k = Math.min(1, scene.morningT / 0.6);
     ctx.save(); ctx.globalAlpha = Math.min(1, k); const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(255,214,165,0.85)'); g.addColorStop(1, 'rgba(255,241,214,0.0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
     ctx.font = '900 38px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 7; ctx.strokeStyle = '#fff'; ctx.fillStyle = '#e07a2f';
-    ctx.strokeText('Bună dimineața!', w / 2, h * 0.3); ctx.fillText('Bună dimineața!', w / 2, h * 0.3);
-    ctx.font = '800 20px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.strokeText(`Ziua ${scene.w.day} · ${clockText(scene.w.minutes)}`, w / 2, h * 0.3 + 36); ctx.fillText(`Ziua ${scene.w.day} · ${clockText(scene.w.minutes)}`, w / 2, h * 0.3 + 36);
+    ctx.strokeText($t('Bună dimineața!'), w / 2, h * 0.3); ctx.fillText($t('Bună dimineața!'), w / 2, h * 0.3);
+    ctx.font = '800 20px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.strokeText($t('Ziua {0} · {1}', scene.w.day, clockText(scene.w.minutes)), w / 2, h * 0.3 + 36); ctx.fillText($t('Ziua {0} · {1}', scene.w.day, clockText(scene.w.minutes)), w / 2, h * 0.3 + 36);
     ctx.restore();
   }
   if (scene.minigame) {
@@ -350,10 +351,10 @@ export function drawSleepOverlay(scene: WorldScene, ctx: CanvasRenderingContext2
   ctx.textAlign = 'center'; ctx.fillStyle = '#3a2a22';
   ctx.font = '900 30px "Baloo 2", sans-serif'; ctx.fillText(`${clockText(scene.w.minutes)}${fast ? '  ⏩' : ''}`, cx, cy - 8);
   ctx.font = '800 15px "Baloo 2", sans-serif';
-  ctx.fillText(nap ? `Pui de somn · energie ${Math.round(scene.w.chars[scene.myId].needs.energy)}%` : `Dormiți… vă treziți la 07:00 (mai sunt ${Math.floor(left / 60)}h ${Math.round(left % 60)}m)`, cx, cy + 20);
+  ctx.fillText(nap ? $t('Pui de somn · energie {0}%', Math.round(scene.w.chars[scene.myId].needs.energy)) : $t('Dormiți… vă treziți la 07:00 (mai sunt {0}h {1}m)', Math.floor(left / 60), Math.round(left % 60)), cx, cy + 20);
   ctx.font = '700 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a';
   const pa = scene.partner.actor.spec.name;
-  ctx.fillText(fast ? 'Noaptea trece repede pentru că dormiți amândoi 💤' : scene.partner.activity?.a.id === 'sleep' ? '' : `Timpul trece normal până se culcă și ${pa}`, cx, cy + 44);
+  ctx.fillText(fast ? $t('Noaptea trece repede pentru că dormiți amândoi 💤') : scene.partner.activity?.a.id === 'sleep' ? '' : $t('Timpul trece normal până se culcă și {0}', pa), cx, cy + 44);
   ctx.restore();
 }
 /** poarta din spatele curtii (spre padure), mereu deschisa */

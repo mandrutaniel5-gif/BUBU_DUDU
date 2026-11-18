@@ -1,6 +1,7 @@
 import type { CharId } from '../char/draw';
 import type { NetAdapter, NetConfig, NetEvent, NetStatus, PlayerState } from './types';
 import { deviceId } from '../game/settings';
+import { $t } from '../i18n';
 
 /** locul (Bubu / Dudu) e ocupat de ALT telefon, conectat acum (semn de viata in ultimele 2 minute) */
 export function seatTaken(p: any, dev: string, now: number) { return !!p?.online && !!p.dev && p.dev !== dev && now - (Number(p.ts) || 0) < 120000; }
@@ -88,7 +89,7 @@ export class FirebaseAdapter extends Base {
       const dev = deviceId(), off = await this.serverOffset();
       // (citire + scriere, nu tranzactie: tranzactia pe nodul in care scriem apoi pozitia de 10 ori pe secunda strica Firebase-ul)
       const cur = await this.once(meRef);
-      if (seatTaken(cur, dev, Date.now() + off)) { this.taken = true; this.setStatus('error', `${me === 'bubu' ? 'Bubu' : 'Dudu'} e deja în casă pe alt telefon`); return; }
+      if (seatTaken(cur, dev, Date.now() + off)) { this.taken = true; this.setStatus('error', $t('{0} e deja în casă pe alt telefon', me === 'bubu' ? 'Bubu' : 'Dudu')); return; }
       await fb.update(meRef, { online: true, ts: fb.serverTimestamp(), dev });
       this.dev = dev;
       fb.onDisconnect(meRef).update({ online: false });

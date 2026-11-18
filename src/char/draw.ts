@@ -1,6 +1,7 @@
 import type { Pose, EyeType, MouthType, PropType } from './pose';
 import { drawHeadItem, drawFaceItem, drawNeckItem, drawBodyItem, drawPin, type Outfit } from './outfit';
 import { drawHamster } from './hamster';
+import { $t } from '../i18n';
 
 export type CharId = 'bubu' | 'dudu';
 
@@ -22,24 +23,24 @@ export interface CharSpec {
 
 /** clientii din sat (NPC), desenati in acelasi stil */
 export const NPC_SPECS: Record<string, CharSpec> = {
-  bunny: { id: 'npc' as CharId, name: 'Iepurașul Ina', body: '#fbf6f2', shade: '#e6dcd4', ear: '#fbf6f2', earInner: '#ffc2d1', cheek: '#ffa3b8', outline: '#2b1d17', tail: '#ffffff', accessory: 'bow', ears: 'bunny' },
-  granny: { id: 'npc' as CharId, name: 'Bunica Leana', body: '#cfc8c3', shade: '#aea49e', ear: '#cfc8c3', earInner: '#f1c6cf', cheek: '#ff9fb0', outline: '#2b1d17', tail: '#eee', accessory: 'none', ears: 'bunny' },
-  pig: { id: 'npc' as CharId, name: 'Purcelușul Gogu', body: '#ffc4d0', shade: '#f0a3b4', ear: '#ffb0c2', earInner: null, cheek: '#ff7f9e', outline: '#2b1d17', tail: '#ff9fb5', accessory: 'none', ears: 'pig', muzzle: '#ff9fb5' },
-  cat: { id: 'npc' as CharId, name: 'Pisica Miti', body: '#f7b267', shade: '#e09145', ear: '#f7b267', earInner: '#ffd6c9', cheek: '#ff8f8f', outline: '#2b1d17', tail: '#e09145', accessory: 'none', ears: 'cat', muzzle: '#fff1e0', nose: '#e5677d' },
-  fox: { id: 'npc' as CharId, name: 'Vulpița Rita', body: '#f08a4b', shade: '#d06a2f', ear: '#f08a4b', earInner: '#3a2418', cheek: '#ff9a9a', outline: '#2b1d17', tail: '#fff', accessory: 'none', ears: 'fox', muzzle: '#fff4ea' },
-  dog: { id: 'npc' as CharId, name: 'Cățelul Rex', body: '#e6c79c', shade: '#c9a678', ear: '#8a5d32', earInner: null, cheek: '#ff9a9a', outline: '#2b1d17', tail: '#8a5d32', accessory: 'none', ears: 'dog', muzzle: '#fff4ea' },
+  bunny: { id: 'npc' as CharId, name: $t('Iepurașul Ina'), body: '#fbf6f2', shade: '#e6dcd4', ear: '#fbf6f2', earInner: '#ffc2d1', cheek: '#ffa3b8', outline: '#2b1d17', tail: '#ffffff', accessory: 'bow', ears: 'bunny' },
+  granny: { id: 'npc' as CharId, name: $t('Bunica Leana'), body: '#cfc8c3', shade: '#aea49e', ear: '#cfc8c3', earInner: '#f1c6cf', cheek: '#ff9fb0', outline: '#2b1d17', tail: '#eee', accessory: 'none', ears: 'bunny' },
+  pig: { id: 'npc' as CharId, name: $t('Purcelușul Gogu'), body: '#ffc4d0', shade: '#f0a3b4', ear: '#ffb0c2', earInner: null, cheek: '#ff7f9e', outline: '#2b1d17', tail: '#ff9fb5', accessory: 'none', ears: 'pig', muzzle: '#ff9fb5' },
+  cat: { id: 'npc' as CharId, name: $t('Pisica Miti'), body: '#f7b267', shade: '#e09145', ear: '#f7b267', earInner: '#ffd6c9', cheek: '#ff8f8f', outline: '#2b1d17', tail: '#e09145', accessory: 'none', ears: 'cat', muzzle: '#fff1e0', nose: '#e5677d' },
+  fox: { id: 'npc' as CharId, name: $t('Vulpița Rita'), body: '#f08a4b', shade: '#d06a2f', ear: '#f08a4b', earInner: '#3a2418', cheek: '#ff9a9a', outline: '#2b1d17', tail: '#fff', accessory: 'none', ears: 'fox', muzzle: '#fff4ea' },
+  dog: { id: 'npc' as CharId, name: $t('Cățelul Rex'), body: '#e6c79c', shade: '#c9a678', ear: '#8a5d32', earInner: null, cheek: '#ff9a9a', outline: '#2b1d17', tail: '#8a5d32', accessory: 'none', ears: 'dog', muzzle: '#fff4ea' },
 };
 
 export const SPECS: Record<CharId, CharSpec> = {
   // 1.14.0: amandoi sunt hamsteri, desenati in hamster.ts (culorile de aici le folosesc doar butoanele si iconitele)
   // „bubu” = Ea: hamsterita alba, cu pata piersicie si fundita roz
   bubu: {
-    id: 'bubu', name: 'Bubu', body: '#fffaf4', shade: '#e8d3c6', ear: '#fff3ea',
+    id: 'bubu', name: /*ro*/'Bubu', body: '#fffaf4', shade: '#e8d3c6', ear: '#fff3ea',
     earInner: '#ffc0cf', cheek: '#ff9fb8', outline: '#4a2a22', tail: '#fffaf4', accessory: 'none',
   },
   // „dudu” = El: hamsterul auriu, cu bot alb si papion albastru
   dudu: {
-    id: 'dudu', name: 'Dudu', body: '#f3a95d', shade: '#d98b3f', ear: '#ec9b4d',
+    id: 'dudu', name: /*ro*/'Dudu', body: '#f3a95d', shade: '#d98b3f', ear: '#ec9b4d',
     earInner: '#ffc0a6', cheek: '#ff8f84', outline: '#4a2a22', tail: '#f3a95d', accessory: 'none',
   },
 };

@@ -8,6 +8,7 @@ import { basePose, type Pose } from '../char/pose';
 import { iconCanvas } from '../ui/icons';
 import { drawTandemSide, RIDE_OUTFIT } from '../world/vehicles';
 import { COURSES, type CourseDef } from '../game/town';
+import { $t } from '../i18n';
 
 const O = '#4a2a22';
 type Box = { x: number; y: number; w: number; h: number };
@@ -32,7 +33,7 @@ export class PostGame extends Panel {
   houses: { x: number; sym: number; got: number }[] = []; scroll = 0; speed = 150; left = 45; letter = 0; good = 0; bad = 0; missed = 0;
   fly: { x: number; y: number; tx: number; ty: number; k: number; ok: boolean } | null = null; dogX = -200; delivered = 0;
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, '💌 Poștașul satului', 'Atinge (SPAȚIU) când cutia cu același semn e în dreptul bicicletei');
+    super(s, d, $t('💌 Poștașul satului'), $t('Atinge (SPAȚIU) când cutia cu același semn e în dreptul bicicletei'));
     let x = 420; for (let i = 0; i < 60; i++) { this.houses.push({ x, sym: Math.floor(Math.random() * SYMS.length), got: 0 }); x += 170 + Math.random() * 70; }
     this.pickLetter();
   }
@@ -57,7 +58,7 @@ export class PostGame extends Panel {
     if (best && ok) best.got = 1;
     this.fly = { x: this.bikeX, y: B.y + B.h * 0.62, tx: mx, ty: B.y + B.h * 0.6, k: 0, ok };
     this.hero.play(ok ? 'dance_hop' : 'shy');
-    this.fx.text(mx, B.y + B.h * 0.45, ok ? 'Livrat! 💌' : 'Greșit! 📭', ok ? '#2a9a4a' : '#e63946', 0.8);
+    this.fx.text(mx, B.y + B.h * 0.45, ok ? $t('Livrat! 💌') : $t('Greșit! 📭'), ok ? '#2a9a4a' : '#e63946', 0.8);
   }
   pointer(t: string) { if (t === 'down') this.throw(); }
   key(k: string, d: boolean) { if (d && (k === ' ' || k === 'e' || k === 'enter')) this.throw(); }
@@ -106,7 +107,7 @@ export class PostGame extends Panel {
 }
 
 // ====================================================================== BRUTARIA
-const BREADS = [{ id: 'paine', name: 'Pâine', col: '#d9a05a' }, { id: 'covrig', name: 'Covrig', col: '#c98a4a' }, { id: 'cozonac', name: 'Cozonac', col: '#e8b06a' }];
+const BREADS = [{ id: 'paine', name: $t('Pâine'), col: '#d9a05a' }, { id: 'covrig', name: $t('Covrig'), col: '#c98a4a' }, { id: 'cozonac', name: $t('Cozonac'), col: '#e8b06a' }];
 function drawBread(ctx: CanvasRenderingContext2D, kind: string, x: number, y: number, s: number, baked: number) {
   const col = baked < 0.3 ? '#f5e6c8' : baked > 1.15 ? '#5a3a22' : BREADS.find(b => b.id === kind)!.col;
   ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.fillStyle = col; ctx.strokeStyle = O; ctx.lineWidth = 3;
@@ -118,7 +119,7 @@ function drawBread(ctx: CanvasRenderingContext2D, kind: string, x: number, y: nu
 export class BakeryGame extends Panel {
   orders = [0, 1, 2, 0, 1].map(i => BREADS[(i + Math.floor(Math.random() * 3)) % 3].id).slice(0, 4);
   i = 0; step: 'knead' | 'shape' | 'bake' | 'show' = 'knead'; knead = 0; lx = 0; ly = 0; down = false; shape = ''; bakeT = 0; baked = 0; scores: number[] = []; showT = 0; left = 70;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🍞 Brutăria satului', 'Frământă (freacă / SPAȚIU) → alege forma → scoate din cuptor când e aurie'); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('🍞 Brutăria satului'), $t('Frământă (freacă / SPAȚIU) → alege forma → scoate din cuptor când e aurie')); }
   get order() { return this.orders[Math.min(this.i, this.orders.length - 1)]; }
   shapeBtn(k: number): Box { const B = this.box, bw = (B.w - 80) / 3; return { x: B.x + 20 + k * (bw + 20), y: B.y + B.h - 110, w: bw, h: 64 }; }
   ovenBtn(): Box { const B = this.box; return { x: B.x + B.w / 2 - 110, y: B.y + B.h - 100, w: 220, h: 56 }; }
@@ -149,12 +150,12 @@ export class BakeryGame extends Panel {
     const acc = 1 - Math.min(1, Math.abs(this.baked - 1) / 0.25); // 1 = perfect auriu
     const sc = (this.shape === this.order ? 0.4 : 0) + acc * 0.6; this.scores.push(sc);
     this.step = 'show'; this.showT = 1.3; Sfx.play('register', { vol: sc > 0.7 ? 1 : 0.5 });
-    this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, sc > 0.85 ? 'Perfectă! ⭐' : sc > 0.6 ? 'Bună! 🍞' : this.baked > 1.15 ? 'Arsă… 🔥' : this.shape !== this.order ? 'Altă formă…' : 'Necoaptă…', sc > 0.6 ? '#2a9a4a' : '#e63946', 1);
+    this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, sc > 0.85 ? $t('Perfectă! ⭐') : sc > 0.6 ? $t('Bună! 🍞') : this.baked > 1.15 ? $t('Arsă… 🔥') : this.shape !== this.order ? $t('Altă formă…') : $t('Necoaptă…'), sc > 0.6 ? '#2a9a4a' : '#e63946', 1);
     if (sc > 0.7) this.hero.play('dance_hop');
   }
   end() {
     const avg = this.scores.length ? this.scores.reduce((a, b) => a + b, 0) / this.orders.length : 0;
-    this.finish(1 + avg, this.scene.finishJob(avg * 1.15, `${this.scores.filter(s => s > 0.6).length}/${this.orders.length} pâini bune`));
+    this.finish(1 + avg, this.scene.finishJob(avg * 1.15, $t('{0}/{1} pâini bune', this.scores.filter(s => s > 0.6).length, this.orders.length)));
   }
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
     ctx.fillStyle = '#fff3e0'; ctx.fillRect(x, y, w, h);
@@ -180,10 +181,10 @@ export class BakeryGame extends Panel {
       ctx.fillStyle = '#f5e6c8'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(dx, dy, 52 * sq, 26 / sq, 0, 0, 7); ctx.fill(); ctx.stroke();
       ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 120, y + h - 70, 240, 16, 8); ctx.fill(); ctx.stroke();
       ctx.fillStyle = '#ffb347'; ctx.beginPath(); ctx.roundRect(x + w / 2 - 118, y + h - 68, 236 * this.knead, 12, 6); ctx.fill();
-      T(ctx, 'Frământă aluatul! (freacă cu degetul)', x + w / 2, y + h - 88, 14);
+      T(ctx, $t('Frământă aluatul! (freacă cu degetul)'), x + w / 2, y + h - 88, 14);
     } else if (this.step === 'shape') {
       ctx.fillStyle = '#f5e6c8'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(dx, dy, 46, 28, 0, 0, 7); ctx.fill(); ctx.stroke();
-      T(ctx, 'Ce formă îi dai?', x + w / 2, this.shapeBtn(0).y - 18, 15);
+      T(ctx, $t('Ce formă îi dai?'), x + w / 2, this.shapeBtn(0).y - 18, 15);
       BREADS.forEach((b, k) => { const r = this.shapeBtn(k); btn(ctx, r, '#fff8ef'); drawBread(ctx, b.id, r.x + 36, r.y + r.h / 2, 0.42, 1); T(ctx, `${k + 1}. ${b.name}`, r.x + r.w * 0.62, r.y + r.h / 2, 14, O, 'center', r.w * 0.6); });
     } else {
       drawBread(ctx, this.shape || this.order, this.step === 'bake' ? ox : dx, this.step === 'bake' ? oy + h * 0.23 : dy, this.step === 'bake' ? 0.6 : 0.9, this.baked);
@@ -192,7 +193,7 @@ export class BakeryGame extends Panel {
         ctx.fillStyle = '#f5e6c8'; ctx.beginPath(); ctx.roundRect(bx, by, bw, 16, 8); ctx.fill(); ctx.stroke();
         ctx.fillStyle = '#ffd23f'; ctx.fillRect(bx + bw * 0.65, by + 2, bw * 0.2, 12);
         const nx = bx + bw * ((this.baked - 0.25) / 1); ctx.fillStyle = O; ctx.beginPath(); ctx.moveTo(nx, by - 4); ctx.lineTo(nx - 6, by - 12); ctx.lineTo(nx + 6, by - 12); ctx.closePath(); ctx.fill();
-        btn(ctx, this.ovenBtn(), '#ffd23f', 'Scoate din cuptor! 🧤', 16);
+        btn(ctx, this.ovenBtn(), '#ffd23f', $t('Scoate din cuptor! 🧤'), 16);
       }
     }
     this.hero.scale = Math.min(0.8, h / 700); this.hero.x = x + 70; this.hero.y = ty + 4; this.hero.draw(ctx);
@@ -201,19 +202,19 @@ export class BakeryGame extends Panel {
 
 // ====================================================================== SPITALUL (asistent/a)
 const CASES = [
-  { sym: '🌡️', name: 'Febră', cure: '💊' }, { sym: '🩹', name: 'Zgârietură', cure: '🩹' }, { sym: '🤧', name: 'Tuse', cure: '🍵' },
-  { sym: '😢', name: 'E speriat', cure: '💕' }, { sym: '🤕', name: 'Cucui', cure: '🧊' },
+  { sym: '🌡️', name: $t('Febră'), cure: '💊' }, { sym: '🩹', name: $t('Zgârietură'), cure: '🩹' }, { sym: '🤧', name: $t('Tuse'), cure: '🍵' },
+  { sym: '😢', name: $t('E speriat'), cure: '💕' }, { sym: '🤕', name: $t('Cucui'), cure: '🧊' },
 ];
 const CURES = ['💊', '🩹', '🍵', '💕', '🧊'];
 export class NurseGame extends Panel {
   pat = 0; kind = 0; pat0 = 0; patience = 1; good = 0; bad = 0; left = 50; react = 0; reactOk = false; walkIn = 0;
   specs = ['bunny', 'cat', 'fox', 'dog', 'pig', 'granny'];
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🏥 Tura la spital', 'Alege tratamentul potrivit pentru fiecare pacient (1-5)'); this.next(); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('🏥 Tura la spital'), $t('Alege tratamentul potrivit pentru fiecare pacient (1-5)')); this.next(); }
   next() { this.kind = Math.floor(Math.random() * CASES.length); this.pat = Math.floor(Math.random() * this.specs.length); this.patience = 1; this.walkIn = 0; }
   cureBtn(k: number): Box { const B = this.box, bw = (B.w - 40 - 4 * 10) / 5; return { x: B.x + 20 + k * (bw + 10), y: B.y + B.h - 104, w: bw, h: 70 }; }
   tick(dt: number) {
     this.left -= dt; this.react = Math.max(0, this.react - dt); this.walkIn = Math.min(1, this.walkIn + dt * 2.5);
-    if (this.react <= 0) { this.patience -= dt / 7; if (this.patience <= 0) { this.bad++; Sfx.play('bad'); this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + 120, 'A plecat supărat… 😞', '#e63946', 0.9); this.next(); } }
+    if (this.react <= 0) { this.patience -= dt / 7; if (this.patience <= 0) { this.bad++; Sfx.play('bad'); this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + 120, $t('A plecat supărat… 😞'), '#e63946', 0.9); this.next(); } }
     if (this.left <= 0) this.end();
   }
   give(k: number) {
@@ -221,11 +222,11 @@ export class NurseGame extends Panel {
     const ok = CURES[k] === CASES[this.kind].cure; this.reactOk = ok; this.react = 1.1;
     const B = this.box;
     if (ok) { this.good++; Sfx.play('good'); this.fx.hearts(B.x + B.w * 0.62, B.y + B.h * 0.3, 5); this.hero.play('dance_hop'); setTimeout(() => this.next(), 1000); }
-    else { this.bad++; Sfx.play('bad'); this.fx.text(B.x + B.w * 0.62, B.y + 110, 'Nu asta îl doare… 😕', '#e63946', 0.9); this.hero.play('shy'); }
+    else { this.bad++; Sfx.play('bad'); this.fx.text(B.x + B.w * 0.62, B.y + 110, $t('Nu asta îl doare… 😕'), '#e63946', 0.9); this.hero.play('shy'); }
   }
   pointer(t: string, x: number, y: number) { if (t === 'down') for (let k = 0; k < 5; k++) if (inside(x, y, this.cureBtn(k))) this.give(k); }
   key(k: string, d: boolean) { if (d && k >= '1' && k <= '5') this.give(+k - 1); }
-  end() { const total = this.good + this.bad; const perf = total ? (this.good / total) * Math.min(1.2, this.good / 8 + 0.2) : 0.3; this.finish(1 + this.good * 0.12, this.scene.finishJob(perf, `${this.good} pacienți vindecați`)); }
+  end() { const total = this.good + this.bad; const perf = total ? (this.good / total) * Math.min(1.2, this.good / 8 + 0.2) : 0.3; this.finish(1 + this.good * 0.12, this.scene.finishJob(perf, $t('{0} pacienți vindecați', this.good))); }
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
     ctx.fillStyle = '#eef8ff'; ctx.fillRect(x, y, w, h);
     ctx.fillStyle = '#d6eefc'; ctx.fillRect(x, y + h * 0.5, w, h * 0.5);
@@ -255,7 +256,7 @@ export class CourseGame extends Panel {
   c: CourseDef; qs: CourseDef['questions']; i = 0; good = 0; answered = -1; wait = 0;
   constructor(s: WorldScene, d: (n: number) => void) {
     const c = COURSES[s.courseId ?? 'birou'];
-    super(s, d, `🎓 ${c.name}`, 'Răspunde corect la cel puțin 3 din 4 întrebări');
+    super(s, d, `🎓 ${c.name}`, $t('Răspunde corect la cel puțin 3 din 4 întrebări'));
     this.c = c; this.qs = [...c.questions].sort(() => Math.random() - 0.5).slice(0, 4);
   }
   tick(dt: number) { if (this.wait > 0) { this.wait -= dt; if (this.wait <= 0) { this.answered = -1; this.i++; if (this.i >= this.qs.length) this.end(); } } }
@@ -268,7 +269,7 @@ export class CourseGame extends Panel {
     ctx.fillStyle = '#f3ecff'; ctx.fillRect(x, y, w, h);
     ctx.fillStyle = '#2f3a5d'; ctx.strokeStyle = '#8a5d32'; ctx.lineWidth = 8; ctx.beginPath(); ctx.roundRect(x + 30, y + 46, w - 60, h * 0.3, 8); ctx.fill(); ctx.stroke();
     const q = this.qs[Math.min(this.i, this.qs.length - 1)];
-    T(ctx, `Întrebarea ${Math.min(this.i + 1, this.qs.length)}/${this.qs.length} · ✅ ${this.good}`, x + w / 2, y + 64, 13, '#cfe0ff');
+    T(ctx, $t('Întrebarea {0}/{1} · ✅ {2}', Math.min(this.i + 1, this.qs.length), this.qs.length, this.good), x + w / 2, y + 64, 13, '#cfe0ff');
     T(ctx, q.q, x + w / 2, y + 46 + h * 0.17, 18, '#fff', 'center', w - 90);
     q.a.forEach((txt, k) => {
       const b = this.btn(k); const st = this.answered < 0 ? 'none' : k === q.ok ? 'ok' : k === this.answered ? 'bad' : 'none';
@@ -287,7 +288,7 @@ export class ShopScene extends Panel {
   constructor(s: WorldScene, d: (n: number) => void) {
     Sfx.play('shopbell', { vol: 0.6 }); Sfx.play('door_open', { vol: 0.35 });
     const cfg = s.shopCfg!;
-    super(s, d, cfg.title, cfg.footer ?? (cfg.sell ? 'Alege ce vinzi' : 'Alege un produs de pe raft, apoi Cumpără'));
+    super(s, d, cfg.title, cfg.footer ?? (cfg.sell ? $t('Alege ce vinzi') : $t('Alege un produs de pe raft, apoi Cumpără')));
     this.cfg = cfg;
   }
   get perPage() { return 8; }
@@ -316,7 +317,7 @@ export class ShopScene extends Panel {
     if (err) { this.msg = err; this.msgT = 2.2; Sfx.play('bad'); this.keeperMood = 'sad'; return; }
     this.bought++; Sfx.play('register'); this.keeperMood = 'love';
     const s = this.slot(this.sel - this.page * this.perPage);
-    this.fx.text(s.x + s.w / 2, s.y, this.cfg.sell ? `+${it.price} lei` : `-${it.price} lei`, this.cfg.sell ? '#2a9a4a' : '#c0573e', 0.9);
+    this.fx.text(s.x + s.w / 2, s.y, this.cfg.sell ? $t('+{0} lei', it.price) : $t('-{0} lei', it.price), this.cfg.sell ? '#2a9a4a' : '#c0573e', 0.9);
     this.fx.hearts(s.x + s.w / 2, s.y + 10, 2);
   }
   keeperMood: 'ok' | 'love' | 'sad' = 'ok';
@@ -359,10 +360,10 @@ export class ShopScene extends Panel {
     T(ctx, `💰 ${this.scene.w.money ?? 0} lei`, x + w - 85, y + 50, 14);
     // butoane
     const it = this.cfg.items[this.sel];
-    btn(ctx, this.buyBtn(), this.cfg.sell ? '#9be38f' : '#ffd23f', it ? (this.cfg.sell ? `Vinde · +${it.price} lei` : `Cumpără · ${it.price} lei`) : (this.cfg.sell ? 'Alege ce vinzi' : 'Alege un produs'), 14, !!it && !it.disabled);
+    btn(ctx, this.buyBtn(), this.cfg.sell ? '#9be38f' : '#ffd23f', it ? (this.cfg.sell ? $t('Vinde · +{0} lei', it.price) : $t('Cumpără · {0} lei', it.price)) : (this.cfg.sell ? $t('Alege ce vinzi') : $t('Alege un produs')), 14, !!it && !it.disabled);
     if (this.pages > 1) { btn(ctx, this.pgBtn(-1), '#fff', '◀', 16); btn(ctx, this.pgBtn(1), '#fff', '▶', 16); T(ctx, `${this.page + 1}/${this.pages}`, x + 140, this.buyBtn().y + 22, 13); }
     this.hero.scale = Math.min(0.75, h / 720); this.hero.x = x + w * 0.2; this.hero.y = cy + 4; this.hero.flip = 1; this.hero.draw(ctx);
   }
   // inchiderea nu e un esec: iesi din magazin
-  abort() { if (!this.ended) this.finish(this.bought ? 1 : 0.01, this.bought ? 'Mulțumim! Mai treceți! 🛍️' : 'La revedere! 👋'); this.ended!.t = 1.6; }
+  abort() { if (!this.ended) this.finish(this.bought ? 1 : 0.01, this.bought ? $t('Mulțumim! Mai treceți! 🛍️') : $t('La revedere! 👋')); this.ended!.t = 1.6; }
 }

@@ -2,6 +2,7 @@
 import { Panel, sweep, HIT_SLACK } from './base';
 import { Sfx } from '../engine/sfx';
 import type { WorldScene } from '../scenes/world';
+import { $t } from '../i18n';
 
 export class PlungerGame extends Panel {
   progress = 0;      // 0..1
@@ -15,13 +16,13 @@ export class PlungerGame extends Panel {
   flush = 0;
 
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, '🪠 Desfundă toaleta!', 'Apasă (atinge / SPAȚIU) când acul e în zona verde');
+    super(scene, done, $t('🪠 Desfundă toaleta!'), $t('Apasă (atinge / SPAȚIU) când acul e în zona verde'));
     this.hero.play('act_plunge');
   }
   tick(dt: number) {
     this.marker = sweep(this.t, this.speed * 0.5);
     this.push = Math.max(0, this.push - dt * 4);
-    if (this.flush > 0) { this.flush += dt; if (this.flush > 1.2) this.finish(1 + Math.max(0, 3 - this.misses) * 0.5, 'FLUUUSH! ✨'); }
+    if (this.flush > 0) { this.flush += dt; if (this.flush > 1.2) this.finish(1 + Math.max(0, 3 - this.misses) * 0.5, $t('FLUUUSH! ✨')); }
     // apa urca incet daca nu faci nimic
     this.water = Math.min(1, this.water + dt * 0.012);
     if (!this.hero.busy) this.hero.play('act_plunge');
@@ -46,11 +47,11 @@ export class PlungerGame extends Panel {
       this.combo = 0; this.misses++;
       this.water = Math.min(1, this.water + 0.22);
       Sfx.play('splash'); Sfx.play('bad', { vol: 0.5 });
-      this.fx.text(cx, cy - 140, 'SPLASH! 💦', '#4ea8de', 1.3);
+      this.fx.text(cx, cy - 140, $t('SPLASH! 💦'), '#4ea8de', 1.3);
       this.fx.burst('drop', cx, cy - 40, 24, 3, 260, { grav: 500, max: 1, color: '#8b6b3e' });
       this.shake = 10;
       this.hero.play('cry');
-      if (this.water >= 1) { this.finish(0, 'INUNDAȚIE! 🌊😭'); Sfx.play('splash'); }
+      if (this.water >= 1) { this.finish(0, $t('INUNDAȚIE! 🌊😭')); Sfx.play('splash'); }
     }
   }
   pointer(type: string) { if (type === 'down') this.hit(); }
@@ -104,10 +105,10 @@ export class PlungerGame extends Panel {
     ctx.fillRect(mx - 2, by, 4, 26);
     // progres + nivel apa
     ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = O;
-    ctx.fillText(`Desfundat: ${Math.round(this.progress * 100)}%`, bx, by + 50);
+    ctx.fillText($t('Desfundat: {0}%', Math.round(this.progress * 100)), bx, by + 50);
     ctx.textAlign = 'right'; ctx.fillStyle = this.water > 0.7 ? '#e63946' : O;
-    ctx.fillText(`Apa: ${'💧'.repeat(Math.ceil(this.water * 5))}`, bx + bw, by + 50);
+    ctx.fillText($t('Apa: {0}', '💧'.repeat(Math.ceil(this.water * 5))), bx + bw, by + 50);
     ctx.textAlign = 'center';
-    if (this.combo >= 3) { ctx.fillStyle = '#ff9f1c'; ctx.fillText(`Combo x${this.combo}! 🔥`, cx, by + 50); }
+    if (this.combo >= 3) { ctx.fillStyle = '#ff9f1c'; ctx.fillText($t('Combo x{0}! 🔥', this.combo), cx, by + 50); }
   }
 }

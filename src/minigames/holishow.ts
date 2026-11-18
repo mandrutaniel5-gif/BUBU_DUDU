@@ -8,6 +8,7 @@ import { NPC_SPECS, SPECS, heartPath, starPath, type CharId } from '../char/draw
 import { VILLAGERS } from '../game/town';
 import type { WorldScene } from '../scenes/world';
 import { fillTextIcons, iconCanvas } from '../ui/icons';
+import { $t } from '../i18n';
 
 export const O = '#3a2a22';
 export const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -116,7 +117,7 @@ export abstract class Show extends Panel {
   goto(id: string) { const i = this.phases.findIndex(p => p.id === id); if (i < 0) return; this.pi = i - 1; this.next(); }
   /** a iesit cu X inainte de final */
   quit = false;
-  end() { if (this.ended) return; try { this.reward(); } catch (e) { console.error(e); } this.finish(1, this.partnerLeft && this.quit ? `${this.paName} a ieșit 🙂` : this.quit ? 'Altă dată 🙂' : this.endText()); }
+  end() { if (this.ended) return; try { this.reward(); } catch (e) { console.error(e); } this.finish(1, this.partnerLeft && this.quit ? $t('{0} a ieșit 🙂', this.paName) : this.quit ? $t('Altă dată 🙂') : this.endText()); }
   abort() { if (this.ended) return; if (this.pi < this.phases.length - 1) this.quit = true; this.send({ quit: 1 }); this.end(); }
   tick(dt: number) {
     this.pt += dt;
@@ -151,7 +152,7 @@ export abstract class Show extends Panel {
     c.restore();
     // subtitlul (ce se intampla) si indiciul (ce ai de facut)
     if (p?.cap) { c.font = '800 17px "Baloo 2", sans-serif'; const tw = Math.min(W - 24, c.measureText(p.cap).width + 44); c.fillStyle = 'rgba(255,250,245,0.95)'; c.strokeStyle = O; c.lineWidth = 3; c.beginPath(); c.roundRect(W / 2 - tw / 2, H - 54, tw, 38, 19); c.fill(); c.stroke(); c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; fillTextIcons(c, p.cap, W / 2, H - 35, 17); }
-    const hint = p?.hint ?? (p && !p.play ? 'Atinge ca să mergi mai departe ›' : '');
+    const hint = p?.hint ?? (p && !p.play ? $t('Atinge ca să mergi mai departe ›') : '');
     if (hint) { c.font = '800 13px "Baloo 2", sans-serif'; const tw = c.measureText(hint).width + 24; c.fillStyle = p?.play ? '#ff4d8d' : 'rgba(58,42,34,0.55)'; c.beginPath(); c.roundRect(W - tw - 58, 13, tw, 26, 13); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; fillTextIcons(c, hint, W - tw / 2 - 58, 26, 13); }
     // butonul X, sus in dreapta (iesi; primesti ce ati facut pana acum)
     c.fillStyle = '#fff'; c.strokeStyle = O; c.lineWidth = 3; c.beginPath(); c.arc(W - 26, 26, 15, 0, 7); c.fill(); c.stroke();

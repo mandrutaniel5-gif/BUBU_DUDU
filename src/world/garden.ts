@@ -2,20 +2,21 @@
 import { iso, tilePath } from './iso';
 import { heartPath } from '../char/draw';
 import { isWinter } from './seasonlook';
+import { $t } from '../i18n';
 
 export type CropCat = 'veg' | 'flower';
 export interface Crop { id: string; name: string; cat: CropCat; grow: number; yield: number; seed: number; sell: number; where: 'online' | 'sat' }
 
 /** grow = minute de joc pana e gata (cu apa). O ora de joc = 1 minut real. */
 export const CROPS: Record<string, Crop> = {
-  carrot: { id: 'carrot', name: 'Morcovi', cat: 'veg', grow: 150, yield: 3, seed: 2, sell: 2, where: 'online' },
-  potato: { id: 'potato', name: 'Cartofi', cat: 'veg', grow: 240, yield: 4, seed: 3, sell: 2, where: 'online' },
-  tulip: { id: 'tulip', name: 'Lalele', cat: 'flower', grow: 180, yield: 3, seed: 3, sell: 3, where: 'online' },
-  tomato: { id: 'tomato', name: 'Roșii', cat: 'veg', grow: 300, yield: 4, seed: 5, sell: 3, where: 'sat' },
-  cabbage: { id: 'cabbage', name: 'Varză', cat: 'veg', grow: 420, yield: 2, seed: 6, sell: 6, where: 'sat' },
-  strawberry: { id: 'strawberry', name: 'Căpșuni', cat: 'veg', grow: 360, yield: 5, seed: 8, sell: 3, where: 'sat' },
-  rose: { id: 'rose', name: 'Trandafiri', cat: 'flower', grow: 480, yield: 3, seed: 9, sell: 6, where: 'sat' },
-  sunflower: { id: 'sunflower', name: 'Floarea-soarelui', cat: 'flower', grow: 540, yield: 2, seed: 8, sell: 8, where: 'sat' },
+  carrot: { id: 'carrot', name: $t('Morcovi'), cat: 'veg', grow: 150, yield: 3, seed: 2, sell: 2, where: /*ro*/'online' },
+  potato: { id: 'potato', name: $t('Cartofi'), cat: 'veg', grow: 240, yield: 4, seed: 3, sell: 2, where: /*ro*/'online' },
+  tulip: { id: 'tulip', name: $t('Lalele'), cat: 'flower', grow: 180, yield: 3, seed: 3, sell: 3, where: /*ro*/'online' },
+  tomato: { id: 'tomato', name: $t('Roșii'), cat: 'veg', grow: 300, yield: 4, seed: 5, sell: 3, where: /*ro*/'sat' },
+  cabbage: { id: 'cabbage', name: $t('Varză'), cat: 'veg', grow: 420, yield: 2, seed: 6, sell: 6, where: /*ro*/'sat' },
+  strawberry: { id: 'strawberry', name: $t('Căpșuni'), cat: 'veg', grow: 360, yield: 5, seed: 8, sell: 3, where: /*ro*/'sat' },
+  rose: { id: 'rose', name: $t('Trandafiri'), cat: 'flower', grow: 480, yield: 3, seed: 9, sell: 6, where: /*ro*/'sat' },
+  sunflower: { id: 'sunflower', name: $t('Floarea-soarelui'), cat: 'flower', grow: 540, yield: 2, seed: 8, sell: 8, where: /*ro*/'sat' },
 };
 export const seedKey = (crop: string) => 'seed_' + crop;
 

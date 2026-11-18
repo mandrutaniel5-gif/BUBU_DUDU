@@ -8,12 +8,13 @@ import { SPECS, type CharId } from '../char/draw';
 import { ITEMS } from '../char/outfit';
 import { catCount } from '../world/garden';
 import * as Hol from '../scenes/holidays';
+import { $t } from '../i18n';
 
 const FLOWERS = ['flower', 'tulip', 'rose', 'sunflower'];
 const DANCES = ['dance_disco', 'dance_hop', 'dance_wave', 'dance_robot', 'shakebutt'];
 
 // ====================================================================== 1. Ziua lui Bubu / Dudu: petrecerea surpriza
-const PGIFTS = [{ k: 'buchet', icon: '💐', label: 'Buchet (3 flori)' }, { k: 'mancare', icon: '🍲', label: 'Ceva gătit de mine' }, { k: 'felicitare', icon: '💌', label: 'Felicitare desenată' }, { k: 'butic', icon: '🎁', label: 'De la butic (120 lei)' }, { k: 'pupic', icon: '💋', label: 'Un pupic uriaș' }];
+const PGIFTS = [{ k: 'buchet', icon: '💐', label: $t('Buchet (3 flori)') }, { k: 'mancare', icon: '🍲', label: $t('Ceva gătit de mine') }, { k: 'felicitare', icon: '💌', label: $t('Felicitare desenată') }, { k: 'butic', icon: '🎁', label: $t('De la butic (120 lei)') }, { k: 'pupic', icon: '💋', label: $t('Un pupic uriaș') }];
 export class BdayShow extends Show {
   who: CharId; B: Actor; P: Actor; candles: { on: boolean; relit: boolean; t: number }[] = []; smoke: { x: number; y: number; t: number }[] = [];
   boxes: GiftBoxes; pg = -1; pgItem = ''; btns: { x: number; y: number; w: number; h: number }[] = []; aiT = 2.5; beatT = 0; beats = 0; good = 0; combo = 0; blows = 0;
@@ -34,7 +35,7 @@ export class BdayShow extends Show {
     if (lit < 0.5) { c.fillStyle = 'rgba(10,10,40,0.55)'; c.fillRect(0, 0, W, H); return; }
     this.garland(c, 0, H * 0.12, W * 0.5, H * 0.2, 24, 14); this.garland(c, W * 0.5, H * 0.2, W, H * 0.12, 24, 14);
     this.lights(c, 0, H * 0.28, W, H * 0.28, 26, 22, 1);
-    rrect(c, W * 0.28, H * 0.04, W * 0.44, 30, 12, '#fff0f5'); say(c, `🎂 La mulți ani, ${this.bName}! 🎉`, W / 2, H * 0.04 + 15, 16, '#ff4d8d');
+    rrect(c, W * 0.28, H * 0.04, W * 0.44, 30, 12, '#fff0f5'); say(c, $t('🎂 La mulți ani, {0}! 🎉', this.bName), W / 2, H * 0.04 + 15, 16, '#ff4d8d');
     for (let i = 0; i < 6; i++) { const x = W * (0.06 + i * 0.18), y = H * 0.4 + Math.sin(this.t * 2 + i) * 6; c.strokeStyle = '#999'; c.lineWidth = 1; c.beginPath(); c.moveTo(x, y + 14); c.lineTo(x + 2, y + 50); c.stroke(); ell(c, x, y, 13, 16, ['#ff7aa2', '#ffd23f', '#4cc9f0', '#7cc576', '#c77dff', '#ff9a5a'][i], true, 1.5); }
   }
   crowd(c: CanvasRenderingContext2D, W: number, H: number, jump = 0) { const s = this.sz() * 0.55; this.guests.forEach((g, i) => { const x = W * (i < 3 ? 0.06 + i * 0.1 : 0.7 + (i - 3) * 0.1), y = H * 0.84 - Math.abs(Math.sin(this.t * 6 + i)) * jump; this.put(g, x, y, s, i < 3 ? 1 : -1); g.draw(c); }); }
@@ -54,54 +55,54 @@ export class BdayShow extends Show {
     this.blows++; Sfx.play('whoosh', { vol: 0.6 });
     const [cd, i] = lit[Math.floor(Math.random() * lit.length)]; cd.on = false; cd.t = this.t; this.smoke.push({ x: i, y: 0, t: this.t });
     // doua lumanari „fermecate” se reaprind o data (gluma lui Rex)
-    if (!cd.relit && (i === 1 || i === 3)) { cd.relit = true; setTimeout(() => { if (!this.ended) { cd.on = true; Sfx.play('pop'); this.fx.text(this.W * 0.5, this.H * 0.3, 'Lumânări fermecate! 😂 Rex râde de tine', '#ff4d6d', 0.9); this.rex.play('laugh'); } }, 900); }
+    if (!cd.relit && (i === 1 || i === 3)) { cd.relit = true; setTimeout(() => { if (!this.ended) { cd.on = true; Sfx.play('pop'); this.fx.text(this.W * 0.5, this.H * 0.3, $t('Lumânări fermecate! 😂 Rex râde de tine'), '#ff4d6d', 0.9); this.rex.play('laugh'); } }, 900); }
     if (mine) this.send({ blow: 1 });
   }
   build(): Phase[] {
     const W0 = () => this.W, H0 = () => this.H; void W0; void H0;
     const P: Phase[] = [
-      { id: 'dark', cap: 'Piața e pustie și întunecată… unde e toată lumea? 🤔', dur: 3.2, enter: () => { this.B.play('shy'); },
-        draw: (c, W, H) => { this.party(c, W, H, 0); this.put(this.B, W * 0.5, H * 0.86, this.sz() * 0.68, 1); this.B.draw(c); for (let i = 0; i < 4; i++) { const x = W * (0.12 + i * 0.25); ell(c, x, H * 0.82, 40, 26, '#2f5a3a'); if (Math.sin(this.t * 3 + i) > 0.2) { ell(c, x - 8 + i * 4, H * 0.62, 5, 9, '#fbf6f2', true, 1.5); ell(c, x + 4 + i * 4, H * 0.62, 5, 9, '#fbf6f2', true, 1.5); } } this.bub(c, `${this.bName}: „Alo? E cineva?…”`, W * 0.5, H * 0.52, 14); } },
-      { id: 'boo', cap: '🎉 SURPRIZĂĂĂ!!!', dur: 3.4, enter: () => { this.flash = 1; Sfx.play('horn'); Sfx.play('applause'); this.boom(120); for (const g of this.guests) g.play('dance_hop'); this.B.play('faint'); this.P.play('dance_hop'); },
-        draw: (c, W, H, k) => { this.party(c, W, H, 1); this.crowd(c, W, H, 14); this.couple(c, W, H); if (k > 0.45) this.bub(c, `${this.bName} a leșinat de emoție 😂`, W * 0.44, H * 0.5, 13); } },
-      { id: 'song', cap: '🎵 „La mulți ani cu sănătate…”', dur: 3.4, enter: () => { Sfx.play('bdaysong'); this.B.play('love'); for (const g of this.guests) g.play('dance_wave'); },
+      { id: 'dark', cap: $t('Piața e pustie și întunecată… unde e toată lumea? 🤔'), dur: 3.2, enter: () => { this.B.play('shy'); },
+        draw: (c, W, H) => { this.party(c, W, H, 0); this.put(this.B, W * 0.5, H * 0.86, this.sz() * 0.68, 1); this.B.draw(c); for (let i = 0; i < 4; i++) { const x = W * (0.12 + i * 0.25); ell(c, x, H * 0.82, 40, 26, '#2f5a3a'); if (Math.sin(this.t * 3 + i) > 0.2) { ell(c, x - 8 + i * 4, H * 0.62, 5, 9, '#fbf6f2', true, 1.5); ell(c, x + 4 + i * 4, H * 0.62, 5, 9, '#fbf6f2', true, 1.5); } } this.bub(c, $t('{0}: „Alo? E cineva?…”', this.bName), W * 0.5, H * 0.52, 14); } },
+      { id: 'boo', cap: $t('🎉 SURPRIZĂĂĂ!!!'), dur: 3.4, enter: () => { this.flash = 1; Sfx.play('horn'); Sfx.play('applause'); this.boom(120); for (const g of this.guests) g.play('dance_hop'); this.B.play('faint'); this.P.play('dance_hop'); },
+        draw: (c, W, H, k) => { this.party(c, W, H, 1); this.crowd(c, W, H, 14); this.couple(c, W, H); if (k > 0.45) this.bub(c, $t('{0} a leșinat de emoție 😂', this.bName), W * 0.44, H * 0.5, 13); } },
+      { id: 'song', cap: $t('🎵 „La mulți ani cu sănătate…”'), dur: 3.4, enter: () => { Sfx.play('bdaysong'); this.B.play('love'); for (const g of this.guests) g.play('dance_wave'); },
         draw: (c, W, H) => { this.party(c, W, H, 1); this.crowd(c, W, H, 4); this.couple(c, W, H); for (let k = 0; k < 5; k++) icon(c, k % 2 ? '🎶' : '🎵', W * (0.2 + k * 0.15) + Math.sin(this.t * 2 + k) * 10, H * 0.5 - ((this.t * 30 + k * 20) % 60), 18); } },
-      { id: 'song2', cap: `🎵 „…să trăiască ${this.who === 'bubu' ? 'Bubu' : 'Dudu'} mulți ani!” (Rex: „AUUUU!”)`, dur: 3.4, enter: () => { Sfx.play('howl'); this.rex.play('dance_robot'); },
+      { id: 'song2', cap: $t('🎵 „…să trăiască {0} mulți ani!” (Rex: „AUUUU!”)', this.who === 'bubu' ? 'Bubu' : 'Dudu'), dur: 3.4, enter: () => { Sfx.play('howl'); this.rex.play('dance_robot'); },
         draw: (c, W, H) => { this.party(c, W, H, 1); this.crowd(c, W, H, 4); this.couple(c, W, H); this.bub(c, 'AUUUU 🎶', this.rex.x, this.rex.y - 80, 13); } },
-      { id: 'pgift', cap: '', hint: this.iAmB ? '' : `Alege cadoul tău pentru ${this.bName}`, max: 30,
+      { id: 'pgift', cap: '', hint: this.iAmB ? '' : $t('Alege cadoul tău pentru {0}', this.bName), max: 30,
         enter: () => { this.aiT = 2.8; if (this.iAmB) Sfx.play('drumroll'); },
-        tap: (type, x, y) => { if (type !== 'down' || this.iAmB || this.pg >= 0) return; const i = this.btns.findIndex(r => this.hit(r, x, y)); if (i < 0 || !this.canGift(i)) { if (i >= 0) { Sfx.play('bad'); this.fx.text(x, y + 80, i === 0 ? 'Îți trebuie 3 flori 🌸' : i === 1 ? 'N-ai nimic gătit 🍲' : 'Nu ajung banii 💰', '#7a5a4a', 0.8); } return; } this.chooseGift(i); },
+        tap: (type, x, y) => { if (type !== 'down' || this.iAmB || this.pg >= 0) return; const i = this.btns.findIndex(r => this.hit(r, x, y)); if (i < 0 || !this.canGift(i)) { if (i >= 0) { Sfx.play('bad'); this.fx.text(x, y + 80, i === 0 ? $t('Îți trebuie 3 flori 🌸') : i === 1 ? $t('N-ai nimic gătit 🍲') : $t('Nu ajung banii 💰'), '#7a5a4a', 0.8); } return; } this.chooseGift(i); },
         play: dt => { if (this.pg < 0 && (this.iAmB ? this.aiPlays : false)) { this.aiT -= dt; if (this.aiT <= 0) { this.pg = [2, 4, 2, 4][this.scene.w.day % 4]; } } return this.pg >= 0; },
         draw: (c, W, H) => { this.party(c, W, H, 1); this.crowd(c, W, H); this.couple(c, W, H);
-          if (this.iAmB) { this.phases[this.pi].cap = `${this.pName} îți pregătește ceva… 👀`; this.bub(c, 'Nu te uita! 🙈', W * 0.56, H * 0.5, 14); }
-          else { this.phases[this.pi].cap = `Ce-i dai lui ${this.bName}?`; this.btns = this.buttons(c, PGIFTS.map((g, i) => ({ icon: g.icon, label: g.label, dis: !this.canGift(i) })), 44, 120); } } },
+          if (this.iAmB) { this.phases[this.pi].cap = $t('{0} îți pregătește ceva… 👀', this.pName); this.bub(c, $t('Nu te uita! 🙈'), W * 0.56, H * 0.5, 14); }
+          else { this.phases[this.pi].cap = $t('Ce-i dai lui {0}?', this.bName); this.btns = this.buttons(c, PGIFTS.map((g, i) => ({ icon: g.icon, label: g.label, dis: !this.canGift(i) })), 44, 120); } } },
       { id: 'pgift2', cap: '', dur: 4.2, enter: () => { Sfx.play('pop'); Sfx.play('good'); this.P.play(this.pg === 4 ? 'kiss' : 'love'); setTimeout(() => this.B.play(this.pg === 4 ? 'kiss' : 'love'), 600); if (this.pg === 4) setTimeout(() => { this.fx.hearts(this.W / 2, this.H * 0.6, 20); Sfx.play('kiss'); }, 900); },
         draw: (c, W, H, k) => { this.party(c, W, H, 1); this.crowd(c, W, H, 3); this.couple(c, W, H); const g = PGIFTS[Math.max(0, this.pg)];
-          this.phases[this.pi].cap = this.pg === 2 ? `💌 O felicitare desenată de ${this.pName}! (artă modernă 😅)` : this.pg === 4 ? '💋 Un pupic URIAȘ! Tot satul face „Awww!”' : this.pg === 3 ? `🎁 ${this.pgItem ? ITEMS.find(i => i.id === this.pgItem)?.label : 'O surpriză'} de la butic!` : this.pg === 0 ? '💐 Un buchet de flori culese cu dragoste!' : '🍲 Ceva gătit cu mâinile lui… mmm!';
-          if (this.pg === 2) { const cw = Math.min(260, W * 0.4), ch = cw * 0.66, s = ease(clamp(k * 3)); c.save(); c.translate(W / 2, H * 0.36); c.scale(s, s); c.rotate(-0.05); rrect(c, -cw / 2, -ch / 2, cw, ch, 6, '#fffaf0'); heartPath(c, -cw * 0.3, -ch * 0.15, 14); c.fillStyle = '#ff4d6d'; c.fill(); c.strokeStyle = O; c.lineWidth = 2; for (const sx of [-0.05, 0.22]) { c.beginPath(); c.arc(cw * sx, -ch * 0.05, 12, 0, 7); c.stroke(); c.beginPath(); c.moveTo(cw * sx, ch * 0.05); c.lineTo(cw * sx, ch * 0.28); c.moveTo(cw * sx - 12, ch * 0.14); c.lineTo(cw * sx + 12, ch * 0.14); c.moveTo(cw * sx, ch * 0.28); c.lineTo(cw * sx - 9, ch * 0.4); c.moveTo(cw * sx, ch * 0.28); c.lineTo(cw * sx + 9, ch * 0.4); c.stroke(); } c.font = '800 13px "Baloo 2", sans-serif'; c.fillStyle = '#7a3a5a'; c.textAlign = 'center'; c.fillText('LA MULȚI ANI! Te iubesc ❤️', 0, -ch * 0.36); c.restore(); }
+          this.phases[this.pi].cap = this.pg === 2 ? $t('💌 O felicitare desenată de {0}! (artă modernă 😅)', this.pName) : this.pg === 4 ? $t('💋 Un pupic URIAȘ! Tot satul face „Awww!”') : this.pg === 3 ? $t('🎁 {0} de la butic!', this.pgItem ? ITEMS.find(i => i.id === this.pgItem)?.label : $t('O surpriză')) : this.pg === 0 ? $t('💐 Un buchet de flori culese cu dragoste!') : $t('🍲 Ceva gătit cu mâinile lui… mmm!');
+          if (this.pg === 2) { const cw = Math.min(260, W * 0.4), ch = cw * 0.66, s = ease(clamp(k * 3)); c.save(); c.translate(W / 2, H * 0.36); c.scale(s, s); c.rotate(-0.05); rrect(c, -cw / 2, -ch / 2, cw, ch, 6, '#fffaf0'); heartPath(c, -cw * 0.3, -ch * 0.15, 14); c.fillStyle = '#ff4d6d'; c.fill(); c.strokeStyle = O; c.lineWidth = 2; for (const sx of [-0.05, 0.22]) { c.beginPath(); c.arc(cw * sx, -ch * 0.05, 12, 0, 7); c.stroke(); c.beginPath(); c.moveTo(cw * sx, ch * 0.05); c.lineTo(cw * sx, ch * 0.28); c.moveTo(cw * sx - 12, ch * 0.14); c.lineTo(cw * sx + 12, ch * 0.14); c.moveTo(cw * sx, ch * 0.28); c.lineTo(cw * sx - 9, ch * 0.4); c.moveTo(cw * sx, ch * 0.28); c.lineTo(cw * sx + 9, ch * 0.4); c.stroke(); } c.font = '800 13px "Baloo 2", sans-serif'; c.fillStyle = '#7a3a5a'; c.textAlign = 'center'; c.fillText($t('LA MULȚI ANI! Te iubesc ❤️'), 0, -ch * 0.36); c.restore(); }
           else if (this.pg !== 4) icon(c, g.icon, W / 2, H * 0.36 - Math.sin(k * Math.PI) * 20, 60); } },
-      { id: 'candles', cap: '🎂 Suflă în lumânări!', hint: 'Atinge repede ca să sufli!', max: 25,
+      { id: 'candles', cap: $t('🎂 Suflă în lumânări!'), hint: $t('Atinge repede ca să sufli!'), max: 25,
         enter: () => { this.aiT = 0.6; },
         tap: (type) => { if (type === 'down') this.blow(true); },
         play: dt => { if (this.aiPlays && (!this.iAmB)) { /* il ajuti pe sarbatorit */ } if (!this.iAmB && this.partnerAI) { this.aiT -= dt; if (this.aiT <= 0) { this.aiT = 0.7; this.blow(false); } } return this.candles.every(c2 => !c2.on) && this.pt > 1; },
         draw: (c, W, H) => { this.party(c, W, H, 1); this.crowd(c, W, H); this.cake(c, W / 2, H * 0.74, this.sz() * 0.9); this.put(this.B, W * 0.26, H * 0.86, this.sz() * 0.62, 1); this.B.draw(c);
           for (const sm of this.smoke) { const a = this.t - sm.t; if (a > 2) continue; c.globalAlpha = 0.5 * (1 - a / 2); c.fillStyle = '#bbb'; c.beginPath(); c.arc(W / 2 + (-32 + sm.x * 16) * this.sz() * 0.9 + Math.sin(a * 5) * 5, H * 0.74 - (120 + a * 40) * this.sz() * 0.9, 5 + a * 4, 0, 7); c.fill(); c.globalAlpha = 1; } } },
-      { id: 'wish', cap: '✨ Pune o dorință… (nu spune nimănui!)', dur: 2.8, enter: () => { Sfx.play('chimes'); Sfx.play('applause', { delay: 0.4 }); this.B.play('shy'); },
+      { id: 'wish', cap: $t('✨ Pune o dorință… (nu spune nimănui!)'), dur: 2.8, enter: () => { Sfx.play('chimes'); Sfx.play('applause', { delay: 0.4 }); this.B.play('shy'); },
         draw: (c, W, H) => { this.party(c, W, H, 1); this.crowd(c, W, H, 6); this.cake(c, W / 2, H * 0.74, this.sz() * 0.9); this.put(this.B, W * 0.26, H * 0.86, this.sz() * 0.62, 1); this.B.draw(c); for (let i = 0; i < 6; i++) icon(c, '✨', W * 0.26 + Math.cos(this.t * 2 + i) * 50, H * 0.5 + Math.sin(this.t * 2 + i) * 20, 16); } },
-      { id: 'rex', cap: 'Nea Gogu taie tortul… și Rex n-a mai rezistat 🐶🎂', dur: 3.6, enter: () => { this.gogu.play('act_cook'); setTimeout(() => { this.rex.play('faint'); Sfx.play('squelch'); Sfx.play('giggle', { delay: 0.3 }); for (const g of this.guests) if (g !== this.rex) g.play('laugh'); this.B.play('laugh'); this.P.play('laugh'); }, 1200); },
-        draw: (c, W, H, k) => { this.party(c, W, H, 1); this.cake(c, W / 2, H * 0.74, this.sz() * 0.9, k > 0.35); const rx = lerp(W * 0.8, W * 0.53, clamp(k * 3)); this.put(this.rex, rx, H * 0.78, this.sz() * 0.6, -1); this.rex.draw(c); if (k > 0.35) { c.fillStyle = '#fff'; for (let i = 0; i < 5; i++) { c.beginPath(); c.arc(rx - 10 + i * 5, H * 0.78 - 60 + (i % 2) * 8, 6, 0, 7); c.fill(); } this.bub(c, 'Rex: „Nu-i ce pare! 😳🍰”', rx, H * 0.42, 13); } this.put(this.gogu, W * 0.35, H * 0.86, this.sz() * 0.6, 1); this.gogu.draw(c); } },
-      { id: 'gifts', cap: '🎁 Cadourile de la săteni!', hint: 'Atinge un cadou de 3 ori ca să-l deschizi', max: 70,
+      { id: 'rex', cap: $t('Nea Gogu taie tortul… și Rex n-a mai rezistat 🐶🎂'), dur: 3.6, enter: () => { this.gogu.play('act_cook'); setTimeout(() => { this.rex.play('faint'); Sfx.play('squelch'); Sfx.play('giggle', { delay: 0.3 }); for (const g of this.guests) if (g !== this.rex) g.play('laugh'); this.B.play('laugh'); this.P.play('laugh'); }, 1200); },
+        draw: (c, W, H, k) => { this.party(c, W, H, 1); this.cake(c, W / 2, H * 0.74, this.sz() * 0.9, k > 0.35); const rx = lerp(W * 0.8, W * 0.53, clamp(k * 3)); this.put(this.rex, rx, H * 0.78, this.sz() * 0.6, -1); this.rex.draw(c); if (k > 0.35) { c.fillStyle = '#fff'; for (let i = 0; i < 5; i++) { c.beginPath(); c.arc(rx - 10 + i * 5, H * 0.78 - 60 + (i % 2) * 8, 6, 0, 7); c.fill(); } this.bub(c, $t('Rex: „Nu-i ce pare! 😳🍰”'), rx, H * 0.42, 13); } this.put(this.gogu, W * 0.35, H * 0.86, this.sz() * 0.6, 1); this.gogu.draw(c); } },
+      { id: 'gifts', cap: $t('🎁 Cadourile de la săteni!'), hint: $t('Atinge un cadou de 3 ori ca să-l deschizi'), max: 70,
         enter: () => { this.aiT = 1.5; if (!this.boxes.gifts.length) this.next(); },
         tap: (type, x, y) => { if (type !== 'down') return; const i = this.boxes.rects.findIndex(r => this.hit(r, x, y)); if (i >= 0) this.boxes.tap(i, true); },
         play: dt => { if (this.aiPlays && !this.iAmB) { this.aiT -= dt; if (this.aiT <= 0) { this.aiT = 0.9; const i = this.boxes.open.findIndex(o => o < 3); if (i >= 0) this.boxes.tap(i, false); } } return this.boxes.done && this.pt > 1; },
         draw: (c, W, H) => { this.party(c, W, H, 1); this.boxes.draw(c, W, H * 0.84, this.guests); } },
-      { id: 'dance', cap: '', hint: 'Dansați! Atinge pe ritm', max: 16,
+      { id: 'dance', cap: '', hint: $t('Dansați! Atinge pe ritm'), max: 16,
         enter: () => { this.beatT = 0; this.beats = 0; },
-        tap: (type) => { if (type !== 'down') return; const ph = (this.beatT % 0.55) / 0.55, d = Math.min(ph, 1 - ph) * 0.55; if (d < 0.11) { this.good++; this.combo++; this.me.play(DANCES[this.combo % DANCES.length]); this.fx.text(this.W / 2, this.H * 0.4, this.combo > 4 ? 'Regele ringului! 👑' : 'Pe ritm! ✨', '#ffd23f', 0.9); if (this.combo % 5 === 0) this.boom(25); this.send({ dance: this.combo }); } else { this.combo = 0; this.fx.text(this.W / 2, this.H * 0.4, 'Ups! 😅', '#fff', 0.7); } },
+        tap: (type) => { if (type !== 'down') return; const ph = (this.beatT % 0.55) / 0.55, d = Math.min(ph, 1 - ph) * 0.55; if (d < 0.11) { this.good++; this.combo++; this.me.play(DANCES[this.combo % DANCES.length]); this.fx.text(this.W / 2, this.H * 0.4, this.combo > 4 ? $t('Regele ringului! 👑') : $t('Pe ritm! ✨'), '#ffd23f', 0.9); if (this.combo % 5 === 0) this.boom(25); this.send({ dance: this.combo }); } else { this.combo = 0; this.fx.text(this.W / 2, this.H * 0.4, $t('Ups! 😅'), '#fff', 0.7); } },
         play: dt => { const prev = Math.floor(this.beatT / 0.55); this.beatT += dt; if (Math.floor(this.beatT / 0.55) !== prev) { Sfx.play('kick'); this.beats++; if (this.aiPlays && this.beats % 2 === 0) this.pa.play(DANCES[this.beats % 5]); if (this.beats % 3 === 0) { const g = this.guests[this.beats % this.guests.length]; g.play(DANCES[(this.beats / 3) % 5 | 0]); } } return this.beats >= 26; },
         draw: (c, W, H) => { this.party(c, W, H, 1); for (let i = 0; i < 6; i++) { const a = this.t * 1.5 + i; c.fillStyle = ['rgba(255,77,141,0.12)', 'rgba(76,201,240,0.12)', 'rgba(255,210,63,0.12)'][i % 3]; c.beginPath(); c.moveTo(W / 2, H * 0.14); c.lineTo(W / 2 + Math.cos(a) * W, H); c.lineTo(W / 2 + Math.cos(a + 0.2) * W, H); c.closePath(); c.fill(); }
           this.crowd(c, W, H, 10); this.couple(c, W, H); const ph = (this.beatT % 0.55) / 0.55, r = 28 + (1 - ph) * 16; ell(c, W / 2, H * 0.3, r, r, 'rgba(255,77,141,0.85)', true, 3); say(c, '🪩', W / 2, H * 0.3, 22); say(c, `✨ ${this.good}`, 70, 30, 16, '#fff'); } },
-      { id: 'end', cap: `🎂 La mulți ani, ${this.bName}! Cea mai frumoasă zi! 💕`, dur: 3.6, enter: () => { Sfx.play('fanfare'); this.boom(80); for (let i = 0; i < 3; i++) setTimeout(() => this.shape(this.W * (0.25 + i * 0.25), this.H * 0.25, ['heart', this.who === 'bubu' ? 'panda' : 'bear', 'star'][i], [['#ff4d6d', '#fff'], ['#fff', '#2b2b33'], ['#ffd23f', '#fff']][i]), i * 350); this.B.play('love'); this.P.play('kiss'); },
+      { id: 'end', cap: $t('🎂 La mulți ani, {0}! Cea mai frumoasă zi! 💕', this.bName), dur: 3.6, enter: () => { Sfx.play('fanfare'); this.boom(80); for (let i = 0; i < 3; i++) setTimeout(() => this.shape(this.W * (0.25 + i * 0.25), this.H * 0.25, ['heart', this.who === 'bubu' ? 'panda' : 'bear', 'star'][i], [['#ff4d6d', '#fff'], ['#fff', '#2b2b33'], ['#ffd23f', '#fff']][i]), i * 350); this.B.play('love'); this.P.play('kiss'); },
         draw: (c, W, H) => { this.party(c, W, H, 1); this.crowd(c, W, H, 8); this.couple(c, W, H); } },
     ];
     return P;
@@ -120,12 +121,12 @@ export class BdayShow extends Show {
     if (d.box != null) this.boxes.tap(d.box, false);
     if (d.dance) this.pa.play(DANCES[d.dance % 5]);
   }
-  endText() { return `La mulți ani, ${this.bName}! 🎂`; }
+  endText() { return $t('La mulți ani, {0}! 🎂', this.bName); }
   reward() {
     const s = this.scene, y = Hol.yearOf(s.w.day);
     if (this.quit && this.pi < 6) return;
     const shared = Hol.once(s, `bday-${this.who}-${y}`);
-    if (shared) { for (const gf of this.boxes.gifts) Hol.befriend(s, gf.vid, 1); s.log(`Petrecere surpriză pentru ${this.bName} în piața satului! 🎂🎉`); }
+    if (shared) { for (const gf of this.boxes.gifts) Hol.befriend(s, gf.vid, 1); s.log($t('Petrecere surpriză pentru {0} în piața satului! 🎂🎉', this.bName)); }
     for (const gf of this.boxes.gifts) Hol.applyGift(s, gf, shared);
     // cadoul partenerului: haina de la butic o primeste sarbatoritul (pe telefonul lui)
     if (this.pgItem) Hol.applyGift(s, { vid: '', from: '', box: '', icon: '', label: '', msg: '', to: this.who, item: this.pgItem }, false);
@@ -156,36 +157,36 @@ export class GrandShow extends Show {
   build(): Phase[] {
     const st = (n: number) => '⭐'.repeat(n) + '☆'.repeat(5 - n);
     return [
-      { id: 'hi', cap: '👵👴 Au venit bunicii! Cu trei sacoșe și un borcan de zacuscă', dur: 3.4, enter: () => { Sfx.play('doorbell'); this.gma.play('wave'); this.gpa.play('wave'); this.bubu.play('dance_hop'); this.dudu.play('love'); },
+      { id: 'hi', cap: $t('👵👴 Au venit bunicii! Cu trei sacoșe și un borcan de zacuscă'), dur: 3.4, enter: () => { Sfx.play('doorbell'); this.gma.play('wave'); this.gpa.play('wave'); this.bubu.play('dance_hop'); this.dudu.play('love'); },
         draw: (c, W, H) => { this.yard(c, W, H); this.family(c, W, H); for (let i = 0; i < 3; i++) icon(c, '🛍️', W * (0.12 + i * 0.05), H * 0.86, 26); icon(c, '🫙', W * 0.86, H * 0.86, 24); } },
       { id: 'cheeks', cap: '', dur: 3.6, enter: () => { this.gma.play('love'); this.dudu.play('shy'); Sfx.play('kiss'); },
-        draw: (c, W, H) => { this.yard(c, W, H); this.family(c, W, H); this.phases[this.pi].cap = 'Bunica îl ciupește pe Dudu de obraji 🥰'; this.bub(c, 'Buni: „Vai, ce te-ai îngrășat, puiule! Mănânci bine? 🥰”', W * 0.4, H * 0.5, 13); } },
-      { id: 'cook', cap: '🍽️ Ce le puneți bunicilor pe masă?', hint: 'Alege mâncarea (sau gătiți cu bunica)', max: 30,
+        draw: (c, W, H) => { this.yard(c, W, H); this.family(c, W, H); this.phases[this.pi].cap = $t('Bunica îl ciupește pe Dudu de obraji 🥰'); this.bub(c, $t('Buni: „Vai, ce te-ai îngrășat, puiule! Mănânci bine? 🥰”'), W * 0.4, H * 0.5, 13); } },
+      { id: 'cook', cap: $t('🍽️ Ce le puneți bunicilor pe masă?'), hint: $t('Alege mâncarea (sau gătiți cu bunica)'), max: 30,
         tap: (type, x, y) => { if (type !== 'down' || this.pick > -2) return; const i = this.btns.findIndex(r => this.hit(r, x, y)); if (i < 0) return; this.choose(i === this.meals.length ? -1 : i, true); },
         play: dt => { if (this.pick === -2 && this.aiPlays && this.remote === false && this.partnerAI) { /* alegi tu */ } if (this.pick === -2 && !this.partnerAI && !this.heard) { this.aiT -= dt; } return this.pick > -2; },
-        draw: (c, W, H) => { this.yard(c, W, H); this.family(c, W, H); this.btns = this.buttons(c, [...this.meals.map(m => ({ icon: m.icon, label: `${m.name} (${m.n})` })), { icon: '🥘', label: 'Gătim cu bunica' }], 44, 130); } },
-      { id: 'stir', cap: '🥘 Bunica face sarmale: amestecă în oală!', hint: 'Atinge repede ca să amesteci!', max: 12,
+        draw: (c, W, H) => { this.yard(c, W, H); this.family(c, W, H); this.btns = this.buttons(c, [...this.meals.map(m => ({ icon: m.icon, label: `${m.name} (${m.n})` })), { icon: '🥘', label: $t('Gătim cu bunica') }], 44, 130); } },
+      { id: 'stir', cap: $t('🥘 Bunica face sarmale: amestecă în oală!'), hint: $t('Atinge repede ca să amesteci!'), max: 12,
         enter: () => { if (this.pick !== -1) this.next(); else { this.stir = 0; this.gma.play('act_cook'); } },
-        tap: (type) => { if (type === 'down') { this.stir++; Sfx.play('spoon', { vol: 0.6 }); if (this.stir === 10) this.fx.text(this.W / 2, this.H * 0.4, 'Bunica: „Mai cu spor, nu adormi!” 😄', '#7a5a4a', 0.9); } },
+        tap: (type) => { if (type === 'down') { this.stir++; Sfx.play('spoon', { vol: 0.6 }); if (this.stir === 10) this.fx.text(this.W / 2, this.H * 0.4, $t('Bunica: „Mai cu spor, nu adormi!” 😄'), '#7a5a4a', 0.9); } },
         play: dt => { if (this.partnerAI && this.pt % 0.5 < dt) this.stir++; return this.stir >= 24; },
         draw: (c, W, H) => { this.yard(c, W, H); this.family(c, W, H); const cx = W / 2, cy = H * 0.6; ell(c, cx, cy, 60, 18, '#555'); rrect(c, cx - 56, cy, 112, 40, 10, '#666'); for (let i = 0; i < 6; i++) ell(c, cx - 30 + i * 12 + Math.sin(this.t * 5 + i) * 3, cy - 2 - ((this.t * 30 + i * 9) % 20), 4, 4, '#ffffffaa', false); c.save(); c.translate(cx, cy - 8); c.rotate(Math.sin(this.stir * 1.2) * 0.6); c.strokeStyle = '#a0703f'; c.lineWidth = 6; c.beginPath(); c.moveTo(0, 0); c.lineTo(20, -60); c.stroke(); c.restore(); say(c, `🥄 ${Math.min(24, this.stir)}/24`, 80, 30, 16, '#7a5a4a'); } },
       { id: 'taste', cap: '', dur: 4.2, enter: () => { this.rating = this.pick === -1 ? 5 : this.meals[this.pick]?.stars ?? 3; this.gma.play('act_eat'); this.gpa.play('act_eat'); setTimeout(() => { Sfx.play(this.rating >= 4 ? 'good' : 'giggle'); this.gma.play(this.rating >= 4 ? 'love' : 'laugh'); }, 1500); setTimeout(() => { Sfx.play('burp'); this.gpa.play('burp'); }, 2800); },
         draw: (c, W, H, k) => { this.yard(c, W, H); this.family(c, W, H); for (let i = 0; i < 4; i++) icon(c, this.pick === -1 ? '🥬' : (this.meals[this.pick]?.icon ?? '🍲'), W * (0.36 + i * 0.09), H * 0.62, 26);
-          this.phases[this.pi].cap = k < 0.35 ? 'Bunicii gustă… 🤔' : k < 0.66 ? `Buni: ${st(this.rating)} ${this.rating >= 5 ? '„Ca la mine acasă! Bravo, copii!”' : this.rating >= 4 ? '„Foarte bun! Puțină sare și era perfect”' : '„Hmm… bun, bun. Mai exersați 😅”'}` : 'Bunicu\': „Pardon! 😳 …mai pune-mi o porție!”'; } },
+          this.phases[this.pi].cap = k < 0.35 ? $t('Bunicii gustă… 🤔') : k < 0.66 ? $t('Buni: {0} {1}', st(this.rating), this.rating >= 5 ? $t('„Ca la mine acasă! Bravo, copii!”') : this.rating >= 4 ? $t('„Foarte bun! Puțină sare și era perfect”') : $t('„Hmm… bun, bun. Mai exersați 😅”')) : $t('Bunicu\': „Pardon! 😳 …mai pune-mi o porție!”'); } },
       { id: 'story', cap: '', dur: 4.4, enter: () => { this.gpa.play('wave'); },
-        draw: (c, W, H) => { this.yard(c, W, H); this.family(c, W, H); this.bub(c, 'Bunicu\': „V-am zis de somnul de 20 de kile pe care l-am prins în ’78?”', W * 0.62, H * 0.42, 13); this.phases[this.pi].cap = this.told > 1 ? `${this.myName}: „Da, bunicu'… de ${this.told + 1} ori până acum 😅”` : `${this.myName}: „Nu… (și urmează o oră de poveste) 😅”`; } },
+        draw: (c, W, H) => { this.yard(c, W, H); this.family(c, W, H); this.bub(c, $t('Bunicu\': „V-am zis de somnul de 20 de kile pe care l-am prins în ’78?”'), W * 0.62, H * 0.42, 13); this.phases[this.pi].cap = this.told > 1 ? $t('{0}: „Da, bunicu\'… de {1} ori până acum 😅”', this.myName, this.told + 1) : $t('{0}: „Nu… (și urmează o oră de poveste) 😅”', this.myName); } },
       { id: 'gifts', cap: '', dur: 4, enter: () => { Sfx.play('coin'); Sfx.play('good', { delay: 0.3 }); this.boom(30); this.bubu.play('love'); this.dudu.play('dance_hop'); },
-        draw: (c, W, H) => { this.yard(c, W, H); this.family(c, W, H); const lei = 60 + this.rating * 20; this.phases[this.pi].cap = `🎁 Bunicii vă lasă ${lei} de lei „de-o ciocolată”, zacuscă și ouă de la țară`; icon(c, '💰', W * 0.4, H * 0.5, 34); icon(c, '🫙', W * 0.5, H * 0.5, 34); icon(c, '🥚', W * 0.6, H * 0.5, 34); } },
-      { id: 'bye', cap: '👋 „Să ne mai chemați, copii! Și să mâncați bine!”', dur: 3.6, enter: () => { this.gma.play('wave'); this.gpa.play('wave'); this.bubu.play('wave'); this.dudu.play('wave'); Sfx.play('chimes'); },
+        draw: (c, W, H) => { this.yard(c, W, H); this.family(c, W, H); const lei = 60 + this.rating * 20; this.phases[this.pi].cap = $t('🎁 Bunicii vă lasă {0} de lei „de-o ciocolată”, zacuscă și ouă de la țară', lei); icon(c, '💰', W * 0.4, H * 0.5, 34); icon(c, '🫙', W * 0.5, H * 0.5, 34); icon(c, '🥚', W * 0.6, H * 0.5, 34); } },
+      { id: 'bye', cap: $t('👋 „Să ne mai chemați, copii! Și să mâncați bine!”'), dur: 3.6, enter: () => { this.gma.play('wave'); this.gpa.play('wave'); this.bubu.play('wave'); this.dudu.play('wave'); Sfx.play('chimes'); },
         draw: (c, W, H, k) => { this.yard(c, W, H); const s = this.sz() * 0.62; this.put(this.gma, W * 0.2 + k * W * 0.7, H * 0.84, s, 1); this.put(this.gpa, W * 0.3 + k * W * 0.7, H * 0.84, s, 1); this.put(this.bubu, W * 0.38, H * 0.9, s, 1); this.put(this.dudu, W * 0.5, H * 0.9, s, 1); this.gma.draw(c); this.gpa.draw(c); this.bubu.draw(c); this.dudu.draw(c); } },
     ];
   }
   choose(i: number, mine: boolean) { this.pick = i; if (mine) { if (i >= 0 && this.meals[i]) this.scene.op({ k: 'res', res: this.meals[i].key, delta: -1 }); this.send({ pick: i }); } Sfx.play('pop'); }
   onNet(d: any) { if (d.pick != null && this.pick === -2) this.choose(d.pick, false); }
-  endText() { return 'Bunicii au plecat fericiți! 👵👴💕'; }
+  endText() { return $t('Bunicii au plecat fericiți! 👵👴💕'); }
   reward() {
     const s = this.scene; if (this.quit && this.pi < 4) return;
-    if (Hol.once(s, Hol.yearKey(s, 'grand'))) { s.op({ k: 'money', delta: 60 + this.rating * 20 }); s.op({ k: 'res', res: 'meals', delta: 3 }); s.op({ k: 'res', res: 'egg', delta: 6 }); s.op({ k: 'stat', key: 'grandStory', delta: 1 }); s.log('Bunicii au fost în vizită! 👵👴'); }
+    if (Hol.once(s, Hol.yearKey(s, 'grand'))) { s.op({ k: 'money', delta: 60 + this.rating * 20 }); s.op({ k: 'res', res: 'meals', delta: 3 }); s.op({ k: 'res', res: 'egg', delta: 6 }); s.op({ k: 'stat', key: 'grandStory', delta: 1 }); s.log($t('Bunicii au fost în vizită! 👵👴')); }
     Hol.memory(s, 'grand'); Hol.feelBoth(s, { love: 25, fun: 20, hunger: 25 });
   }
 }
@@ -193,12 +194,12 @@ export class GrandShow extends Show {
 // ====================================================================== 3. Concursul de pescuit (zi de lac)
 type Catch = { name: string; icon: string; kg: number; fish: boolean };
 const CATCHES: (Catch & { w: number; min: number; max: number })[] = [
-  { name: 'Caras', icon: '🐟', kg: 0, fish: true, w: 30, min: 0.3, max: 1.2 }, { name: 'Biban', icon: '🐟', kg: 0, fish: true, w: 20, min: 0.4, max: 1.5 },
-  { name: 'Crap', icon: '🐠', kg: 0, fish: true, w: 20, min: 1, max: 4.5 }, { name: 'Știucă', icon: '🐡', kg: 0, fish: true, w: 10, min: 2, max: 6 },
-  { name: 'SOMN uriaș', icon: '🐋', kg: 0, fish: true, w: 4, min: 6, max: 14 },
-  { name: 'o gheată veche', icon: '👢', kg: 0, fish: false, w: 7, min: 0, max: 0 }, { name: 'o șosetă (a lui Rex?)', icon: '🧦', kg: 0, fish: false, w: 5, min: 0, max: 0 }, { name: 'o rățușcă de cauciuc', icon: '🦆', kg: 0, fish: false, w: 4, min: 0, max: 0 },
+  { name: $t('Caras'), icon: '🐟', kg: 0, fish: true, w: 30, min: 0.3, max: 1.2 }, { name: $t('Biban'), icon: '🐟', kg: 0, fish: true, w: 20, min: 0.4, max: 1.5 },
+  { name: $t('Crap'), icon: '🐠', kg: 0, fish: true, w: 20, min: 1, max: 4.5 }, { name: $t('Știucă'), icon: '🐡', kg: 0, fish: true, w: 10, min: 2, max: 6 },
+  { name: $t('SOMN uriaș'), icon: '🐋', kg: 0, fish: true, w: 4, min: 6, max: 14 },
+  { name: $t('o gheată veche'), icon: '👢', kg: 0, fish: false, w: 7, min: 0, max: 0 }, { name: $t('o șosetă (a lui Rex?)'), icon: '🧦', kg: 0, fish: false, w: 5, min: 0, max: 0 }, { name: $t('o rățușcă de cauciuc'), icon: '🦆', kg: 0, fish: false, w: 4, min: 0, max: 0 },
 ];
-function rollCatch(r: () => number): Catch { let x = r() * CATCHES.reduce((a, c) => a + c.w, 0); for (const c of CATCHES) { x -= c.w; if (x <= 0) return { name: c.name, icon: c.icon, fish: c.fish, kg: c.fish ? Math.round((c.min + r() * (c.max - c.min)) * 10) / 10 : 0 }; } return { name: 'Caras', icon: '🐟', fish: true, kg: 0.5 }; }
+function rollCatch(r: () => number): Catch { let x = r() * CATCHES.reduce((a, c) => a + c.w, 0); for (const c of CATCHES) { x -= c.w; if (x <= 0) return { name: c.name, icon: c.icon, fish: c.fish, kg: c.fish ? Math.round((c.min + r() * (c.max - c.min)) * 10) / 10 : 0 }; } return { name: $t('Caras'), icon: '🐟', fish: true, kg: 0.5 }; }
 export class FishContestShow extends Show {
   state: 'wait' | 'bite' | 'reel' | 'show' = 'wait'; stT = 0; biteAt = 2; reel = 0; last: Catch | null = null; score: Record<string, number> = { me: 0, pa: 0, miti: 0, rex: 0 }; myFish = 0; rnd = seeded(Date.now() & 0xffff);
   aiT: Record<string, number> = { pa: 4, miti: 3, rex: 6 }; jump = -1; feed: { t: number; txt: string }[] = [];
@@ -226,20 +227,20 @@ export class FishContestShow extends Show {
   }
   build(): Phase[] {
     return [
-      { id: 'go', cap: '🎣 Concursul de pescuit! 45 de secunde. Cine prinde cele mai multe kile?', dur: 3.2, enter: () => { Sfx.play('fanfare'); }, draw: (c, W, H) => { this.lake(c, W, H); this.lanes(c, W, H); } },
-      { id: 'fish', cap: '', hint: 'Când pluta se scufundă (!), atinge! Apoi atinge repede ca să tragi', max: 45,
+      { id: 'go', cap: $t('🎣 Concursul de pescuit! 45 de secunde. Cine prinde cele mai multe kile?'), dur: 3.2, enter: () => { Sfx.play('fanfare'); }, draw: (c, W, H) => { this.lake(c, W, H); this.lanes(c, W, H); } },
+      { id: 'fish', cap: '', hint: $t('Când pluta se scufundă (!), atinge! Apoi atinge repede ca să tragi'), max: 45,
         enter: () => { this.state = 'wait'; this.biteAt = this.t + 1.5 + this.rnd() * 2.5; },
         tap: (type) => { if (type !== 'down') return;
           if (this.state === 'bite') { this.state = 'reel'; this.reel = 0; this.stT = this.t; Sfx.play('reel'); }
           else if (this.state === 'reel') { this.reel++; Sfx.play('click', { vol: 0.4 }); }
-          else if (this.state === 'wait') { this.fx.text(this.W * 0.14 + 50, this.H * 0.44, 'Prea devreme! 🐟💨', '#7a5a4a', 0.7); this.biteAt = this.t + 1.5 + this.rnd() * 2; } },
+          else if (this.state === 'wait') { this.fx.text(this.W * 0.14 + 50, this.H * 0.44, $t('Prea devreme! 🐟💨'), '#7a5a4a', 0.7); this.biteAt = this.t + 1.5 + this.rnd() * 2; } },
         play: dt => {
           if (this.state === 'wait' && this.t >= this.biteAt) { this.state = 'bite'; this.stT = this.t; Sfx.play('splash', { vol: 0.4, rate: 1.6 }); }
-          if (this.state === 'bite' && this.t - this.stT > 0.9) { this.state = 'wait'; this.biteAt = this.t + 1.2 + this.rnd() * 2.5; this.fx.text(this.W * 0.2, this.H * 0.44, 'A scăpat! 🐟💨', '#7a5a4a', 0.8); }
-          if (this.state === 'reel') { if (this.reel >= 7) { const ct = rollCatch(this.rnd); this.got('me', ct); this.send({ ct }); this.state = 'show'; this.stT = this.t; } else if (this.t - this.stT > 3) { this.state = 'wait'; this.biteAt = this.t + 1.5; this.fx.text(this.W * 0.2, this.H * 0.44, 'S-a rupt firul! 😩', '#ff4d6d', 0.8); } }
+          if (this.state === 'bite' && this.t - this.stT > 0.9) { this.state = 'wait'; this.biteAt = this.t + 1.2 + this.rnd() * 2.5; this.fx.text(this.W * 0.2, this.H * 0.44, $t('A scăpat! 🐟💨'), '#7a5a4a', 0.8); }
+          if (this.state === 'reel') { if (this.reel >= 7) { const ct = rollCatch(this.rnd); this.got('me', ct); this.send({ ct }); this.state = 'show'; this.stT = this.t; } else if (this.t - this.stT > 3) { this.state = 'wait'; this.biteAt = this.t + 1.5; this.fx.text(this.W * 0.2, this.H * 0.44, $t('S-a rupt firul! 😩'), '#ff4d6d', 0.8); } }
           if (this.state === 'show' && this.t - this.stT > 1.4) { this.state = 'wait'; this.biteAt = this.t + 1.2 + this.rnd() * 2.5; }
           for (const k of ['pa', 'miti', 'rex']) { if (k === 'pa' && !this.aiPlays) continue; this.aiT[k] -= dt; if (this.aiT[k] <= 0) { this.aiT[k] = k === 'miti' ? 3 + this.rnd() * 3 : k === 'rex' ? 6 + this.rnd() * 5 : 4 + this.rnd() * 4; const ct = rollCatch(this.rnd); if (k === 'miti' && ct.kg > 3) ct.kg = 1.1; this.got(k, ct); } }
-          if (this.jump < 0 && this.pt > 20) { this.jump = this.t; Sfx.play('splash'); Sfx.play('cat', { delay: 0.3 }); this.feed.push({ t: this.t, txt: '🙀 Miți a sărit în apă după un pește!' }); }
+          if (this.jump < 0 && this.pt > 20) { this.jump = this.t; Sfx.play('splash'); Sfx.play('cat', { delay: 0.3 }); this.feed.push({ t: this.t, txt: $t('🙀 Miți a sărit în apă după un pește!') }); }
           return false;
         },
         draw: (c, W, H) => { this.lake(c, W, H); this.lanes(c, W, H);
@@ -251,29 +252,29 @@ export class FishContestShow extends Show {
         draw: (c, W, H) => { this.sky(c, W, H, '#8fd3ff', '#fff1d6'); this.ground(c, W, H, H * 0.7, '#a6dc93');
           const order = Object.entries(this.score).sort((a, b) => b[1] - a[1]); const act: Record<string, Actor> = { me: this.me, pa: this.pa, miti: this.miti, rex: this.rexA };
           const pos = [[0.5, 0.42], [0.3, 0.52], [0.7, 0.58]]; order.slice(0, 3).forEach(([k], i) => { const [u, v] = pos[i]; rrect(c, W * u - 50, H * v, 100, H * (0.86 - v), 6, ['#ffd23f', '#d0d6de', '#e8a36a'][i]); say(c, ['1', '2', '3'][i], W * u, H * v + 22, 24, '#7a5a4a'); this.put(act[k], W * u, H * v, this.sz() * 0.55, 1); act[k].draw(c); icon(c, ['🥇', '🥈', '🥉'][i], W * u + 30, H * v - 50, 26); say(c, `${this.score[k].toFixed(1)} kg`, W * u, H * v - 90, 14, O); });
-          const place = order.findIndex(([k]) => k === 'me' || k === 'pa'); this.phases[this.pi].cap = place === 0 ? '🏆 Ați câștigat concursul! +200 lei și trofeul de aur!' : place === 1 ? '🥈 Locul doi! +100 lei' : place === 2 ? '🥉 Locul trei! +50 lei' : '😅 Miți și Rex v-au întrecut… la anul!';
-          if (order[0][0] === 'miti') this.bub(c, 'Miți: „Prr… peștele e viața mea” 🐱', W * 0.5, H * 0.18, 13); } },
+          const place = order.findIndex(([k]) => k === 'me' || k === 'pa'); this.phases[this.pi].cap = place === 0 ? $t('🏆 Ați câștigat concursul! +200 lei și trofeul de aur!') : place === 1 ? $t('🥈 Locul doi! +100 lei') : place === 2 ? $t('🥉 Locul trei! +50 lei') : $t('😅 Miți și Rex v-au întrecut… la anul!');
+          if (order[0][0] === 'miti') this.bub(c, $t('Miți: „Prr… peștele e viața mea” 🐱'), W * 0.5, H * 0.18, 13); } },
     ];
   }
   got(k: string, ct: Catch) {
     this.score[k] = (this.score[k] ?? 0) + ct.kg;
     if (k === 'me') { this.last = ct; if (ct.fish) { this.myFish++; Sfx.play('good'); this.me.play('love'); } else { Sfx.play('boing'); this.me.play('laugh'); } }
     else if (k === 'pa') { this.pa.play(ct.fish ? 'dance_hop' : 'laugh'); this.feed.push({ t: this.t, txt: `${this.paName}: ${ct.fish ? `${ct.name}, ${ct.kg} kg! ${ct.icon}` : `${ct.name} 😂`}` }); }
-    else if (k === 'rex' && !ct.fish) this.feed.push({ t: this.t, txt: `Rex a prins ${ct.name} ${ct.icon} 😂` });
+    else if (k === 'rex' && !ct.fish) this.feed.push({ t: this.t, txt: $t('Rex a prins {0} {1} 😂', ct.name, ct.icon) });
   }
   onNet(d: any) { if (d.ct) this.got('pa', d.ct); }
-  endText() { return '🎣 Ce concurs!'; }
+  endText() { return $t('🎣 Ce concurs!'); }
   reward() {
     const s = this.scene; if (this.myFish) s.op({ k: 'res', res: 'fish', delta: this.myFish });
     if (this.quit && this.pi < 2) return;
     const order = Object.entries(this.score).sort((a, b) => b[1] - a[1]), place = order.findIndex(([k]) => k === 'me' || k === 'pa');
-    if (Hol.once(s, Hol.yearKey(s, 'contest'))) { const lei = [200, 100, 50, 0][place] ?? 0; if (lei) s.op({ k: 'money', delta: lei }); if (place === 0) s.op({ k: 'stat', key: 'trophies', delta: 1 }); s.log(place === 0 ? 'Ați câștigat concursul de pescuit de la lac! 🏆🎣' : `Concursul de pescuit: locul ${place + 1} 🎣`); s.syncPlaced(); }
+    if (Hol.once(s, Hol.yearKey(s, 'contest'))) { const lei = [200, 100, 50, 0][place] ?? 0; if (lei) s.op({ k: 'money', delta: lei }); if (place === 0) s.op({ k: 'stat', key: 'trophies', delta: 1 }); s.log(place === 0 ? $t('Ați câștigat concursul de pescuit de la lac! 🏆🎣') : $t('Concursul de pescuit: locul {0} 🎣', place + 1)); s.syncPlaced(); }
     Hol.memory(s, 'fishcontest'); Hol.feel(s, s.myId, { fun: 25, energy: -8 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 25 });
   }
 }
 
 // ====================================================================== 4. Picnic pe malul lacului
-const CLOUDS = [{ icon: '🐹', me: 'Un hamster pufos! Seamănă cu tine 🐹', pa: 'Mie îmi pare o pizza 🍕' }, { icon: '❤️', me: 'O inimă! ❤️', pa: 'Sau un fund… 🍑 hihi' }, { icon: '🐼', me: 'O panda! 🐼', pa: 'Ce drăguță… ca tine 😳' }, { icon: '🐟', me: 'Un pește!', pa: 'Miți l-ar mânca 🐱' }, { icon: '🍦', me: 'O înghețată! 🍦', pa: 'Acum mi-e foame…' }];
+const CLOUDS = [{ icon: '🐹', me: $t('Un hamster pufos! Seamănă cu tine 🐹'), pa: $t('Mie îmi pare o pizza 🍕') }, { icon: '❤️', me: $t('O inimă! ❤️'), pa: $t('Sau un fund… 🍑 hihi') }, { icon: '🐼', me: $t('O panda! 🐼'), pa: $t('Ce drăguță… ca tine 😳') }, { icon: '🐟', me: $t('Un pește!'), pa: $t('Miți l-ar mânca 🐱') }, { icon: '🍦', me: $t('O înghețată! 🍦'), pa: $t('Acum mi-e foame…') }];
 export class PicnicShow extends Show {
   ants: { x: number; y: number; vx: number; vy: number; dead: number }[] = []; stolen = 0; shooed = 0; antT = 0; rexT = -1; clouds: { x: number; y: number; k: number; shape: number; t: number }[] = []; aiT = 2;
   scene3(c: CanvasRenderingContext2D, W: number, H: number) {
@@ -289,28 +290,28 @@ export class PicnicShow extends Show {
     const rex = this.villagers('none').find(a => (a as any).vid === 'rex')!; this.guests = [rex];
     for (let i = 0; i < 5; i++) this.clouds.push({ x: i * 200 % 900, y: 40 + (i % 3) * 30, k: i, shape: -1, t: 0 });
     return [
-      { id: 'set', cap: '🧺 Picnic pe malul lacului: sandvișuri, pepene și limonadă!', dur: 3, enter: () => { Sfx.play('birds'); this.bubu.play('dance_hop'); this.dudu.play('love'); }, draw: (c, W, H) => { this.scene3(c, W, H); this.couple(c, W, H); } },
-      { id: 'ants', cap: '🐜 Furnicile vin după mâncare! Alungă-le!', hint: 'Atinge furnicile', max: 18,
-        tap: (type, x, y) => { if (type !== 'down') return; const a = this.ants.find(q => !q.dead && Math.hypot(q.x - x, q.y - y) < 26); if (a) { a.dead = this.t; this.shooed++; Sfx.play('pop'); this.fx.text(a.x, a.y - 10, 'Pa! 👋', '#7a5a4a', 0.7); this.send({ ant: 1 }); } },
+      { id: 'set', cap: $t('🧺 Picnic pe malul lacului: sandvișuri, pepene și limonadă!'), dur: 3, enter: () => { Sfx.play('birds'); this.bubu.play('dance_hop'); this.dudu.play('love'); }, draw: (c, W, H) => { this.scene3(c, W, H); this.couple(c, W, H); } },
+      { id: 'ants', cap: $t('🐜 Furnicile vin după mâncare! Alungă-le!'), hint: $t('Atinge furnicile'), max: 18,
+        tap: (type, x, y) => { if (type !== 'down') return; const a = this.ants.find(q => !q.dead && Math.hypot(q.x - x, q.y - y) < 26); if (a) { a.dead = this.t; this.shooed++; Sfx.play('pop'); this.fx.text(a.x, a.y - 10, $t('Pa! 👋'), '#7a5a4a', 0.7); this.send({ ant: 1 }); } },
         play: dt => {
           this.antT -= dt; if (this.antT <= 0) { this.antT = 0.7; const side = Math.random() < 0.5; const x = side ? -10 : this.W + 10, y = this.H * (0.62 + Math.random() * 0.3); const tx = this.W * 0.5, ty = this.H * 0.74, d = Math.hypot(tx - x, ty - y); this.ants.push({ x, y, vx: (tx - x) / d * 45, vy: (ty - y) / d * 45, dead: 0 }); }
-          for (const a of this.ants) { if (a.dead) { a.y -= dt * 120; a.x += dt * 60; continue; } a.x += a.vx * dt; a.y += a.vy * dt; if (Math.hypot(a.x - this.W * 0.5, a.y - this.H * 0.74) < 30) { a.dead = this.t; this.stolen++; Sfx.play('bad'); this.fx.text(this.W * 0.5, this.H * 0.6, 'Au furat o bucățică! 🐜', '#ff4d6d', 0.8); } }
+          for (const a of this.ants) { if (a.dead) { a.y -= dt * 120; a.x += dt * 60; continue; } a.x += a.vx * dt; a.y += a.vy * dt; if (Math.hypot(a.x - this.W * 0.5, a.y - this.H * 0.74) < 30) { a.dead = this.t; this.stolen++; Sfx.play('bad'); this.fx.text(this.W * 0.5, this.H * 0.6, $t('Au furat o bucățică! 🐜'), '#ff4d6d', 0.8); } }
           if (this.aiPlays) { this.aiT -= dt; if (this.aiT <= 0) { this.aiT = 0.9; const a = this.ants.find(q => !q.dead && q.x > this.W * 0.55); if (a) { a.dead = this.t; this.dudu.play('act_collect'); } } }
           if (this.rexT < 0 && this.pt > 9) { this.rexT = this.t; Sfx.play('dog'); }
           return false;
         },
         draw: (c, W, H) => { this.scene3(c, W, H); this.couple(c, W, H); for (const a of this.ants) { if (a.dead && this.t - a.dead > 1) continue; c.save(); c.translate(a.x, a.y); c.rotate(Math.atan2(a.vy, a.vx) + (a.dead ? this.t * 10 : 0)); c.fillStyle = '#2b2b33'; for (const dx of [-5, 0, 5]) { c.beginPath(); c.arc(dx, 0, 3, 0, 7); c.fill(); } c.strokeStyle = '#2b2b33'; c.lineWidth = 1; for (const dx of [-3, 2]) { c.beginPath(); c.moveTo(dx, -5); c.lineTo(dx, 5); c.stroke(); } c.restore(); }
-          if (this.rexT > 0 && this.t - this.rexT < 4) { const k = (this.t - this.rexT) / 4, x = lerp(W + 40, -40, k); this.put(this.guests[0], x, H * 0.86, this.sz() * 0.55, -1); this.guests[0].draw(c); icon(c, '🌭', x - 20, H * 0.86 - 40, 22); this.bub(c, 'Rex a furat un cârnat! 🐶🌭', x, H * 0.5, 13); }
+          if (this.rexT > 0 && this.t - this.rexT < 4) { const k = (this.t - this.rexT) / 4, x = lerp(W + 40, -40, k); this.put(this.guests[0], x, H * 0.86, this.sz() * 0.55, -1); this.guests[0].draw(c); icon(c, '🌭', x - 20, H * 0.86 - 40, 22); this.bub(c, $t('Rex a furat un cârnat! 🐶🌭'), x, H * 0.5, 13); }
           say(c, `🐜 ${this.shooed}`, 70, 30, 16, '#2b6a9a'); } },
-      { id: 'clouds', cap: '☁️ Întinși pe pătură… la ce seamănă norii?', hint: 'Atinge un nor', max: 14,
+      { id: 'clouds', cap: $t('☁️ Întinși pe pătură… la ce seamănă norii?'), hint: $t('Atinge un nor'), max: 14,
         tap: (type, x, y) => { if (type !== 'down') return; const cl = this.clouds.find(q => q.shape < 0 && Math.abs(q.x - x) < 60 && Math.abs(q.y - y) < 40); if (cl) { cl.shape = cl.k % CLOUDS.length; cl.t = this.t; Sfx.play('chimes', { vol: 0.5 }); const L = CLOUDS[cl.shape]; this.fx.text(x, y + 50, `${this.myName}: ${L.me}`, '#7a3a5a', 0.8); setTimeout(() => this.fx.text(x, y + 80, `${this.paName}: ${L.pa}`, '#2b6a9a', 0.8), 1000); } },
         play: () => this.clouds.filter(q => q.shape >= 0).length >= 3 && this.pt > 4,
         draw: (c, W, H) => { this.scene3(c, W, H); this.couple(c, W, H, true); } },
-      { id: 'hug', cap: '💕 Cea mai frumoasă după-amiază de vară', dur: 3.4, enter: () => { this.bubu.play('love'); this.dudu.play('love'); Sfx.play('kiss'); this.fx.hearts(this.W / 2, this.H * 0.7, 14); }, draw: (c, W, H) => { this.scene3(c, W, H); this.couple(c, W, H, true); } },
+      { id: 'hug', cap: $t('💕 Cea mai frumoasă după-amiază de vară'), dur: 3.4, enter: () => { this.bubu.play('love'); this.dudu.play('love'); Sfx.play('kiss'); this.fx.hearts(this.W / 2, this.H * 0.7, 14); }, draw: (c, W, H) => { this.scene3(c, W, H); this.couple(c, W, H, true); } },
     ];
   }
   onNet(d: any) { if (d.ant) { const a = this.ants.find(q => !q.dead && q.x > this.W * 0.5); if (a) a.dead = this.t; } }
-  endText() { return '🧺 Ce picnic frumos!'; }
+  endText() { return $t('🧺 Ce picnic frumos!'); }
   reward() { const s = this.scene; Hol.memory(s, 'picnic'); Hol.feelBoth(s, { hunger: 30, fun: 25, love: 20, energy: 8 }); }
 }
 
@@ -329,17 +330,17 @@ export class LozShow extends Show {
   }
   card(c: CanvasRenderingContext2D, W: number, H: number) {
     this.sky(c, W, H, '#7a3a8a', '#c77dff'); const cw = Math.min(W * 0.8, 520), ch = Math.min(H * 0.62, 260), x0 = W / 2 - cw / 2, y0 = H * 0.18;
-    rrect(c, x0, y0, cw, ch, 18, '#ffd23f'); say(c, '🎟️ LOZUL NOROCOS · 3 la fel = câștigi!', W / 2, y0 + 22, 15, '#7a3a5a');
+    rrect(c, x0, y0, cw, ch, 18, '#ffd23f'); say(c, $t('🎟️ LOZUL NOROCOS · 3 la fel = câștigi!'), W / 2, y0 + 22, 15, '#7a3a5a');
     this.rects = []; this.cells.forEach((cl, i) => { const w = (cw - 40) / 3 - 10, h = (ch - 60) / 2 - 10, x = x0 + 20 + (i % 3) * (w + 15), y = y0 + 46 + Math.floor(i / 3) * (h + 10); this.rects.push({ x, y, w, h }); rrect(c, x, y, w, h, 10, '#fff'); icon(c, SYM[cl.s], x + w / 2, y + h / 2, Math.min(w, h) * 0.6); if (cl.cover > 0) { c.globalAlpha = cl.cover; rrect(c, x, y, w, h, 10, '#b8bec8'); for (let k = 0; k < 5; k++) { c.fillStyle = '#d0d6de'; c.fillRect(x + 6 + k * w / 5, y + 6, 4, h - 12); } say(c, '?', x + w / 2, y + h / 2, 26, '#7a8a99'); c.globalAlpha = 1; } });
   }
   build(): Phase[] {
     return [
-      { id: 'scratch', cap: '🪙 Răzuiește cele 6 căsuțe! (trage cu degetul)', hint: 'Răzuiește!', max: 60,
+      { id: 'scratch', cap: $t('🪙 Răzuiește cele 6 căsuțe! (trage cu degetul)'), hint: $t('Răzuiește!'), max: 60,
         tap: (type, x, y) => { if (type === 'down') this.down = true; if (type === 'up') { this.down = false; return; } if (!this.down && type === 'move') return; const i = this.rects.findIndex(r => this.hit(r, x, y)); if (i >= 0 && this.cells[i].cover > 0) { this.cells[i].cover = Math.max(0, this.cells[i].cover - (type === 'down' ? 0.25 : 0.08)); if (Math.random() < 0.3) Sfx.play('cloth', { vol: 0.4, rate: 1.6 }); if (this.cells[i].cover <= 0.3) this.cells[i].cover = 0; } },
         play: () => this.cells.every(c2 => c2.cover <= 0),
         draw: (c, W, H) => { this.card(c, W, H); } },
       { id: 'res', cap: '', dur: 3.6, enter: () => { if (this.prize) { Sfx.play('victory'); this.boom(this.prize >= 100 ? 100 : 40); this.me.play('dance_hop'); } else { Sfx.play('boing'); this.me.play('laugh'); } },
-        draw: (c, W, H) => { this.card(c, W, H); this.phases[this.pi].cap = this.prize >= 300 ? '⭐⭐⭐ MARELE PREMIU! +300 lei!!!' : this.prize ? `${SYM[this.win].repeat(3)} Ai câștigat ${this.prize} lei! 🎉` : '🍋🍋 Lămâi… Ești o lămâie norocoasă, dar nu azi 😅'; } },
+        draw: (c, W, H) => { this.card(c, W, H); this.phases[this.pi].cap = this.prize >= 300 ? '⭐⭐⭐ MARELE PREMIU! +300 lei!!!' : this.prize ? $t('{0} Ai câștigat {1} lei! 🎉', SYM[this.win].repeat(3), this.prize) : $t('🍋🍋 Lămâi… Ești o lămâie norocoasă, dar nu azi 😅'); } },
     ];
   }
   endText() { return this.prize ? `+${this.prize} lei! 🎟️` : 'Data viitoare! 🍀'; }

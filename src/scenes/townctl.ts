@@ -9,6 +9,7 @@ import { JOBS, LEVEL_NAMES, LEVEL_NEED, COURSES, VILLAGERS, DECOR, APT_PRICE, AP
 import { SHOP_SELL, SHOP_BUY, SHOP_CITY, INV_INFO, PRICE } from '../game/economy';
 import { RES_INFO } from '../world/build';
 import type { ShopEntry, ShopConfig } from '../minigames/towngames';
+import { $t } from '../i18n';
 
 const st = (s: WorldScene, k: string) => s.w.stats[k] ?? 0;
 const setStat = (s: WorldScene, k: string, v: number) => { const d = v - st(s, k); if (d) s.op({ k: 'stat', key: k, delta: d }); };
@@ -42,22 +43,22 @@ export function finishJob(s: WorldScene, perf: number, detail: string): string {
     s.op({ k: 'stat', key: jobKey(job.id, who, 'xp'), delta: 1 });
     if (jobXp(s.w, job.id, who) >= LEVEL_NEED[lvl]) {
       s.op({ k: 'stat', key: jobKey(job.id, who, 'lvl'), delta: 1 }); setStat(s, jobKey(job.id, who, 'xp'), 0);
-      promo = ` · ⭐ ${fem ? 'Promovată' : 'Promovat'}: ${LEVEL_NAMES[lvl + 1][fem ? 1 : 0]}!`;
+      promo = ` · ⭐ ${fem ? $t('Promovată') : $t('Promovat')}: ${LEVEL_NAMES[lvl + 1][fem ? 1 : 0]}!`;
       setTimeout(() => { Sfx.play('levelup'); Sfx.play('applause', { vol: 0.5, delay: 0.4 }); }, 900);
-      s.log(`${s.me.actor.spec.name} a fost ${fem ? 'promovată' : 'promovat'} la ${job.name[fem ? 1 : 0].toLowerCase()}: ${LEVEL_NAMES[lvl + 1][fem ? 1 : 0]} ⭐`);
+      s.log($t('{0} a fost {1} la {2}: {3} ⭐', s.me.actor.spec.name, fem ? $t('promovată') : $t('promovat'), job.name[fem ? 1 : 0].toLowerCase(), LEVEL_NAMES[lvl + 1][fem ? 1 : 0]));
     }
   }
-  s.log(`${s.me.actor.spec.name} a lucrat o tură ca ${job.name[fem ? 1 : 0].toLowerCase()}: +${pay} lei ${job.icon}`);
+  s.log($t('{0} a lucrat o tură ca {1}: +{2} lei {3}', s.me.actor.spec.name, job.name[fem ? 1 : 0].toLowerCase(), pay, job.icon));
   return `${detail} · +${pay} lei${promo}`;
 }
 
 // ------------------------------------------------------------------ universitatea
 export function startCourse(s: WorldScene, id: string) {
   const c = COURSES[id]; if (!c) return;
-  if (hasDiploma(s.w, id, s.myId)) { s.hud.toast(`🎓 Ai deja ${c.name.toLowerCase()}`); return; }
+  if (hasDiploma(s.w, id, s.myId)) { s.hud.toast($t('🎓 Ai deja {0}', c.name.toLowerCase())); return; }
   const paid = st(s, `paid-${id}-${s.myId}`) > 0;
   if (!paid) {
-    if ((s.w.money ?? 0) < c.price) { s.hud.toast(`🎓 ${c.name} costă ${c.price} lei`); Sfx.play('bad'); return; }
+    if ((s.w.money ?? 0) < c.price) { s.hud.toast($t('🎓 {0} costă {1} lei', c.name, c.price)); Sfx.play('bad'); return; }
     s.op({ k: 'money', delta: -c.price }); s.op({ k: 'stat', key: `paid-${id}-${s.myId}`, delta: 1 }); Sfx.play('coin');
   }
   s.courseId = id; s.startCustom('course');
@@ -66,10 +67,10 @@ export function finishCourse(s: WorldScene, id: string, pass: boolean, good: num
   const c = COURSES[id];
   if (pass) {
     s.op({ k: 'stat', key: `dipl-${id}-${s.myId}`, delta: 1 }); s.op({ k: 'stat', key: 'diplomas', delta: 1 });
-    s.log(`${s.me.actor.spec.name} a absolvit ${c.name.toLowerCase()} 🎓`);
-    return `🎓 Diplomă! ${good}/4 corecte`;
+    s.log($t('{0} a absolvit {1} 🎓', s.me.actor.spec.name, c.name.toLowerCase()));
+    return $t('🎓 Diplomă! {0}/4 corecte', good);
   }
-  return `${good}/4 · mai încearcă (gratuit) 📚`;
+  return $t('{0}/4 · mai încearcă (gratuit) 📚', good);
 }
 
 // ------------------------------------------------------------------ magazine cu interior
@@ -78,18 +79,18 @@ function buyEntry(s: WorldScene, it: { id?: string; label: string; icon: string;
   const price = Math.max(1, Math.round(it.price * (1 - disc)));
   // semintele: desenul plantei + un saculet de seminte mic
   const seed = it.id?.startsWith('seed_') ? it.id.slice(5) : '';
-  return { icon: seed ? (INV_INFO[seed]?.icon ?? it.icon) : it.icon, badge: seed ? '🌰' : undefined, name: it.label, price, note: disc ? `-${Math.round(disc * 100)}% vecinilor` : undefined, buy: () => {
-    if ((s.w.money ?? 0) < price) return 'Nu ajung banii 💰';
+  return { icon: seed ? (INV_INFO[seed]?.icon ?? it.icon) : it.icon, badge: seed ? '🌰' : undefined, name: it.label, price, note: disc ? $t('-{0}% vecinilor', Math.round(disc * 100)) : undefined, buy: () => {
+    if ((s.w.money ?? 0) < price) return $t('Nu ajung banii 💰');
     s.op({ k: 'money', delta: -price }); for (const [k, n] of Object.entries(it.give)) s.op({ k: 'res', res: k, delta: n });
     return null;
   } };
 }
 export function villageGrocery(s: WorldScene) {
   const d = villageBonus(s.w);
-  openShop(s, { title: '🛒 Magazinul satului', wall: '#fff1d6', floor: '#d9b48a', keeper: 'granny', hello: d ? `Vă fac reducere, vecinilor dragi! 💕` : 'Bună ziua! Ce vă dau azi?', items: SHOP_BUY.map(i => buyEntry(s, i, d)) });
+  openShop(s, { title: $t('🛒 Magazinul satului'), wall: '#fff1d6', floor: '#d9b48a', keeper: 'granny', hello: d ? $t('Vă fac reducere, vecinilor dragi! 💕') : $t('Bună ziua! Ce vă dau azi?'), items: SHOP_BUY.map(i => buyEntry(s, i, d)) });
 }
 export function citySuper(s: WorldScene) {
-  openShop(s, { title: '🛒 Supermarketul', wall: '#e7f6e2', floor: '#cfd8dc', keeper: 'cat', hello: 'Bun venit! Avem de toate 🛒', items: SHOP_CITY.map(i => buyEntry(s, i)) });
+  openShop(s, { title: $t('🛒 Supermarketul'), wall: '#e7f6e2', floor: '#cfd8dc', keeper: 'cat', hello: $t('Bun venit! Avem de toate 🛒'), items: SHOP_CITY.map(i => buyEntry(s, i)) });
 }
 export function villageMarket(s: WorldScene) {
   const bonus = villageBonus(s.w) + (isMarketDay(s.w) ? 0.4 : 0);
@@ -99,55 +100,55 @@ export function villageMarket(s: WorldScene) {
   const unit = (i: (typeof SHOP_SELL)[number]) => { const n = s.w.stats[soldKey(i.id)] ?? 0; if (n >= PRICE.marketFull * 2) return 0; return Math.max(1, Math.round(i.price * (1 + bonus) * (n >= PRICE.marketFull ? 0.5 : 1))); };
   const items: ShopEntry[] = SHOP_SELL.filter(i => (r[i.id] ?? 0) > 0).map(i => {
     const price = unit(i);
-    return { icon: i.icon, name: `${i.label} (ai ${r[i.id] ?? 0})${price === 0 ? ' · gata pe azi' : (s.w.stats[soldKey(i.id)] ?? 0) >= PRICE.marketFull ? ' · preț redus' : ''}`, price, buy: () => {
-      if ((s.w.res?.[i.id] ?? 0) < 1) return 'Nu mai ai 🙂';
-      const p = unit(i); if (p === 0) return 'Azi nu mai cumpăr de-astea, am destule! Mâine 🙂';
+    return { icon: i.icon, name: $t('{0} (ai {1}){2}', i.label, r[i.id] ?? 0, price === 0 ? $t(' · gata pe azi') : (s.w.stats[soldKey(i.id)] ?? 0) >= PRICE.marketFull ? $t(' · preț redus') : ''), price, buy: () => {
+      if ((s.w.res?.[i.id] ?? 0) < 1) return $t('Nu mai ai 🙂');
+      const p = unit(i); if (p === 0) return $t('Azi nu mai cumpăr de-astea, am destule! Mâine 🙂');
       s.op({ k: 'res', res: i.id, delta: -1 }); s.op({ k: 'money', delta: p }); s.op({ k: 'stat', key: 'marketSold', delta: 1 }); s.op({ k: 'stat', key: soldKey(i.id), delta: 1 }); return null;
     } };
   });
-  openShop(s, { title: isMarketDay(s.w) ? '🎪 Târgul de duminică!' : '💱 Piața satului', wall: '#ffe9c9', floor: '#c9a678', keeper: 'pig', sell: true,
-    hello: isMarketDay(s.w) ? 'E zi de târg: plătesc cu 40% mai mult! 🎉' : items.length ? 'Ce-mi vindeți azi?' : 'N-aveți nimic de vândut… adunați din grădină și pădure!', items,
-    footer: `Duminica e târg: prețuri mai mari · după ${PRICE.marketFull} bucăți din același lucru pe zi, prețul scade` });
+  openShop(s, { title: isMarketDay(s.w) ? $t('🎪 Târgul de duminică!') : $t('💱 Piața satului'), wall: '#ffe9c9', floor: '#c9a678', keeper: 'pig', sell: true,
+    hello: isMarketDay(s.w) ? $t('E zi de târg: plătesc cu 40% mai mult! 🎉') : items.length ? $t('Ce-mi vindeți azi?') : $t('N-aveți nimic de vândut… adunați din grădină și pădure!'), items,
+    footer: $t('Duminica e târg: prețuri mai mari · după {0} bucăți din același lucru pe zi, prețul scade', PRICE.marketFull) });
 }
 export function villageBakeryShop(s: WorldScene) {
   const d = villageBonus(s.w);
   const items: { label: string; icon: string; price: number; give: Record<string, number> }[] = [
-    { label: 'Pâine caldă (x2 porții)', icon: '🍞', price: 16, give: { meals: 2 } },
-    { label: 'Covrigi (x1 porție)', icon: '🥨', price: 7, give: { meals: 1 } },
-    { label: 'Cozonac (x3 porții)', icon: '🍰', price: 26, give: { meals: 3 } },
-    { label: 'Sac de făină (x3)', icon: '🥡', price: 14, give: { flour: 3 } },
+    { label: $t('Pâine caldă (x2 porții)'), icon: '🍞', price: 16, give: { meals: 2 } },
+    { label: $t('Covrigi (x1 porție)'), icon: '🥨', price: 7, give: { meals: 1 } },
+    { label: $t('Cozonac (x3 porții)'), icon: '🍰', price: 26, give: { meals: 3 } },
+    { label: $t('Sac de făină (x3)'), icon: '🥡', price: 14, give: { flour: 3 } },
   ];
-  openShop(s, { title: '🥖 Brutăria', wall: '#fff3e0', floor: '#d9a05a', keeper: 'dog', hello: 'Pâine caldă, abia scoasă! 🍞', items: items.map(i => buyEntry(s, i, d)) });
+  openShop(s, { title: $t('🥖 Brutăria'), wall: '#fff3e0', floor: '#d9a05a', keeper: 'dog', hello: $t('Pâine caldă, abia scoasă! 🍞'), items: items.map(i => buyEntry(s, i, d)) });
 }
 export function pharmacy(s: WorldScene, city: boolean) {
   const items: ShopEntry[] = [
-    { icon: '🍵', name: 'Ceai de tei (căldură +, sănătate +)', price: city ? 14 : 10, buy: () => { if ((s.w.money ?? 0) < (city ? 14 : 10)) return 'Nu ajung banii 💰'; s.op({ k: 'money', delta: -(city ? 14 : 10) }); s.op({ k: 'need', who: s.myId, need: 'warmth', delta: 20 }); s.op({ k: 'need', who: s.myId, need: 'health', delta: 10 }); return null; } },
-    { icon: '💊', name: 'Vitamine (sănătate ++)', price: city ? 30 : 24, buy: () => { const p = city ? 30 : 24; if ((s.w.money ?? 0) < p) return 'Nu ajung banii 💰'; s.op({ k: 'money', delta: -p }); s.op({ k: 'need', who: s.myId, need: 'health', delta: 30 }); return null; } },
-    { icon: '🩹', name: 'Trusă de prim ajutor (vindecă o boală)', price: city ? 50 : 40, buy: () => cure(s, city ? 50 : 40) },
+    { icon: '🍵', name: $t('Ceai de tei (căldură +, sănătate +)'), price: city ? 14 : 10, buy: () => { if ((s.w.money ?? 0) < (city ? 14 : 10)) return $t('Nu ajung banii 💰'); s.op({ k: 'money', delta: -(city ? 14 : 10) }); s.op({ k: 'need', who: s.myId, need: 'warmth', delta: 20 }); s.op({ k: 'need', who: s.myId, need: 'health', delta: 10 }); return null; } },
+    { icon: '💊', name: $t('Vitamine (sănătate ++)'), price: city ? 30 : 24, buy: () => { const p = city ? 30 : 24; if ((s.w.money ?? 0) < p) return $t('Nu ajung banii 💰'); s.op({ k: 'money', delta: -p }); s.op({ k: 'need', who: s.myId, need: 'health', delta: 30 }); return null; } },
+    { icon: '🩹', name: $t('Trusă de prim ajutor (vindecă o boală)'), price: city ? 50 : 40, buy: () => cure(s, city ? 50 : 40) },
   ];
-  openShop(s, { title: city ? '🏥 Farmacia spitalului' : '💊 Farmacia satului', wall: '#e8f7f0', floor: '#cfe8dc', keeper: city ? 'fox' : 'bunny', hello: 'Sănătate multă! Cu ce vă ajut?', items });
+  openShop(s, { title: city ? $t('🏥 Farmacia spitalului') : $t('💊 Farmacia satului'), wall: '#e8f7f0', floor: '#cfe8dc', keeper: city ? 'fox' : 'bunny', hello: $t('Sănătate multă! Cu ce vă ajut?'), items });
 }
 /** vindeca boala (ta sau a partenerului, daca e langa tine) */
 export function cure(s: WorldScene, price: number): string | null {
   const who = s.w.chars[s.myId].sick ? s.myId : s.sameArea() && s.w.chars[s.partner.id].sick ? s.partner.id : null;
-  if (!who) return 'Sunteți sănătoși tun! 💪';
-  if ((s.w.money ?? 0) < price) return 'Nu ajung banii 💰';
+  if (!who) return $t('Sunteți sănătoși tun! 💪');
+  if ((s.w.money ?? 0) < price) return $t('Nu ajung banii 💰');
   s.op({ k: 'money', delta: -price }); s.op({ k: 'sick', who, value: null }); s.op({ k: 'need', who, need: 'health', delta: 45 });
-  s.log(`${who === 'bubu' ? 'Bubu' : 'Dudu'} s-a vindecat la doctor 🩺`);
+  s.log($t('{0} s-a vindecat la doctor 🩺', who === 'bubu' ? 'Bubu' : 'Dudu'));
   return null;
 }
 export function cityMall(s: WorldScene) {
   const owned = (s.w.town?.decor as string[] | undefined) ?? [];
-  const items: ShopEntry[] = DECOR.map(d => ({ icon: d.icon, name: d.label, price: d.price, note: owned.includes(d.id) ? 'îl aveți ✔' : d.desc, disabled: owned.includes(d.id), buy: () => {
-    if (!st(s, 'apartment')) return 'Întâi cumpărați un apartament 🏙️';
+  const items: ShopEntry[] = DECOR.map(d => ({ icon: d.icon, name: d.label, price: d.price, note: owned.includes(d.id) ? $t('îl aveți ✔') : d.desc, disabled: owned.includes(d.id), buy: () => {
+    if (!st(s, 'apartment')) return $t('Întâi cumpărați un apartament 🏙️');
     const cur = (s.w.town?.decor as string[] | undefined) ?? [];
-    if (cur.includes(d.id)) return 'Îl aveți deja 🙂';
-    if ((s.w.money ?? 0) < d.price) return 'Nu ajung banii 💰';
+    if (cur.includes(d.id)) return $t('Îl aveți deja 🙂');
+    if ((s.w.money ?? 0) < d.price) return $t('Nu ajung banii 💰');
     s.op({ k: 'money', delta: -d.price }); s.op({ k: 'town', key: 'decor', value: [...cur, d.id] }); s.op({ k: 'stat', key: 'decorBought', delta: 1 });
-    s.log(`Ați cumpărat ${d.label.toLowerCase()} pentru apartament ${d.icon}`);
+    s.log($t('Ați cumpărat {0} pentru apartament {1}', d.label.toLowerCase(), d.icon));
     return null;
   } }));
-  openShop(s, { title: '🏬 Mall-ul orașului', wall: '#f3ecff', floor: '#dcd3ea', keeper: 'fox', hello: 'Mobilă și decor pentru apartamentul vostru! ✨', items, footer: 'Ce cumpărați apare în apartament' });
+  openShop(s, { title: $t('🏬 Mall-ul orașului'), wall: '#f3ecff', floor: '#dcd3ea', keeper: 'fox', hello: $t('Mobilă și decor pentru apartamentul vostru! ✨'), items, footer: $t('Ce cumpărați apare în apartament') });
 }
 
 // ------------------------------------------------------------------ cererile satenilor (avizierul + discutii)
@@ -162,8 +163,8 @@ export function questsToday(s: WorldScene): Quest[] {
 export const questHave = (s: WorldScene, q: Quest) => q.res === 'meals' ? hotMealCount(s.w.res ?? {}) : s.w.res?.[q.res] ?? 0;
 export function deliverQuest(s: WorldScene, q: Quest): string | null {
   const have = questHave(s, q);
-  if (q.done) return 'E deja gata 🙂';
-  if (have < q.qty) return `Îți mai trebuie ${q.qty - have} × ${resName(q.res).toLowerCase()}`;
+  if (q.done) return $t('E deja gata 🙂');
+  if (have < q.qty) return $t('Îți mai trebuie {0} × {1}', q.qty - have, resName(q.res).toLowerCase());
   if (q.res === 'meals') { let left = q.qty; for (const k of hotMealKeys(s.w.res ?? {})) { const h = Math.min(left, s.w.res?.[k] ?? 0); if (h > 0) { s.op({ k: 'res', res: k, delta: -h }); left -= h; } if (!left) break; } }
   else s.op({ k: 'res', res: q.res, delta: -q.qty });
   s.op({ k: 'money', delta: q.pay });
@@ -171,7 +172,7 @@ export function deliverQuest(s: WorldScene, q: Quest): string | null {
   const list = questsToday(s).map(x => x.id === q.id ? { ...x, done: true } : x);
   s.op({ k: 'town', key: 'quests', value: list });
   const v = VILLAGERS.find(v => v.id === q.who)!;
-  s.log(`${v.name} vă mulțumește pentru ${q.qty} × ${resName(q.res).toLowerCase()}: +${q.pay} lei 💕`);
+  s.log($t('{0} vă mulțumește pentru {1} × {2}: +{3} lei 💕', v.name, q.qty, resName(q.res).toLowerCase(), q.pay));
   Sfx.play('coin'); return null;
 }
 export const questText = (q: Quest) => `${q.qty} × ${resIcon(q.res)} ${resName(q.res)}`;
@@ -179,16 +180,16 @@ export const questText = (q: Quest) => `${q.qty} × ${resIcon(q.res)} ${resName(
 // ------------------------------------------------------------------ banca
 export function setBank(s: WorldScene, b: Bank) { s.op({ k: 'town', key: 'bank', value: b }); }
 export function buyApartment(s: WorldScene, mode: 'cash' | 'loan'): string | null {
-  if (st(s, 'apartment')) return 'Aveți deja apartamentul 🔑';
+  if (st(s, 'apartment')) return $t('Aveți deja apartamentul 🔑');
   const m = s.w.money ?? 0; const b = bankOf(s.w);
-  if (mode === 'cash') { if (m < APT_PRICE) return `Vă mai trebuie ${APT_PRICE - m} lei`; s.op({ k: 'money', delta: -APT_PRICE }); }
+  if (mode === 'cash') { if (m < APT_PRICE) return $t('Vă mai trebuie {0} lei', APT_PRICE - m); s.op({ k: 'money', delta: -APT_PRICE }); }
   else {
-    if (b.loanLeft > 0) return 'Aveți deja un credit';
-    if (m < APT_DOWN) return `Avansul e ${APT_DOWN} lei (vă mai trebuie ${APT_DOWN - m})`;
+    if (b.loanLeft > 0) return $t('Aveți deja un credit');
+    if (m < APT_DOWN) return $t('Avansul e {0} lei (vă mai trebuie {1})', APT_DOWN, APT_DOWN - m);
     s.op({ k: 'money', delta: -APT_DOWN }); setBank(s, { ...b, loanLeft: LOAN_RATE * LOAN_DAYS });
   }
   s.op({ k: 'stat', key: 'apartment', delta: 1 });
-  s.log(mode === 'cash' ? 'Ați cumpărat un apartament la oraș! 🔑🏙️' : `Ați cumpărat apartamentul cu credit: rata e ${LOAN_RATE} lei/zi 🏦🔑`);
+  s.log(mode === 'cash' ? $t('Ați cumpărat un apartament la oraș! 🔑🏙️') : $t('Ați cumpărat apartamentul cu credit: rata e {0} lei/zi 🏦🔑', LOAN_RATE));
   Sfx.play('good'); return null;
 }
 
@@ -203,17 +204,17 @@ export function dailyTick(s: WorldScene) {
   if (first) return;
   const msgs: string[] = [];
   const b = bankOf(s.w); let money = s.w.money ?? 0;
-  if (b.savings > 0) { const it = Math.max(1, Math.round(Math.min(b.savings, 3000) * 0.02)); b.savings += it; msgs.push(`🏦 Dobândă: +${it} lei la economii`); }
+  if (b.savings > 0) { const it = Math.max(1, Math.round(Math.min(b.savings, 3000) * 0.02)); b.savings += it; msgs.push($t('🏦 Dobândă: +{0} lei la economii', it)); }
   if (b.loanLeft > 0) {
     const rate = Math.min(LOAN_RATE, b.loanLeft);
-    if (money >= rate) { s.op({ k: 'money', delta: -rate }); money -= rate; b.loanLeft -= rate; msgs.push(b.loanLeft > 0 ? `🏦 Rata apartamentului: -${rate} lei (mai aveți ${Math.ceil(b.loanLeft / LOAN_RATE)} rate)` : '🎉 Ați terminat de plătit apartamentul!'); if (b.loanLeft <= 0) { b.late = 0; s.op({ k: 'stat', key: 'loanPaid', delta: 1 }); } }
-    else if (b.savings >= rate) { b.savings -= rate; b.loanLeft -= rate; msgs.push(`🏦 Rata (${rate} lei) s-a luat din economii`); }
-    else { b.late += 1; b.loanLeft += 10; msgs.push(`⚠️ Rată neplătită! Penalizare 10 lei. Munciți la oraș sau vindeți la piață`); }
+    if (money >= rate) { s.op({ k: 'money', delta: -rate }); money -= rate; b.loanLeft -= rate; msgs.push(b.loanLeft > 0 ? $t('🏦 Rata apartamentului: -{0} lei (mai aveți {1} rate)', rate, Math.ceil(b.loanLeft / LOAN_RATE)) : $t('🎉 Ați terminat de plătit apartamentul!')); if (b.loanLeft <= 0) { b.late = 0; s.op({ k: 'stat', key: 'loanPaid', delta: 1 }); } }
+    else if (b.savings >= rate) { b.savings -= rate; b.loanLeft -= rate; msgs.push($t('🏦 Rata ({0} lei) s-a luat din economii', rate)); }
+    else { b.late += 1; b.loanLeft += 10; msgs.push($t('⚠️ Rată neplătită! Penalizare 10 lei. Munciți la oraș sau vindeți la piață')); }
   }
   setBank(s, b);
   if (st(s, 'apartment')) { const bill = Math.min(money, APT_BILLS); if (bill) s.op({ k: 'money', delta: -bill }); msgs.push(`💡 Facturi apartament: -${bill} lei`); }
   questsToday(s);
-  if (isMarketDay(s.w)) msgs.push('🎪 Azi e zi de târg în sat: piața plătește +40%!');
+  if (isMarketDay(s.w)) msgs.push($t('🎪 Azi e zi de târg în sat: piața plătește +40%!'));
   msgs.forEach((m, i) => setTimeout(() => s.hud.toast(m), 1200 + i * 900));
 }
 

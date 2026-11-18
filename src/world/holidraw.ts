@@ -7,6 +7,7 @@ import { starPath, heartPath, NPC_SPECS } from '../char/draw';
 import { Actor } from '../char/actor';
 import { Fx } from '../char/fx';
 import { fillTextIcons, iconCanvas } from '../ui/icons';
+import { $t } from '../i18n';
 
 const O = '#3a2a22';
 function e(c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, fill: string, st = true, lw = 2) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fillStyle = fill; c.fill(); if (st) { c.strokeStyle = O; c.lineWidth = lw; c.stroke(); } }
@@ -79,7 +80,7 @@ export function drawHolidayType(c: CanvasRenderingContext2D, f: Furn, t: number)
       const p = iso(gx + 0.4, gy + 0.3); c.strokeStyle = '#8a5d32'; c.lineWidth = 3; c.beginPath(); c.moveTo(p.x - 14, p.y - 20); c.lineTo(p.x - 14, p.y - 80); c.stroke();
       c.save(); c.translate(p.x - 14, p.y - 92); c.rotate(t * 1.4); starPath(c, 0, 0, 14, 6, 8); c.fillStyle = '#ffd23f'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.5; c.stroke(); c.restore();
       for (let k = 0; k < 3; k++) ic(c, k % 2 ? '🎶' : '🎵', p.x + 10 + k * 12, p.y - 70 - ((t * 20 + k * 14) % 30), 12);
-      label(c, '⭐ Colindătorii', p.x, p.y - 112); return true;
+      label(c, $t('⭐ Colindătorii'), p.x, p.y - 112); return true;
     }
     case 'partyset': {
       const rev = kind === 'revelion', hidden = kind?.startsWith('hidden'), who = kind?.split('-')[1] === 'bubu' ? 'Bubu' : 'Dudu';
@@ -88,7 +89,7 @@ export function drawHolidayType(c: CanvasRenderingContext2D, f: Furn, t: number)
       // bannerul (acoperit cu un cearsaf pana la 17:30: e surpriza!)
       const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2 - 70;
       c.fillStyle = hidden ? '#f3efe9' : rev ? '#2b2b55' : '#ff7aa2'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(a.x, a.y - 72); c.lineTo(b.x, b.y - 72); c.lineTo(b.x, b.y - 54); c.lineTo(a.x, a.y - 54); c.closePath(); c.fill(); c.stroke();
-      c.font = '800 10px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = hidden ? '#b9b0a6' : '#fff'; fillTextIcons(c, hidden ? '🤫 (surpriză…)' : rev ? '🎆 La mulți ani! 🎆' : `🎂 La mulți ani, ${who}!`, mx, my + 8, 10); c.textBaseline = 'alphabetic';
+      c.font = '800 10px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = hidden ? '#b9b0a6' : '#fff'; fillTextIcons(c, hidden ? $t('🤫 (surpriză…)') : rev ? $t('🎆 La mulți ani! 🎆') : $t('🎂 La mulți ani, {0}!', who), mx, my + 8, 10); c.textBaseline = 'alphabetic';
       if (!hidden) { const cols = ['#ff7aa2', '#ffd23f', '#4cc9f0', '#7cc576']; for (let i = 0; i < 4; i++) { const p = i < 2 ? a : b, sx = (i % 2 ? 8 : -8); const bob = Math.sin(t * 2 + i) * 3; c.strokeStyle = '#999'; c.lineWidth = 1; c.beginPath(); c.moveTo(p.x, p.y - 74); c.lineTo(p.x + sx, p.y - 96 + bob); c.stroke(); e(c, p.x + sx, p.y - 104 + bob, 8, 10, cols[i], true, 1.5); } }
       isoBox(c, gx + 0.6, gy + 0.2, w - 1.2, d - 0.3, 22, { top: rev ? '#fff' : '#fff0f5', left: '#e8d4c0', right: '#d9c2ab' });
       const tp = iso(gx + w / 2, gy + 0.55, 22);
@@ -116,7 +117,7 @@ export function drawHolidayType(c: CanvasRenderingContext2D, f: Furn, t: number)
     case 'festable': {
       isoBox(c, gx + 0.15, gy + 0.15, 0.7, 0.7, 18, { top: '#fff1d6', left: '#c98e5f', right: '#a0703f' });
       const p = iso(gx + 0.5, gy + 0.5, 18);
-      if (kind === 'paste') { e(c, p.x, p.y - 4, 14, 6, '#c98e5f'); for (let i = 0; i < 5; i++) e(c, p.x - 9 + i * 4.5, p.y - 9 - (i % 2) * 3, 3.5, 4.5, ['#e63946', '#e63946', '#4cc9f0', '#ffd23f', '#7cc576'][i], true, 1); ic(c, '🍞', p.x + 14, p.y - 8, 14); label(c, '🥚 Paște fericit!', p.x, p.y - 40); }
+      if (kind === 'paste') { e(c, p.x, p.y - 4, 14, 6, '#c98e5f'); for (let i = 0; i < 5; i++) e(c, p.x - 9 + i * 4.5, p.y - 9 - (i % 2) * 3, 3.5, 4.5, ['#e63946', '#e63946', '#4cc9f0', '#ffd23f', '#7cc576'][i], true, 1); ic(c, '🍞', p.x + 14, p.y - 8, 14); label(c, $t('🥚 Paște fericit!'), p.x, p.y - 40); }
       else if (kind === 'martisor') { ic(c, '🎀', p.x, p.y - 10, 18); label(c, '🎀 1 Martie', p.x, p.y - 38); }
       else if (kind === 'drago') { e(c, p.x, p.y - 8, 6, 8, '#cfe9fb'); for (let i = 0; i < 3; i++) { c.strokeStyle = '#4caf50'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(p.x, p.y - 12); c.lineTo(p.x - 4 + i * 4, p.y - 24); c.stroke(); e(c, p.x - 4 + i * 4, p.y - 26, 2.5, 3.5, '#fff', true, 1); } label(c, '💞 Dragobete', p.x, p.y - 44); }
       else if (kind === 'grand') {
@@ -132,7 +133,7 @@ export function drawHolidayType(c: CanvasRenderingContext2D, f: Furn, t: number)
       const a = iso(gx, gy + 0.5), b = iso(gx + w, gy + 0.5);
       for (const p of [a, b]) { c.strokeStyle = '#8a5d32'; c.lineWidth = 3; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x, p.y - 58); c.stroke(); }
       c.fillStyle = '#4cc9f0'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(a.x, a.y - 58); c.lineTo(b.x, b.y - 58); c.lineTo(b.x, b.y - 40); c.lineTo(a.x, a.y - 40); c.closePath(); c.fill(); c.stroke();
-      c.font = '800 10px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; fillTextIcons(c, '🎣 Concurs 🏆', (a.x + b.x) / 2, (a.y + b.y) / 2 - 49, 10); c.textBaseline = 'alphabetic';
+      c.font = '800 10px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; fillTextIcons(c, $t('🎣 Concurs 🏆'), (a.x + b.x) / 2, (a.y + b.y) / 2 - 49, 10); c.textBaseline = 'alphabetic';
       const m = iso(gx + 1, gy + 0.6); ic(c, '🏆', m.x, m.y - 12 + Math.sin(t * 3) * 2, 18); return true;
     }
     case 'picnic': {
@@ -164,10 +165,10 @@ export function drawHolidayType(c: CanvasRenderingContext2D, f: Furn, t: number)
       for (const p of [pts[0], pts[1], pts[3]]) { c.strokeStyle = '#c0573e'; c.lineWidth = 3; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x, p.y - 16); c.stroke(); }
       label(c, '⛸️ Patinoar', m.x, m.y - 50, '#2b6a9a'); return true;
     }
-    case 'santa': { const p = iso(gx + w / 2, gy + d / 2); isoBox(c, gx, gy, w, d, 8, { top: '#fff', left: '#d6e0ec', right: '#c0cbd8' }); c.fillStyle = '#c1121f'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(p.x - 34, p.y - 8); c.lineTo(p.x + 30, p.y - 8); c.quadraticCurveTo(p.x + 42, p.y - 8, p.x + 40, p.y - 28); c.lineTo(p.x - 36, p.y - 20); c.closePath(); c.fill(); c.stroke(); drawSanta(c, p.x, p.y - 10, 0.36, t, 1, Math.sin(t * 0.7) > 0.6 ? 1 : 0); label(c, '🎅 Moș Crăciun', p.x, p.y - 90, '#c1121f'); return true; }
+    case 'santa': { const p = iso(gx + w / 2, gy + d / 2); isoBox(c, gx, gy, w, d, 8, { top: '#fff', left: '#d6e0ec', right: '#c0cbd8' }); c.fillStyle = '#c1121f'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(p.x - 34, p.y - 8); c.lineTo(p.x + 30, p.y - 8); c.quadraticCurveTo(p.x + 42, p.y - 8, p.x + 40, p.y - 28); c.lineTo(p.x - 36, p.y - 20); c.closePath(); c.fill(); c.stroke(); drawSanta(c, p.x, p.y - 10, 0.36, t, 1, Math.sin(t * 0.7) > 0.6 ? 1 : 0); label(c, $t('🎅 Moș Crăciun'), p.x, p.y - 90, '#c1121f'); return true; }
     case 'xmasarch': { const a = iso(gx + 0.5, gy), b = iso(gx + 0.5, gy + d); for (const p of [a, b]) { c.strokeStyle = '#c1121f'; c.lineWidth = 5; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x, p.y - 70); c.stroke(); c.strokeStyle = '#fff'; c.lineWidth = 2; c.setLineDash([5, 5]); c.stroke(); c.setLineDash([]); }
       c.fillStyle = '#2f7d4f'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(a.x, a.y - 84); c.lineTo(b.x, b.y - 84); c.lineTo(b.x, b.y - 64); c.lineTo(a.x, a.y - 64); c.closePath(); c.fill(); c.stroke();
-      c.font = '800 10px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; fillTextIcons(c, '🎄 Târgul de Crăciun', (a.x + b.x) / 2, (a.y + b.y) / 2 - 74, 10); c.textBaseline = 'alphabetic';
+      c.font = '800 10px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; fillTextIcons(c, $t('🎄 Târgul de Crăciun'), (a.x + b.x) / 2, (a.y + b.y) / 2 - 74, 10); c.textBaseline = 'alphabetic';
       for (let i = 0; i < 8; i++) { const u = i / 7, x = a.x + (b.x - a.x) * u, y = a.y + (b.y - a.y) * u - 86; c.fillStyle = ['#ffd23f', '#ff4d6d', '#4cc9f0'][i % 3]; c.globalAlpha = 0.5 + 0.5 * Math.sin(t * 5 + i); c.beginPath(); c.arc(x, y, 3, 0, 7); c.fill(); c.globalAlpha = 1; }
       return true; }
   }

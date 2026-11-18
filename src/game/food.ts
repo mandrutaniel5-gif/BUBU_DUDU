@@ -1,18 +1,19 @@
 // Bucataria: ingrediente, retete romanesti si mancarurile gatite (fiecare cu efectele ei).
 // Mancarurile gatite stau in inventar ca `dish_<id>`; `meals` = mancare gata cumparata (generica).
 import type { NeedKey } from './state';
+import { $t } from '../i18n';
 
 /** ingrediente noi (pe langa legumele din gradina, peste, ciuperci, mure, faina, lamai, apa) */
 export const INGREDIENTS: Record<string, { icon: string; label: string }> = {
-  egg: { icon: '🥚', label: 'Ouă' }, milk: { icon: '🥛', label: 'Lapte' }, cheese: { icon: '🧀', label: 'Brânză' },
-  meat: { icon: '🥩', label: 'Carne' }, cornmeal: { icon: '🌽', label: 'Mălai' }, rice: { icon: '🍚', label: 'Orez' },
+  egg: { icon: '🥚', label: $t('Ouă') }, milk: { icon: '🥛', label: $t('Lapte') }, cheese: { icon: '🧀', label: $t('Brânză') },
+  meat: { icon: '🥩', label: $t('Carne') }, cornmeal: { icon: '🌽', label: $t('Mălai') }, rice: { icon: '🍚', label: $t('Orez') },
 };
 
 /** grupuri de ingrediente: "orice leguma", "orice fruct", "orice floare" */
 export const GROUPS: Record<string, { icon: string; label: string; keys: string[] }> = {
-  anyveg: { icon: '🥕', label: 'legume', keys: ['veg', 'carrot', 'potato', 'tomato', 'cabbage', 'mushroom'] },
-  fruit: { icon: '🍓', label: 'fructe', keys: ['strawberry', 'berry'] },
-  anyflower: { icon: '🌸', label: 'flori', keys: ['flower', 'tulip', 'rose', 'sunflower'] },
+  anyveg: { icon: '🥕', label: $t('legume'), keys: ['veg', 'carrot', 'potato', 'tomato', 'cabbage', 'mushroom'] },
+  fruit: { icon: '🍓', label: $t('fructe'), keys: ['strawberry', 'berry'] },
+  anyflower: { icon: '🌸', label: $t('flori'), keys: ['flower', 'tulip', 'rose', 'sunflower'] },
 };
 
 export type Method = 'pancakes' | 'fry' | 'boil' | 'oven' | 'cold';
@@ -25,26 +26,26 @@ export interface Recipe {
 }
 
 export const RECIPES: Recipe[] = [
-  { id: 'ciorba', name: 'Ciorbă de legume', icon: '🍲', need: { anyveg: 2, water: 1 }, portions: 4, method: 'boil', needs: { hunger: 34, warmth: 10, health: 5 }, fart: 12, text: 'Ciorbă caldă, ca la bunica! 🍲' },
-  { id: 'clatite', name: 'Clătite', icon: '🥞', need: { flour: 1, egg: 1, milk: 1 }, portions: 4, method: 'pancakes', needs: { hunger: 28, fun: 10, love: 4 }, text: 'Clătite pufoase! 🥞' },
-  { id: 'omleta', name: 'Omletă', icon: '🍳', need: { egg: 2 }, portions: 2, method: 'fry', needs: { hunger: 30, energy: 8 }, text: 'O omletă de dimineață! 🍳' },
-  { id: 'mamaliga', name: 'Mămăligă cu brânză', icon: '🫓', need: { cornmeal: 1, cheese: 1, water: 1 }, portions: 3, method: 'boil', needs: { hunger: 46, energy: 6, warmth: 4 }, text: 'Mămăliguță cu brânză! 🫓' },
-  { id: 'sarmale', name: 'Sarmale', icon: '🥘', need: { cabbage: 1, meat: 1, rice: 1 }, portions: 5, method: 'boil', needs: { hunger: 50, love: 8, warmth: 6 }, fart: 35, text: 'Sarmale ca de sărbătoare! 🥘' },
-  { id: 'papanasi', name: 'Papanași', icon: '🍩', need: { cheese: 1, flour: 1, egg: 1, fruit: 1 }, portions: 3, method: 'fry', needs: { hunger: 26, fun: 14, love: 8 }, text: 'Papanași cu dulceață! 🍩' },
-  { id: 'pizza', name: 'Pizza de casă', icon: '🍕', need: { flour: 1, tomato: 1, cheese: 1 }, portions: 4, method: 'oven', needs: { hunger: 38, fun: 12 }, text: 'Pizza făcută de noi! 🍕' },
-  { id: 'placinta', name: 'Plăcintă cu fructe', icon: '🥧', need: { flour: 1, egg: 1, fruit: 2 }, portions: 4, method: 'oven', needs: { hunger: 26, fun: 10, love: 6 }, text: 'Plăcintă caldă! 🥧' },
-  { id: 'peste', name: 'Pește la grătar', icon: '🍢', need: { fish: 1, lemon: 1 }, portions: 2, method: 'fry', needs: { hunger: 38, health: 8 }, text: 'Pește cu lămâie, delicios! 🍢' },
-  { id: 'supa', name: 'Supă cremă de ciuperci', icon: '🥣', need: { mushroom: 2, milk: 1 }, portions: 3, method: 'boil', needs: { hunger: 32, warmth: 10 }, text: 'Supă cremă de ciuperci 🥣' },
-  { id: 'piure', name: 'Piure de cartofi', icon: '🍠', need: { potato: 2, milk: 1 }, portions: 3, method: 'boil', needs: { hunger: 36, energy: 4 }, text: 'Piure cremos! 🍠' },
-  { id: 'salata', name: 'Salată de vară', icon: '🥗', need: { tomato: 1, anyveg: 1 }, portions: 2, method: 'cold', needs: { hunger: 18, health: 8, energy: 5 }, text: 'Salată proaspătă 🥗' },
-  { id: 'limonada', name: 'Limonadă', icon: '🍹', need: { lemon: 2, water: 1 }, portions: 3, method: 'cold', needs: { hunger: 6, fun: 10, energy: 8 }, text: 'Limonadă rece! 🍹' },
-  { id: 'ceai', name: 'Ceai de flori', icon: '🍵', need: { water: 1, anyflower: 1 }, portions: 2, method: 'boil', needs: { hunger: 2, warmth: 14, health: 6 }, text: 'Un ceai cald 🍵' },
+  { id: 'ciorba', name: $t('Ciorbă de legume'), icon: '🍲', need: { anyveg: 2, water: 1 }, portions: 4, method: 'boil', needs: { hunger: 34, warmth: 10, health: 5 }, fart: 12, text: $t('Ciorbă caldă, ca la bunica! 🍲') },
+  { id: 'clatite', name: $t('Clătite'), icon: '🥞', need: { flour: 1, egg: 1, milk: 1 }, portions: 4, method: 'pancakes', needs: { hunger: 28, fun: 10, love: 4 }, text: $t('Clătite pufoase! 🥞') },
+  { id: 'omleta', name: $t('Omletă'), icon: '🍳', need: { egg: 2 }, portions: 2, method: 'fry', needs: { hunger: 30, energy: 8 }, text: $t('O omletă de dimineață! 🍳') },
+  { id: 'mamaliga', name: $t('Mămăligă cu brânză'), icon: '🫓', need: { cornmeal: 1, cheese: 1, water: 1 }, portions: 3, method: 'boil', needs: { hunger: 46, energy: 6, warmth: 4 }, text: $t('Mămăliguță cu brânză! 🫓') },
+  { id: 'sarmale', name: $t('Sarmale'), icon: '🥘', need: { cabbage: 1, meat: 1, rice: 1 }, portions: 5, method: 'boil', needs: { hunger: 50, love: 8, warmth: 6 }, fart: 35, text: $t('Sarmale ca de sărbătoare! 🥘') },
+  { id: 'papanasi', name: $t('Papanași'), icon: '🍩', need: { cheese: 1, flour: 1, egg: 1, fruit: 1 }, portions: 3, method: 'fry', needs: { hunger: 26, fun: 14, love: 8 }, text: $t('Papanași cu dulceață! 🍩') },
+  { id: 'pizza', name: $t('Pizza de casă'), icon: '🍕', need: { flour: 1, tomato: 1, cheese: 1 }, portions: 4, method: 'oven', needs: { hunger: 38, fun: 12 }, text: $t('Pizza făcută de noi! 🍕') },
+  { id: 'placinta', name: $t('Plăcintă cu fructe'), icon: '🥧', need: { flour: 1, egg: 1, fruit: 2 }, portions: 4, method: 'oven', needs: { hunger: 26, fun: 10, love: 6 }, text: $t('Plăcintă caldă! 🥧') },
+  { id: 'peste', name: $t('Pește la grătar'), icon: '🍢', need: { fish: 1, lemon: 1 }, portions: 2, method: 'fry', needs: { hunger: 38, health: 8 }, text: $t('Pește cu lămâie, delicios! 🍢') },
+  { id: 'supa', name: $t('Supă cremă de ciuperci'), icon: '🥣', need: { mushroom: 2, milk: 1 }, portions: 3, method: 'boil', needs: { hunger: 32, warmth: 10 }, text: $t('Supă cremă de ciuperci 🥣') },
+  { id: 'piure', name: $t('Piure de cartofi'), icon: '🍠', need: { potato: 2, milk: 1 }, portions: 3, method: 'boil', needs: { hunger: 36, energy: 4 }, text: $t('Piure cremos! 🍠') },
+  { id: 'salata', name: $t('Salată de vară'), icon: '🥗', need: { tomato: 1, anyveg: 1 }, portions: 2, method: 'cold', needs: { hunger: 18, health: 8, energy: 5 }, text: $t('Salată proaspătă 🥗') },
+  { id: 'limonada', name: $t('Limonadă'), icon: '🍹', need: { lemon: 2, water: 1 }, portions: 3, method: 'cold', needs: { hunger: 6, fun: 10, energy: 8 }, text: $t('Limonadă rece! 🍹') },
+  { id: 'ceai', name: $t('Ceai de flori'), icon: '🍵', need: { water: 1, anyflower: 1 }, portions: 2, method: 'boil', needs: { hunger: 2, warmth: 14, health: 6 }, text: $t('Un ceai cald 🍵') },
 ];
 export const RECIPE: Record<string, Recipe> = Object.fromEntries(RECIPES.map(r => [r.id, r]));
 export const dishKey = (id: string) => 'dish_' + id;
 
 /** mancare gata cumparata (fara reteta) */
-export const READY_MEAL: Recipe = { id: 'meals', name: 'Mâncare gata', icon: '🍱', need: {}, portions: 1, method: 'cold', needs: { hunger: 36, love: 3, energy: 4 }, fart: 15, text: 'Ce bună a fost! 🍱' };
+export const READY_MEAL: Recipe = { id: 'meals', name: $t('Mâncare gata'), icon: '🍱', need: {}, portions: 1, method: 'cold', needs: { hunger: 36, love: 3, energy: 4 }, fart: 15, text: $t('Ce bună a fost! 🍱') };
 
 type Res = Record<string, number>;
 const have = (r: Res, k: string) => (GROUPS[k] ? GROUPS[k].keys.reduce((s, x) => s + (r[x] ?? 0), 0) : r[k] ?? 0);
@@ -52,7 +53,7 @@ const have = (r: Res, k: string) => (GROUPS[k] ? GROUPS[k].keys.reduce((s, x) =>
 export function missingFor(r: Res, rc: Recipe) { return Object.entries(rc.need).filter(([k, n]) => have(r, k) < n).map(([k, n]) => ({ k, n, has: have(r, k) })); }
 export const canCook = (r: Res, rc: Recipe) => missingFor(r, rc).length === 0;
 export function ingIcon(k: string) { return GROUPS[k]?.icon ?? INGREDIENTS[k]?.icon ?? ({ water: '💧', flour: '🥡', lemon: '🍋', fish: '🐟', mushroom: '🍄', berry: '🫐', strawberry: '🍓', carrot: '🥕', potato: '🥔', tomato: '🍅', cabbage: '🥬', veg: '🥕', flower: '🌸', tulip: '🌷', rose: '🌹', sunflower: '🌻', honey: '🍯', corn: '🌽', grain: '🌾' } as Record<string, string>)[k] ?? '🥄'; } // 1.14.1: florile (ceaiul) nu aveau iconita si nu se puteau atinge
-export function ingLabel(k: string) { return GROUPS[k]?.label ?? INGREDIENTS[k]?.label.toLowerCase() ?? ({ water: 'apă', flour: 'făină', lemon: 'lămâi', fish: 'pește', mushroom: 'ciuperci', berry: 'mure', strawberry: 'căpșuni', carrot: 'morcovi', potato: 'cartofi', tomato: 'roșii', cabbage: 'varză' } as Record<string, string>)[k] ?? k; }
+export function ingLabel(k: string) { return GROUPS[k]?.label ?? INGREDIENTS[k]?.label.toLowerCase() ?? ({ water: $t('apă'), flour: $t('făină'), lemon: $t('lămâi'), fish: $t('pește'), mushroom: 'ciuperci', berry: 'mure', strawberry: $t('căpșuni'), carrot: 'morcovi', potato: 'cartofi', tomato: $t('roșii'), cabbage: $t('varză') } as Record<string, string>)[k] ?? k; }
 /** lista de consum concret (grupurile se iau din ce ai mai mult) */
 export function consumeList(r: Res, rc: Recipe): [string, number][] {
   const out: [string, number][] = []; const left = { ...r };

@@ -2,6 +2,7 @@
 import { Panel, sweep, HIT_SLACK } from './base';
 import { Sfx } from '../engine/sfx';
 import type { WorldScene } from '../scenes/world';
+import { $t } from '../i18n';
 
 const O = '#3a2a22';
 
@@ -9,13 +10,13 @@ const O = '#3a2a22';
 export class ChopGame extends Panel {
   hits = 0; need = 5; marker = 0; zone = 0.34; swing = 0; tilt = 0; fall = 0; miss = 0;
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, '🪓 Taie lemne', s.myId === 'dudu' ? 'Lovește în zona verde! (Dudu e mai puternic 💪)' : 'Lovește în zona verde!');
+    super(s, d, '🪓 Taie lemne', s.myId === 'dudu' ? $t('Lovește în zona verde! (Dudu e mai puternic 💪)') : $t('Lovește în zona verde!'));
     if (s.myId === 'dudu') { this.need = 4; this.zone = 0.42; }
   }
   tick(dt: number) {
     this.marker = sweep(this.t, 0.8 + this.hits * 0.08);
     this.swing = Math.max(0, this.swing - dt * 5);
-    if (this.fall > 0) { this.fall += dt * 1.4; if (this.fall > 1.4) this.finish(1 + Math.max(0, 3 - this.miss) * 0.3, 'TIMBEEER! 🪵🪵🪵'); }
+    if (this.fall > 0) { this.fall += dt * 1.4; if (this.fall > 1.4) this.finish(1 + Math.max(0, 3 - this.miss) * 0.3, $t('TIMBEEER! 🪵🪵🪵')); }
     if (!this.hero.busy) this.hero.play('chop_ready');
   }
   hit() {
@@ -27,7 +28,7 @@ export class ChopGame extends Panel {
       this.fx.text(b.x + b.w * 0.6, b.y + b.h * 0.45, ['TOC!', 'POC!', 'ZDANG!', 'TRANC!'][this.hits % 4], '#8b5e34', 1.1);
       this.hero.play('chop_swing');
       if (this.hits >= this.need) { this.fall = 0.01; Sfx.play('tree_fall', { delay: 0.15 }); Sfx.play('wood_drop', { delay: 0.9 }); Sfx.play('leaves', { delay: 0.8, vol: 0.6 }); }
-    } else { this.miss++; Sfx.play('whoosh'); Sfx.play('bad', { vol: 0.6 }); this.fx.text(b.x + b.w * 0.6, b.y + b.h * 0.45, 'Ups! Ratat 😅', '#e63946', 0.9); this.hero.play('chop_swing', () => this.hero.play('dizzy')); }
+    } else { this.miss++; Sfx.play('whoosh'); Sfx.play('bad', { vol: 0.6 }); this.fx.text(b.x + b.w * 0.6, b.y + b.h * 0.45, $t('Ups! Ratat 😅'), '#e63946', 0.9); this.hero.play('chop_swing', () => this.hero.play('dizzy')); }
   }
   pointer(t: string) { if (t === 'down') this.hit(); }
   key(k: string, d: boolean) { if (d && (k === ' ' || k === 'e')) this.hit(); }
@@ -49,21 +50,21 @@ export class ChopGame extends Panel {
     ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by, bw, 24, 12); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#9be38f'; ctx.beginPath(); ctx.roundRect(bx + bw / 2 - bw / 2 * this.zone, by + 3, bw * this.zone, 18, 9); ctx.fill();
     const mx = bx + bw / 2 + this.marker * bw / 2 * 0.95; ctx.fillStyle = '#ff4d6d'; ctx.fillRect(mx - 2, by - 4, 4, 32);
-    ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = O; ctx.fillText(`Lovituri: ${this.hits}/${this.need}`, x + w / 2, by + 48);
+    ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = O; ctx.fillText($t('Lovituri: {0}/{1}', this.hits, this.need), x + w / 2, by + 48);
   }
 }
 
 /** ⛏️ Sparge piatra: atinge crapaturile care apar */
 export class MineGame extends Panel {
   cracks: { x: number; y: number; t: number }[] = []; broken = 0; need = 8; spawn = 0; dur = 15; hp = 1;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '⛏️ Sparge piatra', 'Atinge crăpăturile strălucitoare înainte să dispară!'); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '⛏️ Sparge piatra', $t('Atinge crăpăturile strălucitoare înainte să dispară!')); }
   tick(dt: number) {
     this.spawn -= dt;
     if (this.spawn <= 0 && this.cracks.length < 3) { this.spawn = 0.6; this.cracks.push({ x: 0.3 + Math.random() * 0.4, y: 0.45 + Math.random() * 0.25, t: 0 }); }
     for (const c of this.cracks) c.t += dt;
     this.cracks = this.cracks.filter(c => c.t < 1.6);
-    if (this.broken >= this.need) this.finish(1 + (this.dur - this.t) / this.dur, 'CRAC! Piatră nouă 🪨🪨');
-    else if (this.t > this.dur) this.finish(this.broken >= 4 ? 0.6 : 0, this.broken >= 4 ? 'O piatră mică 🪨' : 'Prea tare… 😓');
+    if (this.broken >= this.need) this.finish(1 + (this.dur - this.t) / this.dur, $t('CRAC! Piatră nouă 🪨🪨'));
+    else if (this.t > this.dur) this.finish(this.broken >= 4 ? 0.6 : 0, this.broken >= 4 ? $t('O piatră mică 🪨') : $t('Prea tare… 😓'));
   }
   pointer(type: string, x: number, y: number) {
     if (type !== 'down') return; const b = this.box;
@@ -71,7 +72,7 @@ export class MineGame extends Panel {
     if (i < 0) { Sfx.play('step_stone', { vol: 0.6 }); return; }
     const c = this.cracks.splice(i, 1)[0]; this.broken++; this.shake = 5; Sfx.play('mine');
     this.fx.burst('drop', b.x + c.x * b.w, b.y + c.y * b.h, 10, 6.28, 150, { grav: 300, max: 0.6, color: '#a9a49b' });
-    this.fx.text(b.x + c.x * b.w, b.y + c.y * b.h - 30, 'CLINC!', '#6c757d', 0.9);
+    this.fx.text(b.x + c.x * b.w, b.y + c.y * b.h - 30, $t('CLINC!'), '#6c757d', 0.9);
   }
   key(k: string, d: boolean) { if (d && (k === ' ' || k === 'e') && this.cracks[0]) { const b = this.box; this.pointer('down', b.x + this.cracks[0].x * b.w, b.y + this.cracks[0].y * b.h); } }
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {

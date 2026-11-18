@@ -2,30 +2,31 @@
 import type { CharId } from '../char/draw';
 import type { Mood } from '../char/actor';
 import type { WorldOp } from '../net/types';
+import { $t } from '../i18n';
 
 export const NEEDS = ['hunger', 'energy', 'warmth', 'hygiene', 'fun', 'love', 'health'] as const;
 export type NeedKey = typeof NEEDS[number];
 export const NEED_INFO: Record<NeedKey, { icon: string; label: string; color: string }> = {
-  hunger: { icon: '🍔', label: 'Foame', color: '#ff9f1c' },
-  energy: { icon: '😴', label: 'Energie', color: '#7a8cff' },
-  warmth: { icon: '🔥', label: 'Căldură', color: '#ff6b3d' },
-  hygiene: { icon: '🛁', label: 'Igienă', color: '#4cc9f0' },
-  fun: { icon: '🎈', label: 'Distracție', color: '#c77dff' },
-  love: { icon: '💕', label: 'Iubire', color: '#ff4d6d' },
-  health: { icon: '❤️‍🩹', label: 'Sănătate', color: '#2ec4b6' },
+  hunger: { icon: '🍔', label: $t('Foame'), color: '#ff9f1c' },
+  energy: { icon: '😴', label: $t('Energie'), color: '#7a8cff' },
+  warmth: { icon: '🔥', label: $t('Căldură'), color: '#ff6b3d' },
+  hygiene: { icon: '🛁', label: $t('Igienă'), color: '#4cc9f0' },
+  fun: { icon: '🎈', label: $t('Distracție'), color: '#c77dff' },
+  love: { icon: '💕', label: $t('Iubire'), color: '#ff4d6d' },
+  health: { icon: '❤️‍🩹', label: $t('Sănătate'), color: '#2ec4b6' },
 };
 
 export type Sickness = 'cold' | 'fever' | 'tummy';
 export const REQUESTS: Record<string, { icon: string; label: string; mini?: string }> = {
-  soup: { icon: '🍲', label: 'supă caldă', mini: 'soup' },
-  medicine: { icon: '💊', label: 'medicamentul', mini: 'medicine' },
-  compress: { icon: '🧊', label: 'o compresă rece', mini: 'compress' },
-  kiss: { icon: '💋', label: 'un pupic de vindecare' },
-  water: { icon: '💧', label: 'un pahar cu apă' },
+  soup: { icon: '🍲', label: $t('supă caldă'), mini: 'soup' },
+  medicine: { icon: '💊', label: $t('medicamentul'), mini: 'medicine' },
+  compress: { icon: '🧊', label: $t('o compresă rece'), mini: 'compress' },
+  kiss: { icon: '💋', label: $t('un pupic de vindecare') },
+  water: { icon: '💧', label: $t('un pahar cu apă') },
 };
 
 export const SICK_INFO: Record<Sickness, { label: string; icon: string }> = {
-  cold: { label: 'Răceală', icon: '🤧' }, fever: { label: 'Febră', icon: '🌡️' }, tummy: { label: 'Burtică', icon: '☁️' },
+  cold: { label: $t('Răceală'), icon: '🤧' }, fever: { label: $t('Febră'), icon: '🌡️' }, tummy: { label: $t('Burtică'), icon: '☁️' },
 };
 
 export interface CharState {

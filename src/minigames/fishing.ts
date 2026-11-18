@@ -3,16 +3,17 @@ import { Panel } from './base';
 import { Sfx, type SndHandle } from '../engine/sfx';
 import type { WorldScene } from '../scenes/world';
 import { heartPath } from '../char/draw';
+import { $t } from '../i18n';
 
 const O = '#3a2a22';
 const FISH = [
-  { id: 'caras', name: 'Caras', col: '#f2b04a', size: 1, pull: 0.8, w: 5 },
-  { id: 'pastrav', name: 'Păstrăv', col: '#9ad1b0', size: 1.2, pull: 1.1, w: 3 },
-  { id: 'stiuca', name: 'Știucă', col: '#7a9a6a', size: 1.6, pull: 1.6, w: 1.5 },
-  { id: 'crap', name: 'Crap', col: '#c9a24a', size: 1.4, pull: 1.3, w: 2.5 },
-  { id: 'biban', name: 'Biban', col: '#9ab86a', size: 1, pull: 0.9, w: 3 },
-  { id: 'somn', name: 'Somn', col: '#5a5a6a', size: 1.9, pull: 1.9, w: 0.8 },
-  { id: 'gheata', name: 'O gheată veche 👢', col: '#6b4a2f', size: 1, pull: 0.5, w: 1 },
+  { id: 'caras', name: $t('Caras'), col: '#f2b04a', size: 1, pull: 0.8, w: 5 },
+  { id: 'pastrav', name: $t('Păstrăv'), col: '#9ad1b0', size: 1.2, pull: 1.1, w: 3 },
+  { id: 'stiuca', name: $t('Știucă'), col: '#7a9a6a', size: 1.6, pull: 1.6, w: 1.5 },
+  { id: 'crap', name: $t('Crap'), col: '#c9a24a', size: 1.4, pull: 1.3, w: 2.5 },
+  { id: 'biban', name: $t('Biban'), col: '#9ab86a', size: 1, pull: 0.9, w: 3 },
+  { id: 'somn', name: $t('Somn'), col: '#5a5a6a', size: 1.9, pull: 1.9, w: 0.8 },
+  { id: 'gheata', name: $t('O gheată veche 👢'), col: '#6b4a2f', size: 1, pull: 0.5, w: 1 },
 ];
 
 type Phase = 'cast' | 'wait' | 'bite' | 'reel' | 'show';
@@ -20,12 +21,12 @@ export class FishingGame extends Panel {
   phase: Phase = 'cast'; waitT = 0; biteT = 0; fish = FISH[0];
   reelSnd: SndHandle | null = null; reelT = 0;
   tension = 0.3; prog = 0; holding = false; caught = 0; lost = 0; showT = 0; lastName = '';
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🎣 Pescuit la lac', 'Atinge ca să arunci. Când se scufundă pluta → atinge repede!'); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('🎣 Pescuit la lac'), $t('Atinge ca să arunci. Când se scufundă pluta → atinge repede!')); }
   pickFish() { const tot = FISH.reduce((a, f) => a + f.w, 0); let r = Math.random() * tot; for (const f of FISH) { r -= f.w; if (r <= 0) return f; } return FISH[0]; }
   tick(dt: number) {
     if (this.phase !== 'reel' && this.reelSnd) { this.reelSnd.stop(); this.reelSnd = null; }
     if (this.phase === 'wait') { this.waitT -= dt; if (this.waitT <= 0) { this.phase = 'bite'; this.biteT = 0.9; Sfx.play('splash'); this.fish = this.pickFish(); } }
-    else if (this.phase === 'bite') { this.biteT -= dt; if (this.biteT <= 0) { this.phase = 'cast'; this.lost++; this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.45, 'A scăpat… 🐟💨', '#4ea8de', 1); } }
+    else if (this.phase === 'bite') { this.biteT -= dt; if (this.biteT <= 0) { this.phase = 'cast'; this.lost++; this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.45, $t('A scăpat… 🐟💨'), '#4ea8de', 1); } }
     else if (this.phase === 'reel') {
       if (this.holding) { this.reelT -= dt; if (this.reelT <= 0) { this.reelT = 1.9; this.reelSnd?.stop(0.2); this.reelSnd = Sfx.play('reel', { vol: 0.5 }); } }
       const pull = this.fish.pull * (0.6 + 0.6 * Math.abs(Math.sin(this.t * 2.3)));
@@ -33,17 +34,17 @@ export class FishingGame extends Panel {
       this.tension = Math.max(0, this.tension);
       if (this.holding && this.tension < 0.85) this.prog += dt * 0.35 / this.fish.size;
       else if (!this.holding) this.prog -= dt * 0.05;
-      if (this.tension >= 1) { this.phase = 'cast'; this.lost++; Sfx.play('bad'); this.shake = 6; this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.4, 'S-a rupt firul! 😩', '#e63946', 1.1); this.hero.play('cry'); }
+      if (this.tension >= 1) { this.phase = 'cast'; this.lost++; Sfx.play('bad'); this.shake = 6; this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.4, $t('S-a rupt firul! 😩'), '#e63946', 1.1); this.hero.play('cry'); }
       if (this.prog >= 1) { this.phase = 'show'; this.showT = 1.8; this.caught++; Sfx.play('good'); this.lastName = this.fish.name; this.hero.play(this.fish.id === 'gheata' ? 'laugh' : 'love'); if (this.fish.id !== 'gheata') { this.scene.op({ k: 'res', res: 'fish', delta: 1 }); this.scene.op({ k: 'stat', key: 'fishCaught', delta: 1 }); this.scene.op({ k: 'stat', key: 'fish-' + this.fish.id, delta: 1 }); } }
     } else if (this.phase === 'show') { if (this.reelSnd) { this.reelSnd.stop(); this.reelSnd = null; } this.showT -= dt; if (this.showT <= 0) this.phase = 'cast'; }
-    if (this.caught >= 3 || this.lost >= 4) this.finish(this.caught ? 1 + this.caught * 0.3 : 0, this.caught ? `Ai prins ${this.caught} pești! 🐟` : 'Azi nu trag peștii… 🎣');
+    if (this.caught >= 3 || this.lost >= 4) this.finish(this.caught ? 1 + this.caught * 0.3 : 0, this.caught ? $t('Ai prins {0} pești! 🐟', this.caught) : $t('Azi nu trag peștii… 🎣'));
   }
   press(down: boolean) {
     if (this.ended) return;
     if (!down) { this.holding = false; this.reelSnd?.stop(); this.reelSnd = null; return; }
     if (this.phase === 'cast') { this.phase = 'wait'; this.waitT = 1.5 + Math.random() * 3; Sfx.play('whoosh'); Sfx.play('splash', { vol: 0.4, rate: 1.4, delay: 0.45 }); this.prog = 0; this.tension = 0.3; }
-    else if (this.phase === 'bite') { this.phase = 'reel'; Sfx.play('plunge'); this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.45, 'Agățat! Ține apăsat ca să mulinezi', '#2ec4b6', 0.9); this.holding = true; }
-    else if (this.phase === 'wait') { this.phase = 'cast'; this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.45, 'Prea devreme! Ai speriat peștii', '#e63946', 0.9); }
+    else if (this.phase === 'bite') { this.phase = 'reel'; Sfx.play('plunge'); this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.45, $t('Agățat! Ține apăsat ca să mulinezi'), '#2ec4b6', 0.9); this.holding = true; }
+    else if (this.phase === 'wait') { this.phase = 'cast'; this.fx.text(this.box.x + this.box.w * 0.6, this.box.y + this.box.h * 0.45, $t('Prea devreme! Ai speriat peștii'), '#e63946', 0.9); }
     else if (this.phase === 'reel') this.holding = true;
     if (this.holding && this.phase === 'reel' && !this.reelSnd) this.reelSnd = Sfx.play('reel', { vol: 0.5 });
   }
@@ -85,7 +86,7 @@ export class FishingGame extends Panel {
       ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bxx, y + 52, bw, 14, 7); ctx.fill(); ctx.stroke();
       ctx.fillStyle = this.tension > 0.8 ? '#e63946' : this.tension > 0.6 ? '#ff9f1c' : '#7cc576'; ctx.beginPath(); ctx.roundRect(bxx + 2, y + 54, (bw - 4) * Math.min(1, this.tension), 10, 5); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(bxx, y + 76, bw, 10, 5); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#4cc9f0'; ctx.beginPath(); ctx.roundRect(bxx + 2, y + 78, (bw - 4) * Math.max(0, this.prog), 6, 3); ctx.fill();
-      ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = O; ctx.fillText('Tensiunea firului (nu lăsa în roșu! dă drumul)', bxx, y + 48);
+      ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = O; ctx.fillText($t('Tensiunea firului (nu lăsa în roșu! dă drumul)'), bxx, y + 48);
     }
     ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.textAlign = 'right'; ctx.fillStyle = O; ctx.fillText(`🐟 ${this.caught}/3`, x + w - 50, y + 100);
     heartPath(ctx, 0, 0, 0);

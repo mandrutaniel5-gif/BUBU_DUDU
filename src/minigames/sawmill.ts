@@ -15,6 +15,7 @@ import { g } from '../game/gender';
 import { nightAmount } from '../game/state';
 import { fillTextIcons } from '../ui/icons';
 import { openStaff } from '../scenes/story';
+import { $t } from '../i18n';
 
 const O = '#3a2a22';
 /** pretul unui lemn in fiecare zi a saptamanii (Dudu negociaza +2) */
@@ -25,17 +26,17 @@ export const PLANK_PRICE = 12;
 /** lemnele care raman mereu pentru soba */
 export const KEEP_WOOD = 5;
 /** „1 scândură”, „2 scânduri”, „20 de scânduri” */
-export const nPlanks = (n: number) => n === 1 ? 'o scândură' : `${n}${n >= 20 ? ' de' : ''} scânduri`;
-export const nWood = (n: number) => n === 1 ? 'un lemn' : `${n}${n >= 20 ? ' de' : ''} lemne`;
+export const nPlanks = (n: number) => n === 1 ? $t('o scândură') : $t('{0}{1} scânduri', n, n >= 20 ? ' de' : '');
+export const nWood = (n: number) => n === 1 ? $t('un lemn') : $t('{0}{1} lemne', n, n >= 20 ? ' de' : '');
 
 export interface SawOrder { idx: number; text: string; res: 'wood' | 'plank'; qty: number; pay: number }
 const ORDERS: { text: string; res: 'wood' | 'plank'; min: number; max: number }[] = [
-  { text: 'Lemne de foc pentru Brutăria satului', res: 'wood', min: 8, max: 12 },
-  { text: 'Scânduri pentru gardul Bunicului Ion', res: 'plank', min: 2, max: 4 },
-  { text: 'Lemne pentru soba hanului „La Răscruce”', res: 'wood', min: 10, max: 14 },
-  { text: 'Scânduri pentru magazia familiei Popescu', res: 'plank', min: 3, max: 5 },
-  { text: 'Scânduri pentru băncuțele de la lac', res: 'plank', min: 2, max: 3 },
-  { text: 'Lemne pentru cuptorul Bunicii Leana', res: 'wood', min: 6, max: 9 },
+  { text: $t('Lemne de foc pentru Brutăria satului'), res: 'wood', min: 8, max: 12 },
+  { text: $t('Scânduri pentru gardul Bunicului Ion'), res: 'plank', min: 2, max: 4 },
+  { text: $t('Lemne pentru soba hanului „La Răscruce”'), res: 'wood', min: 10, max: 14 },
+  { text: $t('Scânduri pentru magazia familiei Popescu'), res: 'plank', min: 3, max: 5 },
+  { text: $t('Scânduri pentru băncuțele de la lac'), res: 'plank', min: 2, max: 3 },
+  { text: $t('Lemne pentru cuptorul Bunicii Leana'), res: 'wood', min: 6, max: 9 },
 ];
 function mulberry(a: number) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 /** comenzile zilei (la fel pe ambele telefoane) */
@@ -69,8 +70,8 @@ export class SawmillGame extends Panel {
   saw: { logs: number; i: number; x: number; off: number; acc: number[]; cur: number; samples: number; phase: number; amp: number; drag: number | null; made: number; keys: Set<string> } | null = null;
 
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, '🪚 Cheresteaua lui Nea Vasile', '');
-    this.vasile = new Actor('bubu', this.fx, { ...NPC_SPECS.dog, name: 'Nea Vasile' });
+    super(scene, done, $t('🪚 Cheresteaua lui Nea Vasile'), '');
+    this.vasile = new Actor('bubu', this.fx, { ...NPC_SPECS.dog, name: $t('Nea Vasile') });
     this.vasile.outfit = { head: 'cap', face: 'none', neck: 'none', body: 'salopeta' } as any;
     this.vasile.flip = -1; this.vasile.play('wave');
     this.sellN = Math.min(this.leftToday(), this.spare());
@@ -87,13 +88,13 @@ export class SawmillGame extends Panel {
 
   /** sunetele de fundal (le porneste soundscape): gaterul din sopron, mai tare cand tai tu */
   get loops(): [string, number, { rate?: number }?][] { return this.saw ? [['machine_loop', 0.55, { rate: 1.2 }], ['amb_forest', 0.25]] : [['machine_loop', 0.14, { rate: 0.8 }], ['amb_forest', 0.35]]; }
-  abort() { if (this.mode === 'saw' && this.saw) { this.endSaw(); return; } this.finish(this.coins > 0 ? 1 : 0.2, this.coins > 0 ? `Ai câștigat ${this.coins} lei la cherestea! 💰` : 'Pe mâine, Nea Vasile! 👋'); }
+  abort() { if (this.mode === 'saw' && this.saw) { this.endSaw(); return; } this.finish(this.coins > 0 ? 1 : 0.2, this.coins > 0 ? $t('Ai câștigat {0} lei la cherestea! 💰', this.coins) : $t('Pe mâine, Nea Vasile! 👋')); }
 
   // ------------------------------------------------------------------ cantarul
   startSell() {
     if (this.carrying) return;
     const n = Math.min(this.sellN, this.leftToday(), this.spare());
-    if (n <= 0) { this.say(this.leftToday() ? `Păstrează ${KEEP_WOOD} lemne pentru sobă 🔥` : 'Am cumpărat destule azi. Vino mâine! 🙂'); Sfx.play('bad'); return; }
+    if (n <= 0) { this.say(this.leftToday() ? $t('Păstrează {0} lemne pentru sobă 🔥', KEEP_WOOD) : $t('Am cumpărat destule azi. Vino mâine! 🙂')); Sfx.play('bad'); return; }
     this.carrying = { n, done: 0, t: 0, price: this.price() };
     this.hero.play('act_carry');
   }
@@ -103,32 +104,32 @@ export class SawmillGame extends Panel {
     s.op({ k: 'res', res: 'wood', delta: -c.n }); s.op({ k: 'money', delta: lei });
     s.op({ k: 'stat', key: 'woodSold', delta: c.n }); s.op({ k: 'stat', key: dayKey, delta: c.n });
     s.op({ k: 'need', who: this.me, need: 'energy', delta: -Math.min(6, c.n * 0.4) });
-    s.log(`${s.me.actor.spec.name} a vândut ${nWood(c.n)} la cherestea: +${lei} lei 💰`);
+    s.log($t('{0} a vândut {1} la cherestea: +{2} lei 💰', s.me.actor.spec.name, nWood(c.n), lei));
     this.coins += lei; this.onScale = 0;
     this.hero.play(this.me === 'dudu' ? 'flex' : 'love'); this.vasile.play('love');
     Sfx.play('register'); Sfx.play('coin', { delay: 0.25 });
-    this.fx.text(this.W * 0.4, this.H * 0.3, `+${lei} lei`, '#2ec4b6', 1.3);
+    this.fx.text(this.W * 0.4, this.H * 0.3, $t('+{0} lei', lei), '#2ec4b6', 1.3);
     this.fx.burst('sparkle', this.W * 0.4, this.H * 0.36, 14, 6.28, 160, { max: 0.7, color: '#ffd23f' });
-    this.say(this.me === 'dudu' ? `Bun lemn, Dudu! ${c.price} lei bucata, cum ne-am înțeles 🤝` : `Mulțumesc, Bubu! ${c.price} lei bucata 🙂`);
+    this.say(this.me === 'dudu' ? $t('Bun lemn, Dudu! {0} lei bucata, cum ne-am înțeles 🤝', c.price) : $t('Mulțumesc, Bubu! {0} lei bucata 🙂', c.price));
     this.sellN = Math.min(this.leftToday(), this.spare());
   }
   sellPlanks() {
-    const n = this.res('plank'); if (!n) { this.say('N-ai scânduri. Taie câteva la gater! 🪚'); Sfx.play('bad'); return; }
+    const n = this.res('plank'); if (!n) { this.say($t('N-ai scânduri. Taie câteva la gater! 🪚')); Sfx.play('bad'); return; }
     const lei = n * PLANK_PRICE, s = this.scene;
     s.op({ k: 'res', res: 'plank', delta: -n }); s.op({ k: 'money', delta: lei }); s.op({ k: 'stat', key: 'planksSold', delta: n });
     this.coins += lei; Sfx.play('register'); this.vasile.play('love');
-    this.fx.text(this.W * 0.4, this.H * 0.3, `+${lei} lei`, '#2ec4b6', 1.2);
-    this.say(`${nPlanks(n)}, ${PLANK_PRICE} lei bucata. Frumos tăiate! 👌`);
+    this.fx.text(this.W * 0.4, this.H * 0.3, $t('+{0} lei', lei), '#2ec4b6', 1.2);
+    this.say($t('{0}, {1} lei bucata. Frumos tăiate! 👌', nPlanks(n), PLANK_PRICE));
   }
   deliver(i: number) {
     const o = this.orders()[i]; if (!o || this.orderDone(i)) return;
-    if (this.res(o.res) < o.qty || (o.res === 'wood' && this.res('wood') - o.qty < 0)) { this.say(o.res === 'wood' ? `Îți trebuie ${o.qty} lemne 🪵` : `Îți trebuie ${o.qty} scânduri: taie-le la gater 🪚`); Sfx.play('bad'); return; }
+    if (this.res(o.res) < o.qty || (o.res === 'wood' && this.res('wood') - o.qty < 0)) { this.say(o.res === 'wood' ? $t('Îți trebuie {0} lemne 🪵', o.qty) : $t('Îți trebuie {0} scânduri: taie-le la gater 🪚', o.qty)); Sfx.play('bad'); return; }
     const s = this.scene;
     s.op({ k: 'res', res: o.res, delta: -o.qty }); s.op({ k: 'money', delta: o.pay });
     s.op({ k: 'stat', key: orderKey(this.day, i), delta: 1 }); s.op({ k: 'stat', key: 'sawOrders', delta: 1 });
-    s.log(`${s.me.actor.spec.name} a livrat comanda „${o.text}”: +${o.pay} lei 📜`);
+    s.log($t('{0} a livrat comanda „{1}”: +{2} lei 📜', s.me.actor.spec.name, o.text, o.pay));
     this.coins += o.pay; Sfx.play('register'); Sfx.play('good', { delay: 0.3 }); this.vasile.play('love'); this.hero.play('dance_hop');
-    this.fx.text(this.W * 0.5, this.H * 0.3, `Comandă livrată! +${o.pay} lei`, '#2ec4b6', 1.2);
+    this.fx.text(this.W * 0.5, this.H * 0.3, $t('Comandă livrată! +{0} lei', o.pay), '#2ec4b6', 1.2);
     this.fx.hearts(this.W * 0.5, this.H * 0.35, 6);
   }
   say(t: string) { this.bubble = { t, life: 3.2 }; }
@@ -137,8 +138,8 @@ export class SawmillGame extends Panel {
   // ------------------------------------------------------------------ gaterul
   startSaw() {
     const logs = Math.min(3, Math.floor(this.spare() / 2));
-    if (logs < 1) { this.say(`Îți trebuie 2 lemne pe scândură (și ${KEEP_WOOD} rămân pentru sobă)`); Sfx.play('bad'); return; }
-    const c = this.scene.w.chars[this.me]; if (c.needs.energy < 8) { this.say(`${g(this.me, 'Ești prea obosit', 'Ești prea obosită')} pentru gater 😴`); Sfx.play('bad'); return; }
+    if (logs < 1) { this.say($t('Îți trebuie 2 lemne pe scândură (și {0} rămân pentru sobă)', KEEP_WOOD)); Sfx.play('bad'); return; }
+    const c = this.scene.w.chars[this.me]; if (c.needs.energy < 8) { this.say($t('{0} pentru gater 😴', g(this.me, $t('Ești prea obosit'), $t('Ești prea obosită')))); Sfx.play('bad'); return; }
     this.mode = 'saw';
     this.saw = { logs, i: 0, x: 0, off: 0, acc: [], cur: 0, samples: 0, phase: Math.random() * 6, amp: 0.55 + Math.random() * 0.25, drag: null, made: 0, keys: new Set() };
     this.scene.op({ k: 'res', res: 'wood', delta: -logs * 2 });
@@ -152,7 +153,7 @@ export class SawmillGame extends Panel {
     const planks = a >= 0.85 ? 2 : a >= 0.45 ? 1 : 0;
     s.made += planks;
     if (planks) this.scene.op({ k: 'res', res: 'plank', delta: planks });
-    this.fx.text(this.W / 2, this.H * 0.25, a >= 0.85 ? 'Tăietură perfectă! +2 scânduri ✨' : a >= 0.45 ? '+1 scândură 👍' : 'Strâmb… s-a făcut surcele 😅', a >= 0.45 ? '#2ec4b6' : '#e63946', 1.1);
+    this.fx.text(this.W / 2, this.H * 0.25, a >= 0.85 ? $t('Tăietură perfectă! +2 scânduri ✨') : a >= 0.45 ? $t('+1 scândură 👍') : $t('Strâmb… s-a făcut surcele 😅'), a >= 0.45 ? '#2ec4b6' : '#e63946', 1.1);
     Sfx.play(a >= 0.45 ? 'wood_drop' : 'bad');
     s.i++; s.x = 0; s.cur = 0; s.samples = 0; s.off *= 0.3;
     if (s.i >= s.logs) setTimeout(() => this.endSaw(), 700);
@@ -161,8 +162,8 @@ export class SawmillGame extends Panel {
     const s = this.saw; if (!s) return;
     this.scene.op({ k: 'stat', key: 'planksMade', delta: s.made });
     this.scene.op({ k: 'need', who: this.me, need: 'energy', delta: -5 });
-    if (s.made) this.scene.log(`${this.scene.me.actor.spec.name} a tăiat ${nPlanks(s.made)} la gater 🪚`);
-    this.say(s.made ? `${nPlanks(s.made)}! Le poți livra la comenzi 📜` : 'Mai încearcă, ține linia pe pânză 🙂');
+    if (s.made) this.scene.log($t('{0} a tăiat {1} la gater 🪚', this.scene.me.actor.spec.name, nPlanks(s.made)));
+    this.say(s.made ? $t('{0}! Le poți livra la comenzi 📜', nPlanks(s.made)) : $t('Mai încearcă, ține linia pe pânză 🙂'));
     this.saw = null; this.mode = 'yard';
   }
 
@@ -249,7 +250,7 @@ export class SawmillGame extends Panel {
     ctx.fillStyle = '#a0473e'; ctx.beginPath(); ctx.moveTo(sx - 18, sy + 4); ctx.lineTo(sx + sw / 2, sy - H * 0.12); ctx.lineTo(sx + sw + 18, sy + 4); ctx.closePath(); ctx.fill(); ctx.stroke();
     for (let x = sx; x < sx + sw; x += 18) { ctx.strokeStyle = '#7a3a30'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, sy + 2); ctx.lineTo(sx + sw / 2 + (x - sx - sw / 2) * 0.2, sy - H * 0.1); ctx.stroke(); }
     ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(sx + sw / 2 - 86, sy - H * 0.06, 172, 26, 8); ctx.fill(); ctx.stroke();
-    ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#8a3a30'; ctx.fillText('CHERESTEAUA · Nea Vasile', sx + sw / 2, sy - H * 0.06 + 13);
+    ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#8a3a30'; ctx.fillText($t('CHERESTEAUA · Nea Vasile'), sx + sw / 2, sy - H * 0.06 + 13);
     // gaterul din sopron: pana care urca si coboara
     const gx = sx + sw * 0.35, gyy = sy + sh * 0.25, bob = Math.sin(this.t * 14) * 5;
     ctx.fillStyle = '#9aa5ad'; ctx.strokeStyle = O; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.rect(gx - 30, gyy, 60, sh * 0.62); ctx.fill(); ctx.stroke();
@@ -262,10 +263,10 @@ export class SawmillGame extends Panel {
     const bx = W * 0.03, by = H * 0.05, bw = Math.min(250, W * 0.3), bh = H * 0.2;
     ctx.fillStyle = '#3d4a45'; ctx.strokeStyle = '#a0703f'; ctx.lineWidth = 6; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = '800 15px "Baloo 2", sans-serif';
-    fillTextIcons(ctx, `Azi: ${this.price()} lei / lemn${this.me === 'dudu' ? ' (+2 Dudu)' : ''}`, bx + 12, by + bh * 0.3, 15);
+    fillTextIcons(ctx, $t('Azi: {0} lei / lemn{1}', this.price(), this.me === 'dudu' ? ' (+2 Dudu)' : ''), bx + 12, by + bh * 0.3, 15);
     ctx.font = '700 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffe680';
-    fillTextIcons(ctx, `Mai cumpăr azi: ${this.leftToday()} lemne`, bx + 12, by + bh * 0.56, 13);
-    ctx.fillStyle = '#ffd6e4'; fillTextIcons(ctx, `Scânduri: ${PLANK_PRICE} lei · comenzi: mai mult`, bx + 12, by + bh * 0.8, 13);
+    fillTextIcons(ctx, $t('Mai cumpăr azi: {0} lemne', this.leftToday()), bx + 12, by + bh * 0.56, 13);
+    ctx.fillStyle = '#ffd6e4'; fillTextIcons(ctx, $t('Scânduri: {0} lei · comenzi: mai mult', PLANK_PRICE), bx + 12, by + bh * 0.8, 13);
     // gramada ta de lemne (stanga), cantarul, Nea Vasile, tu
     const pileX = W * 0.1, pileY = gy + H * 0.02, wood = this.res('wood') - (this.carrying ? this.carrying.done + this.fly.length : 0);
     for (let i = 0; i < Math.min(15, wood); i++) { const r = Math.floor(i / 5), k = i % 5; const x = pileX + k * 14 + r * 7 - 30, y = pileY - r * 11; ctx.fillStyle = i < KEEP_WOOD ? '#8a5d32' : '#a0703f'; ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, y, 8, 7, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#e7c08f'; ctx.beginPath(); ctx.ellipse(x, y, 4, 3.4, 0, 0, 7); ctx.fill(); }
@@ -303,24 +304,24 @@ export class SawmillGame extends Panel {
     const line = (t: string, x: number, y: number, col = O, size = 12) => { ctx.font = `700 ${size}px "Baloo 2", sans-serif`; ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; fillTextIcons(ctx, t, x, y, size); };
     const bh = Math.min(30, ch * 0.28);
     // ajutoarele lui Dudu: taietori, spargatori de piatra, carausi (deasupra cartonaselor, in dreapta)
-    btn('staff', W - 196, top - bh - 10, 186, bh, '🪓 Angajează ajutoare', true, '#d6f5d0');
+    btn('staff', W - 196, top - bh - 10, 186, bh, $t('🪓 Angajează ajutoare'), true, '#d6f5d0');
     // 1. cantarul
-    { const x = card(0, '⚖️ Cântarul', '#c98e5f'); const can = Math.min(this.leftToday(), this.spare());
-      line(can ? `Poți vinde ${can} (${KEEP_WOOD} rămân pentru sobă)` : this.leftToday() ? `Ai doar ${this.res('wood')} lemne (${KEEP_WOOD} pentru sobă)` : 'Gata pe azi: vino mâine', x + 10, top + 38, can ? O : '#c0392b', 11);
+    { const x = card(0, $t('⚖️ Cântarul'), '#c98e5f'); const can = Math.min(this.leftToday(), this.spare());
+      line(can ? $t('Poți vinde {0} ({1} rămân pentru sobă)', can, KEEP_WOOD) : this.leftToday() ? $t('Ai doar {0} lemne ({1} pentru sobă)', this.res('wood'), KEEP_WOOD) : $t('Gata pe azi: vino mâine'), x + 10, top + 38, can ? O : '#c0392b', 11);
       const n = Math.max(0, Math.min(this.sellN, can));
       btn('minus', x + 10, top + 52, bh, bh, '−', can > 0); line(`${n}`, x + 18 + bh, top + 52 + bh / 2, O, 16); btn('plus', x + 46 + bh, top + 52, bh, bh, '+', can > 0);
-      btn('sell', x + 10, top + ch - bh - 8, cw - 20, bh, this.carrying ? 'Se cântărește…' : `Pune pe cântar · +${n * this.price()} lei`, can > 0 && !this.carrying, '#ffe08a'); }
+      btn('sell', x + 10, top + ch - bh - 8, cw - 20, bh, this.carrying ? $t('Se cântărește…') : $t('Pune pe cântar · +{0} lei', n * this.price()), can > 0 && !this.carrying, '#ffe08a'); }
     // 2. comenzile zilei
     { const x = card(1, '📜 Comenzile zilei', '#7a5ad6'); const rowH = (ch - 30) / 2;
       this.orders().forEach((o, i) => { const y = top + 28 + i * rowH, done = this.orderDone(i), have = this.res(o.res) >= o.qty;
         line(`${o.res === 'wood' ? '🪵' : '📏'} ${o.res === 'wood' ? nWood(o.qty) : nPlanks(o.qty)} · ${o.pay} lei`, x + 10, y + 10, O, 12);
         ctx.font = '600 10px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.textAlign = 'left'; ctx.fillText(o.text.length > 44 ? o.text.slice(0, 43) + '…' : o.text, x + 10, y + 25);
-        btn('ord' + i, x + cw - 92, y + 2, 82, Math.min(26, rowH * 0.45), done ? '✔ Livrată' : 'Livrează', !done && have, '#d6f5d0'); }); }
+        btn('ord' + i, x + cw - 92, y + 2, 82, Math.min(26, rowH * 0.45), done ? $t('✔ Livrată') : $t('Livrează'), !done && have, '#d6f5d0'); }); }
     // 3. gaterul
     { const x = card(2, '🪚 Gaterul', '#5b7fbf'); const logs = Math.min(3, Math.floor(this.spare() / 2));
-      line('2 lemne → 1 scândură', x + 10, top + 38, O, 12); line('tăietură perfectă = scândură în plus', x + 10, top + 54, '#7a5a4a', 10);
-      btn('saw', x + 10, top + ch - bh * 2 - 14, cw - 20, bh, logs ? `Taie ${logs} ${logs === 1 ? 'bușteanul' : 'bușteni'} la gater` : 'Îți trebuie lemne', logs > 0, '#cfe3ff');
-      btn('planks', x + 10, top + ch - bh - 8, cw - 20, bh, `Vinde scândurile (${this.res('plank')} × ${PLANK_PRICE} lei)`, this.res('plank') > 0, '#ffe1ea'); }
+      line($t('2 lemne → 1 scândură'), x + 10, top + 38, O, 12); line($t('tăietură perfectă = scândură în plus'), x + 10, top + 54, '#7a5a4a', 10);
+      btn('saw', x + 10, top + ch - bh * 2 - 14, cw - 20, bh, logs ? $t('Taie {0} {1} la gater', logs, logs === 1 ? $t('bușteanul') : $t('bușteni')) : $t('Îți trebuie lemne'), logs > 0, '#cfe3ff');
+      btn('planks', x + 10, top + ch - bh - 8, cw - 20, bh, $t('Vinde scândurile ({0} × {1} lei)', this.res('plank'), PLANK_PRICE), this.res('plank') > 0, '#ffe1ea'); }
   }
 
   drawSaw(ctx: CanvasRenderingContext2D, W: number, H: number) {
@@ -355,10 +356,10 @@ export class SawmillGame extends Panel {
     const err = Math.abs(this.chalk(Math.max(0, Math.min(1, s.x))) + s.off), q = Math.max(0, 1 - err / 0.32);
     ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(W / 2 - 160, 14, 320, 58, 14); ctx.fill(); ctx.stroke();
     ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = O;
-    fillTextIcons(ctx, `Bușteanul ${Math.min(s.i + 1, s.logs)} din ${s.logs} · scânduri: ${s.made}`, W / 2, 32, 15);
+    fillTextIcons(ctx, $t('Bușteanul {0} din {1} · scânduri: {2}', Math.min(s.i + 1, s.logs), s.logs, s.made), W / 2, 32, 15);
     ctx.fillStyle = '#eee'; ctx.fillRect(W / 2 - 140, 50, 280, 10); ctx.fillStyle = q > 0.7 ? '#7cc576' : q > 0.4 ? '#ffd23f' : '#e63946'; ctx.fillRect(W / 2 - 140, 50, 280 * q, 10); ctx.strokeRect(W / 2 - 140, 50, 280, 10);
     ctx.font = '700 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff';
-    ctx.fillText('Trage bușteanul în sus / în jos (sau W / S) ca linia albă să treacă prin pânză', W / 2, H - 22);
+    ctx.fillText($t('Trage bușteanul în sus / în jos (sau W / S) ca linia albă să treacă prin pânză'), W / 2, H - 22);
     // Dudu (sau Bubu) impinge busteanul
     const sc = Math.min(1.3, H / 380); this.hero.scale = sc; this.hero.x = W * 0.86; this.hero.y = H * 0.92; this.hero.flip = -1; this.hero.draw(ctx);
   }

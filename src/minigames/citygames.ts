@@ -6,6 +6,7 @@ import { drawCharacter, heartPath, NPC_SPECS } from '../char/draw';
 import { basePose, type Pose } from '../char/pose';
 import { iconCanvas } from '../ui/icons';
 import { g } from '../game/gender';
+import { $t } from '../i18n';
 
 const O = '#4a2a22';
 const inside = (x: number, y: number, b: { x: number; y: number; w: number; h: number }) => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h;
@@ -18,17 +19,17 @@ const pose = (o: Partial<Pose>) => Object.assign(basePose(), o);
 // ====================================================================== CAFENEAUA (barista)
 type Ing = 'espresso' | 'milk' | 'foam' | 'choco' | 'caramel' | 'ice';
 const ING: Record<Ing, { col: string; label: string }> = {
-  espresso: { col: '#6b3a22', label: 'Espresso' }, milk: { col: '#fff8ef', label: 'Lapte' }, foam: { col: '#f6e7d3', label: 'Spumă' },
-  choco: { col: '#4a2a1a', label: 'Ciocolată' }, caramel: { col: '#e8a040', label: 'Caramel' }, ice: { col: '#cfeeff', label: 'Gheață' },
+  espresso: { col: '#6b3a22', label: $t('Espresso') }, milk: { col: '#fff8ef', label: $t('Lapte') }, foam: { col: '#f6e7d3', label: $t('Spumă') },
+  choco: { col: '#4a2a1a', label: $t('Ciocolată') }, caramel: { col: '#e8a040', label: $t('Caramel') }, ice: { col: '#cfeeff', label: $t('Gheață') },
 };
 const DRINKS: { name: string; rec: Ing[] }[] = [
-  { name: 'Espresso', rec: ['espresso'] },
-  { name: 'Cappuccino', rec: ['espresso', 'milk', 'foam'] },
-  { name: 'Latte', rec: ['espresso', 'milk', 'milk'] },
-  { name: 'Mocha', rec: ['espresso', 'choco', 'milk'] },
-  { name: 'Caramel latte', rec: ['espresso', 'milk', 'caramel'] },
-  { name: 'Frappe', rec: ['ice', 'espresso', 'milk', 'foam'] },
-  { name: 'Ciocolată caldă', rec: ['choco', 'milk', 'foam'] },
+  { name: $t('Espresso'), rec: ['espresso'] },
+  { name: $t('Cappuccino'), rec: ['espresso', 'milk', 'foam'] },
+  { name: $t('Latte'), rec: ['espresso', 'milk', 'milk'] },
+  { name: $t('Mocha'), rec: ['espresso', 'choco', 'milk'] },
+  { name: $t('Caramel latte'), rec: ['espresso', 'milk', 'caramel'] },
+  { name: $t('Frappe'), rec: ['ice', 'espresso', 'milk', 'foam'] },
+  { name: $t('Ciocolată caldă'), rec: ['choco', 'milk', 'foam'] },
 ];
 const CUST = ['bunny', 'cat', 'fox', 'dog', 'pig', 'granny'];
 
@@ -50,7 +51,7 @@ function drawCup(ctx: CanvasRenderingContext2D, x: number, y: number, s: number,
 
 export class CafeGame extends Panel {
   order = DRINKS[0]; cup: Ing[] = []; served = 0; good = 0; tips = 0; left = 60; react = 0; reactOk = false; cust = 0; custT = 0;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '☕ Tura de barista', 'Fă băutura din comandă, în ordine, apoi Servește'); this.next(); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('☕ Tura de barista'), $t('Fă băutura din comandă, în ordine, apoi Servește')); this.next(); }
   next() { this.order = DRINKS[Math.min(DRINKS.length - 1, Math.floor(Math.random() * (3 + Math.min(4, this.served))))]; this.cup = []; this.cust = Math.floor(Math.random() * CUST.length); this.custT = 0; }
   tick(dt: number) {
     this.left -= dt; this.react = Math.max(0, this.react - dt); this.custT += dt;
@@ -59,7 +60,7 @@ export class CafeGame extends Panel {
   end() {
     // cat de bine ai lucrat: ~7 cafele perfecte intr-o tura = 100%, bacsisul mai adauga
     const perf = Math.min(1.2, (this.good + this.tips * 0.15) / 7);
-    this.finish(this.good ? 1 + this.good * 0.15 : 0.3, this.scene.finishJob(perf, `${this.good} clienți fericiți`));
+    this.finish(this.good ? 1 + this.good * 0.15 : 0.3, this.scene.finishJob(perf, $t('{0} clienți fericiți', this.good)));
   }
   // asezare proportionala: tejgheaua la 42% din inaltime, butoanele jos (merge si pe ecrane scunde)
   get C() { return this.box.y + this.box.h * 0.42; }
@@ -77,8 +78,8 @@ export class CafeGame extends Panel {
     const ok = this.cup.length === this.order.rec.length && this.cup.every((c, i) => c === this.order.rec[i]);
     this.served++; this.reactOk = ok; this.react = 1.2;
     const B = this.box;
-    if (ok) { this.good++; const tip = this.custT < 6 ? 3 : this.custT < 10 ? 1 : 0; this.tips += tip; Sfx.play('register'); this.fx.hearts(B.x + B.w * 0.3, B.y + 150, 4); this.fx.text(B.x + B.w * 0.3, B.y + 120, tip ? `+9 lei +${tip} bacșiș 💰` : '+9 lei 💰', '#2a9a4a', 0.9); this.hero.play('dance_hop'); }
-    else { Sfx.play('bad'); this.fx.text(B.x + B.w * 0.3, B.y + 120, 'Nu asta am cerut… 😕', '#e63946', 0.9); this.hero.play('shy'); }
+    if (ok) { this.good++; const tip = this.custT < 6 ? 3 : this.custT < 10 ? 1 : 0; this.tips += tip; Sfx.play('register'); this.fx.hearts(B.x + B.w * 0.3, B.y + 150, 4); this.fx.text(B.x + B.w * 0.3, B.y + 120, tip ? $t('+9 lei +{0} bacșiș 💰', tip) : $t('+9 lei 💰'), '#2a9a4a', 0.9); this.hero.play('dance_hop'); }
+    else { Sfx.play('bad'); this.fx.text(B.x + B.w * 0.3, B.y + 120, $t('Nu asta am cerut… 😕'), '#e63946', 0.9); this.hero.play('shy'); }
     this.next();
   }
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
@@ -88,7 +89,7 @@ export class CafeGame extends Panel {
     ctx.fillStyle = '#c98e5f'; ctx.fillRect(x, C, w, y + h - C);
     ctx.fillStyle = '#2f3a36'; ctx.strokeStyle = '#8a5d32'; ctx.lineWidth = 6; ctx.beginPath(); ctx.roundRect(x + 20, y + 40, w * 0.4, bh, 8); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'left'; ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff';
-    ctx.fillText(`Comanda: ${this.order.name}`, x + 34, y + 62);
+    ctx.fillText($t('Comanda: {0}', this.order.name), x + 34, y + 62);
     this.order.rec.forEach((r, i) => { ctx.fillStyle = ING[r].col; ctx.beginPath(); ctx.arc(x + 44, y + 82 + i * 18, 6, 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.fillText(`${i + 1}. ${ING[r].label}`, x + 56, y + 87 + i * 18); });
     ctx.fillStyle = '#ffd23f'; ctx.textAlign = 'right'; ctx.fillText(`⏰ ${Math.ceil(Math.max(0, this.left))}s  ·  ✅ ${this.good}`, x + 20 + w * 0.4 - 10, y + 40 + bh - 10);
     // clientul la tejghea
@@ -109,15 +110,15 @@ export class CafeGame extends Panel {
     if (this.cup.length) for (let i = 0; i < 3; i++) { const k = (this.t * 1.4 + i / 3) % 1; ctx.globalAlpha = 1 - k; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + w * 0.42 + Math.sin(k * 6 + i) * 8, this.ingBtn(0).y - 8 - 64 * cupS - k * 30, 6 + k * 6, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
     // butoane ingrediente
     (Object.keys(ING) as Ing[]).forEach((k, i) => { const b = this.ingBtn(i); btn(ctx, b, '#fff8ef'); ctx.fillStyle = ING[k].col; ctx.strokeStyle = O; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(b.x + 24, b.y + b.h / 2, 13, 0, 7); ctx.fill(); ctx.stroke(); ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(`${i + 1} ${ING[k].label}`, b.x + 44, b.y + b.h / 2 + 1); ctx.textBaseline = 'alphabetic'; });
-    btn(ctx, this.serveBtn(), '#9be38f', 'Servește ☕', 15); btn(ctx, this.trashBtn(), '#ffd0d0', 'Golește', 13);
+    btn(ctx, this.serveBtn(), '#9be38f', $t('Servește ☕'), 15); btn(ctx, this.trashBtn(), '#ffd0d0', $t('Golește'), 13);
   }
 }
 
 // ====================================================================== BIROUL (sortat dosare)
-const FOLDERS = [{ col: '#ff7aa2', label: 'Facturi' }, { col: '#7ab8ff', label: 'Contracte' }, { col: '#ffd23f', label: 'Rapoarte' }];
+const FOLDERS = [{ col: '#ff7aa2', label: $t('Facturi') }, { col: '#7ab8ff', label: $t('Contracte') }, { col: '#ffd23f', label: $t('Rapoarte') }];
 export class OfficeGame extends Panel {
   docs: { c: number; x: number; y: number; vy: number }[] = []; spawn = 0; good = 0; bad = 0; left = 45; coffee = 0;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '💼 O zi la birou', 'Pune fiecare dosar în sertarul de aceeași culoare (1-2-3)'); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('💼 O zi la birou'), $t('Pune fiecare dosar în sertarul de aceeași culoare (1-2-3)')); }
   tick(dt: number) {
     this.left -= dt; this.spawn -= dt; this.coffee += dt;
     const sp = 1.6 - Math.min(0.9, (45 - this.left) / 50);
@@ -130,15 +131,15 @@ export class OfficeGame extends Panel {
   end() {
     const total = this.good + this.bad;
     const perf = total ? (this.good / total) * Math.min(1.2, this.good / 14 + 0.15) : 0.3;
-    this.finish(this.good ? 1 + this.good * 0.08 : 0.3, this.scene.finishJob(perf, `${this.good} dosare la locul lor`));
+    this.finish(this.good ? 1 + this.good * 0.08 : 0.3, this.scene.finishJob(perf, $t('{0} dosare la locul lor', this.good)));
   }
   drawer(i: number) { const B = this.box; const bw = (B.w - 80) / 3, dh = Math.min(80, B.h * 0.15); return { x: B.x + 20 + i * (bw + 20), y: B.y + B.h - 40 - dh, w: bw, h: dh }; }
   put(i: number) {
     const d = this.docs[0]; if (!d) return;
     this.docs.shift();
     const dr = this.drawer(i);
-    if (d.c === i) { this.good++; Sfx.play('paper'); Sfx.play('drawer', { vol: 0.5, delay: 0.15 }); this.fx.text(dr.x + dr.w / 2, dr.y - 10, '+6 lei', '#2a9a4a', 0.8); this.hero.play('dance_hop'); }
-    else { this.bad++; Sfx.play('bad'); this.fx.text(dr.x + dr.w / 2, dr.y - 10, 'Greșit! 📄', '#e63946', 0.8); this.hero.play('shy'); }
+    if (d.c === i) { this.good++; Sfx.play('paper'); Sfx.play('drawer', { vol: 0.5, delay: 0.15 }); this.fx.text(dr.x + dr.w / 2, dr.y - 10, $t('+6 lei'), '#2a9a4a', 0.8); this.hero.play('dance_hop'); }
+    else { this.bad++; Sfx.play('bad'); this.fx.text(dr.x + dr.w / 2, dr.y - 10, $t('Greșit! 📄'), '#e63946', 0.8); this.hero.play('shy'); }
   }
   pointer(t: string, x: number, y: number) { if (t !== 'down' || this.ended) return; for (let i = 0; i < 3; i++) if (inside(x, y, this.drawer(i))) this.put(i); }
   key(k: string, d: boolean) { if (d && k >= '1' && k <= '3') this.put(+k - 1); }
@@ -168,7 +169,7 @@ export class CinemaGame extends Panel {
   k = 0; pops: { x: number; y: number; vx: number; vy: number }[] = []; caught = 0; holdT = 0; held = false; holding = false; romance = false; popT = 0; duo: boolean;
   dust = Array.from({ length: 24 }, () => ({ u: Math.random(), v: Math.random(), s: 0.3 + Math.random() * 0.7 }));
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, '🎬 La film', s.duo ? 'Prinde floricelele 🍿 · Când apare inima, ține apăsat (mână în mână)' : 'Prinde floricelele 🍿 și bucură-te de film');
+    super(s, d, $t('🎬 La film'), s.duo ? $t('Prinde floricelele 🍿 · Când apare inima, ține apăsat (mână în mână)') : $t('Prinde floricelele 🍿 și bucură-te de film'));
     this.duo = s.duo;
   }
   tick(dt: number) {
@@ -187,17 +188,17 @@ export class CinemaGame extends Panel {
       s.op({ k: 'need', who: s.myId, need: 'love', delta: love }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: fun }); s.op({ k: 'need', who: s.myId, need: 'hunger', delta: this.caught });
       if (this.duo && s.partner.control !== 'remote') { s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love }); s.op({ k: 'need', who: s.partner.id, need: 'fun', delta: fun }); }
       s.op({ k: 'stat', key: 'cinema', delta: 1 });
-      s.log(this.duo ? (this.held ? 'Un film romantic, mână în mână 🎬💕' : 'O seară la cinema 🎬') : `${s.me.actor.spec.name} a fost la un film 🎬`);
-      this.finish(this.held ? 2 : 1, this.held ? 'Mână în mână 💕 · cel mai frumos film' : `Ce film! 🍿 ${this.caught} floricele`);
+      s.log(this.duo ? (this.held ? $t('Un film romantic, mână în mână 🎬💕') : $t('O seară la cinema 🎬')) : $t('{0} a fost la un film 🎬', s.me.actor.spec.name));
+      this.finish(this.held ? 2 : 1, this.held ? $t('Mână în mână 💕 · cel mai frumos film') : $t('Ce film! 🍿 {0} floricele', this.caught));
     }
   }
   pointer(t: string, x: number, y: number) {
     if (t === 'down') this.holding = true; if (t === 'up') this.holding = false;
     if (t !== 'down' || (this.romance && this.duo)) return;
     const i = this.pops.findIndex(p => Math.hypot(p.x - x, p.y - y) < 36);
-    if (i >= 0) { const p = this.pops[i]; this.pops.splice(i, 1); this.caught++; Sfx.play('crunch', { vol: 0.6 }); this.fx.text(p.x, p.y, 'Hap! 🍿', '#ff8c42', 0.7); this.hero.play('dance_hop'); }
+    if (i >= 0) { const p = this.pops[i]; this.pops.splice(i, 1); this.caught++; Sfx.play('crunch', { vol: 0.6 }); this.fx.text(p.x, p.y, $t('Hap! 🍿'), '#ff8c42', 0.7); this.hero.play('dance_hop'); }
   }
-  key(k: string, d: boolean) { if (k === ' ' || k === 'e') { this.holding = d; if (d && !(this.romance && this.duo) && this.pops.length) { const p = this.pops[0]; this.pops.shift(); this.caught++; Sfx.play('crunch', { vol: 0.6 }); this.fx.text(p.x, p.y, 'Hap! 🍿', '#ff8c42', 0.7); } } }
+  key(k: string, d: boolean) { if (k === ' ' || k === 'e') { this.holding = d; if (d && !(this.romance && this.duo) && this.pops.length) { const p = this.pops[0]; this.pops.shift(); this.caught++; Sfx.play('crunch', { vol: 0.6 }); this.fx.text(p.x, p.y, $t('Hap! 🍿'), '#ff8c42', 0.7); } } }
   /** filmul: doi prieteni (iepurasul si pisicuta) — se cunosc in parc, ploaia si umbrela, noaptea cu stele, artificii */
   movie(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
     const k = this.k, t = this.t;
@@ -227,7 +228,7 @@ export class CinemaGame extends Panel {
     if (sc >= 2 && this.romance) { const hy = fy - 70 - (k - 0.55) * 80; heartPath(ctx, (ax + bx) / 2, hy, 12 + Math.sin(t * 6) * 2); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.stroke(); }
     if (sc === 3) for (let i = 0; i < 3; i++) { const fx0 = x + w * (0.25 + i * 0.25), fy0 = y + h * (0.25 + (i % 2) * 0.1), fr = ((t * 50 + i * 25) % 45); ctx.strokeStyle = ['#ffd23f', '#ff7aa2', '#7ab8ff'][i]; ctx.lineWidth = 2; for (let r = 0; r < 10; r++) { const a = r * Math.PI / 5; ctx.beginPath(); ctx.moveTo(fx0 + Math.cos(a) * fr * 0.5, fy0 + Math.sin(a) * fr * 0.5); ctx.lineTo(fx0 + Math.cos(a) * fr, fy0 + Math.sin(a) * fr); ctx.stroke(); } }
     // titlul scenei, ca in filme
-    const title = ['Capitolul 1 · Cum s-au cunoscut', 'Capitolul 2 · Ploaia', 'Capitolul 3 · Noaptea cu stele', 'SFÂRȘIT 💕'][sc];
+    const title = [$t('Capitolul 1 · Cum s-au cunoscut'), 'Capitolul 2 · Ploaia', $t('Capitolul 3 · Noaptea cu stele'), $t('SFÂRȘIT 💕')][sc];
     const tk = sc === 0 ? (k - 0.06) / 0.08 : sc === 1 ? (k - 0.3) / 0.08 : sc === 2 ? (k - 0.55) / 0.08 : 1;
     if (tk > 0 && tk < 1.6 || sc === 3) { ctx.globalAlpha = sc === 3 ? 1 : Math.max(0, Math.min(1, tk < 1 ? tk * 2 : (1.6 - tk) * 2)); ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(x, y + h - 26, w, 26); ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(title, x + w / 2, y + h - 8); ctx.globalAlpha = 1; }
     // banda de film: putin "praf" pe imagine
@@ -274,24 +275,24 @@ export class CinemaGame extends Panel {
     for (let i = 0; i < 6; i++) { ctx.fillStyle = '#fff3b0'; ctx.beginPath(); ctx.arc(bx - 14 + i * 6, byy - 32 - (i % 2) * 4, 5, 0, 7); ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1; ctx.stroke(); }
     for (const p of this.pops) { ctx.fillStyle = '#fff3b0'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; for (const [dx, dy] of [[0, 0], [5, -3], [-4, -4]]) { ctx.beginPath(); ctx.arc(p.x + dx, p.y + dy, 6, 0, 7); ctx.fill(); ctx.stroke(); } }
     ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-    ctx.fillText(this.romance && this.duo ? (this.held ? 'Mână în mână 💕' : 'Acum! Ține apăsat ❤️') : this.romance ? 'Ce scenă frumoasă 💕' : `🍿 ${this.caught}`, x + w / 2, y + 30 + sh + 34);
+    ctx.fillText(this.romance && this.duo ? (this.held ? $t('Mână în mână 💕') : $t('Acum! Ține apăsat ❤️')) : this.romance ? $t('Ce scenă frumoasă 💕') : `🍿 ${this.caught}`, x + w / 2, y + 30 + sh + 34);
   }
 }
 
 // ====================================================================== RESTAURANTUL (cina romantica)
 const COURSES: { name: string; opts: string[] }[] = [
-  { name: 'Felul întâi', opts: ['🍲', '🥗', '🍄'] },
-  { name: 'Felul principal', opts: ['🍕', '🐟', '🍔'] },
-  { name: 'Desertul', opts: ['🍰', '🍓', '🍫'] },
+  { name: $t('Felul întâi'), opts: ['🍲', '🥗', '🍄'] },
+  { name: $t('Felul principal'), opts: ['🍕', '🐟', '🍔'] },
+  { name: $t('Desertul'), opts: ['🍰', '🍓', '🍫'] },
 ];
-const DISH_NAMES: Record<string, string> = { '🍲': 'Supă cremă', '🥗': 'Salată cu ierburi', '🍄': 'Ciuperci la grătar', '🍕': 'Pizza cu inimioare', '🐟': 'Pește la cuptor', '🍔': 'Burger gurmand', '🍰': 'Tort cu frișcă', '🍓': 'Căpșuni cu ciocolată', '🍫': 'Fondant de ciocolată' };
+const DISH_NAMES: Record<string, string> = { '🍲': $t('Supă cremă'), '🥗': $t('Salată cu ierburi'), '🍄': $t('Ciuperci la grătar'), '🍕': $t('Pizza cu inimioare'), '🐟': $t('Pește la cuptor'), '🍔': 'Burger gurmand', '🍰': $t('Tort cu frișcă'), '🍓': $t('Căpșuni cu ciocolată'), '🍫': $t('Fondant de ciocolată') };
 /** felurile preferate (cate unul la fiecare fel), marcate clar in meniu */
 const FAV: Record<string, number[]> = { bubu: [1, 0, 1], dudu: [0, 2, 2] };
 export class RestoGame extends Panel {
   clinked = false;
   i = 0; wants: number[] = COURSES.map(() => Math.floor(Math.random() * 3)); picked: number[] = []; wait = 0; toast = false; toastK = 0; toastHit = false; candle = 0; duo: boolean;
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, s.duo ? '🕯️ Cină romantică' : '🍽️ Cina la restaurant', s.duo ? `Comandă pentru amândoi · 💕 = preferatul lui ${s.partner.actor.spec.name}` : 'Alege ce-ți place din fiecare fel');
+    super(s, d, s.duo ? $t('🕯️ Cină romantică') : $t('🍽️ Cina la restaurant'), s.duo ? $t('Comandă pentru amândoi · 💕 = preferatul lui {0}', s.partner.actor.spec.name) : $t('Alege ce-ți place din fiecare fel'));
     this.duo = s.duo; this.wants = this.duo ? [...(FAV[s.partner.id] ?? [0, 0, 0])] : [];
   }
   get pa() { return this.scene.partner; }
@@ -304,11 +305,11 @@ export class RestoGame extends Panel {
   pick(k: number) {
     if (this.wait > 0 || this.i >= COURSES.length) return;
     this.picked.push(k); this.wait = 1.4;
-    if (!this.duo) { this.wants[this.i] = k; Sfx.play('clink'); this.fx.text(this.box.x + this.box.w / 2, this.box.y + 150, ['Mmm, delicios! 😋', 'Ce bun! 🤤', 'Perfect! ✨'][this.i % 3], '#ff4d6d', 0.9); return; }
+    if (!this.duo) { this.wants[this.i] = k; Sfx.play('clink'); this.fx.text(this.box.x + this.box.w / 2, this.box.y + 150, ['Mmm, delicios! 😋', $t('Ce bun! 🤤'), 'Perfect! ✨'][this.i % 3], '#ff4d6d', 0.9); return; }
     const ok = k === this.wants[this.i];
     const B = this.box;
-    if (ok) { Sfx.play('clink'); Sfx.play('kiss', { delay: 0.3 }); this.fx.hearts(B.x + B.w * 0.7, B.y + 170, 6); this.fx.text(B.x + B.w * 0.7, B.y + 140, `Preferatul ${g(this.pa.id, 'lui', 'ei')}! 💕`, '#ff4d6d', 0.9); }
-    else { Sfx.play('clink'); this.fx.text(B.x + B.w * 0.7, B.y + 140, 'Mmm, bun! 🙂', '#7a5a4a', 0.85); }
+    if (ok) { Sfx.play('clink'); Sfx.play('kiss', { delay: 0.3 }); this.fx.hearts(B.x + B.w * 0.7, B.y + 170, 6); this.fx.text(B.x + B.w * 0.7, B.y + 140, $t('Preferatul {0}! 💕', g(this.pa.id, $t('lui'), 'ei')), '#ff4d6d', 0.9); }
+    else { Sfx.play('clink'); this.fx.text(B.x + B.w * 0.7, B.y + 140, $t('Mmm, bun! 🙂'), '#7a5a4a', 0.85); }
   }
   pointer(t: string, x: number, y: number) {
     if (t !== 'down' || this.ended) return;
@@ -330,9 +331,9 @@ export class RestoGame extends Panel {
     s.op({ k: 'need', who: s.myId, need: 'hunger', delta: 60 }); s.op({ k: 'need', who: s.myId, need: 'love', delta: love }); s.op({ k: 'need', who: s.myId, need: 'fun', delta: 12 });
     if (this.duo && s.partner.control !== 'remote') { s.op({ k: 'need', who: s.partner.id, need: 'hunger', delta: 60 }); s.op({ k: 'need', who: s.partner.id, need: 'love', delta: love }); }
     if (this.duo) s.op({ k: 'stat', key: 'restoDates', delta: 1 });
-    s.log(this.duo ? `Cină romantică la „La Doi” 🕯️ ${right}/3 feluri ghicite${elegant ? ', în haine elegante' : ''}` : `${s.me.actor.spec.name} a luat cina la restaurant 🍽️`);
-    if (!this.duo) { this.finish(1.4, 'Ce cină bună! 😋'); return; }
-    this.finish(1 + right * 0.4, right === 3 ? `Vă cunoașteți perfect! 💕 3/3` : `${right}/3 ghicite · o seară dulce 🕯️`);
+    s.log(this.duo ? $t('Cină romantică la „La Doi” 🕯️ {0}/3 feluri ghicite{1}', right, elegant ? $t(', în haine elegante') : '') : $t('{0} a luat cina la restaurant 🍽️', s.me.actor.spec.name));
+    if (!this.duo) { this.finish(1.4, $t('Ce cină bună! 😋')); return; }
+    this.finish(1 + right * 0.4, right === 3 ? $t('Vă cunoașteți perfect! 💕 3/3') : $t('{0}/3 ghicite · o seară dulce 🕯️', right));
   }
   scene2(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
     const bg = ctx.createLinearGradient(0, y, 0, y + h); bg.addColorStop(0, '#4a2a3a'); bg.addColorStop(1, '#7a3a4a'); ctx.fillStyle = bg; ctx.fillRect(x, y, w, h);
@@ -360,19 +361,19 @@ export class RestoGame extends Panel {
       // toastul: paharele se apropie, apasa cand se ating
       const ph = (this.toastK * 0.9) % 1, dx = Math.abs(ph - 0.5) * 220;
       for (const s of [-1, 1]) { const gx = cx + s * (10 + dx), gy = y + h * 0.3; ctx.fillStyle = 'rgba(255,240,200,.7)'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(gx - 12, gy - 24); ctx.lineTo(gx + 12, gy - 24); ctx.lineTo(gx + 4, gy + 4); ctx.lineTo(gx - 4, gy + 4); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(gx, gy + 4); ctx.lineTo(gx, gy + 22); ctx.moveTo(gx - 9, gy + 22); ctx.lineTo(gx + 9, gy + 22); ctx.stroke(); }
-      ctx.font = '900 26px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffd23f'; ctx.fillText('Noroc! 🥂', x + w / 2, y + h - 100);
+      ctx.font = '900 26px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffd23f'; ctx.fillText($t('Noroc! 🥂'), x + w / 2, y + h - 100);
     } else if (this.i < COURSES.length && !this.duo) {
-      ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(`${COURSES[this.i].name} · ce-ți comanzi?`, x + w / 2, y + h - 166);
+      ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText($t('{0} · ce-ți comanzi?', COURSES[this.i].name), x + w / 2, y + h - 166);
       COURSES[this.i].opts.forEach((o, k) => { const b = this.opt(k); btn(ctx, b, '#fff8ef'); const ic = iconCanvas(o, 64); if (ic) ctx.drawImage(ic, b.x + b.w / 2 - 24, b.y + 8, 48, 48); ctx.font = '700 12px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.fillText(DISH_NAMES[o] ?? '', b.x + b.w / 2, b.y + b.h - 16); });
     } else if (this.i < COURSES.length) {
       // meniul: preferatul partenerului e marcat clar cu o inimioara (nimic de ghicit)
       const nm = this.pa.actor.spec.name, fav = this.wants[this.i];
-      ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(`${COURSES[this.i].name} · comandă pentru amândoi`, x + w / 2, y + h - 166);
+      ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText($t('{0} · comandă pentru amândoi', COURSES[this.i].name), x + w / 2, y + h - 166);
       COURSES[this.i].opts.forEach((o, k) => {
         const b = this.opt(k); btn(ctx, b, k === fav ? '#ffe1ea' : '#fff8ef');
         const ic = iconCanvas(o, 64); if (ic) ctx.drawImage(ic, b.x + b.w / 2 - 24, b.y + 8, 48, 48);
         ctx.font = '700 12px "Baloo 2", sans-serif'; ctx.fillStyle = O; ctx.fillText(DISH_NAMES[o] ?? '', b.x + b.w / 2, b.y + b.h - 16);
-        if (k === fav) { heartPath(ctx, b.x + b.w - 14, b.y + 14, 9); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.font = '800 10px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText(`💕 preferatul lui ${nm}`, b.x + b.w / 2, b.y + b.h - 32); }
+        if (k === fav) { heartPath(ctx, b.x + b.w - 14, b.y + 14, 9); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.font = '800 10px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText($t('💕 preferatul lui {0}', nm), b.x + b.w / 2, b.y + b.h - 32); }
       });
     }
     ctx.textBaseline = 'alphabetic';

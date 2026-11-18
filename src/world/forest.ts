@@ -5,6 +5,7 @@ import { heartPath } from '../char/draw';
 import { drawTractorIso, drawParked } from './vehicles';
 import { ORIGIN } from './layout';
 import { leaf, fruit, isWinter } from './seasonlook';
+import { $t } from '../i18n';
 
 /** padurea sta in lume la nord de casa: coordonatele de mai jos sunt cele vechi (locale), plus OX/OY */
 const OX = ORIGIN.forest.x, OY = ORIGIN.forest.y;
@@ -31,7 +32,7 @@ treeSpots.forEach(([x, y], i) => F.push({ id: 'f-tree' + i, type: (i % 3 ? 'pine
 // bolovani: piatra pentru pod, felinare, drum si magazin (in curte sunt doar 5); se refac in 2,5 minute
 ([[12, 1], [15, 3], [3, 7], [13, 12], [9, 14], [20, 15], [6, 19], [16, 21]] as [number, number][]).forEach(([x, y], i) => F.push({ id: 'f-rock' + i, type: 'rock' as any, gx: x, gy: y, w: 1, d: 1, solid: true, action: act('mine', 'Sparge piatra', '⛏️') }));
 // lacul: podetul de pescuit
-F.push({ id: 'f-pier', type: 'pier' as any, gx: 15, gy: 11, w: 1, d: 1, solid: false, action: act('fish', 'Pescuiește', '🎣') });
+F.push({ id: 'f-pier', type: 'pier' as any, gx: 15, gy: 11, w: 1, d: 1, solid: false, action: act('fish', $t('Pescuiește'), '🎣') });
 F.push({ id: 'f-logs', type: 'logpile' as any, gx: 7, gy: 24, w: 1, d: 1, solid: true });
 void rnd;
 for (const f of F) { f.gx += OX; f.gy += OY; }
@@ -109,7 +110,7 @@ export function drawForestType(ctx: CanvasRenderingContext2D, f: Furn, t: number
 // ------------------------------------------------------------------ animalele padurii
 export type CritterKind = 'deer' | 'squirrel' | 'hedgehog' | 'bird';
 export interface Critter { id: number; kind: CritterKind; x: number; y: number; tx: number; ty: number; t: number; flip: 1 | -1; friend: number; flee: number }
-export const CRITTER_NAMES: Record<CritterKind, string> = { deer: 'Căprioara', squirrel: 'Veverița', hedgehog: 'Ariciul', bird: 'Vrăbiuța' };
+export const CRITTER_NAMES: Record<CritterKind, string> = { deer: $t('Căprioara'), squirrel: $t('Veverița'), hedgehog: 'Ariciul', bird: $t('Vrăbiuța') };
 
 export function drawCritter(ctx: CanvasRenderingContext2D, c: Critter, x: number, y: number, t: number) {
   ctx.save(); ctx.translate(x, y); ctx.scale(c.flip, 1); ctx.lineJoin = 'round';

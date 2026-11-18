@@ -1,55 +1,56 @@
 // Accesorii (garderoba): desenate peste personaj.
 import { heartPath, starPath } from './draw';
+import { $t } from '../i18n';
 
 export interface Outfit { head: string; face: string; neck: string; body?: string; /** marțisorul prins in piept (1.11.0) */ pin?: string }
 export const NO_OUTFIT: Outfit = { head: 'none', face: 'none', neck: 'none', body: 'none' };
 
 export interface Item { id: string; slot: keyof Outfit; label: string; icon: string; price: number; shop?: 'sat' | 'oras' | 'targ' }
 export const ITEMS: Item[] = [
-  { id: 'bow', slot: 'head', label: 'Fundiță roz', icon: '🎀', price: 15 },
-  { id: 'flower', slot: 'head', label: 'Coroniță de flori', icon: '🌸', price: 25 },
-  { id: 'party', slot: 'head', label: 'Coif de petrecere', icon: '🥳', price: 20 },
-  { id: 'chef', slot: 'head', label: 'Bonetă de bucătar', icon: '👨‍🍳', price: 35 },
-  { id: 'beanie', slot: 'head', label: 'Căciuliță cu moț', icon: '🧶', price: 30 },
-  { id: 'cap', slot: 'head', label: 'Șapcă', icon: '🧢', price: 25 },
-  { id: 'crown', slot: 'head', label: 'Coroană regală', icon: '👑', price: 85 },
-  { id: 'hearts', slot: 'face', label: 'Ochelari-inimioară', icon: '😍', price: 35 },
-  { id: 'shades', slot: 'face', label: 'Ochelari de soare', icon: '😎', price: 25 },
-  { id: 'bowtie', slot: 'neck', label: 'Papion', icon: '🎩', price: 15 },
-  { id: 'scarf', slot: 'neck', label: 'Eșarfă de iarnă', icon: '🧣', price: 25 },
-  { id: 'bandana', slot: 'neck', label: 'Bandană', icon: '🏴‍☠️', price: 20 },
+  { id: 'bow', slot: 'head', label: $t('Fundiță roz'), icon: '🎀', price: 15 },
+  { id: 'flower', slot: 'head', label: $t('Coroniță de flori'), icon: '🌸', price: 25 },
+  { id: 'party', slot: 'head', label: $t('Coif de petrecere'), icon: '🥳', price: 20 },
+  { id: 'chef', slot: 'head', label: $t('Bonetă de bucătar'), icon: '👨‍🍳', price: 35 },
+  { id: 'beanie', slot: 'head', label: $t('Căciuliță cu moț'), icon: '🧶', price: 30 },
+  { id: 'cap', slot: 'head', label: $t('Șapcă'), icon: '🧢', price: 25 },
+  { id: 'crown', slot: 'head', label: $t('Coroană regală'), icon: '👑', price: 85 },
+  { id: 'hearts', slot: 'face', label: $t('Ochelari-inimioară'), icon: '😍', price: 35 },
+  { id: 'shades', slot: 'face', label: $t('Ochelari de soare'), icon: '😎', price: 25 },
+  { id: 'bowtie', slot: 'neck', label: $t('Papion'), icon: '🎩', price: 15 },
+  { id: 'scarf', slot: 'neck', label: $t('Eșarfă de iarnă'), icon: '🧣', price: 25 },
+  { id: 'bandana', slot: 'neck', label: $t('Bandană'), icon: '🏴‍☠️', price: 20 },
   // haine taranesti (Croitoria din sat)
-  { id: 'ie', slot: 'body', label: 'Ie românească', icon: '👚', price: 50, shop: 'sat' },
-  { id: 'vesta', slot: 'body', label: 'Vestă țărănească', icon: '🦺', price: 60, shop: 'sat' },
-  { id: 'salopeta', slot: 'body', label: 'Salopetă de fermier', icon: '👖', price: 70, shop: 'sat' },
-  { id: 'rochita', slot: 'body', label: 'Rochiță roz cu buline', icon: '👗', price: 60, shop: 'sat' },
-  { id: 'tricou', slot: 'body', label: 'Tricou albastru cu buline', icon: '👕', price: 50, shop: 'sat' },
-  { id: 'pulover', slot: 'body', label: 'Pulover tricotat', icon: '🧶', price: 60, shop: 'sat' },
-  { id: 'palarie', slot: 'head', label: 'Pălărie de paie', icon: '👒', price: 35, shop: 'sat' },
-  { id: 'batic', slot: 'head', label: 'Băsmăluță cu flori', icon: '🧕', price: 30, shop: 'sat' },
+  { id: 'ie', slot: 'body', label: $t('Ie românească'), icon: '👚', price: 50, shop: 'sat' },
+  { id: 'vesta', slot: 'body', label: $t('Vestă țărănească'), icon: '🦺', price: 60, shop: 'sat' },
+  { id: 'salopeta', slot: 'body', label: $t('Salopetă de fermier'), icon: '👖', price: 70, shop: 'sat' },
+  { id: 'rochita', slot: 'body', label: $t('Rochiță roz cu buline'), icon: '👗', price: 60, shop: 'sat' },
+  { id: 'tricou', slot: 'body', label: $t('Tricou albastru cu buline'), icon: '👕', price: 50, shop: 'sat' },
+  { id: 'pulover', slot: 'body', label: $t('Pulover tricotat'), icon: '🧶', price: 60, shop: 'sat' },
+  { id: 'palarie', slot: 'head', label: $t('Pălărie de paie'), icon: '👒', price: 35, shop: 'sat' },
+  { id: 'batic', slot: 'head', label: $t('Băsmăluță cu flori'), icon: '🧕', price: 30, shop: 'sat' },
   // haine elegante (la oras)
-  { id: 'rochie', slot: 'body', label: 'Rochie de seară', icon: '💃', price: 205, shop: 'oras' },
-  { id: 'costum', slot: 'body', label: 'Costum elegant', icon: '🤵', price: 240, shop: 'oras' },
-  { id: 'joben', slot: 'head', label: 'Joben', icon: '🎩', price: 100, shop: 'oras' },
+  { id: 'rochie', slot: 'body', label: $t('Rochie de seară'), icon: '💃', price: 205, shop: 'oras' },
+  { id: 'costum', slot: 'body', label: $t('Costum elegant'), icon: '🤵', price: 240, shop: 'oras' },
+  { id: 'joben', slot: 'head', label: $t('Joben'), icon: '🎩', price: 100, shop: 'oras' },
   // nunta (Buticul Elegant, din capitolul Nunta)
-  { id: 'mireasa', slot: 'body', label: 'Rochie de mireasă', icon: '👰', price: 650, shop: 'oras' },
-  { id: 'voal', slot: 'head', label: 'Voal de mireasă', icon: '💐', price: 120, shop: 'oras' },
-  { id: 'mire', slot: 'body', label: 'Costum de mire', icon: '🤵', price: 600, shop: 'oras' },
+  { id: 'mireasa', slot: 'body', label: $t('Rochie de mireasă'), icon: '👰', price: 650, shop: 'oras' },
+  { id: 'voal', slot: 'head', label: $t('Voal de mireasă'), icon: '💐', price: 120, shop: 'oras' },
+  { id: 'mire', slot: 'body', label: $t('Costum de mire'), icon: '🤵', price: 600, shop: 'oras' },
   // negustorul ambulant (targul lunar din sat, 1.11.0): doar la el
-  { id: 'mustata', slot: 'face', label: 'Mustață falsă', icon: '🥸', price: 40, shop: 'targ' },
-  { id: 'monoclu', slot: 'face', label: 'Monoclu de boier', icon: '🧐', price: 60, shop: 'targ' },
-  { id: 'ochelari', slot: 'face', label: 'Ochelari rotunzi', icon: '🤓', price: 45, shop: 'targ' },
-  { id: 'cowboy', slot: 'head', label: 'Pălărie de cowboy', icon: '🤠', price: 80, shop: 'targ' },
+  { id: 'mustata', slot: 'face', label: $t('Mustață falsă'), icon: '🥸', price: 40, shop: 'targ' },
+  { id: 'monoclu', slot: 'face', label: $t('Monoclu de boier'), icon: '🧐', price: 60, shop: 'targ' },
+  { id: 'ochelari', slot: 'face', label: $t('Ochelari rotunzi'), icon: '🤓', price: 45, shop: 'targ' },
+  { id: 'cowboy', slot: 'head', label: $t('Pălărie de cowboy'), icon: '🤠', price: 80, shop: 'targ' },
   // 1.14.0: haine noi pentru hamsteri
-  { id: 'pijama', slot: 'body', label: 'Pijama cu stele', icon: '🌙', price: 55, shop: 'sat' },
-  { id: 'sort', slot: 'body', label: 'Șorț de bucătărie', icon: '🍰', price: 30, shop: 'sat' },
-  { id: 'casca', slot: 'head', label: 'Cască de meșter', icon: '⛑️', price: 45, shop: 'sat' },
-  { id: 'agrafa', slot: 'head', label: 'Agrafă-căpșună', icon: '🍓', price: 15, shop: 'sat' },
-  { id: 'hanorac', slot: 'body', label: 'Hanorac cu glugă', icon: '🧥', price: 90, shop: 'oras' },
-  { id: 'geaca', slot: 'body', label: 'Geacă pufoasă de iarnă', icon: '🧣', price: 120, shop: 'oras' },
-  { id: 'bereta', slot: 'head', label: 'Beretă de pictor', icon: '🎨', price: 55, shop: 'oras' },
-  { id: 'colier', slot: 'neck', label: 'Colier de perle', icon: '📿', price: 80, shop: 'oras' },
-  { id: 'stele', slot: 'face', label: 'Ochelari-stea', icon: '🤩', price: 40, shop: 'targ' },
+  { id: 'pijama', slot: 'body', label: $t('Pijama cu stele'), icon: '🌙', price: 55, shop: 'sat' },
+  { id: 'sort', slot: 'body', label: $t('Șorț de bucătărie'), icon: '🍰', price: 30, shop: 'sat' },
+  { id: 'casca', slot: 'head', label: $t('Cască de meșter'), icon: '⛑️', price: 45, shop: 'sat' },
+  { id: 'agrafa', slot: 'head', label: $t('Agrafă-căpșună'), icon: '🍓', price: 15, shop: 'sat' },
+  { id: 'hanorac', slot: 'body', label: $t('Hanorac cu glugă'), icon: '🧥', price: 90, shop: 'oras' },
+  { id: 'geaca', slot: 'body', label: $t('Geacă pufoasă de iarnă'), icon: '🧣', price: 120, shop: 'oras' },
+  { id: 'bereta', slot: 'head', label: $t('Beretă de pictor'), icon: '🎨', price: 55, shop: 'oras' },
+  { id: 'colier', slot: 'neck', label: $t('Colier de perle'), icon: '📿', price: 80, shop: 'oras' },
+  { id: 'stele', slot: 'face', label: $t('Ochelari-stea'), icon: '🤩', price: 40, shop: 'targ' },
 ];
 // accesoriile vechi se gasesc tot la Croitoria din sat (coroana: la oras)
 for (const it of ITEMS) if (!it.shop) it.shop = it.id === 'crown' ? 'oras' : 'sat';
@@ -232,7 +233,7 @@ export function drawBodyItem(ctx: CanvasRenderingContext2D, id: string, clipBody
 }
 
 /** martisorul prins in piept (1.11.0): snurul alb-rosu cu fundita si talismanul ales */
-export const CHARMS = [{ id: 'trifoi', icon: '🍀', label: 'Trifoi cu 4 foi', text: 'aduce noroc' }, { id: 'inima', icon: '❤️', label: 'Inimioară', text: 'pentru dragoste' }, { id: 'potcoava', icon: '🧲', label: 'Potcoavă', text: 'aduce noroc în casă' }, { id: 'coșar', icon: '🎩', label: 'Coșar', text: 'alungă necazurile' }, { id: 'ghiocel', icon: '🤍', label: 'Ghiocel', text: 'vestește primăvara' }];
+export const CHARMS = [{ id: 'trifoi', icon: '🍀', label: $t('Trifoi cu 4 foi'), text: $t('aduce noroc') }, { id: 'inima', icon: '❤️', label: $t('Inimioară'), text: $t('pentru dragoste') }, { id: 'potcoava', icon: '🧲', label: $t('Potcoavă'), text: $t('aduce noroc în casă') }, { id: /*ro*/'coșar', icon: '🎩', label: $t('Coșar'), text: $t('alungă necazurile') }, { id: 'ghiocel', icon: '🤍', label: $t('Ghiocel'), text: $t('vestește primăvara') }];
 export function drawPin(ctx: CanvasRenderingContext2D, id: string, t: number) {
   ctx.save(); ctx.translate(-12, -16); ctx.rotate(Math.sin(t * 2) * 0.05);
   // snurul rasucit, alb si rosu, cu fundita

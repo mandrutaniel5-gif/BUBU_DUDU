@@ -1,6 +1,7 @@
 import type { WorldScene } from '../scenes/world';
 import { Actor } from '../char/actor';
 import { Fx } from '../char/fx';
+import { $t } from '../i18n';
 
 /** ac care merge cu viteza constanta de la -1 la 1 si inapoi (nu accelereaza prin mijloc) */
 export function sweep(t: number, perSec: number) { const x = (t * perSec) % 2; return x < 1 ? x * 2 - 1 : 1 - (x - 1) * 2; }
@@ -28,7 +29,7 @@ export abstract class Panel implements Minigame {
   constructor(protected scene: WorldScene, private done: (score: number) => void, public title: string, public help: string) {
     this.hero = new Actor(scene.myId, this.fx);
   }
-  abort() { if (!this.ended) { this.ended = { score: 0, text: 'Altă dată 🙂', t: END_HOLD - 0.5 }; } }
+  abort() { if (!this.ended) { this.ended = { score: 0, text: $t('Altă dată 🙂'), t: END_HOLD - 0.5 }; } }
   /** sari peste ecranul de final (o atingere) */
   skipEnd() { if (this.ended && this.ended.t > 0.25) this.ended.t = END_HOLD; }
   finish(score: number, text: string) { if (!this.ended) this.ended = { score, text, t: 0 }; }

@@ -3,6 +3,7 @@ import { Panel } from './base';
 import { Sfx } from '../engine/sfx';
 import { heartPath, starPath } from '../char/draw';
 import type { WorldScene } from '../scenes/world';
+import { $t } from '../i18n';
 
 const O = '#3a2a22';
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
@@ -16,15 +17,15 @@ const timerBar = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number
 interface Bubble { x: number; y: number; r: number; vy: number; ph: number; duck?: boolean; gold?: boolean }
 export class BathGame extends Panel {
   bubbles: Bubble[] = []; popped = 0; goal = 22; dur = 22; spawn = 0;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🫧 Baie cu spumă', 'Sparge bulele! Rățușca aurie = bonus'); this.hero.play('act_bath'); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('🫧 Baie cu spumă'), $t('Sparge bulele! Rățușca aurie = bonus')); this.hero.play('act_bath'); }
   tick(dt: number) {
     this.spawn -= dt;
     if (this.spawn <= 0) { this.spawn = rnd(0.18, 0.4); const duck = Math.random() < 0.06; this.bubbles.push({ x: rnd(0.1, 0.9), y: 1.05, r: duck ? 26 : rnd(14, 30), vy: rnd(0.12, 0.25), ph: rnd(0, 6), duck, gold: duck }); }
     for (const b of this.bubbles) { b.y -= b.vy * dt; b.x += Math.sin(this.t * 2 + b.ph) * 0.0015; }
     this.bubbles = this.bubbles.filter(b => b.y > -0.1);
     if (!this.hero.busy) this.hero.play('act_bath');
-    if (this.popped >= this.goal) this.finish(1 + (this.dur - this.t) / this.dur, 'Curat lună! ✨🛁');
-    else if (this.t > this.dur) this.finish(this.popped / this.goal > 0.5 ? 0.6 : 0, this.popped / this.goal > 0.5 ? 'Destul de curat 🧼' : 'Încă miroase a pârț 😅');
+    if (this.popped >= this.goal) this.finish(1 + (this.dur - this.t) / this.dur, $t('Curat lună! ✨🛁'));
+    else if (this.t > this.dur) this.finish(this.popped / this.goal > 0.5 ? 0.6 : 0, this.popped / this.goal > 0.5 ? $t('Destul de curat 🧼') : $t('Încă miroase a pârț 😅'));
   }
   pointer(type: string, x: number, y: number) {
     if (type !== 'down') return; const B = this.box;
@@ -33,7 +34,7 @@ export class BathGame extends Panel {
       if (Math.hypot(x - bx, y - by) < b.r + 10) {
         this.bubbles.splice(i, 1); this.popped += b.gold ? 4 : 1; Sfx.play('bubble', { rate: b.gold ? 0.8 : 1.15 });
         this.fx.burst('sparkle', bx, by, 6, 6.28, 80, { color: '#bde7ff', max: 0.5 });
-        if (b.gold) { this.fx.text(bx, by - 30, 'MAC MAC! +4', '#ffb703', 1.1); this.hero.play('laugh'); }
+        if (b.gold) { this.fx.text(bx, by - 30, $t('MAC MAC! +4'), '#ffb703', 1.1); this.hero.play('laugh'); }
         return;
       }
     }
@@ -69,7 +70,7 @@ export class BathGame extends Panel {
 interface Germ { tooth: number; t: number; hp: number }
 export class TeethGame extends Panel {
   germs: Germ[] = []; spawn = 0.5; killed = 0; dur = 18; brushX = -1; brushY = -1; down = false;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🪥 Dinți strălucitori', 'Freacă microbii cu degetul înainte să se înmulțească!'); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('🪥 Dinți strălucitori'), $t('Freacă microbii cu degetul înainte să se înmulțească!')); }
   teeth() { const B = this.box; const out: { x: number; y: number }[] = []; for (let r = 0; r < 2; r++) for (let i = 0; i < 6; i++) out.push({ x: B.x + B.w * (0.2 + i * 0.12), y: B.y + B.h * (r ? 0.62 : 0.42) }); return out; }
   tick(dt: number) {
     this.spawn -= dt;
@@ -82,8 +83,8 @@ export class TeethGame extends Panel {
       for (const g of dead) { const p = T[g.tooth]; this.killed++; Sfx.play('pop'); this.fx.text(p.x, p.y - 30, ['Pa!', 'Iiiik!', 'Nuuu!'][this.killed % 3], '#7cb342', 0.8); this.fx.burst('sparkle', p.x, p.y, 6, 6.28, 90, { max: 0.5 }); }
       this.germs = this.germs.filter(g => g.hp > 0);
     }
-    if (this.germs.length >= 9) this.finish(0, 'Carii peste tot! 🦷😱');
-    if (this.t > this.dur) this.finish(1 + Math.min(1, this.killed / 25), 'Zâmbet de milioane! 😁✨');
+    if (this.germs.length >= 9) this.finish(0, $t('Carii peste tot! 🦷😱'));
+    if (this.t > this.dur) this.finish(1 + Math.min(1, this.killed / 25), $t('Zâmbet de milioane! 😁✨'));
   }
   pointer(type: string, x: number, y: number) { this.down = type === 'down' ? true : type === 'up' ? false : this.down; this.brushX = x; this.brushY = y; }
   key(k: string, d: boolean) { if (d && (k === ' ' || k === 'e') && this.germs[0]) { const p = this.teeth()[this.germs[0].tooth]; this.down = true; this.brushX = p.x; this.brushY = p.y; setTimeout(() => (this.down = false), 300); } }
@@ -123,11 +124,11 @@ export class TeethGame extends Panel {
 // ---------------------------------------------------------------- 🍽️ Spalat vase: freaca farfuria
 export class DishesGame extends Panel {
   plate = 0; dirt = 1; total = 5; lx = 0; ly = 0; down = false; foam: { x: number; y: number; r: number }[] = []; dur = 25;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🍽️ Spălat vase', 'Freacă farfuria înainte-înapoi până strălucește'); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('🍽️ Spălat vase'), $t('Freacă farfuria înainte-înapoi până strălucește')); }
   tick(dt: number) {
-    if (this.dirt <= 0) { this.plate++; Sfx.play('clink'); Sfx.play('good', { vol: 0.6 }); this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, ['Scârț-scârț!', 'Lună!', 'Ca nouă!', 'Strălucește!', 'Gata!'][this.plate % 5], '#2ec4b6', 1.1); this.dirt = 1; this.foam = []; }
-    if (this.plate >= this.total) this.finish(1 + (this.dur - this.t) / this.dur, 'Vase curate! 🍽️✨');
-    else if (this.t > this.dur) this.finish(this.plate >= 3 ? 0.6 : 0, this.plate >= 3 ? 'Restul… mâine 😅' : 'Chiuveta a câștigat 😩');
+    if (this.dirt <= 0) { this.plate++; Sfx.play('clink'); Sfx.play('good', { vol: 0.6 }); this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, [$t('Scârț-scârț!'), $t('Lună!'), $t('Ca nouă!'), $t('Strălucește!'), 'Gata!'][this.plate % 5], '#2ec4b6', 1.1); this.dirt = 1; this.foam = []; }
+    if (this.plate >= this.total) this.finish(1 + (this.dur - this.t) / this.dur, $t('Vase curate! 🍽️✨'));
+    else if (this.t > this.dur) this.finish(this.plate >= 3 ? 0.6 : 0, this.plate >= 3 ? $t('Restul… mâine 😅') : $t('Chiuveta a câștigat 😩'));
   }
   pointer(type: string, x: number, y: number) {
     if (type === 'down') { this.down = true; this.lx = x; this.ly = y; return; }
@@ -163,7 +164,7 @@ const SOCKS = ['#ff7aa2', '#7ab8ff', '#ffd23f', '#7cc576', '#c77dff', '#ff8c42']
 export class SocksGame extends Panel {
   cards: { c: number; open: boolean; done: boolean }[] = []; first = -1; wait = 0; pairs = 0; moves = 0; lostJoke = 0;
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, '🧦 Perechi de șosete', 'Găsește perechile! (o șosetă dispare mereu…)');
+    super(s, d, $t('🧦 Perechi de șosete'), $t('Găsește perechile! (o șosetă dispare mereu…)'));
     const arr = [...SOCKS.keys(), ...SOCKS.keys()].sort(() => Math.random() - 0.5);
     this.cards = arr.map(c => ({ c, open: false, done: false }));
   }
@@ -171,7 +172,7 @@ export class SocksGame extends Panel {
   tick(dt: number) {
     if (this.wait > 0) { this.wait -= dt; if (this.wait <= 0) this.cards.forEach(c => { if (!c.done) c.open = false; }); }
     if (this.pairs >= 6 && !this.lostJoke) { this.lostJoke = 0.01; }
-    if (this.lostJoke) { this.lostJoke += dt; if (this.lostJoke > 2.5) this.finish(1 + Math.max(0, (20 - this.moves) / 20), 'Rufe împerecheate! 🧺💕'); }
+    if (this.lostJoke) { this.lostJoke += dt; if (this.lostJoke > 2.5) this.finish(1 + Math.max(0, (20 - this.moves) / 20), $t('Rufe împerecheate! 🧺💕')); }
   }
   pointer(type: string, x: number, y: number) {
     if (type !== 'down' || this.wait > 0 || this.lostJoke) return;
@@ -203,10 +204,10 @@ export class SocksGame extends Panel {
       if (c.open || c.done) this.sock(ctx, r.x + r.w / 2 + 6, r.y + r.h / 2, Math.min(r.w, r.h) / 60, SOCKS[c.c]);
       else { font(ctx, 26); ctx.fillStyle = '#fff'; ctx.fillText('?', r.x + r.w / 2, r.y + r.h / 2); }
     });
-    font(ctx, 15); ctx.fillStyle = O; ctx.fillText(`Perechi: ${this.pairs}/6 · Mutări: ${this.moves}`, x + w / 2, y + 54);
+    font(ctx, 15); ctx.fillStyle = O; ctx.fillText($t('Perechi: {0}/6 · Mutări: {1}', this.pairs, this.moves), x + w / 2, y + 54);
     if (this.lostJoke) {
       ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(x, y + h * 0.35, w, 120);
-      font(ctx, 18); ctx.fillStyle = O; ctx.fillText(`…dar o șosetă e pe capul lui ${this.scene.partner.actor.spec.name}! 🧦😂`, x + w / 2, y + h * 0.35 + 60);
+      font(ctx, 18); ctx.fillStyle = O; ctx.fillText($t('…dar o șosetă e pe capul lui {0}! 🧦😂', this.scene.partner.actor.spec.name), x + w / 2, y + h * 0.35 + 60);
     }
   }
 }
@@ -216,26 +217,26 @@ interface Spot { stage: number; water: number }
 export class GardenGame extends Panel {
   spots: Spot[] = Array.from({ length: 6 }, () => ({ stage: 0, water: 0 }));
   crow: { x: number; y: number; target: number; t: number } | null = null; crowT = 4; dur = 30; harvested = 0;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🌱 Grădina noastră', 'Atinge: plantează → udă (de 3 ori) → culege! Alungă ciorile'); this.hero.play('act_garden'); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('🌱 Grădina noastră'), $t('Atinge: plantează → udă (de 3 ori) → culege! Alungă ciorile')); this.hero.play('act_garden'); }
   pos(i: number) { const B = this.box; return { x: B.x + B.w * (0.22 + (i % 3) * 0.28), y: B.y + B.h * (0.45 + Math.floor(i / 3) * 0.24) }; }
   tick(dt: number) {
     this.crowT -= dt;
-    if (!this.crow && this.crowT <= 0) { const t = this.spots.findIndex(s => s.stage >= 1); if (t >= 0) { this.crow = { x: this.box.x - 40, y: this.box.y + 80, target: t, t: 0 }; this.fx.text(this.box.x + 60, this.box.y + 70, 'CRA-CRA!', '#333', 0.9); } this.crowT = rnd(4, 7); }
+    if (!this.crow && this.crowT <= 0) { const t = this.spots.findIndex(s => s.stage >= 1); if (t >= 0) { this.crow = { x: this.box.x - 40, y: this.box.y + 80, target: t, t: 0 }; this.fx.text(this.box.x + 60, this.box.y + 70, $t('CRA-CRA!'), '#333', 0.9); } this.crowT = rnd(4, 7); }
     if (this.crow) {
       const c = this.crow; c.t += dt; const p = this.pos(c.target);
       c.x += (p.x - c.x) * Math.min(1, dt * 1.2); c.y += (p.y - 30 - c.y) * Math.min(1, dt * 1.2);
-      if (c.t > 2.6) { this.spots[c.target].stage = Math.max(0, this.spots[c.target].stage - 1); this.spots[c.target].water = 0; this.fx.text(p.x, p.y - 50, 'Mi-a furat sămânța! 😠', '#e63946', 0.8); this.crow = null; Sfx.play('bad'); }
+      if (c.t > 2.6) { this.spots[c.target].stage = Math.max(0, this.spots[c.target].stage - 1); this.spots[c.target].water = 0; this.fx.text(p.x, p.y - 50, $t('Mi-a furat sămânța! 😠'), '#e63946', 0.8); this.crow = null; Sfx.play('bad'); }
     }
     if (!this.hero.busy) this.hero.play('act_garden');
-    if (this.harvested >= 6 || this.t > this.dur) this.finish(this.harvested >= 2 ? 1 + this.harvested / 6 : 0, this.harvested >= 6 ? 'Recoltă bogată! 🍓🌻' : this.harvested >= 2 ? `Ai cules ${this.harvested} 🍓` : 'Ciorile au câștigat 🐦');
+    if (this.harvested >= 6 || this.t > this.dur) this.finish(this.harvested >= 2 ? 1 + this.harvested / 6 : 0, this.harvested >= 6 ? $t('Recoltă bogată! 🍓🌻') : this.harvested >= 2 ? $t('Ai cules {0} 🍓', this.harvested) : $t('Ciorile au câștigat 🐦'));
   }
   pointer(type: string, x: number, y: number) {
     if (type !== 'down') return;
-    if (this.crow && Math.hypot(x - this.crow.x, y - this.crow.y) < 50) { this.fx.burst('puff', this.crow.x, this.crow.y, 8, 6.28, 80); this.fx.text(this.crow.x, this.crow.y - 30, 'ZBAAT!', '#ff9f1c', 1); this.crow = null; Sfx.play('slap'); return; }
+    if (this.crow && Math.hypot(x - this.crow.x, y - this.crow.y) < 50) { this.fx.burst('puff', this.crow.x, this.crow.y, 8, 6.28, 80); this.fx.text(this.crow.x, this.crow.y - 30, $t('ZBAAT!'), '#ff9f1c', 1); this.crow = null; Sfx.play('slap'); return; }
     for (let i = 0; i < 6; i++) {
       const p = this.pos(i); if (Math.hypot(x - p.x, y - p.y) > 55) continue;
       const s = this.spots[i];
-      if (s.stage === 0) { s.stage = 1; s.water = 0; Sfx.play('dig', { vol: 0.6 }); this.fx.text(p.x, p.y - 40, 'Sămânță!', '#8b5e34', 0.7); }
+      if (s.stage === 0) { s.stage = 1; s.water = 0; Sfx.play('dig', { vol: 0.6 }); this.fx.text(p.x, p.y - 40, $t('Sămânță!'), '#8b5e34', 0.7); }
       else if (s.stage < 4) { s.water++; this.fx.burst('drop', p.x, p.y - 60, 8, 0.8, 80, { rot: Math.PI / 2, grav: 300, max: 0.6 }); Sfx.play('pour', { vol: 0.5, rate: 1.2 }); if (s.water >= 3) { s.stage++; s.water = 0; if (s.stage === 4) this.fx.burst('sparkle', p.x, p.y - 30, 8, 6.28, 90); } }
       else { s.stage = 0; this.harvested++; Sfx.play('coin'); this.fx.text(p.x, p.y - 50, '+🍓', '#e63946', 1.1); this.fx.hearts(p.x, p.y - 40, 3); }
       return;
@@ -269,12 +270,12 @@ export class GardenGame extends Panel {
 // ---------------------------------------------------------------- 🧊 Frigiderul: prinde gustarile
 interface Food { x: number; y: number; vy: number; kind: number; rot: number }
 const FOODS = [
-  { e: '🍰', good: 1, txt: 'Mmm!' }, { e: '🧋', good: 1, txt: 'Boba!' }, { e: '🍓', good: 1, txt: 'Dulce!' }, { e: '🍪', good: 1, txt: 'Crunch!' },
-  { e: '🫘', good: 2, txt: 'Fasole! 💨' }, { e: '🥦', good: -1, txt: 'Bleah!' }, { e: '🌶️', good: -2, txt: 'FOC! 🔥' },
+  { e: '🍰', good: 1, txt: $t('Mmm!') }, { e: '🧋', good: 1, txt: $t('Boba!') }, { e: '🍓', good: 1, txt: $t('Dulce!') }, { e: '🍪', good: 1, txt: $t('Crunch!') },
+  { e: '🫘', good: 2, txt: $t('Fasole! 💨') }, { e: '🥦', good: -1, txt: $t('Bleah!') }, { e: '🌶️', good: -2, txt: $t('FOC! 🔥') },
 ];
 export class FridgeGame extends Panel {
   foods: Food[] = []; px = 0.5; spawn = 0; score = 0; beans = 0; dur = 20; keys = new Set<string>(); hot = 0;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🧊 Raid la frigider', 'Mișcă farfuria (deget / ← →). Fasolea umple bara de pârț 💨'); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('🧊 Raid la frigider'), $t('Mișcă farfuria (deget / ← →). Fasolea umple bara de pârț 💨')); }
   tick(dt: number) {
     this.spawn -= dt;
     if (this.spawn <= 0) { this.spawn = rnd(0.35, 0.7); const k = Math.random(); this.foods.push({ x: rnd(0.1, 0.9), y: 0.12, vy: rnd(0.28, 0.45), kind: k < 0.55 ? Math.floor(Math.random() * 4) : k < 0.72 ? 4 : k < 0.9 ? 5 : 6, rot: rnd(-1, 1) }); }
@@ -293,7 +294,7 @@ export class FridgeGame extends Panel {
       }
     }
     this.foods = this.foods.filter(f => f.y < 1.1);
-    if (this.t > this.dur) this.finish(this.score >= 5 ? 1 + this.score / 20 : 0.3, this.score >= 10 ? 'Burtică fericită! 😋' : 'Gustărică 🍪');
+    if (this.t > this.dur) this.finish(this.score >= 5 ? 1 + this.score / 20 : 0.3, this.score >= 10 ? $t('Burtică fericită! 😋') : $t('Gustărică 🍪'));
   }
   get bonusFart() { return this.beans * 12; }
   pointer(type: string, x: number) { if (type !== 'up') this.px = Math.max(0.08, Math.min(0.92, (x - this.box.x) / this.box.w)); }

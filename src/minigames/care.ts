@@ -5,6 +5,7 @@ import { Sfx } from '../engine/sfx';
 import { heartPath } from '../char/draw';
 import type { WorldScene } from '../scenes/world';
 import { g } from '../game/gender';
+import { $t } from '../i18n';
 
 abstract class CarePanel extends Panel {
   patient: Actor;
@@ -31,7 +32,7 @@ export class SoupGame extends CarePanel {
   stir = 0; lastAng: number | null = null; dragging = false;
   knife = 0;
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, g(scene.partner.id, '🍲 Supă pentru bolnăvior', '🍲 Supă pentru bolnăvioară'), 'Atinge legumele ca să le tai, apoi amestecă în cerc');
+    super(scene, done, g(scene.partner.id, $t('🍲 Supă pentru bolnăvior'), $t('🍲 Supă pentru bolnăvioară')), $t('Atinge legumele ca să le tai, apoi amestecă în cerc'));
     for (let i = 0; i < 5; i++) this.veg.push({ kind: i % 3, x: 0.18 + i * 0.12, y: 0.42, // 1.14.2: toate pe tocator (a cincea ajungea pe patul bolnavului)
       cuts: 0, done: false, fly: 0, vx: 0, vy: 0 });
     this.hero.play('act_cook'); this.patient.play('sick');
@@ -40,7 +41,7 @@ export class SoupGame extends CarePanel {
     this.knife = Math.max(0, this.knife - dt * 5);
     for (const v of this.veg) if (v.fly > 0) { v.fly += dt; v.x += v.vx * dt; v.y += v.vy * dt; v.vy += 1.8 * dt; }
     if (this.phase === 'chop' && this.veg.every(v => v.done && v.fly > 0.8)) { this.phase = 'stir'; this.hero.play('act_cook'); }
-    if (this.phase === 'stir' && this.stir >= 1) { this.finish(1.5, 'Supă gata! 🍲💕'); this.patient.play('love'); }
+    if (this.phase === 'stir' && this.stir >= 1) { this.finish(1.5, $t('Supă gata! 🍲💕')); this.patient.play('love'); }
     if (!this.hero.busy) this.hero.play('act_cook');
     if (!this.patient.busy) this.patient.play(Math.random() < 0.5 ? 'sneeze' : 'sick');
   }
@@ -53,7 +54,7 @@ export class SoupGame extends CarePanel {
         if (Math.hypot(x - vx, y - vy) < 38) {
           v.cuts++; this.knife = 1; Sfx.play('knife'); this.shake = 3;
           this.fx.burst('drop', vx, vy, 5, 3, 120, { grav: 300, max: 0.5, color: ['#ff8c42', '#e9d8a6', '#c8e7a7'][v.kind] });
-          if (v.cuts >= 3) { v.done = true; v.fly = 0.01; v.vx = (0.62 - v.x) * 1.4; v.vy = -0.9; this.fx.text(vx, vy - 40, 'ZDANG!', '#ff9f1c', 0.9); }
+          if (v.cuts >= 3) { v.done = true; v.fly = 0.01; v.vx = (0.62 - v.x) * 1.4; v.vy = -0.9; this.fx.text(vx, vy - 40, $t('ZDANG!'), '#ff9f1c', 0.9); }
           return;
         }
       }
@@ -93,7 +94,7 @@ export class SoupGame extends CarePanel {
       const a = this.t * 0 + (this.lastAng ?? this.t * 3);
       ctx.strokeStyle = '#8b5e34'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * 40, cy - 42 + Math.sin(a) * 10); ctx.lineTo(cx + Math.cos(a) * 60, cy - 140); ctx.stroke();
       ctx.strokeStyle = '#ff7aa2'; ctx.lineWidth = 3; ctx.setLineDash([8, 8]); ctx.beginPath(); ctx.ellipse(cx, cy - 40, 120, 60, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = O; ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`Amestecă în cerc! ${Math.round(this.stir * 100)}%`, cx, cy + 100);
+      ctx.fillStyle = O; ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText($t('Amestecă în cerc! {0}%', Math.round(this.stir * 100)), cx, cy + 100);
     }
     // legumele
     for (const v of this.veg) {
@@ -124,7 +125,7 @@ export class MedicineGame extends CarePanel {
   spoonX = 0.5; headX = 0.5; headV = 0.24; mouthOpen = 0; fed = 0; flying = 0; miss = 0;
   keysDown = new Set<string>();
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, '💊 Vine avionul!', 'Mișcă lingurița (deget / ← →) și apasă când gura e deschisă');
+    super(scene, done, '💊 Vine avionul!', $t('Mișcă lingurița (deget / ← →) și apasă când gura e deschisă'));
     this.patient.play('sick');
   }
   tick(dt: number) {
@@ -145,10 +146,10 @@ export class MedicineGame extends CarePanel {
         this.flying = 0;
         const hit = Math.abs(this.spoonX - this.headX) < 0.13 && this.mouthOpen > 0.2;
         const b = this.box;
-        if (hit) { this.fed++; Sfx.play('gulp'); Sfx.play('good', { vol: 0.5 }); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, ['Hamm!', 'Mmm!', 'Bleah... dar bun!'][this.fed % 3], '#2ec4b6', 1.1); this.patient.play('shy'); }
-        else { this.miss++; Sfx.play('bad'); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, 'Nu vreau! 🙅', '#e63946', 1.1); this.patient.play('angry'); this.fx.burst('drop', b.x + this.spoonX * b.w, b.y + b.h * 0.3, 10, 3, 150, { grav: 300, color: '#ff6f91', max: 0.7 }); }
-        if (this.fed >= 3) { this.finish(1.4, 'A luat medicamentul! 💊✨'); this.patient.play('love'); }
-        if (this.miss >= 6) this.finish(0, 'S-a ascuns sub pătură 🙈');
+        if (hit) { this.fed++; Sfx.play('gulp'); Sfx.play('good', { vol: 0.5 }); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, ['Hamm!', 'Mmm!', $t('Bleah... dar bun!')][this.fed % 3], '#2ec4b6', 1.1); this.patient.play('shy'); }
+        else { this.miss++; Sfx.play('bad'); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, $t('Nu vreau! 🙅'), '#e63946', 1.1); this.patient.play('angry'); this.fx.burst('drop', b.x + this.spoonX * b.w, b.y + b.h * 0.3, 10, 3, 150, { grav: 300, color: '#ff6f91', max: 0.7 }); }
+        if (this.fed >= 3) { this.finish(1.4, $t('A luat medicamentul! 💊✨')); this.patient.play('love'); }
+        if (this.miss >= 6) this.finish(0, $t('S-a ascuns sub pătură 🙈'));
       }
     }
     if (!this.patient.busy) this.patient.play('sick');
@@ -178,10 +179,10 @@ export class MedicineGame extends CarePanel {
     ctx.fillStyle = '#7ab8ff'; ctx.beginPath(); ctx.moveTo(-5, 26); ctx.lineTo(-40, 36); ctx.lineTo(-5, 40); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(5, 26); ctx.lineTo(40, 36); ctx.lineTo(5, 40); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
-    if (this.flying > 0) { ctx.fillStyle = '#3a2a22'; ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Bzzzzz… ✈️', sx + 60, sy); }
-    else if (this.mouthOpen > 0.2) { ctx.fillStyle = '#2ec4b6'; ctx.font = '900 22px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Acum! Gura e deschisă 👄', x + w / 2, y + h * 0.66); }
+    if (this.flying > 0) { ctx.fillStyle = '#3a2a22'; ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText($t('Bzzzzz… ✈️'), sx + 60, sy); }
+    else if (this.mouthOpen > 0.2) { ctx.fillStyle = '#2ec4b6'; ctx.font = '900 22px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText($t('Acum! Gura e deschisă 👄'), x + w / 2, y + h * 0.66); }
     ctx.fillStyle = '#3a2a22'; ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText(`Lingurițe: ${'💊'.repeat(this.fed)}${'⚪'.repeat(3 - this.fed)}`, x + 20, y + 52);
+    ctx.fillText($t('Lingurițe: {0}{1}', '💊'.repeat(this.fed), '⚪'.repeat(3 - this.fed)), x + 20, y + 52);
   }
 }
 
@@ -189,22 +190,22 @@ export class MedicineGame extends CarePanel {
 export class CompressGame extends CarePanel {
   temp = 39.2; towel = 0; onHead = false; held = 0; good = 0;
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, '🧊 Compresă rece', 'Atinge ca să uzi prosopul și să i-l pui pe frunte');
+    super(scene, done, $t('🧊 Compresă rece'), $t('Atinge ca să uzi prosopul și să i-l pui pe frunte'));
     this.patient.play('sick');
   }
   tick(dt: number) {
     if (this.onHead) { this.towel = Math.max(0, this.towel - dt * 0.22); this.temp = Math.max(36.6, this.temp - dt * 0.35 * this.towel); }
     else this.temp = Math.min(41, this.temp + dt * 0.25);
     if (this.temp < 37.6) { this.held += dt; } else this.held = Math.max(0, this.held - dt * 0.5);
-    if (this.held > 4) { this.finish(1.3, 'Febra a scăzut! 🌡️💚'); this.patient.play('love'); }
-    if (this.temp >= 41) this.finish(0, 'Prea fierbinte! Mai încearcă 🥵');
-    if (this.onHead && this.towel <= 0) { this.onHead = false; this.fx.text(this.box.x + this.box.w * 0.5, this.box.y + this.box.h * 0.25, 'S-a încălzit!', '#ff9f1c', 0.9); }
+    if (this.held > 4) { this.finish(1.3, $t('Febra a scăzut! 🌡️💚')); this.patient.play('love'); }
+    if (this.temp >= 41) this.finish(0, $t('Prea fierbinte! Mai încearcă 🥵'));
+    if (this.onHead && this.towel <= 0) { this.onHead = false; this.fx.text(this.box.x + this.box.w * 0.5, this.box.y + this.box.h * 0.25, $t('S-a încălzit!'), '#ff9f1c', 0.9); }
     if (!this.patient.busy) this.patient.play('sick');
   }
   tap() {
     if (this.ended) return;
     if (!this.onHead) { this.towel = 1; this.onHead = true; Sfx.play('squelch'); Sfx.play('pour', { vol: 0.3 }); this.fx.burst('drop', this.box.x + this.box.w * 0.2, this.box.y + this.box.h * 0.7, 12, 2, 120, { grav: 300, max: 0.6 }); this.patient.play('shy'); this.hero.play('love'); }
-    else { this.fx.text(this.box.x + this.box.w * 0.5, this.box.y + this.box.h * 0.22, 'Mai stai puțin… 💕', '#ff4d6d', 0.8); }
+    else { this.fx.text(this.box.x + this.box.w * 0.5, this.box.y + this.box.h * 0.22, $t('Mai stai puțin… 💕'), '#ff4d6d', 0.8); }
   }
   pointer(type: string) { if (type === 'down') this.tap(); }
   key(k: string, down: boolean) { if (down && (k === ' ' || k === 'e')) this.tap(); }
@@ -230,7 +231,7 @@ export class CompressGame extends CarePanel {
     ctx.fillStyle = this.temp > 39 ? '#e63946' : this.temp > 37.6 ? '#ff9f1c' : '#2ec4b6';
     ctx.fillRect(tx - 7, ty + th - th * k, 14, th * k); ctx.beginPath(); ctx.arc(tx, ty + th + 6, 20, 0, 7); ctx.fill(); ctx.stroke();
     ctx.fillStyle = O; ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(this.temp.toFixed(1) + '°', tx, ty - 10);
-    ctx.textAlign = 'left'; ctx.fillText(`Răcorit: ${Math.round(Math.min(1, this.held / 4) * 100)}%`, x + 20, y + 52);
+    ctx.textAlign = 'left'; ctx.fillText($t('Răcorit: {0}%', Math.round(Math.min(1, this.held / 4) * 100)), x + 20, y + 52);
     this.hero.scale = 1.1; this.hero.x = x + w * 0.2; this.hero.y = y + h * 0.62; this.hero.draw(ctx);
   }
 }

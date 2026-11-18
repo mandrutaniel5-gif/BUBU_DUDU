@@ -7,6 +7,7 @@
 //   Camera, la rooms/<cheia din cod + parola>, are meta = { v: 2 } (asa stim ca parola e buna).
 import { BUILTIN_FIREBASE } from '../game/settings';
 import type { NetConfig } from './types';
+import { $t } from '../i18n';
 
 // ------------------------------------------------------------------ SHA-256 (fara crypto.subtle: merge si pe http in reteaua de acasa)
 const K = new Uint32Array([
@@ -60,7 +61,7 @@ export const passOk = (p: string) => (p || '').length >= 4;
 /** amprenta codului (ce vede baza de date in loc de cod) */
 export const codeKey = (code: string) => 'c' + sha256('bubududu|cod|' + normCode(code)).slice(0, 31);
 /** camera: din cod + parola; fara parola nu se poate afla */
-export const roomOf = (code: string, pass: string) => 'h' + sha256('bubududu|casa|v2|' + normCode(code) + '|' + pass).slice(0, 39);
+export const roomOf = (code: string, pass: string) => 'h' + sha256($t('bubududu|casa|v2|') + normCode(code) + '|' + pass).slice(0, 39);
 /** camerele noi (sigure) au 40 de caractere si incep cu h */
 export const isSecureRoom = (room: string) => /^h[0-9a-f]{39}$/.test(room || '');
 
@@ -73,7 +74,7 @@ async function fbDb(cfg: NetConfig['firebase']) {
   const app = getApps()[0] ?? initializeApp(cfg?.databaseURL ? cfg : BUILTIN_FIREBASE);
   return { fb, db: fb.getDatabase(app) };
 }
-const NET_ERR = 'Nu mă pot conecta la internet. Verifică conexiunea și încearcă din nou.';
+const NET_ERR = $t('Nu mă pot conecta la internet. Verifică conexiunea și încearcă din nou.');
 
 async function fbCreate(cfg: NetConfig['firebase'], pass: string, seed?: { json: string; ts: number } | null): Promise<HouseResult> {
   const { fb, db } = await timeout(fbDb(cfg), 8000, NET_ERR);
@@ -86,15 +87,15 @@ async function fbCreate(cfg: NetConfig['firebase'], pass: string, seed?: { json:
     if (seed?.json) await timeout(fb.set(fb.ref(db, `rooms/${room}/save`), { json: seed.json, ts: Date.now() }), 12000, NET_ERR);
     return { ok: true, code, room };
   }
-  return { ok: false, msg: 'Nu am putut face un cod nou. Mai încearcă o dată.' };
+  return { ok: false, msg: $t('Nu am putut face un cod nou. Mai încearcă o dată.') };
 }
 async function fbJoin(cfg: NetConfig['firebase'], code: string, pass: string): Promise<HouseResult> {
   const { fb, db } = await timeout(fbDb(cfg), 8000, NET_ERR);
   const c = normCode(code), room = roomOf(c, pass);
   const h = await timeout(fb.get(fb.ref(db, `houses/${codeKey(c)}`)), 8000, NET_ERR);
-  if (!(h as any).exists()) return { ok: false, msg: `Nu există nicio casă cu codul ${c}. Verifică literele.` };
+  if (!(h as any).exists()) return { ok: false, msg: $t('Nu există nicio casă cu codul {0}. Verifică literele.', c) };
   const m = await timeout(fb.get(fb.ref(db, `rooms/${room}/meta`)), 8000, NET_ERR);
-  if (!(m as any).exists()) return { ok: false, msg: 'Parola nu e bună pentru casa asta.' };
+  if (!(m as any).exists()) return { ok: false, msg: $t('Parola nu e bună pentru casa asta.') };
   return { ok: true, code: c, room };
 }
 
@@ -118,7 +119,7 @@ export function watchSeats(rooms: string[], cb: (room: string, seats: Seats, now
 // ------------------------------------------------------------------ ce foloseste meniul
 /** casa noua (cod unic). seed = progresul de pana acum, mutat in casa noua */
 export async function createHouse(net: NetConfig, pass: string, seed?: { json: string; ts: number } | null): Promise<HouseResult> {
-  if (!passOk(pass)) return { ok: false, msg: 'Parola trebuie să aibă cel puțin 4 caractere.' };
+  if (!passOk(pass)) return { ok: false, msg: $t('Parola trebuie să aibă cel puțin 4 caractere.') };
   try {
     if (net.mode === 'solo' || net.mode === 'local') { const code = newCode(); return { ok: true, code, room: roomOf(code, pass) }; }
     return await fbCreate(net.firebase, pass, seed);
@@ -126,8 +127,8 @@ export async function createHouse(net: NetConfig, pass: string, seed?: { json: s
 }
 /** intri in casa partenerului (codul si parola de la el / ea) */
 export async function joinHouse(net: NetConfig, code: string, pass: string): Promise<HouseResult> {
-  if (!codeOk(code)) return { ok: false, msg: 'Codul arată așa: LALEA-7K3P (un cuvânt, liniuță, 4 litere sau cifre).' };
-  if (!passOk(pass)) return { ok: false, msg: 'Parola are cel puțin 4 caractere.' };
+  if (!codeOk(code)) return { ok: false, msg: $t('Codul arată așa: LALEA-7K3P (un cuvânt, liniuță, 4 litere sau cifre).') };
+  if (!passOk(pass)) return { ok: false, msg: $t('Parola are cel puțin 4 caractere.') };
   try {
     if (net.mode === 'solo' || net.mode === 'local') { const c = normCode(code); return { ok: true, code: c, room: roomOf(c, pass) }; }
     return await fbJoin(net.firebase, code, pass);

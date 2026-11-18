@@ -3,6 +3,7 @@ import { Panel } from './base';
 import { Sfx, type SndHandle } from '../engine/sfx';
 import { heartPath } from '../char/draw';
 import type { WorldScene } from '../scenes/world';
+import { $t } from '../i18n';
 
 type Phase = 'pour' | 'cook1' | 'flip' | 'cook2' | 'serve' | 'ceiling';
 
@@ -16,7 +17,7 @@ export class PancakeGame extends Panel {
   ceilingT = 0;
 
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, '🥞 Clătite cu dragoste', 'Ține apăsat să torni · Atinge ca s-o întorci când e aurie');
+    super(scene, done, $t('🥞 Clătite cu dragoste'), $t('Ține apăsat să torni · Atinge ca s-o întorci când e aurie'));
     this.hero.play('act_cook');
   }
 
@@ -28,7 +29,7 @@ export class PancakeGame extends Panel {
         break;
       case 'cook1': case 'cook2':
         this.cook += dt * (0.22 + this.stack.length * 0.05);
-        if (this.cook > 1.15) { this.fx.text(this.cx, this.cy - 80, 'ARSĂ! 🔥', '#6d4c41', 1.2); Sfx.play('cough', { vol: 0.6 }); this.fx.burst('puff', this.cx, this.cy - 20, 12, 3, 60, { color: '#555' }); this.next(0); }
+        if (this.cook > 1.15) { this.fx.text(this.cx, this.cy - 80, $t('ARSĂ! 🔥'), '#6d4c41', 1.2); Sfx.play('cough', { vol: 0.6 }); this.fx.burst('puff', this.cx, this.cy - 20, 12, 3, 60, { color: '#555' }); this.next(0); }
         break;
       case 'flip':
         this.flipT += dt;
@@ -36,7 +37,7 @@ export class PancakeGame extends Panel {
         break;
       case 'ceiling':
         this.ceilingT += dt;
-        if (this.ceilingT > 2.2) { this.fx.text(this.hero.x, this.hero.y - 130, 'PLEOSC! 🥞', '#ff9f1c', 1.3); this.hero.play('dizzy'); this.shake = 8; Sfx.play('squelch', { rate: 0.7 }); Sfx.play('bonk'); this.next(0.3); }
+        if (this.ceilingT > 2.2) { this.fx.text(this.hero.x, this.hero.y - 130, $t('PLEOSC! 🥞'), '#ff9f1c', 1.3); this.hero.play('dizzy'); this.shake = 8; Sfx.play('squelch', { rate: 0.7 }); Sfx.play('bonk'); this.next(0.3); }
         break;
     }
   }
@@ -50,7 +51,7 @@ export class PancakeGame extends Panel {
     if (q > 0.6) { this.fx.hearts(this.cx, this.cy - 60, 5); Sfx.play('good'); this.hero.play('laugh'); }
     if (this.stack.length >= 3) {
       const s = this.quality / 3;
-      this.finish(s > 0.15 ? 1 + s : 0, s > 0.75 ? 'CLĂTITE PERFECTE! 🥞💕' : s > 0.4 ? 'Bunicele! 🥞' : s > 0.15 ? 'Se pot mânca… 😅' : 'Comandăm pizza 🍕');
+      this.finish(s > 0.15 ? 1 + s : 0, s > 0.75 ? $t('CLĂTITE PERFECTE! 🥞💕') : s > 0.4 ? $t('Bunicele! 🥞') : s > 0.15 ? $t('Se pot mânca… 😅') : $t('Comandăm pizza 🍕'));
       this.phase = 'serve';
     }
   }
@@ -64,7 +65,7 @@ export class PancakeGame extends Panel {
         if (this.size < 0.25) return;
         this.phase = 'cook1'; this.cook = 0;
         const err = Math.abs(this.size - this.target);
-        this.fx.text(this.cx, this.cy - 90, err < 0.1 ? 'Perfect rotundă!' : this.size > this.target ? 'Prea mare!' : 'Cam mică…', err < 0.1 ? '#2ec4b6' : '#ff9f1c', 0.9);
+        this.fx.text(this.cx, this.cy - 90, err < 0.1 ? $t('Perfect rotundă!') : this.size > this.target ? $t('Prea mare!') : $t('Cam mică…'), err < 0.1 ? '#2ec4b6' : '#ff9f1c', 0.9);
       }
       return;
     }
@@ -74,7 +75,7 @@ export class PancakeGame extends Panel {
       this.flipOk = q > 0.3;
       this.pq = q;
       if (Math.random() < 0.15) { // se lipeste de tavan :)
-        this.phase = 'ceiling'; this.ceilingT = 0; this.fx.text(this.cx, this.box.y + 70, 'S-a lipit de tavan!! 😱', '#e63946', 1); this.hero.play('cry'); Sfx.play('whoosh'); Sfx.play('squelch', { delay: 0.35, vol: 0.6 });
+        this.phase = 'ceiling'; this.ceilingT = 0; this.fx.text(this.cx, this.box.y + 70, $t('S-a lipit de tavan!! 😱'), '#e63946', 1); this.hero.play('cry'); Sfx.play('whoosh'); Sfx.play('squelch', { delay: 0.35, vol: 0.6 });
         return;
       }
       this.phase = 'flip'; this.flipT = 0; Sfx.play('whoosh'); Sfx.play('pan', { vol: 0.25 }); this.hero.play('wave');
@@ -144,7 +145,7 @@ export class PancakeGame extends Panel {
       const mx = bx + Math.min(1, this.cook / 1.15) * bw;
       ctx.fillStyle = '#ff4d6d'; ctx.beginPath(); ctx.moveTo(mx, by - 2); ctx.lineTo(mx - 8, by - 14); ctx.lineTo(mx + 8, by - 14); ctx.closePath(); ctx.fill(); ctx.stroke();
       ctx.font = '800 15px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = O;
-      ctx.fillText(this.phase === 'cook1' ? 'Atinge să o întorci când e AURIE!' : 'Atinge să o pui pe farfurie!', x + w / 2, by + 44);
+      ctx.fillText(this.phase === 'cook1' ? $t('Atinge să o întorci când e AURIE!') : $t('Atinge să o pui pe farfurie!'), x + w / 2, by + 44);
     }
     // farfuria cu teancul
     const px = x + w * 0.2, py = y + h * 0.5;

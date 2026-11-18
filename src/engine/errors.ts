@@ -1,5 +1,6 @@
 // Jurnalul de erori: le tinem minte (ultimele 30) ca sa le poti copia din meniu si sa mi le trimiti.
 import { Bugs } from './bugs';
+import { $t } from '../i18n';
 const KEY = 'bd-errors';
 export interface ErrRec { t: number; msg: string; where: string; ver: string }
 let list: ErrRec[] = [];
@@ -21,7 +22,7 @@ export const ErrorLog = {
     console.warn('[eroare]', where, e);
     // modul tester: eroarea intra si in rapoarte, cu poza si ce faceai (o data pe sesiune pentru fiecare eroare)
     Bugs.add({ kind: 'eroare', cat: 'Eroare de cod', title: msg, note: (where + ' ' + stack).trim() });
-    if (toaster && Date.now() - lastToast > 30000) { lastToast = Date.now(); toaster('⚠️ A apărut o eroare. Jocul merge mai departe · Meniu → 📋 Erori'); }
+    if (toaster && Date.now() - lastToast > 30000) { lastToast = Date.now(); toaster($t('⚠️ A apărut o eroare. Jocul merge mai departe · Meniu → 📋 Erori')); }
   },
   all() { return list.slice(); },
   clear() { list = []; try { localStorage.removeItem(KEY); } catch { /* */ } },

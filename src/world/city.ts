@@ -6,6 +6,7 @@ import { iso, isoBox, shade, boxOf, type Pt } from './iso';
 import { heartPath } from '../char/draw';
 import { drawPOI, drawSign } from './poi';
 import { isOpen } from '../game/town';
+import { $t } from '../i18n';
 
 const O = '#4a2a22';
 const act = (id: string, label: string, icon: string) => ({ id, label, icon });
@@ -50,21 +51,21 @@ export function cityFloorW(x: number, y: number): Floor {
 export interface CityBuilding { id: string; gx: number; gy: number; w: number; d: number; h: number; front: 'x' | 'y'; wall: string; trim: string; sign: string; signCol: string; awning?: string; action: { id: string; label: string; icon: string }; marquee?: boolean; floors: number }
 export const CITY_BUILDINGS: CityBuilding[] = [
   // Strada Teilor (usile spre ea): banca, universitatea, birourile
-  { id: 'c-bank', gx: 187, gy: 3, w: 5, d: 6, h: 132, floors: 5, front: 'y', wall: '#f5ead6', trim: '#c9a24a', sign: 'Banca', signCol: '#a07a2a', action: act('c-bank', 'Banca (economii, credit, apartament)', '🏦') },
-  { id: 'c-uni', gx: 193, gy: 3, w: 6, d: 6, h: 122, floors: 4, front: 'y', wall: '#e8e0ff', trim: '#6a5acd', sign: 'Universitatea', signCol: '#5a4abd', action: act('c-uni', 'Universitatea (cursuri, diplome)', '🎓') },
-  { id: 'c-office', gx: 203, gy: 2, w: 6, d: 7, h: 196, floors: 8, front: 'y', wall: '#d8e6f5', trim: '#3f5f8f', sign: 'Turnul de birouri', signCol: '#3f5f8f', action: act('c-office', 'Birourile (lucrează la birou)', '💻') },
+  { id: 'c-bank', gx: 187, gy: 3, w: 5, d: 6, h: 132, floors: 5, front: 'y', wall: '#f5ead6', trim: '#c9a24a', sign: $t('Banca'), signCol: '#a07a2a', action: act('c-bank', 'Banca (economii, credit, apartament)', '🏦') },
+  { id: 'c-uni', gx: 193, gy: 3, w: 6, d: 6, h: 122, floors: 4, front: 'y', wall: '#e8e0ff', trim: '#6a5acd', sign: $t('Universitatea'), signCol: '#5a4abd', action: act('c-uni', 'Universitatea (cursuri, diplome)', '🎓') },
+  { id: 'c-office', gx: 203, gy: 2, w: 6, d: 7, h: 196, floors: 8, front: 'y', wall: '#d8e6f5', trim: '#3f5f8f', sign: $t('Turnul de birouri'), signCol: '#3f5f8f', action: act('c-office', $t('Birourile (lucrează la birou)'), '💻') },
   // Bulevardul (usile spre el): magazinele si distractiile
-  { id: 'c-super', gx: 187, gy: 18, w: 6, d: 5, h: 92, floors: 3, front: 'y', wall: '#e7f6e2', trim: '#5aa35a', sign: 'Supermarket', signCol: '#3f8f5a', awning: '#7cc576', action: act('c-super', 'Supermarketul', '🛒') },
-  { id: 'c-cafe', gx: 194, gy: 19, w: 4, d: 4, h: 70, floors: 2, front: 'y', wall: '#f5e1c8', trim: '#8a5d32', sign: 'Cafeneaua', signCol: '#8a5d32', awning: '#c98e5f', action: act('c-cafe', 'Cafeneaua (lucrează ca barista)', '🧋') },
-  { id: 'c-cinema', gx: 203, gy: 16, w: 7, d: 7, h: 104, floors: 3, front: 'y', wall: '#e9e2ff', trim: '#7a5ad6', sign: 'CINEMA', signCol: '#e63946', marquee: true, action: act('c-cinema', 'Cinema (35 lei / doi)', '🎬') },
-  { id: 'c-resto', gx: 211, gy: 18, w: 6, d: 5, h: 84, floors: 3, front: 'y', wall: '#fff1d6', trim: '#c0573e', sign: 'Restaurant La Doi', signCol: '#c0573e', awning: '#e07a5f', action: act('c-resto', 'Restaurant (cină romantică)', '🍽️') },
-  { id: 'c-boutique', gx: 218, gy: 17, w: 7, d: 6, h: 118, floors: 4, front: 'y', wall: '#ffe1ea', trim: '#e5809a', sign: 'Buticul Elegant', signCol: '#ff4d8d', awning: '#ff9ab8', action: act('c-boutique', 'Buticul (haine elegante)', '🛍️') },
-  { id: 'c-mall', gx: 229, gy: 16, w: 12, d: 7, h: 86, floors: 3, front: 'y', wall: '#fff0f5', trim: '#ff7aa2', sign: 'Mall', signCol: '#ff4d8d', awning: '#ffb3c7', action: act('c-mall', 'Mall-ul (mobilă pentru apartament)', '🛍️') },
+  { id: 'c-super', gx: 187, gy: 18, w: 6, d: 5, h: 92, floors: 3, front: 'y', wall: '#e7f6e2', trim: '#5aa35a', sign: $t('Supermarket'), signCol: '#3f8f5a', awning: '#7cc576', action: act('c-super', 'Supermarketul', '🛒') },
+  { id: 'c-cafe', gx: 194, gy: 19, w: 4, d: 4, h: 70, floors: 2, front: 'y', wall: '#f5e1c8', trim: '#8a5d32', sign: $t('Cafeneaua'), signCol: '#8a5d32', awning: '#c98e5f', action: act('c-cafe', $t('Cafeneaua (lucrează ca barista)'), '🧋') },
+  { id: 'c-cinema', gx: 203, gy: 16, w: 7, d: 7, h: 104, floors: 3, front: 'y', wall: '#e9e2ff', trim: '#7a5ad6', sign: $t('CINEMA'), signCol: '#e63946', marquee: true, action: act('c-cinema', 'Cinema (35 lei / doi)', '🎬') },
+  { id: 'c-resto', gx: 211, gy: 18, w: 6, d: 5, h: 84, floors: 3, front: 'y', wall: '#fff1d6', trim: '#c0573e', sign: $t('Restaurant La Doi'), signCol: '#c0573e', awning: '#e07a5f', action: act('c-resto', $t('Restaurant (cină romantică)'), '🍽️') },
+  { id: 'c-boutique', gx: 218, gy: 17, w: 7, d: 6, h: 118, floors: 4, front: 'y', wall: '#ffe1ea', trim: '#e5809a', sign: $t('Buticul Elegant'), signCol: '#ff4d8d', awning: '#ff9ab8', action: act('c-boutique', 'Buticul (haine elegante)', '🛍️') },
+  { id: 'c-mall', gx: 229, gy: 16, w: 12, d: 7, h: 86, floors: 3, front: 'y', wall: '#fff0f5', trim: '#ff7aa2', sign: $t('Mall'), signCol: '#ff4d8d', awning: '#ffb3c7', action: act('c-mall', $t('Mall-ul (mobilă pentru apartament)'), '🛍️') },
   // Strada Scolii (usile spre ea): spitalul, blocul vostru
-  { id: 'c-hospital', gx: 187, gy: 30, w: 7, d: 7, h: 112, floors: 4, front: 'y', wall: '#ffffff', trim: '#e63946', sign: 'Spitalul', signCol: '#e63946', action: act('c-hospital', 'Spitalul (doctor, farmacie, lucru)', '🏥') },
-  { id: 'c-tower', gx: 203, gy: 31, w: 5, d: 6, h: 176, floors: 7, front: 'y', wall: '#e8f1ff', trim: '#5b7fbf', sign: 'Blocul Lalelelor', signCol: '#5b7fbf', action: act('c-tower', 'Blocul cu apartamente', '🏙️') },
+  { id: 'c-hospital', gx: 187, gy: 30, w: 7, d: 7, h: 112, floors: 4, front: 'y', wall: '#ffffff', trim: '#e63946', sign: $t('Spitalul'), signCol: '#e63946', action: act('c-hospital', 'Spitalul (doctor, farmacie, lucru)', '🏥') },
+  { id: 'c-tower', gx: 203, gy: 31, w: 5, d: 6, h: 176, floors: 7, front: 'y', wall: '#e8f1ff', trim: '#5b7fbf', sign: $t('Blocul Lalelelor'), signCol: '#5b7fbf', action: act('c-tower', $t('Blocul cu apartamente'), '🏙️') },
   // Strada Garii
-  { id: 'c-gara', gx: 187, gy: 45, w: 12, d: 6, h: 70, floors: 2, front: 'y', wall: '#f5ead6', trim: '#a0703f', sign: 'Gara', signCol: '#a0703f', awning: '#c98e5f', action: act('c-gara', 'Gara orașului', '🚂') },
+  { id: 'c-gara', gx: 187, gy: 45, w: 12, d: 6, h: 70, floors: 2, front: 'y', wall: '#f5ead6', trim: '#a0703f', sign: $t('Gara'), signCol: '#a0703f', awning: '#c98e5f', action: act('c-gara', $t('Gara orașului'), '🚂') },
 ];
 /** usa blocului (Scara A) si locul unde iesi din bloc */
 const TW = CITY_BUILDINGS.find(b => b.id === 'c-tower')!;
@@ -73,7 +74,7 @@ export const TOWER_DOOR = { x: TW.gx + TW.w / 2, y: TW.gy + TW.d + 0.6 };
 const F: Furn[] = [];
 for (const b of CITY_BUILDINGS) F.push({ id: b.id, type: 'cbuilding' as any, gx: b.gx, gy: b.gy, w: b.w, d: b.d, solid: true, action: b.id === 'c-tower' ? undefined : b.action });
 // blocul: intri doar pe usa scarii (pe fata dinspre Strada Scolii), nu de oriunde din jurul lui
-F.push({ id: 'c-towerdoor', type: 'towerdoor' as any, gx: TW.gx + TW.w / 2 - 0.5, gy: TW.gy + TW.d, w: 1, d: 1, solid: false, action: act('c-tower', 'Intră în bloc (Scara A)', '🔑') });
+F.push({ id: 'c-towerdoor', type: 'towerdoor' as any, gx: TW.gx + TW.w / 2 - 0.5, gy: TW.gy + TW.d, w: 1, d: 1, solid: false, action: act('c-tower', $t('Intră în bloc (Scara A)'), '🔑') });
 
 // ------------------------------------------------------------------ blocurile de locuinte si birourile (decor), aliniate la strazi
 const PAL: [string, string][] = [['#e8f1ff', '#5b7fbf'], ['#fff1d6', '#c0573e'], ['#ffe1ea', '#e5809a'], ['#e7f6e2', '#5aa35a'], ['#e8e0ff', '#6a5acd'], ['#d8e6f5', '#3f5f8f'], ['#f5ead6', '#c9a24a'], ['#fff6b8', '#c98e5f']];
@@ -99,7 +100,7 @@ const nearDoor = (x: number, y: number) => doors.some(d => Math.abs(d.x - (x + 0
 
 // ------------------------------------------------------------------ strada: statiile, semafoarele, felinarele
 F.push({ id: 'c-bus', type: 'busstop' as any, gx: 209, gy: 26, w: 1, d: 1, solid: true, action: act('c-bus', 'Autobuzul spre sat', '🚌') });
-F.push({ id: 'c-taxi', type: 'taxistand' as any, gx: 203, gy: 26, w: 1, d: 1, solid: true, action: act('c-taxi', 'Taxi direct acasă (70 lei)', '🚕') });
+F.push({ id: 'c-taxi', type: 'taxistand' as any, gx: 203, gy: 26, w: 1, d: 1, solid: true, action: act('c-taxi', $t('Taxi direct acasă (70 lei)'), '🚕') });
 F.push({ id: 'c-lights', type: 'trafficlight' as any, gx: 199, gy: 23, w: 1, d: 1, solid: true });
 F.push({ id: 'c-lights2', type: 'trafficlight' as any, gx: 202, gy: 26, w: 1, d: 1, solid: true });
 for (let x = 187; x < 251; x += 5) for (const y of [9, 23, 26, 37, 51]) {
@@ -108,21 +109,21 @@ for (let x = 187; x < 251; x += 5) for (const y of [9, 23, 26, 37, 51]) {
   F.push({ id: `cl-${x}-${y}`, type: 'lamppost' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 }
 // ------------------------------------------------------------------ Parcul Central: fantana, inghetata, bancute, copaci
-F.push({ id: 'c-fountain', type: 'cfountain' as any, gx: 216, gy: 31, w: 2, d: 2, solid: true, action: act('v-fountain', 'Aruncă o monedă', '🪙') });
-F.push({ id: 'c-ice', type: 'icecart' as any, gx: 213, gy: 28, w: 1, d: 1, solid: true, action: act('c-ice', 'Înghețată (10 lei)', '🍦') });
-for (const [x, y] of [[211, 35], [220, 35], [220, 28]]) F.push({ id: `c-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța din parc', '🌅') });
+F.push({ id: 'c-fountain', type: 'cfountain' as any, gx: 216, gy: 31, w: 2, d: 2, solid: true, action: act('v-fountain', $t('Aruncă o monedă'), '🪙') });
+F.push({ id: 'c-ice', type: 'icecart' as any, gx: 213, gy: 28, w: 1, d: 1, solid: true, action: act('c-ice', $t('Înghețată (10 lei)'), '🍦') });
+for (const [x, y] of [[211, 35], [220, 35], [220, 28]]) F.push({ id: `c-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', $t('Băncuța din parc'), '🌅') });
 for (const [x, y] of [[211, 27], [224, 27], [224, 30], [214, 36], [224, 36], [211, 31]]) F.push({ id: `c-tree${x}-${y}`, type: 'tree' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 for (const [x, y] of [[215, 29], [219, 34], [213, 33], [222, 31]]) F.push({ id: `c-fl${x}-${y}`, type: 'flowers' as any, gx: x, gy: y, w: 1, d: 1, solid: false });
 for (const [x, y] of [[210, 30], [225, 33]]) F.push({ id: `c-lamp${x}-${y}`, type: 'lamppost' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 for (const [x, y] of [[199, 15], [198, 27]]) F.push({ id: `c-pot${x}-${y}`, type: 'pot' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 // terenul de vanzare (pentru magazinul vostru, mai tarziu)
-F.push({ id: 'c-lot', type: 'roadsign' as any, gx: 230, gy: 27, w: 1, d: 1, solid: true, text: '🏗️ Teren de vânzare', action: act('st-lot', 'Terenul de vânzare', '🏗️') });
-F.push({ id: 'c-lot2', type: 'roadsign' as any, gx: 199, gy: 41, w: 1, d: 1, solid: true, text: '🚂 Gara' });
+F.push({ id: 'c-lot', type: 'roadsign' as any, gx: 230, gy: 27, w: 1, d: 1, solid: true, text: $t('🏗️ Teren de vânzare'), action: act('st-lot', $t('Terenul de vânzare'), '🏗️') });
+F.push({ id: 'c-lot2', type: 'roadsign' as any, gx: 199, gy: 41, w: 1, d: 1, solid: true, text: $t('🚂 Gara') });
 // parcul din nord si parcul mare din sud: copaci, bancute, a doua fantana
 const crnd = (i: number) => { const v = Math.sin(i * 77.7 + 3.1) * 43758.5; return v - Math.floor(v); };
 for (let i = 0; i < 60; i++) { const park = i < 32 ? { x0: 203, y0: 55, x1: 227, y1: 63 } : { x0: 187, y0: -11, x1: 225, y1: -3 }; const x = Math.floor(park.x0 + crnd(i) * (park.x1 - park.x0)), y = Math.floor(park.y0 + crnd(i + 99) * (park.y1 - park.y0)); if (busy(x, y, 1)) continue; F.push({ id: `cp-t${i}`, type: (i % 5 === 0 ? 'pine' : 'oak') as any, kind: i % 4 === 0 ? 'birch' : 'oak', gx: x, gy: y, w: 1, d: 1, solid: true }); }
-F.push({ id: 'cp-fountain', type: 'cfountain' as any, gx: 214, gy: 58, w: 2, d: 2, solid: true, action: act('v-fountain', 'Aruncă o monedă', '🪙') });
-for (const [x, y] of [[209, 57], [219, 60], [195, -6]]) if (!busy(x, y, 0) && !busy(x + 1, y, 0) && !busy(x + 1, y + 1, 0) && !busy(x + 2, y + 1, 0)) F.push({ id: `cp-b${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', 'Băncuța din parc', '🌅') });
+F.push({ id: 'cp-fountain', type: 'cfountain' as any, gx: 214, gy: 58, w: 2, d: 2, solid: true, action: act('v-fountain', $t('Aruncă o monedă'), '🪙') });
+for (const [x, y] of [[209, 57], [219, 60], [195, -6]]) if (!busy(x, y, 0) && !busy(x + 1, y, 0) && !busy(x + 1, y + 1, 0) && !busy(x + 2, y + 1, 0)) F.push({ id: `cp-b${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', $t('Băncuța din parc'), '🌅') });
 // copaci pe trotuarele late din spatele cladirilor de pe bulevard
 for (const [x, y] of [[188, 14], [192, 14], [196, 14], [212, 14], [216, 14], [233, 13], [238, 13], [190, 41], [205, 41], [212, 41], [222, 41], [233, 41], [240, 41]]) if (!busy(x, y, 0)) F.push({ id: `c-tree${x}-${y}`, type: 'tree' as any, gx: x, gy: y, w: 1, d: 1, solid: true });
 AREAS.city = { floor: cityFloorW, furniture: F, walls: [], spawn: { x: 209.5, y: 27.5 } };
@@ -194,7 +195,7 @@ export function drawCar(c: CanvasRenderingContext2D, car: Car, t: number) {
     const cx0 = p.dir === 'x' ? x0 + w * 0.22 : x0 + 0.04, cy0 = p.dir === 'y' ? y0 + d * 0.22 : y0 + 0.04;
     const cw = p.dir === 'x' ? w * 0.5 : w - 0.08, cd = p.dir === 'y' ? d * 0.5 : d - 0.08;
     isoBox(c, cx0, cy0, cw, cd, 16, { top: shade(col, 1.08), left: '#bfe8ff', right: '#a8d8f0' }, 26);
-    if (car.kind === 'taxi') { const tp = iso(cx0 + cw / 2, cy0 + cd / 2, 43); c.fillStyle = '#fff'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(tp.x - 9, tp.y - 5, 18, 8, 3); c.fill(); c.stroke(); c.font = '800 6px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('TAXI', tp.x, tp.y - 1); c.textBaseline = 'alphabetic'; }
+    if (car.kind === 'taxi') { const tp = iso(cx0 + cw / 2, cy0 + cd / 2, 43); c.fillStyle = '#fff'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(tp.x - 9, tp.y - 5, 18, 8, 3); c.fill(); c.stroke(); c.font = '800 6px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText($t('TAXI'), tp.x, tp.y - 1); c.textBaseline = 'alphabetic'; }
   }
   // roti
   const wheels: Pt[] = p.dir === 'x' ? [{ x: x0 + 0.22 * w, y: y0 + d }, { x: x0 + 0.78 * w, y: y0 + d }] : [{ x: x0 + w, y: y0 + 0.22 * d }, { x: x0 + w, y: y0 + 0.78 * d }];
@@ -253,7 +254,7 @@ function drawCityBuilding(c: CanvasRenderingContext2D, b: CityBuilding, t: numbe
     for (let i = 0; i < 3; i++) { c.fillStyle = '#3a3a44'; c.beginPath(); c.arc(ic.x, ic.y - 4 + i * 3, 0.9, 0, 7); c.fill(); }
     quad(c, [P(0.34, 36), P(0.66, 36), { x: P(0.66, 36).x - 12, y: P(0.66, 36).y + 8 }, { x: P(0.34, 36).x - 12, y: P(0.34, 36).y + 8 }], b.trim, 1.5);
     const pl = P(0.5, 44); c.fillStyle = '#fff'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(pl.x - 15, pl.y - 6, 30, 12, 3); c.fill(); c.stroke();
-    c.fillStyle = b.trim; c.font = '800 8px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('Scara A', pl.x, pl.y + 0.5); c.textBaseline = 'alphabetic';
+    c.fillStyle = b.trim; c.font = '800 8px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText($t('Scara A'), pl.x, pl.y + 0.5); c.textBaseline = 'alphabetic';
     // treptele din fata usii
     for (let i = 0; i < 2; i++) isoBox(c, gx + w * 0.38, gy + d + i * 0.18, w * 0.24, 0.36 - i * 0.18, 6 - i * 3, { top: '#e6e6ee', left: '#c9ccd6', right: '#b0b4c0' });
   } else {
@@ -293,7 +294,7 @@ function drawCityBuilding(c: CanvasRenderingContext2D, b: CityBuilding, t: numbe
   if (b.marquee) { const p = P(0.18, 64); c.fillStyle = '#ffb3c7'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(p.x - 10, p.y - 18, 20, 28, 3); c.fill(); c.stroke(); heartPath(c, p.x, p.y - 6, 5); c.fillStyle = '#e63946'; c.fill(); }
   // apartamentul vostru: inimioara la fereastra
   if (b.id === 'c-tower' && owned.apartment && !body) { const p = faceY(0.3, 40 + fh * 3 + fh * 0.45); heartPath(c, p.x, p.y, 6 + Math.sin(t * 3)); c.fillStyle = '#ff4d6d'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.5; c.stroke(); }
-  if (b.id === 'c-tower' && !owned.apartment) { const p = P(0.5, 52); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = '#fff'; c.beginPath(); c.roundRect(p.x - 40, p.y - 8, 80, 16, 5); c.fill(); c.strokeStyle = '#e63946'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#e63946'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🔒 DE VÂNZARE', p.x, p.y + 0.5); c.textBaseline = 'alphabetic'; }
+  if (b.id === 'c-tower' && !owned.apartment) { const p = P(0.5, 52); c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = '#fff'; c.beginPath(); c.roundRect(p.x - 40, p.y - 8, 80, 16, 5); c.fill(); c.strokeStyle = '#e63946'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#e63946'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText($t('🔒 DE VÂNZARE'), p.x, p.y + 0.5); c.textBaseline = 'alphabetic'; }
 }
 
 export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, night: number, owned: Record<string, boolean>, st: Record<string, unknown> = {}): boolean {
@@ -315,7 +316,7 @@ export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, ni
     case 'taxistand': {
       isoBox(c, gx + 0.42, gy + 0.42, 0.16, 0.16, 46, boxOf('#5a5a66'));
       const p = iso(gx + 0.5, gy + 0.5, 50); c.fillStyle = '#ffd23f'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(p.x - 18, p.y - 10, 36, 16, 4); c.fill(); c.stroke();
-      c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('TAXI', p.x, p.y - 1.5); c.textBaseline = 'alphabetic';
+      c.font = '800 9px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText($t('TAXI'), p.x, p.y - 1.5); c.textBaseline = 'alphabetic';
       drawPOI(c, p.x, p.y - 34, '🚕', t, '#ffd23f');
       return true;
     }
@@ -478,24 +479,24 @@ const AF: Furn[] = [
   { id: 'a-ns', type: 'nightstand', gx: 6, gy: 3, w: 1, d: 1, solid: true, action: act('lamp', 'Lampa', '💡') },
   { id: 'ward', type: 'wardrobe', gx: 3, gy: 6, w: 1, d: 1, solid: true, action: act('dress', 'Garderoba', '👗') },
   { id: 'a-rugB', type: 'rug', gx: 7, gy: 4, w: 3, d: 2, solid: false, color: '#e3c8ff' },
-  { id: 'a-plantB', type: 'plant', gx: 10, gy: 3, w: 1, d: 1, solid: true, action: act('water_plant', 'Udă floarea', '🪴') },
+  { id: 'a-plantB', type: 'plant', gx: 10, gy: 3, w: 1, d: 1, solid: true, action: act('water_plant', $t('Udă floarea'), '🪴') },
   { id: 'toilet', type: 'toilet', gx: 13, gy: 3, w: 1, d: 1, solid: true, action: act('toilet', 'Toaleta', '🚽') },
-  { id: 'tub', type: 'bathtub', gx: 14, gy: 3, w: 2, d: 1, solid: true, action: act('bath', 'Baie cu spumă', '🛁') },
-  { id: 'sink', type: 'sink', gx: 16, gy: 5, w: 1, d: 1, solid: true, action: act('teeth', 'Spălat pe dinți', '🪥') },
+  { id: 'tub', type: 'bathtub', gx: 14, gy: 3, w: 2, d: 1, solid: true, action: act('bath', $t('Baie cu spumă'), '🛁') },
+  { id: 'sink', type: 'sink', gx: 16, gy: 5, w: 1, d: 1, solid: true, action: act('teeth', $t('Spălat pe dinți'), '🪥') },
   { id: 'washer', type: 'washer', gx: 16, gy: 3, w: 1, d: 1, solid: true, action: act('laundry', 'Rufe', '🧺') },
   // bucataria: frigiderul in colt, langa el espressorul (de la mall), apoi aragazul si blatul cu vasele
   { id: 'fridge', type: 'fridge', gx: 16, gy: 8, w: 1, d: 1, solid: true, action: act('snack', 'Frigiderul', '🧊') },
-  { id: 'stove', type: 'stove', gx: 16, gy: 10, w: 1, d: 1, solid: true, action: act('cook', 'Gătește', '🍳') },
-  { id: 'counter', type: 'counter', gx: 16, gy: 11, w: 1, d: 1, solid: true, action: act('dishes', 'Spălat vase', '🍽️') },
+  { id: 'stove', type: 'stove', gx: 16, gy: 10, w: 1, d: 1, solid: true, action: act('cook', $t('Gătește'), '🍳') },
+  { id: 'counter', type: 'counter', gx: 16, gy: 11, w: 1, d: 1, solid: true, action: act('dishes', $t('Spălat vase'), '🍽️') },
   { id: 'table', type: 'table', gx: 13, gy: 11, w: 2, d: 1, solid: true, action: act('eat', 'Masa', '🍰') },
   { id: 'a-rugL', type: 'rug', gx: 5, gy: 9, w: 4, d: 3, solid: false, color: '#ffd6e4' },
   { id: 'sofa', type: 'sofa', gx: 8, gy: 10, w: 1, d: 2, solid: true, action: act('cuddle', 'Canapeaua', '🛋️') },
   { id: 'tv', type: 'tv', gx: 3, gy: 10, w: 1, d: 2, solid: true, action: act('tv', 'Televizor mare', '📺') },
-  { id: 'shelf', type: 'bookshelf', gx: 3, gy: 8, w: 1, d: 1, solid: true, action: act('read', 'Citește', '📚') },
+  { id: 'shelf', type: 'bookshelf', gx: 3, gy: 8, w: 1, d: 1, solid: true, action: act('read', $t('Citește'), '📚') },
   { id: 'laptop', type: 'laptop', gx: 10, gy: 9, w: 1, d: 1, solid: true, action: act('online', 'Laptopul (magazin online)', '💻') },
-  { id: 'a-plantL', type: 'plant', gx: 5, gy: 13, w: 1, d: 1, solid: true, action: act('water_plant', 'Udă floarea', '🪴') },
+  { id: 'a-plantL', type: 'plant', gx: 5, gy: 13, w: 1, d: 1, solid: true, action: act('water_plant', $t('Udă floarea'), '🪴') },
   // usa de la intrare e pe peretele din stanga (y = 12): stai pe pres si iesi pe usa, pe scara blocului
-  { id: 'a-door', type: 'doormat', gx: 3, gy: 12, w: 1, d: 1, solid: false, action: act('a-exit', 'Ieși pe ușă (scara blocului)', '🔑') },
+  { id: 'a-door', type: 'doormat', gx: 3, gy: 12, w: 1, d: 1, solid: false, action: act('a-exit', $t('Ieși pe ușă (scara blocului)'), '🔑') },
 ];
 AREAS.apartment = { floor: aptFloor, furniture: AF, walls: aptWalls(), spawn: { x: 3.7, y: 12.5 } };
 

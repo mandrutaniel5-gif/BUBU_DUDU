@@ -7,10 +7,11 @@ import { drawItem } from './items';
 import { drawWell } from './garden';
 import type { Furn } from './map';
 import { leaf, isWinter, snowMound } from './seasonlook';
+import { $t } from '../i18n';
 
 export type Res = 'wood' | 'stone' | 'flower' | 'soil';
 export const RES_INFO: Record<Res, { icon: string; label: string }> = {
-  wood: { icon: '🪵', label: 'Lemn' }, stone: { icon: '🪨', label: 'Piatră' }, flower: { icon: '🌸', label: 'Flori' }, soil: { icon: '🟫', label: 'Pământ' },
+  wood: { icon: '🪵', label: $t('Lemn') }, stone: { icon: '🪨', label: $t('Piatră') }, flower: { icon: '🌸', label: $t('Flori') }, soil: { icon: '🟫', label: $t('Pământ') },
 };
 
 export interface BuildItem {
@@ -19,38 +20,38 @@ export interface BuildItem {
 }
 
 export const CATALOG: BuildItem[] = [
-  { type: 'soilplot', label: 'Răzor nou de grădină', icon: '🟫', w: 1, d: 1, solid: false, floor: true, cost: { soil: 1 } },
-  { type: 'stonepath', label: 'Alee de piatră', icon: '🪨', w: 1, d: 1, solid: false, floor: true, cost: { stone: 1 } },
-  { type: 'fence', label: 'Gărduleț', icon: '🪵', w: 1, d: 1, solid: true, cost: { wood: 1 } },
-  { type: 'pot', label: 'Ghiveci cu flori', icon: '🌷', w: 1, d: 1, solid: true, cost: { stone: 1, flower: 2 } },
-  { type: 'lamppost', label: 'Felinar', icon: '🏮', w: 1, d: 1, solid: true, cost: { wood: 1, stone: 2 } },
-  { type: 'sapling', label: 'Puiet de copac', icon: '🌳', w: 1, d: 1, solid: true, cost: { flower: 1 }, action: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
-  { type: 'flowerbed', label: 'Strat de flori', icon: '🌼', w: 1, d: 1, solid: false, floor: true, cost: { flower: 3 }, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
-  { type: 'swing', label: 'Leagăn pentru doi', icon: '🎠', w: 2, d: 1, solid: true, cost: { wood: 6, stone: 2 }, action: { id: 'swing', label: 'Leagănul', icon: '🎠' }, coop: true },
-  { type: 'snowman', label: 'Om de zăpadă', icon: '⛄', w: 1, d: 1, solid: true, cost: { stone: 2, flower: 1 } },
-  { type: 'gazebo', label: 'Foișor romantic', icon: '⛩️', w: 2, d: 2, solid: true, cost: { wood: 14, stone: 8, flower: 4 }, action: { id: 'gazebo', label: 'Foișorul', icon: '💞' }, coop: true },
-  { type: 'heartstone', label: 'Inimă din pietre', icon: '💗', w: 1, d: 1, solid: false, floor: true, cost: { stone: 3, flower: 2 } },
+  { type: 'soilplot', label: $t('Răzor nou de grădină'), icon: '🟫', w: 1, d: 1, solid: false, floor: true, cost: { soil: 1 } },
+  { type: 'stonepath', label: $t('Alee de piatră'), icon: '🪨', w: 1, d: 1, solid: false, floor: true, cost: { stone: 1 } },
+  { type: 'fence', label: $t('Gărduleț'), icon: '🪵', w: 1, d: 1, solid: true, cost: { wood: 1 } },
+  { type: 'pot', label: $t('Ghiveci cu flori'), icon: '🌷', w: 1, d: 1, solid: true, cost: { stone: 1, flower: 2 } },
+  { type: 'lamppost', label: $t('Felinar'), icon: '🏮', w: 1, d: 1, solid: true, cost: { wood: 1, stone: 2 } },
+  { type: 'sapling', label: $t('Puiet de copac'), icon: '🌳', w: 1, d: 1, solid: true, cost: { flower: 1 }, action: { id: 'chop', label: $t('Taie lemne'), icon: '🪓' } },
+  { type: 'flowerbed', label: $t('Strat de flori'), icon: '🌼', w: 1, d: 1, solid: false, floor: true, cost: { flower: 3 }, action: { id: 'pick', label: $t('Culege flori'), icon: '🌸' } },
+  { type: 'swing', label: $t('Leagăn pentru doi'), icon: '🎠', w: 2, d: 1, solid: true, cost: { wood: 6, stone: 2 }, action: { id: 'swing', label: $t('Leagănul'), icon: '🎠' }, coop: true },
+  { type: 'snowman', label: $t('Om de zăpadă'), icon: '⛄', w: 1, d: 1, solid: true, cost: { stone: 2, flower: 1 } },
+  { type: 'gazebo', label: $t('Foișor romantic'), icon: '⛩️', w: 2, d: 2, solid: true, cost: { wood: 14, stone: 8, flower: 4 }, action: { id: 'gazebo', label: $t('Foișorul'), icon: '💞' }, coop: true },
+  { type: 'heartstone', label: $t('Inimă din pietre'), icon: '💗', w: 1, d: 1, solid: false, floor: true, cost: { stone: 3, flower: 2 } },
 ];
 
 /** noduri de resurse (copaci, pietre, flori salbatice) */
 export const RESOURCE_NODES: Furn[] = [
-  { id: 'rock1', type: 'rock', gx: 14, gy: 6, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
-  { id: 'rock2', type: 'rock', gx: 10, gy: 17, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
-  { id: 'rock3', type: 'rock', gx: 12, gy: 15, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
-  { id: 'wild1', type: 'wildflower', gx: 4, gy: 15, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
-  { id: 'wild2', type: 'wildflower', gx: 15, gy: 11, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
-  { id: 'wild3', type: 'wildflower', gx: 0, gy: 12, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
-  { id: 'wild4', type: 'wildflower', gx: 9, gy: 19, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
-  { id: 'wild5', type: 'wildflower', gx: 19, gy: 5, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
-  { id: 'wild6', type: 'wildflower', gx: 12, gy: 22, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
-  { id: 'wild7', type: 'wildflower', gx: 17, gy: 26, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
-  { id: 'wild8', type: 'wildflower', gx: 16, gy: 4, w: 1, d: 1, solid: false, action: { id: 'pick', label: 'Culege flori', icon: '🌸' } },
-  { id: 'rock4', type: 'rock', gx: 20, gy: 14, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
-  { id: 'rock5', type: 'rock', gx: 2, gy: 20, w: 1, d: 1, solid: true, action: { id: 'mine', label: 'Sparge piatra', icon: '⛏️' } },
-  { id: 'tree5', type: 'tree', gx: 18, gy: 2, w: 1, d: 1, solid: true, action: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
-  { id: 'tree6', type: 'tree', gx: 20, gy: 9, w: 1, d: 1, solid: true, action: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
-  { id: 'tree7', type: 'tree', gx: 15, gy: 20, w: 1, d: 1, solid: true, action: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
-  { id: 'tree8', type: 'tree', gx: 7, gy: 20, w: 1, d: 1, solid: true, action: { id: 'chop', label: 'Taie lemne', icon: '🪓' } },
+  { id: 'rock1', type: 'rock', gx: 14, gy: 6, w: 1, d: 1, solid: true, action: { id: 'mine', label: $t('Sparge piatra'), icon: '⛏️' } },
+  { id: 'rock2', type: 'rock', gx: 10, gy: 17, w: 1, d: 1, solid: true, action: { id: 'mine', label: $t('Sparge piatra'), icon: '⛏️' } },
+  { id: 'rock3', type: 'rock', gx: 12, gy: 15, w: 1, d: 1, solid: true, action: { id: 'mine', label: $t('Sparge piatra'), icon: '⛏️' } },
+  { id: 'wild1', type: 'wildflower', gx: 4, gy: 15, w: 1, d: 1, solid: false, action: { id: 'pick', label: $t('Culege flori'), icon: '🌸' } },
+  { id: 'wild2', type: 'wildflower', gx: 15, gy: 11, w: 1, d: 1, solid: false, action: { id: 'pick', label: $t('Culege flori'), icon: '🌸' } },
+  { id: 'wild3', type: 'wildflower', gx: 0, gy: 12, w: 1, d: 1, solid: false, action: { id: 'pick', label: $t('Culege flori'), icon: '🌸' } },
+  { id: 'wild4', type: 'wildflower', gx: 9, gy: 19, w: 1, d: 1, solid: false, action: { id: 'pick', label: $t('Culege flori'), icon: '🌸' } },
+  { id: 'wild5', type: 'wildflower', gx: 19, gy: 5, w: 1, d: 1, solid: false, action: { id: 'pick', label: $t('Culege flori'), icon: '🌸' } },
+  { id: 'wild6', type: 'wildflower', gx: 12, gy: 22, w: 1, d: 1, solid: false, action: { id: 'pick', label: $t('Culege flori'), icon: '🌸' } },
+  { id: 'wild7', type: 'wildflower', gx: 17, gy: 26, w: 1, d: 1, solid: false, action: { id: 'pick', label: $t('Culege flori'), icon: '🌸' } },
+  { id: 'wild8', type: 'wildflower', gx: 16, gy: 4, w: 1, d: 1, solid: false, action: { id: 'pick', label: $t('Culege flori'), icon: '🌸' } },
+  { id: 'rock4', type: 'rock', gx: 20, gy: 14, w: 1, d: 1, solid: true, action: { id: 'mine', label: $t('Sparge piatra'), icon: '⛏️' } },
+  { id: 'rock5', type: 'rock', gx: 2, gy: 20, w: 1, d: 1, solid: true, action: { id: 'mine', label: $t('Sparge piatra'), icon: '⛏️' } },
+  { id: 'tree5', type: 'tree', gx: 18, gy: 2, w: 1, d: 1, solid: true, action: { id: 'chop', label: $t('Taie lemne'), icon: '🪓' } },
+  { id: 'tree6', type: 'tree', gx: 20, gy: 9, w: 1, d: 1, solid: true, action: { id: 'chop', label: $t('Taie lemne'), icon: '🪓' } },
+  { id: 'tree7', type: 'tree', gx: 15, gy: 20, w: 1, d: 1, solid: true, action: { id: 'chop', label: $t('Taie lemne'), icon: '🪓' } },
+  { id: 'tree8', type: 'tree', gx: 7, gy: 20, w: 1, d: 1, solid: true, action: { id: 'chop', label: $t('Taie lemne'), icon: '🪓' } },
 ];
 
 const O = '#3a2a22';
@@ -75,9 +76,9 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
     }
     case 'signpost': {
       // la poarta casei: satul e spre est (dreapta, pe drum); in sat: casa e spre vest
-      if (f.id === 'a-exit') { drawRoadSign(ctx, gx, gy, 'Ieșire', ''); return true; }
-      if (f.id === 'st-farmgate') { drawRoadSign(ctx, gx, gy, '🐔 Ferma voastră', 'N', true); return true; } // inainte scria „Spre sat” si ferma nu se gasea
-      if (f.id === 'v-home') drawRoadSign(ctx, gx, gy, '🏡 Spre casă', 'W');
+      if (f.id === 'a-exit') { drawRoadSign(ctx, gx, gy, $t('Ieșire'), ''); return true; }
+      if (f.id === 'st-farmgate') { drawRoadSign(ctx, gx, gy, $t('🐔 Ferma voastră'), 'N', true); return true; } // inainte scria „Spre sat” si ferma nu se gasea
+      if (f.id === 'v-home') drawRoadSign(ctx, gx, gy, $t('🏡 Spre casă'), 'W');
       else drawRoadSign(ctx, gx, gy, '🏘️ Spre sat', 'E');
       return true;
     }
@@ -136,7 +137,7 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
         isoBox(ctx, gx + 0.05, gy + 0.3, w - 0.1, 0.6, 12, { top: '#c9a57c', left: '#a87a50', right: '#946a44' });
         for (const [u, v, a] of [[0.4, 0.95, 0.3], [1.3, 1.05, -0.4], [0.9, 0.6, 0.1]]) { const p = iso(gx + u, gy + v, 13); ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a); ctx.fillStyle = '#c98e5f'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.fillRect(-16, -3, 32, 6); ctx.strokeRect(-16, -3, 32, 6); ctx.restore(); }
         const sg = iso(gx + w / 2, gy + 0.9, 18); ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.save(); ctx.translate(sg.x, sg.y); ctx.rotate(0.25); ctx.beginPath(); ctx.roundRect(-26, -7, 52, 14, 3); ctx.fill(); ctx.stroke();
-        ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#e63946'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; fillTextIcons(ctx, 'STRICATĂ 🔨', 0, 0, 8); ctx.restore(); ctx.textBaseline = 'alphabetic';
+        ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#e63946'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; fillTextIcons(ctx, $t('STRICATĂ 🔨'), 0, 0, 8); ctx.restore(); ctx.textBaseline = 'alphabetic';
         return true;
       }
       if (!S.open) {
@@ -145,7 +146,7 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
         const a1 = iso(gx, gy + 0.12, 62), b1 = iso(gx + w, gy + 0.12, 62); // copertina stransa
         ctx.strokeStyle = O; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(a1.x, a1.y); ctx.lineTo(b1.x, b1.y); ctx.stroke(); ctx.strokeStyle = '#ff9ab8'; ctx.lineWidth = 4; ctx.stroke();
         const sg = iso(gx + w / 2, gy + 0.9, 12); ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(sg.x - 24, sg.y - 7, 48, 14, 4); ctx.fill(); ctx.stroke();
-        ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('ÎNCHIS', sg.x, sg.y); ctx.textBaseline = 'alphabetic';
+        ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText($t('ÎNCHIS'), sg.x, sg.y); ctx.textBaseline = 'alphabetic';
         return true;
       }
       for (const u of [0.1, w - 0.15]) isoBox(ctx, gx + u, gy + 0.2, 0.06, 0.06, 64, boxOf('#c98e5f'));
@@ -159,7 +160,7 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ['flower:2', 'veg:1', 'flower:0', 'veg:2'].forEach((e, i) => { const p = iso(gx + 0.3 + i * 0.45, gy + 0.6, 30); drawItem(ctx, e, p.x, p.y - 4, 20, t); });
       const sg = iso(gx + w / 2, gy + 0.9, 12); ctx.fillStyle = '#fff8ef'; ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(sg.x - 30, sg.y - 7, 60, 14, 4); ctx.fill(); ctx.stroke();
-      ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText('Taraba lui Bubu', sg.x, sg.y); ctx.textBaseline = 'alphabetic';
+      ctx.font = '800 8px "Baloo 2", sans-serif'; ctx.fillStyle = '#ff4d6d'; ctx.fillText($t('Taraba lui Bubu'), sg.x, sg.y); ctx.textBaseline = 'alphabetic';
       return true;
     }
     case 'rock': {

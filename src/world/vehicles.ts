@@ -6,6 +6,7 @@ import { IDLE, WALK } from '../char/anims';
 import type { Outfit } from '../char/outfit';
 import { HS } from '../char/hamster';
 import { iso, isoBox, boxOf, shade } from './iso';
+import { $t } from '../i18n';
 
 const O = '#4a2a22';
 const RED = '#e5383b', RED_D = '#b81d24', RED_L = '#ff6b6b';
@@ -187,7 +188,7 @@ export function drawTravelScene(c: CanvasRenderingContext2D, w: number, h: numbe
   if (sx > -120 && sx < w + 120) {
     c.fillStyle = '#a0703f'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(sx - 3, ground - 90, 6, 90, 2); c.fill(); c.stroke();
     c.fillStyle = '#e7c08f'; c.beginPath(); c.moveTo(sx - 50, ground - 96); c.lineTo(sx + 40, ground - 96); c.lineTo(sx + 56, ground - 82); c.lineTo(sx + 40, ground - 68); c.lineTo(sx - 50, ground - 68); c.closePath(); c.fill(); c.stroke();
-    c.font = '800 15px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; fillTextIcons(c, toCity ? 'Orașul 🏙️' : toVillage || fromCity ? 'Satul 🏘️' : toForest ? 'Pădurea 🌲' : 'Acasă 🏡', sx, ground - 82, 15); c.textBaseline = 'alphabetic';
+    c.font = '800 15px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; fillTextIcons(c, toCity ? $t('Orașul 🏙️') : toVillage || fromCity ? $t('Satul 🏘️') : toForest ? $t('Pădurea 🌲') : $t('Acasă 🏡'), sx, ground - 82, 15); c.textBaseline = 'alphabetic';
   }
   // drumul
   c.fillStyle = '#c9af89'; c.fillRect(0, ground, w, h - ground);
@@ -452,7 +453,7 @@ export function drawBusSide(c: CanvasRenderingContext2D, x: number, y: number, s
   c.fillStyle = '#e63946'; c.beginPath(); c.roundRect(-152, -46, 6, 14, 3); c.fill(); c.stroke();
   // tabla cu destinatia
   c.fillStyle = '#3a3a44'; c.beginPath(); c.roundRect(-60, -142, 120, 16, 4); c.fill(); c.stroke();
-  c.font = '800 11px "Baloo 2", sans-serif'; c.fillStyle = '#ffd23f'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('SAT ⇄ ORAȘ', 0, -133.5); c.textBaseline = 'alphabetic';
+  c.font = '800 11px "Baloo 2", sans-serif'; c.fillStyle = '#ffd23f'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText($t('SAT ⇄ ORAȘ'), 0, -133.5); c.textBaseline = 'alphabetic';
   c.restore();
   simpleWheel(c, -96, -14, 18, opt.rot, '#2b2b33', '#d9d9d9');
   simpleWheel(c, 92, -14, 18, opt.rot, '#2b2b33', '#d9d9d9');
@@ -473,7 +474,7 @@ export function drawTaxiSide(c: CanvasRenderingContext2D, x: number, y: number, 
   const heads: [CharSpec | undefined, number][] = [[opt.passenger, -26], [opt.driver, 26]];
   for (const [sp, hx] of heads) if (sp) { c.save(); c.beginPath(); c.rect(hx - 26, -88, 52, 30); c.clip(); const P = basePose(); P.eyes = 'happy'; P.mouth = 'open'; P.blush = 1.2; drawCharacter(c, sp, P, hx, -28 + Math.sin(t * 9 + hx) * 1, 0.5, 1, t); c.restore(); }
   c.fillStyle = '#fff'; c.beginPath(); c.roundRect(-18, -112, 36, 16, 4); c.fill(); c.stroke();
-  c.font = '800 10px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('TAXI', 0, -104); c.textBaseline = 'alphabetic';
+  c.font = '800 10px "Baloo 2", sans-serif'; c.fillStyle = O; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText($t('TAXI'), 0, -104); c.textBaseline = 'alphabetic';
   c.fillStyle = '#fff6b0'; c.beginPath(); c.arc(114, -36, 5, 0, 7); c.fill(); c.stroke();
   c.restore();
   simpleWheel(c, -72, -14, 17, opt.rot, '#2b2b33', '#d9d9d9');
@@ -512,7 +513,7 @@ export function drawStairsScene(c: CanvasRenderingContext2D, w: number, h: numbe
     // brau de faianta + numarul etajului pe perete
     c.fillStyle = night > 0.5 ? '#b3a9c6' : '#dccfc0'; c.fillRect(0, y - 46, w, 46);
     c.font = '900 22px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.fillStyle = '#8a7a6a';
-    c.fillText(f === 0 ? 'PARTER' : `ETAJUL ${f}`, side(f) === xL ? xL + 150 : xR - 150, y - FH * 0.62);
+    c.fillText(f === 0 ? $t('PARTER') : $t('ETAJUL {0}', f), side(f) === xL ? xL + 150 : xR - 150, y - FH * 0.62);
     // fereastra casei scarii
     const wx = w / 2 - 40, wy = y - FH * 0.78; c.fillStyle = night > 0.5 ? '#2b3a67' : '#bfe8ff'; c.strokeStyle = O; c.lineWidth = 3; c.beginPath(); c.roundRect(wx, wy, 80, 54, 6); c.fill(); c.stroke(); c.beginPath(); c.moveTo(wx + 40, wy); c.lineTo(wx + 40, wy + 54); c.stroke();
     // palierul + usa vecinilor (sau usa voastra la etajul 4, usa blocului la parter)
@@ -524,7 +525,7 @@ export function drawStairsScene(c: CanvasRenderingContext2D, w: number, h: numbe
     if (entrance) { c.fillStyle = night > 0.5 ? '#fff4c0' : '#d4eefc'; c.beginPath(); c.roundRect(dx - 20, y - 92, 40, 54, 4); c.fill(); c.stroke(); }
     c.fillStyle = '#ffd23f'; c.beginPath(); c.arc(dx + (dirOut > 0 ? -20 : 20), y - 52, 4, 0, 7); c.fill(); c.stroke();
     c.fillStyle = '#fff'; c.beginPath(); c.roundRect(dx - 14, y - 124, 28, 16, 4); c.fill(); c.stroke();
-    c.fillStyle = O; c.font = '800 11px "Baloo 2", sans-serif'; c.fillText(entrance ? 'IEȘIRE' : ours ? '14' : String(f * 3 + 2), dx, y - 112);
+    c.fillStyle = O; c.font = '800 11px "Baloo 2", sans-serif'; c.fillText(entrance ? $t('IEȘIRE') : ours ? '14' : String(f * 3 + 2), dx, y - 112);
     if (ours) { c.fillStyle = '#ff4d6d'; c.beginPath(); c.arc(dx, y - 70, 6, 0, 7); c.fill(); }
     // rampa de scari spre etajul de jos
     if (f > 0) {
@@ -555,6 +556,6 @@ export function drawStairsScene(c: CanvasRenderingContext2D, w: number, h: numbe
   // ce etaj e acum
   const fl = Math.max(0, Math.min(FLOORS, Math.round(FLOORS - q * FLOORS)));
   c.save(); c.font = '900 26px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.lineWidth = 6; c.strokeStyle = '#fff'; c.fillStyle = '#3a2a22';
-  const txt = (down ? 'Coborâm pe scări… ' : 'Urcăm acasă… ') + (fl === 0 ? 'parter' : `etajul ${fl}`);
+  const txt = (down ? $t('Coborâm pe scări… ') : $t('Urcăm acasă… ')) + (fl === 0 ? 'parter' : `etajul ${fl}`);
   c.strokeText(txt, w / 2, h * 0.1); c.fillText(txt, w / 2, h * 0.1); c.restore();
 }

@@ -6,31 +6,32 @@ import { heartPath } from '../char/draw';
 import { iconCanvas } from '../ui/icons';
 import type { WorldScene } from '../scenes/world';
 import { g as gen } from '../game/gender';
+import { $t } from '../i18n';
 
 type Step = 'intro' | 'msg' | 'msgShow' | 'pos' | 'posShow' | 'tug' | 'dutch' | 'kiss' | 'night' | 'story' | 'stars' | 'dream' | 'dreamShow' | 'sheep';
 
 const POSES = [
-  { id: 'spoon', icon: '🥄', label: 'Lingurițe' },
-  { id: 'chest', icon: '💗', label: 'Cap pe piept' },
-  { id: 'leg', icon: '🦵', label: 'Picior peste' },
-  { id: 'back', icon: '🙃', label: 'Spate în spate' },
+  { id: 'spoon', icon: '🥄', label: $t('Lingurițe') },
+  { id: 'chest', icon: '💗', label: $t('Cap pe piept') },
+  { id: 'leg', icon: '🦵', label: $t('Picior peste') },
+  { id: 'back', icon: '🙃', label: $t('Spate în spate') },
 ];
 
 /** povesti de seara (3 pagini fiecare) */
 const STORIES: { title: string; pages: [string, string][] }[] = [
-  { title: 'Hamsterul care nu putea dormi', pages: [['🌙', 'A fost odată un hamster care număra stelele ca să adoarmă.'], ['⭐', 'Într-o noapte, o stea a coborât și i-a spus: „Te ajut eu”.'], ['🛏️', 'L-a învelit cu o rază caldă… și hamsterul a adormit zâmbind, cu obrajii plini.']] },
-  { title: 'Hamsterița și norișorul', pages: [['☁️', 'Un norișor rătăcit plângea deasupra câmpului de floarea-soarelui.'], ['🌻', 'O hamsteriță mică i-a făcut loc lângă ea, în culcușul ei pufos.'], ['☀️', 'Dimineața, norișorul i-a dăruit un curcubeu doar al ei.']] },
-  { title: 'Căsuța din poiană', pages: [['🏡', 'Într-o poiană era o căsuță cu ferestre roz.'], ['🔥', 'Seara, cei doi locatari făceau focul și beau ceai.'], ['💕', 'Și oricât de rece era afară, înăuntru era mereu cald.']] },
-  { title: 'Licuriciul curajos', pages: [['🌲', 'Un licurici mic se temea de întunericul din pădure.'], ['✨', 'Până a aflat că el e lumina pe care o așteaptă ceilalți.'], ['🌙', 'De atunci zboară în fiecare noapte, să nu se teamă nimeni.']] },
-  { title: 'Scrisoarea pierdută', pages: [['💌', 'Vântul a luat o scrisoare de dragoste și a dus-o departe.'], ['🐦', 'O vrabie a găsit-o și a zburat trei zile cu ea în cioc.'], ['💗', 'A lăsat-o la fereastra potrivită, exact înainte de culcare.']] },
+  { title: $t('Hamsterul care nu putea dormi'), pages: [['🌙', $t('A fost odată un hamster care număra stelele ca să adoarmă.')], ['⭐', $t('Într-o noapte, o stea a coborât și i-a spus: „Te ajut eu”.')], ['🛏️', $t('L-a învelit cu o rază caldă… și hamsterul a adormit zâmbind, cu obrajii plini.')]] },
+  { title: $t('Hamsterița și norișorul'), pages: [['☁️', $t('Un norișor rătăcit plângea deasupra câmpului de floarea-soarelui.')], ['🌻', $t('O hamsteriță mică i-a făcut loc lângă ea, în culcușul ei pufos.')], ['☀️', $t('Dimineața, norișorul i-a dăruit un curcubeu doar al ei.')]] },
+  { title: $t('Căsuța din poiană'), pages: [['🏡', $t('Într-o poiană era o căsuță cu ferestre roz.')], ['🔥', $t('Seara, cei doi locatari făceau focul și beau ceai.')], ['💕', $t('Și oricât de rece era afară, înăuntru era mereu cald.')]] },
+  { title: $t('Licuriciul curajos'), pages: [['🌲', $t('Un licurici mic se temea de întunericul din pădure.')], ['✨', $t('Până a aflat că el e lumina pe care o așteaptă ceilalți.')], ['🌙', $t('De atunci zboară în fiecare noapte, să nu se teamă nimeni.')]] },
+  { title: $t('Scrisoarea pierdută'), pages: [['💌', $t('Vântul a luat o scrisoare de dragoste și a dus-o departe.')], ['🐦', $t('O vrabie a găsit-o și a zburat trei zile cu ea în cioc.')], ['💗', $t('A lăsat-o la fereastra potrivită, exact înainte de culcare.')]] },
 ];
-const DREAMS = [{ icon: '🌊', label: 'La mare' }, { icon: '🌲', label: 'La munte' }, { icon: '🧺', label: 'Un picnic' }, { icon: '⭐', label: 'Printre stele' }];
+const DREAMS = [{ icon: '🌊', label: $t('La mare') }, { icon: '🌲', label: $t('La munte') }, { icon: '🧺', label: $t('Un picnic') }, { icon: '⭐', label: $t('Printre stele') }];
 /** numere la intamplare dar la fel pe ambele telefoane (pornesc din ziua serii) */
 function seeded(seed: number) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 const AI_MSG: Record<string, string[]> = {
-  bubu: ['Ești cel mai pufos hamster din lume 🐹💕', 'Mulțumesc că m-ai făcut să râd azi', 'Te iubesc mai mult decât bubble tea 🧋', 'Cu tine e acasă 🏡', 'Chiar și când sforăi, te iubesc 😴💗'],
-  dudu: ['Ești cea mai frumoasă hamsteriță 🐹💕', 'Îmi place cum râzi', 'Te iubesc mai mult decât mâncarea… aproape 🍔😳', 'Mulțumesc că ai grijă de mine', 'Ești soarele meu chiar și noaptea 🌙'],
+  bubu: [$t('Ești cel mai pufos hamster din lume 🐹💕'), $t('Mulțumesc că m-ai făcut să râd azi'), $t('Te iubesc mai mult decât bubble tea 🧋'), $t('Cu tine e acasă 🏡'), $t('Chiar și când sforăi, te iubesc 😴💗')],
+  dudu: [$t('Ești cea mai frumoasă hamsteriță 🐹💕'), $t('Îmi place cum râzi'), $t('Te iubesc mai mult decât mâncarea… aproape 🍔😳'), $t('Mulțumesc că ai grijă de mine'), $t('Ești soarele meu chiar și noaptea 🌙')],
 };
 
 export class BedtimeGame extends Panel {
@@ -53,7 +54,7 @@ export class BedtimeGame extends Panel {
   sheep: { t: number; counted: boolean }[] = []; sheepT = 0; sheepCount = 0;
 
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, '🌙 Rutina de seară', '');
+    super(scene, done, $t('🌙 Rutina de seară'), '');
     this.partnerAI = scene.partner.control !== 'remote';
     this.me = new Actor(scene.myId, this.fx); this.pa = new Actor(scene.partner.id, this.fx);
     for (const d of scene.miniInbox.splice(0)) if (!(d as any)?.quit) this.net(d); // un „a iesit” vechi (de aseara) nu conteaza
@@ -89,7 +90,7 @@ export class BedtimeGame extends Panel {
     if (d.dream !== undefined) this.theirDream = d.dream;
     // partenerul a inchis rutina (X): nu mai astepti dupa el, adormi si tu (somnul merge mai departe la amandoi)
     // (1.12.0: pe loc, fara ecranul de 3 secunde „noapte buna” in care ramaneai blocat)
-    if (d.quit && !this.ended) { this.theirQuit = true; this.removeInput(); this.finish(Math.max(0.5, this.score), `${this.scene.partner.actor.spec.name} a adormit 💤`); this.ended!.t = 0.6; }
+    if (d.quit && !this.ended) { this.theirQuit = true; this.removeInput(); this.finish(Math.max(0.5, this.score), $t('{0} a adormit 💤', this.scene.partner.actor.spec.name)); this.ended!.t = 0.6; }
   }
   theirQuit = false;
   /** X: ii spunem si partenerului (altfel ramanea singur in rutina, cu timpul oprit) si adormim mai departe */
@@ -97,7 +98,7 @@ export class BedtimeGame extends Panel {
     if (this.ended) return;
     if (!this.partnerAI) this.send({ quit: true });
     this.removeInput(); // biletelul deschis ramanea peste joc dupa X
-    this.finish(Math.max(0.5, this.score), 'Noapte bună 💤');
+    this.finish(Math.max(0.5, this.score), $t('Noapte bună 💤'));
     this.ended!.t = 1.6;
   }
 
@@ -153,7 +154,7 @@ export class BedtimeGame extends Panel {
         const diff = this.myTaps - this.theirTaps;
         if (!this.tugWinner && (Math.abs(diff) >= 22 || this.stepT > 11.5)) {
           this.tugWinner = diff >= 0 ? 'me' : 'them';
-          this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, this.tugWinner === 'me' ? 'Pătura e a ta! 😈' : 'Ți-a furat pătura! 🥶', '#ff4d6d', 1.2);
+          this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, this.tugWinner === 'me' ? $t('Pătura e a ta! 😈') : $t('Ți-a furat pătura! 🥶'), '#ff4d6d', 1.2);
           if (this.tugWinner === 'me') this.score += 0.5;
           Sfx.play(this.tugWinner === 'me' ? 'good' : 'bad');
         }
@@ -161,7 +162,7 @@ export class BedtimeGame extends Panel {
         break;
       }
       case 'dutch':
-        if (this.dutchBy === 'them') { if (this.stepT > 6 || this.fan >= 1) { this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, this.fan >= 1 ? 'Ai supraviețuit! 😮‍💨' : 'Ai leșinat… 😵', '#7cb342', 1.2); this.score += this.fan >= 1 ? 0.5 : 0; this.go('kiss'); } }
+        if (this.dutchBy === 'them') { if (this.stepT > 6 || this.fan >= 1) { this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, this.fan >= 1 ? $t('Ai supraviețuit! 😮‍💨') : $t('Ai leșinat… 😵'), '#7cb342', 1.2); this.score += this.fan >= 1 ? 0.5 : 0; this.go('kiss'); } }
         else if (this.stepT > 4.5) this.next();
         break;
       case 'kiss':
@@ -172,7 +173,7 @@ export class BedtimeGame extends Panel {
         if (this.kiss >= 1) { this.go('night'); this.score += 1; Sfx.play('kiss'); this.fx.hearts(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.45, 16); }
         if (this.stepT > 20) this.go('night');
         break;
-      case 'night': if (this.stepT > 3.2) { this.removeInput(); this.finish(1 + this.score, 'Noapte bună 💕'); } break;
+      case 'night': if (this.stepT > 3.2) { this.removeInput(); this.finish(1 + this.score, $t('Noapte bună 💕')); } break;
     }
   }
   tugDoneT = 0;
@@ -188,7 +189,7 @@ export class BedtimeGame extends Panel {
   showInput() {
     const d = document.createElement('div');
     d.className = 'bed-input';
-    d.innerHTML = `<textarea maxlength="200" placeholder="Spune-i ceva frumos înainte de culcare…"></textarea><div><button class="skip">Sari peste</button><button class="ok">Trimite 💌</button></div>`;
+    d.innerHTML = `<textarea maxlength="200" placeholder="Spune-i ceva frumos înainte de culcare…"></textarea><div><button class="skip">${$t('Sari peste')}</button><button class="ok">${$t('Trimite 💌')}</button></div>`;
     document.getElementById('ui')!.appendChild(d);
     this.input = d;
     d.addEventListener('pointerdown', e => e.stopPropagation());
@@ -222,7 +223,7 @@ export class BedtimeGame extends Panel {
     }
     if (this.step === 'tug' && type === 'down' && !this.tugWinner && this.stepT > 1.5) { this.myTaps++; this.shake = 2; Sfx.play('cloth', { vol: 0.5 }); }
     if (this.step === 'story' && type === 'down') { if (this.page < this.story.pages.length - 1) { this.page++; this.stepT = 0; Sfx.play('page'); } else if (this.stepT > 1) { this.score += 0.5; this.next(); } }
-    if (this.step === 'stars' && type === 'down') { const st = this.stars.find(q => Math.hypot(q.x - x, q.y - y) < 46); if (st) { st.hit = true; this.caughtStars++; Sfx.play('chimes', { vol: 0.6, rate: 1 + this.caughtStars * 0.04 }); this.fx.burst('sparkle', st.x, st.y, 8, 6.28, 90, { max: 0.6, color: '#fff6b0' }); this.fx.text(st.x, st.y - 20, 'O dorință! ✨', '#fff6b0', 0.8); } }
+    if (this.step === 'stars' && type === 'down') { const st = this.stars.find(q => Math.hypot(q.x - x, q.y - y) < 46); if (st) { st.hit = true; this.caughtStars++; Sfx.play('chimes', { vol: 0.6, rate: 1 + this.caughtStars * 0.04 }); this.fx.burst('sparkle', st.x, st.y, 8, 6.28, 90, { max: 0.6, color: '#fff6b0' }); this.fx.text(st.x, st.y - 20, $t('O dorință! ✨'), '#fff6b0', 0.8); } }
     if (this.step === 'dream' && type === 'down' && this.myDream < 0) {
       const cw = (b.w - 60) / 2, ch = 100;
       DREAMS.forEach((_, i) => { const cx = b.x + 30 + (i % 2) * cw, cy = b.y + 140 + Math.floor(i / 2) * (ch + 14); if (x > cx && x < cx + cw - 8 && y > cy && y < cy + ch) { this.myDream = i; this.send({ dream: i }); Sfx.play('pop'); } });
@@ -244,8 +245,8 @@ export class BedtimeGame extends Panel {
         if (yes) {
           this.dutchBy = 'me'; this.stepT = 0; this.send({ dutch: true }); this.fx.fart(b.x + b.w / 2, b.y + b.h * 0.55, 2.5); Sfx.play('bigfart'); this.shake = 8;
           this.scene.op({ k: 'need', who: this.scene.myId, need: 'fart', delta: -50 }); this.scene.op({ k: 'need', who: this.scene.myId, need: 'fun', delta: 15 });
-          this.fx.text(b.x + b.w / 2, b.y + b.h * 0.3, 'CUPTORUL OLANDEZ! 😈💨', '#7cb342', 1.2);
-        } else { this.fx.text(b.x + b.w / 2, b.y + b.h * 0.3, 'Ce cuminte ești 😇', '#4ea8de', 1.1); this.next(); }
+          this.fx.text(b.x + b.w / 2, b.y + b.h * 0.3, $t('CUPTORUL OLANDEZ! 😈💨'), '#7cb342', 1.2);
+        } else { this.fx.text(b.x + b.w / 2, b.y + b.h * 0.3, $t('Ce cuminte ești 😇'), '#4ea8de', 1.1); this.next(); }
       }
       return;
     }
@@ -299,10 +300,10 @@ export class BedtimeGame extends Panel {
     };
     switch (this.step) {
       case 'intro':
-        drawBed('none'); T('E timpul de culcare… 🌙', y + 120, 26); T('Rutina noastră de seară', y + 156, 16, '#ffd6e4'); break;
+        drawBed('none'); T($t('E timpul de culcare… 🌙'), y + 120, 26); T($t('Rutina noastră de seară'), y + 156, 16, '#ffd6e4'); break;
       case 'msg':
         drawBed('none'); T('💌 Spune-i ceva frumos', y + 60, 22);
-        if (this.myMsg) T(this.partnerAI || this.theirMsg ? '…' : `Aștept mesajul lui ${this.scene.partner.actor.spec.name}…`, y + 250, 15, '#ffd6e4');
+        if (this.myMsg) T(this.partnerAI || this.theirMsg ? '…' : $t('Aștept mesajul lui {0}…', this.scene.partner.actor.spec.name), y + 250, 15, '#ffd6e4');
         break;
       case 'msgShow': {
         drawBed('none');
@@ -315,18 +316,18 @@ export class BedtimeGame extends Panel {
           ctx.fillStyle = O; ctx.font = '700 15px "Baloo 2", sans-serif'; lines.forEach((l, i) => ctx.fillText(l, bx, by + 34 + i * 20));
           return bh;
         };
-        const h1 = bubble(this.theirMsg ?? '💤', x + w / 2, y + 50, `${this.scene.partner.actor.spec.name} îți spune:`);
-        if (this.myMsg) bubble(this.myMsg, x + w / 2, y + 66 + h1, 'Tu ai spus:');
+        const h1 = bubble(this.theirMsg ?? '💤', x + w / 2, y + 50, $t('{0} îți spune:', this.scene.partner.actor.spec.name));
+        if (this.myMsg) bubble(this.myMsg, x + w / 2, y + 66 + h1, $t('Tu ai spus:'));
         break;
       }
       case 'pos': case 'posShow': {
         if (this.step === 'posShow') {
           drawBed(POSES[this.myPos === this.theirPos ? this.myPos : this.theirPos].id);
           T(this.myPos === this.theirPos ? `Perfect sincron! ${POSES[this.myPos].icon} 💞` : `Tu: ${POSES[this.myPos].label} · ${this.scene.partner.actor.spec.name}: ${POSES[this.theirPos].label}`, y + 70, 18);
-          if (this.myPos !== this.theirPos) T(`…așa că ați făcut cum a vrut ${gen(this.scene.partner.id, 'el', 'ea')} 😅`, y + 100, 14, '#ffd6e4');
+          if (this.myPos !== this.theirPos) T($t('…așa că ați făcut cum a vrut {0} 😅', gen(this.scene.partner.id, 'el', 'ea')), y + 100, 14, '#ffd6e4');
           break;
         }
-        T('🤗 Cum adormim în seara asta?', y + 60, 20); T('Dacă alegeți la fel → bonus!', y + 88, 14, '#ffd6e4');
+        T($t('🤗 Cum adormim în seara asta?'), y + 60, 20); T($t('Dacă alegeți la fel → bonus!'), y + 88, 14, '#ffd6e4');
         const cw = (w - 60) / 2, ch = 110;
         POSES.forEach((p, i) => {
           const cx = x + 30 + (i % 2) * cw, cy = y + 150 + Math.floor(i / 2) * (ch + 14);
@@ -336,7 +337,7 @@ export class BedtimeGame extends Panel {
           this.heads(ctx, cx + (cw - 8) / 2, cy + 62, 0.75, p.id); ctx.restore();
           ctx.fillStyle = this.myPos === i ? '#fff' : O; ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillText(`${p.icon} ${p.label}`, cx + (cw - 8) / 2, cy + ch - 12);
         });
-        if (this.myPos >= 0) T(this.theirPos >= 0 ? '…' : `Aștept alegerea lui ${this.scene.partner.actor.spec.name}…`, y + h - 50, 14, '#ffd6e4');
+        if (this.myPos >= 0) T(this.theirPos >= 0 ? '…' : $t('Aștept alegerea lui {0}…', this.scene.partner.actor.spec.name), y + h - 50, 14, '#ffd6e4');
         break;
       }
       case 'tug': {
@@ -346,30 +347,30 @@ export class BedtimeGame extends Panel {
         drawBed('none');
         ctx.fillStyle = '#ff9ab8'; ctx.strokeStyle = O; ctx.lineWidth = 4;
         ctx.beginPath(); ctx.roundRect(x + 40 - off * (w * 0.3), bedY - 6, w - 80, 70, 22); ctx.fill(); ctx.stroke();
-        T('🛌 Cine fură pătura?!', y + 60, 22);
+        T($t('🛌 Cine fură pătura?!'), y + 60, 22);
         if (this.stepT < 1.5) T(['3', '2', '1'][Math.min(2, Math.floor(this.stepT * 2))], y + 150, 48, '#ffd23f');
-        else T(this.tugWinner ? '' : 'APASĂ CÂT DE REPEDE POȚI!', y + 110, 18, '#ffd23f');
+        else T(this.tugWinner ? '' : $t('APASĂ CÂT DE REPEDE POȚI!'), y + 110, 18, '#ffd23f');
         // bara
         const bx = x + 40, bw = w - 80, by = y + 180;
         ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(bx, by, bw, 24, 12); ctx.fill(); ctx.stroke();
         ctx.fillStyle = '#ff4d6d'; ctx.beginPath(); ctx.arc(bx + bw / 2 - off * bw / 2, by + 12, 14, 0, 7); ctx.fill(); ctx.stroke();
-        ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.fillText('Tu', bx, by + 44); ctx.textAlign = 'right'; ctx.fillText(this.scene.partner.actor.spec.name, bx + bw, by + 44); ctx.textAlign = 'center';
+        ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.fillText($t('Tu'), bx, by + 44); ctx.textAlign = 'right'; ctx.fillText(this.scene.partner.actor.spec.name, bx + bw, by + 44); ctx.textAlign = 'center';
         break;
       }
       case 'dutch': {
         drawBed('none');
         if (this.dutchBy === null) {
-          T('Burtica ta e plină de gaze… 😏', y + 70, 20); T('Ce faci?', y + 100, 16, '#ffd6e4');
+          T($t('Burtica ta e plină de gaze… 😏'), y + 70, 20); T($t('Ce faci?'), y + 100, 16, '#ffd6e4');
           const by = y + h * 0.62;
-          for (const [i, label] of ['😈 Pârț sub pătură', '😇 Fii cuminte'].entries()) {
+          for (const [i, label] of [$t('😈 Pârț sub pătură'), '😇 Fii cuminte'].entries()) {
             const bx = x + 30 + i * (w / 2 - 15);
             ctx.fillStyle = i ? '#7ab8ff' : '#b8e08c'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by, w / 2 - 45, 56, 18); ctx.fill(); ctx.stroke();
             ctx.fillStyle = O; ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.fillText(label, bx + (w / 2 - 45) / 2, by + 28);
           }
         } else if (this.dutchBy === 'them') {
           ctx.fillStyle = `rgba(150,200,90,${0.5 * (1 - this.fan)})`; ctx.fillRect(x, y, w, h);
-          T(`${this.scene.partner.actor.spec.name} a făcut CUPTORUL OLANDEZ! 💨`, y + 70, 18);
-          T('Fă vânt! Atinge repede ecranul!', y + 100, 16, '#ffd23f');
+          T($t('{0} a făcut CUPTORUL OLANDEZ! 💨', this.scene.partner.actor.spec.name), y + 70, 18);
+          T($t('Fă vânt! Atinge repede ecranul!'), y + 100, 16, '#ffd23f');
           ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x + 40, y + 130, w - 80, 22, 11); ctx.fill(); ctx.stroke();
           ctx.fillStyle = '#2ec4b6'; ctx.beginPath(); ctx.roundRect(x + 40, y + 130, (w - 80) * this.fan, 22, 11); ctx.fill();
           if (Math.random() < 0.3) this.fx.fart(x + w / 2 + (Math.random() - 0.5) * w * 0.6, bedY - 20, 1.2);
@@ -378,11 +379,11 @@ export class BedtimeGame extends Panel {
       }
       case 'kiss': {
         drawBed('spoon');
-        T('🌙 Noapte bună!', y + 56, 24);
-        T(this.partnerAI ? 'Ține apăsat ca să-i dai pupic' : 'Țineți apăsat amândoi pentru pupic', y + 88, 15, '#ffd6e4');
+        T($t('🌙 Noapte bună!'), y + 56, 24);
+        T(this.partnerAI ? $t('Ține apăsat ca să-i dai pupic') : $t('Țineți apăsat amândoi pentru pupic'), y + 88, 15, '#ffd6e4');
         // biletelul (optional) si ce ti-a scris celalalt
         if (this.theirMsg && this.theirMsg !== '💤') { ctx.font = '700 14px "Baloo 2", sans-serif'; const lines = wrap(ctx, this.theirMsg, w * 0.6); const bh = 22 + lines.length * 18; ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x + w * 0.18, y + 112, w * 0.64, bh, 14); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#ff4d6d'; ctx.font = '800 12px "Baloo 2", sans-serif'; ctx.fillText(`💌 ${this.scene.partner.actor.spec.name}:`, x + w / 2, y + 124); ctx.fillStyle = O; ctx.font = '700 14px "Baloo 2", sans-serif'; lines.forEach((l, i) => ctx.fillText(l, x + w / 2, y + 142 + i * 18)); }
-        { const nb = this.noteBtn(); if (!this.myMsg) { ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(nb.x, nb.y, nb.w, nb.h, 16); ctx.fill(); ctx.stroke(); ctx.fillStyle = O; ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillText('💌 Scrie-i un bilețel', nb.x + nb.w / 2, nb.y + nb.h / 2 + 1); } else { ctx.font = '700 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffd6e4'; ctx.fillText('💌 Bilețel trimis', nb.x + nb.w / 2, nb.y + nb.h / 2); } }
+        { const nb = this.noteBtn(); if (!this.myMsg) { ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(nb.x, nb.y, nb.w, nb.h, 16); ctx.fill(); ctx.stroke(); ctx.fillStyle = O; ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillText($t('💌 Scrie-i un bilețel'), nb.x + nb.w / 2, nb.y + nb.h / 2 + 1); } else { ctx.font = '700 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffd6e4'; ctx.fillText($t('💌 Bilețel trimis'), nb.x + nb.w / 2, nb.y + nb.h / 2); } }
         const r = 18 + this.kiss * 34;
         heartPath(ctx, x + w / 2, bedY - 118, r); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
         ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff';
@@ -397,12 +398,12 @@ export class BedtimeGame extends Panel {
         ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#c0573e'; ctx.fillText('📖 ' + this.story.title, x + w / 2, by0 + 20);
         const ic = iconCanvas(pg[0], 128); if (ic) { const sz = Math.min(90, bh0 * 0.45); ctx.drawImage(ic, x + w * 0.28 - sz / 2, by0 + bh0 / 2 - sz / 2 + 6, sz, sz); }
         ctx.font = '700 14px "Baloo 2", sans-serif'; ctx.fillStyle = O; wrap(ctx, pg[1], bw0 * 0.42).forEach((l, i) => ctx.fillText(l, x + w * 0.72, by0 + bh0 * 0.32 + i * 20));
-        ctx.font = '700 12px "Baloo 2", sans-serif'; ctx.fillStyle = '#9a8a7a'; ctx.fillText(`${this.page + 1} / ${this.story.pages.length} · atinge ca să dai pagina`, x + w / 2, by0 + bh0 - 14);
+        ctx.font = '700 12px "Baloo 2", sans-serif'; ctx.fillStyle = '#9a8a7a'; ctx.fillText($t('{0} / {1} · atinge ca să dai pagina', this.page + 1, this.story.pages.length), x + w / 2, by0 + bh0 - 14);
         break;
       }
       case 'stars': {
         drawBed('none');
-        T('⭐ Prindeți stelele căzătoare!', y + 50, 20); T(`Dorințe: ${this.caughtStars}`, y + 80, 15, '#ffd6e4');
+        T($t('⭐ Prindeți stelele căzătoare!'), y + 50, 20); T($t('Dorințe: {0}', this.caughtStars), y + 80, 15, '#ffd6e4');
         for (const st of this.stars) { const gr = ctx.createLinearGradient(st.x - 50, st.y - 16, st.x, st.y); gr.addColorStop(0, 'rgba(255,255,220,0)'); gr.addColorStop(1, 'rgba(255,255,220,.95)'); ctx.strokeStyle = gr; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(st.x - 50, st.y - 16); ctx.lineTo(st.x, st.y); ctx.stroke(); ctx.fillStyle = '#fff6b0'; ctx.beginPath(); ctx.arc(st.x, st.y, 4, 0, 7); ctx.fill(); }
         break;
       }
@@ -410,10 +411,10 @@ export class BedtimeGame extends Panel {
         if (this.step === 'dreamShow') {
           drawBed('spoon'); const d = DREAMS[this.myDream === this.theirDream ? this.myDream : this.theirDream];
           const ic = iconCanvas(d.icon, 128); if (ic) { ctx.globalAlpha = 0.85; ctx.drawImage(ic, x + w / 2 - 40, y + 90, 80, 80); ctx.globalAlpha = 1; }
-          T(this.myDream === this.theirDream ? `Visați același vis: ${d.label}! 💞` : `Tu: ${DREAMS[this.myDream].label} · ${this.scene.partner.actor.spec.name}: ${DREAMS[this.theirDream].label}`, y + 60, 17);
+          T(this.myDream === this.theirDream ? $t('Visați același vis: {0}! 💞', d.label) : $t('Tu: {0} · {1}: {2}', DREAMS[this.myDream].label, this.scene.partner.actor.spec.name, DREAMS[this.theirDream].label), y + 60, 17);
           break;
         }
-        T('🌙 Ce visăm la noapte?', y + 60, 20); T('Dacă alegeți la fel → același vis!', y + 88, 14, '#ffd6e4');
+        T($t('🌙 Ce visăm la noapte?'), y + 60, 20); T($t('Dacă alegeți la fel → același vis!'), y + 88, 14, '#ffd6e4');
         const cw = (w - 60) / 2, ch = 100;
         DREAMS.forEach((d, i) => {
           const cx = x + 30 + (i % 2) * cw, cy = y + 140 + Math.floor(i / 2) * (ch + 14);
@@ -421,7 +422,7 @@ export class BedtimeGame extends Panel {
           const ic = iconCanvas(d.icon, 96); if (ic) ctx.drawImage(ic, cx + (cw - 8) / 2 - 26, cy + 10, 52, 52);
           ctx.fillStyle = this.myDream === i ? '#fff' : O; ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillText(d.label, cx + (cw - 8) / 2, cy + ch - 16);
         });
-        if (this.myDream >= 0) T(this.theirDream >= 0 ? '…' : `Aștept alegerea lui ${this.scene.partner.actor.spec.name}…`, y + h - 50, 14, '#ffd6e4');
+        if (this.myDream >= 0) T(this.theirDream >= 0 ? '…' : $t('Aștept alegerea lui {0}…', this.scene.partner.actor.spec.name), y + h - 50, 14, '#ffd6e4');
         break;
       }
       case 'sheep': {
@@ -435,14 +436,14 @@ export class BedtimeGame extends Panel {
           ctx.fillStyle = '#4a3a3a'; ctx.beginPath(); ctx.ellipse(sx + 18, sy - 4, 7, 6, 0, 0, 7); ctx.fill(); ctx.fillRect(sx - 8, sy + 10, 3, 10); ctx.fillRect(sx + 6, sy + 10, 3, 10);
           if (sh.counted) { ctx.font = '800 14px "Baloo 2", sans-serif'; ctx.fillStyle = '#ffd23f'; ctx.fillText('+1', sx, sy - 28); }
         }
-        T('⭐ Numărăm oițe… atinge când sar gardul', y + 50, 17); T(`${this.sheepCount} oițe`, y + 80, 16, '#ffd6e4');
+        T($t('⭐ Numărăm oițe… atinge când sar gardul'), y + 50, 17); T($t('{0} oițe', this.sheepCount), y + 80, 16, '#ffd6e4');
         break;
       }
       case 'night': {
         drawBed('spoon');
         ctx.fillStyle = `rgba(10,10,30,${Math.min(0.75, this.stepT / 2)})`; ctx.fillRect(x, y, w, h);
-        T('Noapte bună, iubire 💕', y + h * 0.35, 28, '#ffd6e4');
-        if (this.theirQuit) T(`${this.scene.partner.actor.spec.name} a adormit deja 😴`, y + h * 0.35 + 40, 17, '#ffd6e4');
+        T($t('Noapte bună, iubire 💕'), y + h * 0.35, 28, '#ffd6e4');
+        if (this.theirQuit) T($t('{0} a adormit deja 😴', this.scene.partner.actor.spec.name), y + h * 0.35 + 40, 17, '#ffd6e4');
         break;
       }
     }

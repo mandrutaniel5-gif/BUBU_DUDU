@@ -2,6 +2,7 @@
 // Totul e tinut in w.stats (numere) si w.town (obiecte), sincronizat prin op-uri.
 import type { WorldState } from './state';
 import type { CharId } from '../char/draw';
+import { $t } from '../i18n';
 
 // ------------------------------------------------------------------ joburi
 export interface JobDef {
@@ -10,13 +11,13 @@ export interface JobDef {
 }
 /** name: [masculin, feminin] */
 export const JOBS: Record<string, JobDef> = {
-  post: { id: 'post', name: ['Poștaș', 'Poștăriță'], place: 'village', building: 'v-post', mini: 'post', base: 26, open: [8, 17], energy: 12, icon: '💌', desc: 'Duci scrisorile prin sat cu bicicleta' },
-  bakery: { id: 'bakery', name: ['Brutar', 'Brutăriță'], place: 'village', building: 'v-bakery', mini: 'bakery', base: 24, open: [6, 13], energy: 12, icon: '🍞', desc: 'Frămânți, modelezi și coci pâinea satului' },
-  cafe: { id: 'cafe', name: ['Barista', 'Barista'], place: 'city', building: 'c-cafe', mini: 'cafe', base: 38, open: [7, 21], energy: 14, icon: '☕', desc: 'Faci cafelele comandate, cât mai repede' },
-  office: { id: 'office', name: ['Funcționar', 'Funcționară'], place: 'city', building: 'c-office', mini: 'office', base: 70, open: [8, 18], energy: 18, requires: 'birou', icon: '💼', desc: 'Sortezi dosarele firmei (ai nevoie de diploma de birou)' },
-  nurse: { id: 'nurse', name: ['Asistent medical', 'Asistentă medicală'], place: 'city', building: 'c-hospital', mini: 'nurse', base: 82, open: [7, 20], energy: 20, requires: 'prim-ajutor', icon: '🩹', desc: 'Îngrijești pacienții spitalului (ai nevoie de diploma de prim ajutor)' },
+  post: { id: 'post', name: [$t('Poștaș'), $t('Poștăriță')], place: 'village', building: 'v-post', mini: 'post', base: 26, open: [8, 17], energy: 12, icon: '💌', desc: $t('Duci scrisorile prin sat cu bicicleta') },
+  bakery: { id: 'bakery', name: ['Brutar', $t('Brutăriță')], place: 'village', building: 'v-bakery', mini: 'bakery', base: 24, open: [6, 13], energy: 12, icon: '🍞', desc: $t('Frămânți, modelezi și coci pâinea satului') },
+  cafe: { id: 'cafe', name: ['Barista', 'Barista'], place: 'city', building: 'c-cafe', mini: 'cafe', base: 38, open: [7, 21], energy: 14, icon: '☕', desc: $t('Faci cafelele comandate, cât mai repede') },
+  office: { id: 'office', name: [$t('Funcționar'), $t('Funcționară')], place: 'city', building: 'c-office', mini: 'office', base: 70, open: [8, 18], energy: 18, requires: 'birou', icon: '💼', desc: $t('Sortezi dosarele firmei (ai nevoie de diploma de birou)') },
+  nurse: { id: 'nurse', name: ['Asistent medical', $t('Asistentă medicală')], place: 'city', building: 'c-hospital', mini: 'nurse', base: 82, open: [7, 20], energy: 20, requires: 'prim-ajutor', icon: '🩹', desc: $t('Îngrijești pacienții spitalului (ai nevoie de diploma de prim ajutor)') },
 };
-export const LEVEL_NAMES = [['Începător', 'Începătoare'], ['Priceput', 'Pricepută'], ['Expert', 'Expertă'], ['Șef de tură', 'Șefă de tură']];
+export const LEVEL_NAMES = [[$t('Începător'), $t('Începătoare')], ['Priceput', $t('Pricepută')], ['Expert', $t('Expertă')], [$t('Șef de tură'), $t('Șefă de tură')]];
 export const LEVEL_MULT = [1, 1.25, 1.55, 1.9];
 /** cate ture bune (peste 70%) iti trebuie ca sa urci la nivelul urmator */
 export const LEVEL_NEED = [3, 4, 6];
@@ -30,10 +31,10 @@ export const hasDiploma = (w: WorldState, course: string, who: CharId) => st(w, 
 /** de ce nu poti lucra acum (sau null daca poti) */
 export function jobBlock(w: WorldState, job: JobDef, who: CharId, energy: number, female: boolean): string | null {
   const h = w.minutes / 60;
-  if (h < job.open[0] || h >= job.open[1]) return `${job.icon} Programul e între ${job.open[0]}:00 și ${job.open[1]}:00`;
-  if (job.requires && !hasDiploma(w, job.requires, who)) return `🎓 Ai nevoie de ${COURSES[job.requires].name} (Universitatea din oraș)`;
-  if (st(w, jobKey(job.id, who, 'day')) === w.day) return `${job.icon} Ai lucrat deja azi aici. Revino mâine! (o tură pe zi)`;
-  if (energy < job.energy + 6) return `😴 Ești prea ${female ? 'obosită' : 'obosit'} pentru o tură (îți trebuie ${job.energy + 6}% energie)`;
+  if (h < job.open[0] || h >= job.open[1]) return $t('{0} Programul e între {1}:00 și {2}:00', job.icon, job.open[0], job.open[1]);
+  if (job.requires && !hasDiploma(w, job.requires, who)) return $t('🎓 Ai nevoie de {0} (Universitatea din oraș)', COURSES[job.requires].name);
+  if (st(w, jobKey(job.id, who, 'day')) === w.day) return $t('{0} Ai lucrat deja azi aici. Revino mâine! (o tură pe zi)', job.icon);
+  if (energy < job.energy + 6) return $t('😴 Ești prea {0} pentru o tură (îți trebuie {1}% energie)', female ? $t('obosită') : $t('obosit'), job.energy + 6);
   return null;
 }
 /** plata pentru o tura: baza x nivel x cat de bine ai lucrat (0..1.2) */
@@ -43,47 +44,47 @@ export const jobPay = (w: WorldState, job: JobDef, who: CharId, perf: number) =>
 export interface CourseDef { id: string; name: string; price: number; icon: string; desc: string; questions: { q: string; a: string[]; ok: number }[] }
 export const COURSES: Record<string, CourseDef> = {
   birou: {
-    id: 'birou', name: 'Cursul de birou', price: 220, icon: '💻', desc: 'Calculator, documente, e-mail. Deschide jobul de la birou.',
+    id: 'birou', name: $t('Cursul de birou'), price: 220, icon: '💻', desc: $t('Calculator, documente, e-mail. Deschide jobul de la birou.'),
     questions: [
-      { q: 'Unde salvezi un document ca să nu-l pierzi?', a: ['Pe hârtie de ziar', 'Într-un dosar pe calculator 💾', 'În frigider'], ok: 1 },
-      { q: 'Ce faci cu o factură plătită?', a: ['O arunci', 'O pui la dosarul „Facturi” 📁', 'O mănânci'], ok: 1 },
-      { q: 'Cum scrii un e-mail politicos?', a: ['„Bună ziua, …, Mulțumesc!” ✉️', 'Doar cu majuscule', 'Cu 20 de emoji'], ok: 0 },
-      { q: 'Ce înseamnă un „termen limită”?', a: ['Ziua până la care trebuie gata ⏰', 'Un fel de prăjitură', 'Pauza de masă'], ok: 0 },
-      { q: 'Colegul îți cere ajutor. Ce faci?', a: ['Îl ignori', 'Îl ajuți, apoi îți termini treaba 🤝', 'Pleci acasă'], ok: 1 },
-      { q: 'Ce e un tabel?', a: ['Rânduri și coloane cu date 📊', 'O masă de bucătărie', 'Un cântec'], ok: 0 },
-      { q: 'Ce faci înainte să închizi calculatorul?', a: ['Salvezi tot 💾', 'Tragi de cablu', 'Nimic'], ok: 0 },
+      { q: $t('Unde salvezi un document ca să nu-l pierzi?'), a: [$t('Pe hârtie de ziar'), $t('Într-un dosar pe calculator 💾'), $t('În frigider')], ok: 1 },
+      { q: $t('Ce faci cu o factură plătită?'), a: [$t('O arunci'), $t('O pui la dosarul „Facturi” 📁'), $t('O mănânci')], ok: 1 },
+      { q: $t('Cum scrii un e-mail politicos?'), a: [$t('„Bună ziua, …, Mulțumesc!” ✉️'), $t('Doar cu majuscule'), $t('Cu 20 de emoji')], ok: 0 },
+      { q: $t('Ce înseamnă un „termen limită”?'), a: [$t('Ziua până la care trebuie gata ⏰'), $t('Un fel de prăjitură'), $t('Pauza de masă')], ok: 0 },
+      { q: $t('Colegul îți cere ajutor. Ce faci?'), a: [$t('Îl ignori'), $t('Îl ajuți, apoi îți termini treaba 🤝'), $t('Pleci acasă')], ok: 1 },
+      { q: $t('Ce e un tabel?'), a: [$t('Rânduri și coloane cu date 📊'), $t('O masă de bucătărie'), $t('Un cântec')], ok: 0 },
+      { q: $t('Ce faci înainte să închizi calculatorul?'), a: [$t('Salvezi tot 💾'), $t('Tragi de cablu'), 'Nimic'], ok: 0 },
     ],
   },
   'prim-ajutor': {
-    id: 'prim-ajutor', name: 'Cursul de prim ajutor', price: 270, icon: '🩹', desc: 'Îngrijirea bolnavilor. Deschide jobul de la spital.',
+    id: 'prim-ajutor', name: $t('Cursul de prim ajutor'), price: 270, icon: '🩹', desc: $t('Îngrijirea bolnavilor. Deschide jobul de la spital.'),
     questions: [
-      { q: 'Cineva are febră mare. Ce îi dai?', a: ['Înghețată', 'Medicament pentru febră și apă 💊', 'Cafea'], ok: 1 },
-      { q: 'Ce pui pe o zgârietură curată?', a: ['Un plasture 🩹', 'Sare', 'Lipici'], ok: 0 },
-      { q: 'Ce faci întâi la o rană care sângerează?', a: ['Apeși cu un pansament curat', 'Fugi', 'O speli cu suc'], ok: 0 },
-      { q: 'Cum îl ajuți pe cel care tușește?', a: ['Ceai cald și sirop 🍵', 'Îl pui să alerge', 'Îl duci în ploaie'], ok: 0 },
-      { q: 'Cât ține termometrul sub braț?', a: ['O secundă', 'Câteva minute 🌡️', 'O zi'], ok: 1 },
-      { q: 'Pacientul e trist și speriat. Ce faci?', a: ['Îl liniștești cu blândețe 💕', 'Țipi la el', 'Râzi de el'], ok: 0 },
-      { q: 'Ce te speli pe mâini înainte să îngrijești pe cineva?', a: ['Nu e nevoie', 'Întotdeauna, cu săpun 🧼', 'Doar duminica'], ok: 1 },
+      { q: $t('Cineva are febră mare. Ce îi dai?'), a: [$t('Înghețată'), $t('Medicament pentru febră și apă 💊'), 'Cafea'], ok: 1 },
+      { q: $t('Ce pui pe o zgârietură curată?'), a: [$t('Un plasture 🩹'), 'Sare', 'Lipici'], ok: 0 },
+      { q: $t('Ce faci întâi la o rană care sângerează?'), a: [$t('Apeși cu un pansament curat'), 'Fugi', $t('O speli cu suc')], ok: 0 },
+      { q: $t('Cum îl ajuți pe cel care tușește?'), a: [$t('Ceai cald și sirop 🍵'), $t('Îl pui să alerge'), $t('Îl duci în ploaie')], ok: 0 },
+      { q: $t('Cât ține termometrul sub braț?'), a: [$t('O secundă'), $t('Câteva minute 🌡️'), $t('O zi')], ok: 1 },
+      { q: $t('Pacientul e trist și speriat. Ce faci?'), a: [$t('Îl liniștești cu blândețe 💕'), $t('Țipi la el'), $t('Râzi de el')], ok: 0 },
+      { q: $t('Ce te speli pe mâini înainte să îngrijești pe cineva?'), a: [$t('Nu e nevoie'), $t('Întotdeauna, cu săpun 🧼'), $t('Doar duminica')], ok: 1 },
     ],
   },
   florist: {
-    id: 'florist', name: 'Cursul de florist', price: 250, icon: '💐', desc: 'Buchete mai frumoase: la Florăria lui Bubu clienții plătesc mai mult.',
+    id: 'florist', name: $t('Cursul de florist'), price: 250, icon: '💐', desc: $t('Buchete mai frumoase: la Florăria lui Bubu clienții plătesc mai mult.'),
     questions: [
-      { q: 'Ce flori se dăruiesc din dragoste?', a: ['Trandafiri roșii 🌹', 'Urzici', 'Cactuși'], ok: 0 },
-      { q: 'Cum ții florile proaspete mai mult?', a: ['Apă curată și tăieturi oblice ✂️', 'Fără apă', 'La soare puternic'], ok: 0 },
-      { q: 'Ce se pune într-un buchet de primăvară?', a: ['Lalele 🌷', 'Frunze uscate', 'Pietre'], ok: 0 },
-      { q: 'Ce flori iubesc soarele?', a: ['Floarea-soarelui 🌻', 'Ciupercile', 'Mușchiul'], ok: 0 },
-      { q: 'Cât de des schimbi apa din vază?', a: ['O dată pe an', 'La 1–2 zile 💧', 'Niciodată'], ok: 1 },
+      { q: $t('Ce flori se dăruiesc din dragoste?'), a: [$t('Trandafiri roșii 🌹'), 'Urzici', $t('Cactuși')], ok: 0 },
+      { q: $t('Cum ții florile proaspete mai mult?'), a: [$t('Apă curată și tăieturi oblice ✂️'), $t('Fără apă'), $t('La soare puternic')], ok: 0 },
+      { q: $t('Ce se pune într-un buchet de primăvară?'), a: ['Lalele 🌷', 'Frunze uscate', 'Pietre'], ok: 0 },
+      { q: $t('Ce flori iubesc soarele?'), a: ['Floarea-soarelui 🌻', 'Ciupercile', $t('Mușchiul')], ok: 0 },
+      { q: $t('Cât de des schimbi apa din vază?'), a: [$t('O dată pe an'), $t('La 1–2 zile 💧'), $t('Niciodată')], ok: 1 },
     ],
   },
   tamplar: {
-    id: 'tamplar', name: 'Cursul de tâmplar', price: 250, icon: '🪚', desc: 'Mobilă mai fină: la Tâmplăria lui Dudu câștigi cu 30% mai mult.',
+    id: 'tamplar', name: $t('Cursul de tâmplar'), price: 250, icon: '🪚', desc: $t('Mobilă mai fină: la Tâmplăria lui Dudu câștigi cu 30% mai mult.'),
     questions: [
-      { q: 'Cu ce tai o scândură drept?', a: ['Cu fierăstrăul 🪚', 'Cu lingura', 'Cu foarfeca de unghii'], ok: 0 },
-      { q: 'Ce faci înainte să tai?', a: ['Măsori de două ori 📏', 'Închizi ochii', 'Nimic'], ok: 0 },
-      { q: 'Cum faci lemnul neted?', a: ['Cu șmirghel', 'Cu apă', 'Cu lipici'], ok: 0 },
-      { q: 'Ce porți ca să-ți protejezi ochii?', a: ['Ochelari de protecție 🥽', 'Ochelari de soare', 'Nimic'], ok: 0 },
-      { q: 'Din ce lemn faci o masă rezistentă?', a: ['Stejar 🌳', 'Carton', 'Hârtie'], ok: 0 },
+      { q: $t('Cu ce tai o scândură drept?'), a: [$t('Cu fierăstrăul 🪚'), $t('Cu lingura'), $t('Cu foarfeca de unghii')], ok: 0 },
+      { q: $t('Ce faci înainte să tai?'), a: [$t('Măsori de două ori 📏'), $t('Închizi ochii'), 'Nimic'], ok: 0 },
+      { q: $t('Cum faci lemnul neted?'), a: [$t('Cu șmirghel'), $t('Cu apă'), $t('Cu lipici')], ok: 0 },
+      { q: $t('Ce porți ca să-ți protejezi ochii?'), a: [$t('Ochelari de protecție 🥽'), $t('Ochelari de soare'), 'Nimic'], ok: 0 },
+      { q: $t('Din ce lemn faci o masă rezistentă?'), a: ['Stejar 🌳', 'Carton', $t('Hârtie')], ok: 0 },
     ],
   },
 };
@@ -91,18 +92,18 @@ export const COURSES: Record<string, CourseDef> = {
 // ------------------------------------------------------------------ satenii (cereri + reputatie)
 export interface Villager { id: string; spec: string; name: string; likes: string[]; hello: string[] }
 export const VILLAGERS: Villager[] = [
-  { id: 'leana', spec: 'granny', name: 'Bunica Leana', likes: ['carrot', 'potato', 'cabbage', 'meals'], hello: ['Ce copii frumoși! 🥰', 'Vă fac o plăcintă duminică!', 'Pe vremea mea…'] },
-  { id: 'ina', spec: 'bunny', name: 'Ina', likes: ['tulip', 'rose', 'flower', 'strawberry'], hello: ['Bună! 🌸', 'Ce flori frumoase aveți!', 'Mergem la roata mare?'] },
-  { id: 'gogu', spec: 'pig', name: 'Nea Gogu', likes: ['wood', 'stone', 'potato'], hello: ['Salutare, vecine!', 'Îmi repar gardul… 🔨', 'Cum merge grădina?'] },
-  { id: 'miti', spec: 'cat', name: 'Miți', likes: ['fish', 'mushroom', 'berry'], hello: ['Miau! 🐟', 'Aveți pește?', 'Prr…'] },
-  { id: 'rita', spec: 'fox', name: 'Rita', likes: ['sunflower', 'tomato', 'strawberry'], hello: ['Hei! 🦊', 'Am auzit că aveți tarabă!', 'Ce haine faine!'] },
-  { id: 'rex', spec: 'dog', name: 'Rex', likes: ['wood', 'meals', 'fish'], hello: ['Ham! 🐶', 'Am o scrisoare pentru voi… glumesc!', 'Ce zi frumoasă!'] },
+  { id: 'leana', spec: 'granny', name: $t('Bunica Leana'), likes: ['carrot', 'potato', 'cabbage', 'meals'], hello: [$t('Ce copii frumoși! 🥰'), $t('Vă fac o plăcintă duminică!'), $t('Pe vremea mea…')] },
+  { id: 'ina', spec: 'bunny', name: $t('Ina'), likes: ['tulip', 'rose', 'flower', 'strawberry'], hello: [$t('Bună! 🌸'), $t('Ce flori frumoase aveți!'), $t('Mergem la roata mare?')] },
+  { id: 'gogu', spec: 'pig', name: $t('Nea Gogu'), likes: ['wood', 'stone', 'potato'], hello: ['Salutare, vecine!', $t('Îmi repar gardul… 🔨'), $t('Cum merge grădina?')] },
+  { id: 'miti', spec: 'cat', name: $t('Miți'), likes: ['fish', 'mushroom', 'berry'], hello: ['Miau! 🐟', $t('Aveți pește?'), 'Prr…'] },
+  { id: 'rita', spec: 'fox', name: $t('Rita'), likes: ['sunflower', 'tomato', 'strawberry'], hello: ['Hei! 🦊', $t('Am auzit că aveți tarabă!'), $t('Ce haine faine!')] },
+  { id: 'rex', spec: 'dog', name: $t('Rex'), likes: ['wood', 'meals', 'fish'], hello: ['Ham! 🐶', $t('Am o scrisoare pentru voi… glumesc!'), $t('Ce zi frumoasă!')] },
 ];
 export interface Quest { id: string; who: string; res: string; qty: number; pay: number; day: number; done?: boolean }
 
 /** reputatia in sat = suma prieteniilor */
 export const reputation = (w: WorldState) => VILLAGERS.reduce((a, v) => a + st(w, 'friend-' + v.id), 0);
-export const REP_LEVELS = [{ at: 0, name: 'Nou-veniți', bonus: 0 }, { at: 4, name: 'Cunoscuți', bonus: 0.05 }, { at: 10, name: 'Vecini dragi', bonus: 0.1 }, { at: 18, name: 'Sufletul satului', bonus: 0.15 }];
+export const REP_LEVELS = [{ at: 0, name: $t('Nou-veniți'), bonus: 0 }, { at: 4, name: $t('Cunoscuți'), bonus: 0.05 }, { at: 10, name: $t('Vecini dragi'), bonus: 0.1 }, { at: 18, name: $t('Sufletul satului'), bonus: 0.15 }];
 export const repLevel = (w: WorldState) => { const r = reputation(w); let L = REP_LEVELS[0]; for (const l of REP_LEVELS) if (r >= l.at) L = l; return L; };
 /** reducere la magazinele din sat / bonus la piata */
 export const villageBonus = (w: WorldState) => repLevel(w).bonus;
@@ -137,11 +138,11 @@ export const bankOf = (w: WorldState): Bank => ({ savings: 0, loanLeft: 0, late:
 // ------------------------------------------------------------------ mall: mobila pentru apartament
 export interface DecorDef { id: string; label: string; icon: string; price: number; type: string; gx: number; gy: number; w: number; d: number; action?: { id: string; label: string; icon: string }; desc: string }
 export const DECOR: DecorDef[] = [
-  { id: 'aquarium', label: 'Acvariu cu peștișori', icon: '🐟', price: 300, type: 'aquarium', gx: 3, gy: 9, w: 1, d: 1, action: { id: 'aquarium', label: 'Privește peștișorii', icon: '🐟' }, desc: 'Relaxare: +distracție' },
-  { id: 'piano', label: 'Pian', icon: '🎹', price: 1100, type: 'piano', gx: 10, gy: 4, w: 2, d: 2, action: { id: 'piano', label: 'Cântă la pian', icon: '🎹' }, desc: 'Cântați împreună: +iubire, +distracție' },
-  { id: 'console', label: 'Consolă de jocuri', icon: '🎮', price: 480, type: 'console', gx: 4, gy: 10, w: 1, d: 1, action: { id: 'console', label: 'Joacă pe consolă', icon: '🎮' }, desc: 'Jocuri video în doi: +distracție mare' },
-  { id: 'coffee', label: 'Espressor', icon: '☕', price: 260, type: 'coffeemachine', gx: 15, gy: 8, w: 1, d: 1, action: { id: 'coffee', label: 'Fă o cafea', icon: '☕' }, desc: 'O cafea pe zi: +energie' },
-  { id: 'painting', label: 'Tablou cu inimioare', icon: '🖼️', price: 150, type: 'painting', gx: 7, gy: 8, w: 1, d: 1, desc: 'Decor: casa e mai frumoasă' },
-  { id: 'bigplant', label: 'Plantă mare', icon: '🪴', price: 100, type: 'bigplant', gx: 11, gy: 13, w: 1, d: 1, action: { id: 'water_plant', label: 'Udă planta', icon: '🪴' }, desc: 'Decor viu' },
-  { id: 'lamp', label: 'Lampă de podea', icon: '💡', price: 140, type: 'floorlamp', gx: 9, gy: 13, w: 1, d: 1, desc: 'Lumină caldă seara' },
+  { id: 'aquarium', label: $t('Acvariu cu peștișori'), icon: '🐟', price: 300, type: 'aquarium', gx: 3, gy: 9, w: 1, d: 1, action: { id: 'aquarium', label: $t('Privește peștișorii'), icon: '🐟' }, desc: $t('Relaxare: +distracție') },
+  { id: 'piano', label: $t('Pian'), icon: '🎹', price: 1100, type: 'piano', gx: 10, gy: 4, w: 2, d: 2, action: { id: 'piano', label: $t('Cântă la pian'), icon: '🎹' }, desc: $t('Cântați împreună: +iubire, +distracție') },
+  { id: 'console', label: $t('Consolă de jocuri'), icon: '🎮', price: 480, type: 'console', gx: 4, gy: 10, w: 1, d: 1, action: { id: 'console', label: $t('Joacă pe consolă'), icon: '🎮' }, desc: $t('Jocuri video în doi: +distracție mare') },
+  { id: 'coffee', label: $t('Espressor'), icon: '☕', price: 260, type: 'coffeemachine', gx: 15, gy: 8, w: 1, d: 1, action: { id: 'coffee', label: $t('Fă o cafea'), icon: '☕' }, desc: $t('O cafea pe zi: +energie') },
+  { id: 'painting', label: $t('Tablou cu inimioare'), icon: '🖼️', price: 150, type: 'painting', gx: 7, gy: 8, w: 1, d: 1, desc: $t('Decor: casa e mai frumoasă') },
+  { id: 'bigplant', label: $t('Plantă mare'), icon: '🪴', price: 100, type: 'bigplant', gx: 11, gy: 13, w: 1, d: 1, action: { id: 'water_plant', label: $t('Udă planta'), icon: '🪴' }, desc: $t('Decor viu') },
+  { id: 'lamp', label: $t('Lampă de podea'), icon: '💡', price: 140, type: 'floorlamp', gx: 9, gy: 13, w: 1, d: 1, desc: $t('Lumină caldă seara') },
 ];
