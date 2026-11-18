@@ -468,3 +468,4 @@ html.h520l .menu-card .myname { margin-top:3px; font-size:12px; } html.h520l .me
 /* 1.14.1: ferestrele incap si cand ecranul e foarte mic (tastatura deschisa pe telefon intors) */
 @supports (height: 1dvh) { .modal .box { max-height: min(86vh, 86dvh); } }
 @media (max-height: 320px) { .modal { align-items: flex-start; padding: 6px; } .modal .box { max-height: calc(100dvh - 12px); padding: 8px 12px; } .bugshot { width: fit-content; margin: 4px auto; } .bugshot img { width: auto; max-width: 100%; max-height: 28dvh; } }
+.langrow label { display:flex; gap:8px; align-items:center; justify-content:center; font-weight:800; width:100%; } .langrow select { font:700 15px "Baloo 2", sans-serif; border:3px solid var(--ink); border-radius:12px; padding:3px 8px; background:#fff; color:var(--ink); }

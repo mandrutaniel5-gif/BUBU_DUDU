@@ -14,7 +14,7 @@ import type { NetConfig } from '../net/types';
 import type { CharId } from '../char/draw';
 import { createHouse, joinHouse, normCode, watchSeats, type Seats } from '../net/house';
 import { seatTaken } from '../net/adapters';
-import { $t } from '../i18n';
+import { $t, LANGS, lang, setLang, type Lang } from '../i18n';
 
 // 1.13.0: personajele nu mai au nume fixe. Pana se stie numele (din salvare), scrie cine e: ea (hamsterita alba) / el (hamsterul auriu)
 const ROLE: Record<CharId, string> = { bubu: $t('Ea (hamsterița)'), dudu: $t('El (hamsterul)') } as Record<CharId, string>;
@@ -311,6 +311,7 @@ export class MenuScene implements Scene {
   showSettings() {
     const s = Settings.get();
     this.dialog(`<h3>${$t('⚙ Setări')}</h3>
+      <div class="row2 langrow"><label>🌐 ${$t('Limba')} <select class="lang">${LANGS.map(l => `<option value="${l.id}"${l.id === lang ? ' selected' : ''}>${l.flag} ${l.name}</option>`).join('')}</select></label></div>
       <div class="row2"><button class="mute">${s.muted ? $t('🔇 Sunet: oprit') : $t('🔊 Sunet: pornit')}</button><button class="eco" title="${$t('Economisire baterie: mai puține cadre pe secundă când stați')}">${isEco() ? $t('🔋 Eco: pornit') : $t('⚡ Eco: oprit')}</button></div>
       <div class="row2"><button class="errs" title="${$t('Erorile jocului (le poți copia și trimite)')}">${$t('📋 Erori ({0})', ErrorLog.all().length)}</button><button class="credits">${$t('📜 Credite')}</button></div>
       ${DEV ? `<div class="devbox"><h4>${$t('🧪 Modul dezvoltator')}</h4><p class="sub">${$t('Uneltele (totul nelimitat, capitole, zile, sărbători) merg doar în lumea de test: nu se scrie nimic în casele voastre online.')}</p>
@@ -322,6 +323,8 @@ export class MenuScene implements Scene {
         <button class="tester">${Bugs.on() ? $t('🐞 Mod tester: pornit') : $t('🐞 Pornește modul tester')}</button></div>
       <div class="row2"><button class="xcred">${$t('Închide')}</button></div>`);
     // ascuns: atingi de 5 ori versiunea si apare locul pentru cod
+    // limba: se tine minte si jocul porneste din nou in ea (din meniu; casa si salvarile raman)
+    (this.ui.querySelector('select.lang') as HTMLSelectElement | null)?.addEventListener('change', e => setLang((e.target as HTMLSelectElement).value as Lang));
     let taps = 0; const v = this.ui.querySelector('.vtap') as HTMLElement;
     v.addEventListener('click', () => { if (++taps >= 5 && !DEV) this.ui.querySelector('.devcode')!.classList.remove('hidden'); });
   }
