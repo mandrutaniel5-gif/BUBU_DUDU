@@ -32,7 +32,8 @@ export class SoupGame extends CarePanel {
   knife = 0;
   constructor(scene: WorldScene, done: (s: number) => void) {
     super(scene, done, g(scene.partner.id, '🍲 Supă pentru bolnăvior', '🍲 Supă pentru bolnăvioară'), 'Atinge legumele ca să le tai, apoi amestecă în cerc');
-    for (let i = 0; i < 5; i++) this.veg.push({ kind: i % 3, x: 0.22 + i * 0.14, y: 0.42, cuts: 0, done: false, fly: 0, vx: 0, vy: 0 });
+    for (let i = 0; i < 5; i++) this.veg.push({ kind: i % 3, x: 0.18 + i * 0.12, y: 0.42, // 1.14.2: toate pe tocator (a cincea ajungea pe patul bolnavului)
+      cuts: 0, done: false, fly: 0, vx: 0, vy: 0 });
     this.hero.play('act_cook'); this.patient.play('sick');
   }
   tick(dt: number) {
@@ -120,7 +121,7 @@ export class SoupGame extends CarePanel {
 
 // ---------------------------------------------------------------- 💊 Avionul cu lingurita
 export class MedicineGame extends CarePanel {
-  spoonX = 0.5; headX = 0.5; headV = 0.35; mouthOpen = 0; fed = 0; flying = 0; miss = 0;
+  spoonX = 0.5; headX = 0.5; headV = 0.24; mouthOpen = 0; fed = 0; flying = 0; miss = 0;
   keysDown = new Set<string>();
   constructor(scene: WorldScene, done: (s: number) => void) {
     super(scene, done, '💊 Vine avionul!', 'Mișcă lingurița (deget / ← →) și apasă când gura e deschisă');
@@ -128,22 +129,26 @@ export class MedicineGame extends CarePanel {
   }
   tick(dt: number) {
     // capul se fereste
-    this.headX += this.headV * dt * (1 + this.fed * 0.3);
-    if (this.headX < 0.2 || this.headX > 0.8) this.headV *= -1;
-    if (Math.random() < dt * 0.8) this.headV *= -1;
-    this.mouthOpen = Math.max(0, Math.sin(this.t * 1.7) * 1.4 - 0.4);
+    // 1.14.2 (raport: „prea greu”): capul se misca mai incet si nu se mai intoarce in timp ce zboara lingurita,
+    // gura sta deschisa mai mult, iar lingurita in zbor se duce singura spre gura (o mai poti rata, dar nu din noroc)
+    if (!this.flying) {
+      this.headX += this.headV * dt * (1 + this.fed * 0.2);
+      if (this.headX < 0.22 || this.headX > 0.78) this.headV *= -1;
+      if (Math.random() < dt * 0.35) this.headV *= -1;
+    } else this.spoonX += (this.headX - this.spoonX) * Math.min(1, dt * 4);
+    this.mouthOpen = Math.max(0, Math.sin(this.t * 1.5) * 1.4 - 0.15);
     if (this.keysDown.has('arrowleft') || this.keysDown.has('a')) this.spoonX = Math.max(0.1, this.spoonX - dt * 0.9);
     if (this.keysDown.has('arrowright') || this.keysDown.has('d')) this.spoonX = Math.min(0.9, this.spoonX + dt * 0.9);
     if (this.flying > 0) {
       this.flying += dt * 2.2;
       if (this.flying >= 1) {
         this.flying = 0;
-        const hit = Math.abs(this.spoonX - this.headX) < 0.09 && this.mouthOpen > 0.25;
+        const hit = Math.abs(this.spoonX - this.headX) < 0.13 && this.mouthOpen > 0.2;
         const b = this.box;
         if (hit) { this.fed++; Sfx.play('gulp'); Sfx.play('good', { vol: 0.5 }); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, ['Hamm!', 'Mmm!', 'Bleah... dar bun!'][this.fed % 3], '#2ec4b6', 1.1); this.patient.play('shy'); }
         else { this.miss++; Sfx.play('bad'); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, 'Nu vreau! 🙅', '#e63946', 1.1); this.patient.play('angry'); this.fx.burst('drop', b.x + this.spoonX * b.w, b.y + b.h * 0.3, 10, 3, 150, { grav: 300, color: '#ff6f91', max: 0.7 }); }
         if (this.fed >= 3) { this.finish(1.4, 'A luat medicamentul! 💊✨'); this.patient.play('love'); }
-        if (this.miss >= 5) this.finish(0, 'S-a ascuns sub pătură 🙈');
+        if (this.miss >= 6) this.finish(0, 'S-a ascuns sub pătură 🙈');
       }
     }
     if (!this.patient.busy) this.patient.play('sick');
@@ -157,7 +162,7 @@ export class MedicineGame extends CarePanel {
     this.bed(ctx, x + w / 2, y + h * 0.5, w * 0.8);
     const hx = x + this.headX * w, hy = y + h * 0.36;
     this.patient.scale = 1.6; this.patient.x = hx; this.patient.y = hy; this.patient.pose.headOnly = true;
-    if (this.mouthOpen > 0.25 && !this.patient.busy) { this.patient.pose.mouth = 'scream'; this.patient.pose.eyes = 'closed'; }
+    if (this.mouthOpen > 0.2 && !this.patient.busy) { this.patient.pose.mouth = 'scream'; this.patient.pose.eyes = 'closed'; }
     else if (!this.patient.busy) { this.patient.pose.mouth = 'flat'; }
     this.patient.draw(ctx);
     // termometrul din coltul gurii
@@ -174,6 +179,7 @@ export class MedicineGame extends CarePanel {
     ctx.beginPath(); ctx.moveTo(5, 26); ctx.lineTo(40, 36); ctx.lineTo(5, 40); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
     if (this.flying > 0) { ctx.fillStyle = '#3a2a22'; ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Bzzzzz… ✈️', sx + 60, sy); }
+    else if (this.mouthOpen > 0.2) { ctx.fillStyle = '#2ec4b6'; ctx.font = '900 22px "Baloo 2", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Acum! Gura e deschisă 👄', x + w / 2, y + h * 0.66); }
     ctx.fillStyle = '#3a2a22'; ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.textAlign = 'left';
     ctx.fillText(`Lingurițe: ${'💊'.repeat(this.fed)}${'⚪'.repeat(3 - this.fed)}`, x + 20, y + 52);
   }

@@ -23,7 +23,7 @@ import pkg from '../../package.json';
 import { RECIPE, RECIPES, canCook, consumeList, bestRecipe, bestDish, dishCount, dishKey, dishesOwned, READY_MEAL } from '../game/food';
 import { g } from '../game/gender';
 import type { Scene, Game } from '../engine/game';
-import { iso, unIso, screenDirToGrid, isoBox, boxOf, TW, TH } from '../world/iso';
+import { iso, unIso, screenDirToGrid, isoBox, boxOf, shade, TW, TH } from '../world/iso';
 import { iconCanvas } from '../ui/icons';
 import { FURNITURE, WALLS, MAP_W, MAP_H, YARD_H, YARD_GATE, BACK_GATE, type Furn, type Wall, resetAreas, currentArea } from '../world/map';
 import { drawFurn, drawWall, drawYardFence, drawYardGate, type FurnState } from '../world/furniture';
@@ -408,6 +408,8 @@ export function drawPawn(scene: WorldScene, ctx: CanvasRenderingContext2D, p: Pa
   if (p.activity?.a.place === 'sofa') { // spatarul canapelei acopera spatele personajului
     const f = p.activity.furn;
     isoBox(ctx, f.gx + 0.72, f.gy + 0.22, 0.22, f.d - 0.44, 30, boxOf('#83b9f0'));
+    // 1.14.2: si bratul din fata al canapelei (hamsterii pufosi ieseau peste el: „sta pe canapea dar corpul e peste ea”)
+    if (f.type === 'sofa') isoBox(ctx, f.gx + 0.1, f.gy + f.d - 0.22, 0.8, 0.22, 28, boxOf(shade('#8ec5ff', 0.95)));
   }
   // eticheta cu numele + starea
   const s = iso(p.gx, p.gy, p.z);

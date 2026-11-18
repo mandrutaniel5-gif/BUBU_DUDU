@@ -104,12 +104,15 @@ export class FirebaseAdapter extends Base {
       this.unsub.push(fb.onChildAdded(evRef, (snap: any) => { const v = snap.val(); if (!v || v.from === me) return; this.onEvent?.(v.e); fb.remove(snap.ref).catch(() => {}); }));
       // conexiunea reala cu Firebase (online / reconectare)
       this.off = off; this.unsub.push(fb.onValue(fb.ref(this.db, '.info/serverTimeOffset'), (s2: any) => { this.off = Number(s2.val()) || 0; }));
-      this.unsub.push(fb.onValue(fb.ref(this.db, '.info/connected'), (snap: any) => { if (snap.val() === true) { this.setStatus('online'); fb.update(meRef, { online: true, ts: fb.serverTimestamp(), dev }); fb.onDisconnect(meRef).update({ online: false }); } else this.setStatus('connecting'); }));
+      this.unsub.push(fb.onValue(fb.ref(this.db, '.info/connected'), (snap: any) => { this.connected = snap.val() === true; if (snap.val() === true) { this.setStatus('online'); fb.update(meRef, { online: true, ts: fb.serverTimestamp(), dev }); fb.onDisconnect(meRef).update({ online: false }); } else this.setStatus('connecting'); }));
       this.setStatus('online');
     } catch (e) { this.setStatus('error', 'Firebase: ' + (e as Error).message); }
   }
   /** locul lui Bubu / Dudu e luat de alt telefon: jocul nu intra (vezi WorldScene.enter) */
   taken = false; private dev = ''; private off = 0;
+  /** 1.14.2: legatura reala cu Firebase. Fara ea nu trimitem pozitia: Firebase punea la coada fiecare scriere (10 pe secunda cat
+   *  telefonul era fara net / jocul minimizat) si la reconectare le trimitea pe toate odata -> „Maximum call stack size exceeded” */
+  private connected = false;
   now() { return Date.now() + this.off; }
   private async serverOffset() { try { return Number(await this.once(this.fb.ref(this.db, '.info/serverTimeOffset'))) || 0; } catch { return 0; } }
   /** valoarea de acum a unui nod (onValue o data; get() crapa in Firebase cand meniul a ascultat inainte camera: „childPathObj.split”) */
@@ -122,9 +125,9 @@ export class FirebaseAdapter extends Base {
   }
   private lastState = 0;
   sendState(s: PlayerState) {
-    if (!this.db || this.taken || Date.now() - this.lastState < 100) return; // max 10/s
+    if (!this.db || this.taken || !this.connected || Date.now() - this.lastState < 100) return; // max 10/s, doar cu legatura
     this.lastState = Date.now();
-    this.fb.update(this.fb.ref(this.db, `rooms/${this.room}/players/${this.me}`), { online: true, state: clean(s), ts: this.fb.serverTimestamp() }).catch(() => { /* offline: urmatoarea */ });
+    try { this.fb.update(this.fb.ref(this.db, `rooms/${this.room}/players/${this.me}`), { online: true, state: clean(s), ts: this.fb.serverTimestamp() }).catch(() => { /* offline: urmatoarea */ }); } catch (err) { console.warn('stare netrimisa', err); }
   }
   sendEvent(e: NetEvent) { if (!this.db || this.taken) return; try { this.fb.push(this.fb.ref(this.db, `rooms/${this.room}/events`), { from: this.me, e: clean(e), ts: Date.now() }).catch(() => { /* offline */ }); } catch (err) { console.warn('eveniment netrimis', err); } }
   // lumea intreaga se urca in Firebase cel mult o data la 45 s (si imediat la inchidere / minimizare) -> mai putina baterie si date mobile

@@ -1672,7 +1672,7 @@ export class WorldScene implements Scene {
     const r = this.ride; if (!r) return;
     this.ride = null;
     const me = this.me, pa = this.partner;
-    if (r.dest === 'field') { me.riding = false; me.board = false; me.fieldOp = undefined; me.actor.moving = false; this.hud.setRide(null); if (this.nav.hits(me.gx, me.gy)) me.gy = Math.ceil(me.gy) + 0.6; const d = this.fieldDone; this.fieldDone = null; d?.(); this.sendCharSync(); return; }
+    if (r.dest === 'field') { me.riding = false; me.board = false; me.fieldOp = undefined; me.actor.moving = false; this.hud.setRide(null); this.unstickNow(me); const d = this.fieldDone; /* 1.14.2: la capatul randului ramanea in mijlocul parcelei (zona plina) si nu mai putea pleca */ this.fieldDone = null; d?.(); this.sendCharSync(); return; }
     me.riding = false; me.board = false; me.actor.moving = false;
     if (r.kind === 'bike' || r.kind === 'scooter' || r.kind === 'tractor') this.op({ k: 'veh', kind: r.kind, at: r.dest });
     this.syncPlaced();
@@ -1698,7 +1698,7 @@ export class WorldScene implements Scene {
     if (a.place === 'bed') { pawn.gx = f.gx + 0.55 + slot * 0.95; pawn.gy = f.gy + 0.62; pawn.z = 34; }
     else if (a.place === 'tub') { pawn.gx = f.gx + 0.6 + slot * 0.8; pawn.gy = f.gy + 0.5; pawn.z = 24; }
     else if (a.place === 'toilet') { pawn.gx = f.gx + 0.5; pawn.gy = f.gy + 0.6; pawn.z = 12; }
-    else if (a.place === 'sofa') { pawn.gx = f.gx + 0.45; pawn.gy = f.gy + 0.6 + slot * 0.8; pawn.z = 10; }
+    else if (a.place === 'sofa') { pawn.gx = f.gx + 0.45; pawn.gy = f.gy + 0.64 + slot * 0.72; pawn.z = 10; }
     else if (a.place === 'piano') { const other = pawn === this.me ? this.partner : this.me; const duo = other.activity?.a.id === 'piano'; pawn.gx = f.gx + (duo ? 0.45 + slot * 1.1 : 1); pawn.gy = f.gy + 1.42; pawn.z = 18; if (duo) other.gx = f.gx + 0.45 + (1 - slot) * 1.1; }
     else if (a.id === 'aquarium') { pawn.gx = f.gx + 1.35; pawn.gy = f.gy + 0.3 + slot * 0.45; }
     else if (a.id === 'coffee') { pawn.gx = f.gx + 0.5; pawn.gy = f.gy + 1.4; }
@@ -2582,8 +2582,11 @@ export class WorldScene implements Scene {
     this.walkers = this.walkers.filter(v => !v.emp);
     Story.staffOf(this).forEach((e, i) => {
       const old = had.get(e.id); if (old && old.role === e.role) { old.job!.route = null; this.walkers.push(old); return; }
-      const P = WorldScene.STAFF_SPOTS[e.role] ?? WorldScene.STAFF_SPOTS.garden, kinds = Object.keys(NPC_SPECS), a = new Actor('bubu', this.fx, NPC_SPECS[kinds[(i * 3 + e.name.length) % kinds.length]]); a.scale = ACTOR_SCALE * 0.92;
-      a.outfit = { head: e.role === 'tractor' || e.role === 'garden' ? 'palarie' : 'none', face: 'none', neck: 'none', body: e.role === 'shop' || e.role === 'florist' || e.role === 'picker' || e.role === 'stall' ? 'rochita' : 'salopeta' } as any;
+      // 1.14.2: infatisarea si hainele dupa cum e angajatul (baiat / fata); inainte „Radu” putea iesi iepuroaica in rochita
+      const kinds = e.f ? ['bunny', 'cat', 'fox'] : ['pig', 'dog'];
+      const P = WorldScene.STAFF_SPOTS[e.role] ?? WorldScene.STAFF_SPOTS.garden, a = new Actor('bubu', this.fx, NPC_SPECS[kinds[(i * 3 + e.name.length) % kinds.length]]); a.scale = ACTOR_SCALE * 0.92;
+      const seller = e.role === 'shop' || e.role === 'florist' || e.role === 'picker' || e.role === 'stall';
+      a.outfit = { head: e.role === 'tractor' || e.role === 'garden' ? 'palarie' : 'none', face: 'none', neck: 'none', body: seller ? (e.f ? 'rochita' : 'vesta') : e.f && e.role !== 'tractor' ? 'sort' : 'salopeta' } as any;
       a.audible = () => this.space === 'world' ? Math.max(0, 1 - Math.hypot(v.x - this.me.gx, v.y - this.me.gy) / 9) * 0.3 : 0;
       const v = { a, x: P[0].x, y: P[0].y, tx: P[0].x, ty: P[0].y, t: 0, greetT: 0, region: 'village', name: e.name, emp: true, eid: e.id, role: e.role } as WorldScene['walkers'][number];
       v.job = { steps: this.staffPlan(v, i), i: 0, route: null, t: 0, at: false };
@@ -2627,15 +2630,19 @@ export class WorldScene implements Scene {
     const F = this.wFurn();
     const e = Story.staffOf(this).find(x => x.id === v.eid), k = Math.min(5, e?.skill ?? 1);
     const fast = (d: number) => d * (1.15 - k * 0.07); // cu cat e mai priceput, cu atat lucreaza mai repede
-    const idle = (anim?: string): StaffStep[] => P.map(q => ({ x: q.x, y: q.y, anim, dur: rnd(6, 10) }));
+    // 1.14.2: locul lui de asteptare poate fi ocupat de ce ati pus voi (banca, flori): sta langa, nu in ele
+    const spot = (q: Pt): Pt => free(q) ? q : this.wNav().freeSpot(q.x, q.y, 5) ?? q;
+    const idle = (anim?: string): StaffStep[] => P.map(spot).map(q => ({ x: q.x, y: q.y, anim, dur: rnd(6, 10) }));
     /** nu e nimic de facut acum: se odihneste la locul lui (fara sa mimeze munca) si spune de ce */
-    const waiting = (why: string): StaffStep[] => P.slice(0, 2).map((q, i) => ({ x: q.x, y: q.y, dur: rnd(8, 12), done: i === 0 ? why : undefined }));
+    const waiting = (why: string): StaffStep[] => P.slice(0, 2).map(spot).map((q, i) => ({ x: q.x, y: q.y, dur: rnd(8, 12), done: i === 0 ? why : undefined }));
     const nearest = <X extends { x: number; y: number }>(list: X[], n: number) => { const out: X[] = []; let at = { x: v.x, y: v.y }; const left = [...list]; while (out.length < n && left.length) { left.sort((a, b) => Math.hypot(a.x - at.x, a.y - at.y) - Math.hypot(b.x - at.x, b.y - at.y)); const q = left.shift()!; out.push(q); at = q; } return out; };
     switch (role) {
       case 'wood': {
         // in padure (din Capitolul 2) sau in curte: copac dupa copac, de dimineata pana seara; fiecare copac da lemne pe loc
-        const trees = F.filter(f => f.action?.id === 'chop' && !this.depleted(f.id) && (forest ? inForest(f) : inYard(f)));
-        const st = work(three(trees), 'act_chop', fast(8), fast(10), 'chop');
+        // 1.14.2: daca in padure nu gaseste (taiati sau fara loc liber langa ei), taie si din curte; „toti sunt taiati” doar cand chiar asa e
+        const trees = (where: (f: Furn) => boolean) => F.filter(f => f.action?.id === 'chop' && !this.depleted(f.id) && where(f));
+        let st = work(three(trees(forest ? inForest : inYard)), 'act_chop', fast(8), fast(10), 'chop');
+        if (!st.length && forest) st = work(three(trees(inYard)), 'act_chop', fast(8), fast(10), 'chop');
         return st.length ? st : waiting('🌱 toți copacii sunt tăiați, aștept să crească');
       }
       case 'stone': {

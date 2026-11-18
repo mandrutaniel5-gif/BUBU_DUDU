@@ -10,6 +10,9 @@ export interface Scene {
 /** Bucla principala + canvas care se adapteaza la ecran (DPR). */
 /** modul eco (30 de cadre cand nu se misca nimic): pornit implicit peste tot (se poate opri din meniu) */
 export const isEco = () => { const e = Settings.get().eco; return e ?? true; };
+/** cea mai mica parte din rezolutie la care coboara calitatea adaptiva (sub ea textul si personajele se vad incetosate) */
+const Q_MIN = 0.8;
+
 export class Game {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
@@ -34,7 +37,7 @@ export class Game {
    * Calitatea (0,6..1): cat din rezolutia ecranului folosim. Scade singura daca jocul nu tine pasul
    * (calculator / telefon slab) si creste la loc cand e loc. O tinem minte pe fiecare aparat.
    */
-  quality = (() => { try { const q = Number(localStorage.getItem('bd-quality')); return q >= 0.5 && q <= 1 ? q : 1; } catch { return 1; } })();
+  quality = (() => { try { const q = Number(localStorage.getItem('bd-quality')); return q >= 0.5 && q <= 1 ? Math.max(Q_MIN, q) : 1; } catch { return 1; } })();
   resize() {
     // pe telefon in modul eco desenam la 1,5x (aproape la fel de clar, ~45% mai putini pixeli de colorat)
     const base = Math.min(isEco() && matchMedia('(pointer: coarse)').matches ? 1.5 : 2, devicePixelRatio || 1);
@@ -90,7 +93,7 @@ export class Game {
     requestAnimationFrame(loop);
   }
 
-  // ---- calitatea adaptiva: masuram cate cadre iese de fapt fata de cate vrem
+  // ---- calitatea adaptiva: masuram cate cadre iese de fapt fata de cate vrem (cel mult pana la Q_MIN)
   private win = { t0: 0, n: 0, want: 0 };
   private lastDown = 0;
   private adapt(dtMs: number, want: number, now: number) {
@@ -103,7 +106,10 @@ export class Game {
     W.t0 = now; W.n = 0;
     void dtMs;
     if (document.hidden) return;
-    if (got < want * 0.72 && this.quality > 0.6) { this.setQuality(Math.max(0.6, this.quality * 0.85)); this.lastDown = now; }
+    // 1.14.2: iPhone-ul in economie de baterie da doar 30 de cadre oricat de putin am desena (si o blocare de cateva secunde
+    // nu inseamna ca e slab): atunci nu scadem rezolutia. Si nu mai jos de Q_MIN: la 0,6 jocul arata „blurat”.
+    const capped = want > 45 && got > 27 && got < 32.5;
+    if (got < want * 0.72 && !capped && this.quality > Q_MIN) { this.setQuality(Math.max(Q_MIN, this.quality * 0.88)); this.lastDown = now; }
     else if (got > want * 0.96 && this.quality < 1 && now - this.lastDown > 45000) this.setQuality(Math.min(1, this.quality / 0.85));
   }
   setQuality(q: number) {

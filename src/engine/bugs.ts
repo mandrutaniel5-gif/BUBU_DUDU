@@ -77,6 +77,8 @@ export const Bugs = {
   /** urca in Firebase ce n-a ajuns inca (bugs/<id>); fara reguli puse sau fara internet raman pe telefon */
   async upload() {
     if (busy || !navigator.onLine) return; const todo = list.filter(r => !r.up); if (!todo.length) return;
+    // 1.14.2: testele de pe calculatorul de dezvoltare (localhost) nu se mai amesteca printre rapoartele testerilor
+    if (/^(localhost|127.0.0.1)$/.test(location.hostname) && location.port !== '') return; // serverul vite are port; Android (https://localhost) n-are
     busy = true;
     try {
       const [{ initializeApp, getApps }, fb] = await Promise.all([import('firebase/app'), import('firebase/database')]);

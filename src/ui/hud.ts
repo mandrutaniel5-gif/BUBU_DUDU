@@ -73,6 +73,14 @@ export class Hud {
       <div class="toasts"></div>
       <div class="modal hidden"></div>
     `;
+    // 1.14.2: cartonasul tau creste (randul „bolnav”) si acoperea obiectivul de sub el: obiectivul coboara cat e nevoie
+    {
+      const card = root.querySelector('.card.me') as HTMLElement, goal = root.querySelector('.goal') as HTMLElement;
+      const sy = (el: HTMLElement) => { const t = getComputedStyle(el).transform; return t && t !== 'none' ? new DOMMatrix(t).d : 1; };
+      const fit = () => { goal.style.marginTop = ''; const gap = card.offsetTop + card.offsetHeight * sy(card) + 6 - goal.offsetTop; if (gap > 0) goal.style.marginTop = gap + 'px'; };
+      try { new ResizeObserver(fit).observe(card); } catch { /* browsere vechi */ }
+      addEventListener('resize', () => requestAnimationFrame(fit));
+    }
     document.getElementById('ui')!.appendChild(root);
     this.root = root;
     for (const sel of ['.me .mood', '.me .sick', '.clock .time', '.clock .day', '.pst', '.pmood', '.net', '.dot', '[data-a="action"]', '.emotes', '.pairs', '.toasts', '.modal', '.fart .fill', '[data-a="pairs"]']) this.els[sel] = root.querySelector(sel)!;

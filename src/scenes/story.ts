@@ -279,7 +279,14 @@ export function openFarmGate(s: S) {
   }));
 }
 /** cat e gata de strans la un animal azi */
-export function ready(s: S, k: string) { const a = ANIMALS[k], n = st(s, a.stat); if (!n) return 0; const last = st(s, 'got-' + k); return s.w.day - last >= a.every ? n * a.per : 0; }
+/** cate produse sunt gata: toate, daca a trecut perioada; altfel doar de la animalele cumparate dupa ultimul strans
+ *  (1.14.2: inainte, dupa ce mulgeai, vaca abia cumparata nu dadea nimic pana a doua zi: „Ai strâns deja”) */
+export function ready(s: S, k: string) {
+  const a = ANIMALS[k], n = st(s, a.stat); if (!n) return 0;
+  const last = st(s, 'got-' + k); if (s.w.day - last >= a.every) return n * a.per;
+  const done = st(s, 'gotN-' + k) || n; // salvarile vechi n-au gotN: le socotim stranse pe toate
+  return Math.max(0, n - done) * a.per;
+}
 /** strange produsele unui animal; pawn = null: le strange angajatul (fara animatia voastra) */
 /** o animatie de lucru scurta (mulsul, culesul, caratul): animatiile act_ se repeta la nesfarsit, asa ca dupa cateva
  *  secunde personajul revine la normal (inainte ramanea „inghetat” mulgand pana pleca) */
@@ -291,6 +298,7 @@ export function collect(s: S, k: string, pawn: S['me'] | null = s.me) {
   const a = ANIMALS[k], n = ready(s, k);
   if (!n) { if (pawn === s.me) s.hud.toast(`${a.icon} Ai strâns deja. Revino ${a.every === 1 ? 'mâine' : `peste ${a.every} zile`}`); return; }
   s.op({ k: 'res', res: a.product, delta: n }); s.op({ k: 'stat', key: 'got-' + k, delta: s.w.day - st(s, 'got-' + k) });
+  s.op({ k: 'stat', key: 'gotN-' + k, delta: st(s, a.stat) - st(s, 'gotN-' + k) }); // de la cate animale s-a strans in perioada asta
   const statKey = { egg: 'eggsCollected', milk: 'milkCollected', wool: 'woolCollected', honey: 'honeyCollected' }[a.product]!;
   s.op({ k: 'stat', key: statKey, delta: n });
   if (!pawn) return;
@@ -319,9 +327,17 @@ export const ROLES: Record<string, { name: [string, string]; icon: string; text:
   tractor: { name: ['Tractorist', 'Tractoristă'], icon: '🚜', text: 'ară, seamănă, udă și recoltează parcelele cu utilajele voastre', base: 26, need: s => Object.values(parcelsOf(s)).some(p => p.owned) ? null : 'Nu aveți încă parcele' },
   shop: { name: ['Vânzător la magazin', 'Vânzătoare la magazin'], icon: '🏪', text: 'vinde marfa de pe rafturile magazinului „Bubu & Dudu”', base: 30, need: s => st(s, 'shopBuilt') ? null : 'Nu aveți încă magazinul din oraș' },
 };
-const NAMES_M = ['Ion', 'Vasile', 'Mihai', 'Andrei', 'Costel', 'Radu', 'Gelu', 'Petrică', 'Florin', 'Sorin'];
-const NAMES_F = ['Maria', 'Ioana', 'Elena', 'Ana', 'Floarea', 'Georgiana', 'Lenuța', 'Anca', 'Viorica', 'Irina'];
-export const staffOf = (s: S): Staff[] => T(s, 'staff', [] as Staff[]);
+// 1.14.2: nume de joc, nu de oameni adevarati (cerut de tester); usor de ghicit daca e baiat sau fata
+const NAMES_M = ['Morcovel', 'Cartofel', 'Pufuleț', 'Bobiță', 'Țăndărică', 'Covrigel', 'Năsturel', 'Fulguț', 'Ciupercel', 'Ghindocel'];
+const NAMES_F = ['Gărgărița', 'Căpșunica', 'Fluturica', 'Bomboana', 'Cireșica', 'Zmeurica', 'Brioșa', 'Clătita', 'Mărgica', 'Lăcrămioara'];
+const OLD_M = ['Ion', 'Vasile', 'Mihai', 'Andrei', 'Costel', 'Radu', 'Gelu', 'Petrică', 'Florin', 'Sorin'];
+const OLD_F = ['Maria', 'Ioana', 'Elena', 'Ana', 'Floarea', 'Georgiana', 'Lenuța', 'Anca', 'Viorica', 'Irina'];
+/** angajatii; cei angajati inainte de 1.14.2 primesc numele noi (acelasi pe ambele telefoane: dupa pozitia numelui vechi) */
+export const staffOf = (s: S): Staff[] => {
+  const list = T(s, 'staff', [] as Staff[]);
+  for (const e of list) { const i = (e.f ? OLD_F : OLD_M).indexOf(e.name); if (i >= 0) e.name = (e.f ? NAMES_F : NAMES_M)[i]; }
+  return list;
+};
 /** 1.10.2: alegeti voi meseria; pentru fiecare meserie vin mereu 3 oameni (aceiasi pe ambele telefoane, se schimba zilnic) */
 function candidates(s: S, role: string): Staff[] {
   const ri = Object.keys(ROLES).indexOf(role), r = mulberry(s.w.day * 31337 + ri * 977 + 7), out: Staff[] = [];

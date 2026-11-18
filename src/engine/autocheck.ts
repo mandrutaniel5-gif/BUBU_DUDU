@@ -40,16 +40,18 @@ export function autoCheck(s: WorldScene, fps: number) {
     }
   }
   // 4) interfata: ferestre iesite din ecran, texte taiate, bucati din bara de sus suprapuse
+  // 1.14.2: cu tastatura deschisa (scrii in raport / in borcan) ecranul ramane cat o fasie: nu e o greseala de asezare
+  const typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName ?? '') || innerHeight < 260;
   const W = innerWidth, H = innerHeight, vis = (e: Element) => { const r = (e as HTMLElement).getBoundingClientRect(); return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden' ? r : null; };
   const box = document.querySelector('#ui .modal:not(.hidden) .box');
-  if (box) { const r = vis(box); if (r && (r.left < -2 || r.top < -2 || r.right > W + 2 || r.bottom > H + 2)) { const t = box.querySelector('h3')?.textContent ?? ''; if (again('modal-' + t, true, 2)) Bugs.add({ kind: 'auto', cat: 'Interfață', title: `Fereastra „${t.trim()}” iese din ecran`, key: 'modal-out-' + t }); } }
-  for (const b of Array.from(document.querySelectorAll('#ui button, #ui .gtxt, #ui .name'))) {
+  if (box && !typing) { const r = vis(box); if (r && (r.left < -2 || r.top < -2 || r.right > W + 2 || r.bottom > H + 2)) { const t = box.querySelector('h3')?.textContent ?? ''; if (again('modal-' + t, true, 2)) Bugs.add({ kind: 'auto', cat: 'Interfață', title: `Fereastra „${t.trim()}” iese din ecran`, key: 'modal-out-' + t }); } }
+  if (!typing) for (const b of Array.from(document.querySelectorAll('#ui button, #ui .gtxt, #ui .name'))) {
     const el = b as HTMLElement; const r = vis(el); if (!r) continue;
     if (el.scrollWidth > el.clientWidth + 4 && getComputedStyle(el).overflow !== 'visible' && el.textContent?.trim()) {
       const t = el.textContent.trim().slice(0, 50); if (again('cut-' + t, true, 2)) Bugs.add({ kind: 'auto', cat: 'Text tăiat', title: `Text tăiat: „${t}”`, key: 'cut-' + t });
     }
   }
-  if (!box && !busy) {
+  if (!box && !busy && !typing) {
     const parts = ['.card.me', '.clock', '.goal', '.card.partner', '.minimap', '.actions'].map(q => [q, document.querySelector('#ui ' + q)] as const).filter(([, e]) => e && vis(e)) as [string, Element][];
     for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
       const a = parts[i][1].getBoundingClientRect(), b = parts[j][1].getBoundingClientRect();
