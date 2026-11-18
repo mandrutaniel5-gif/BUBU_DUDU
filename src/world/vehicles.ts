@@ -4,7 +4,6 @@ import { drawCharacter, type CharSpec } from '../char/draw';
 import { basePose } from '../char/pose';
 import { IDLE, WALK } from '../char/anims';
 import type { Outfit } from '../char/outfit';
-import { drawHamsterSide } from '../char/hamside';
 import { HS } from '../char/hamster';
 import { iso, isoBox, boxOf, shade } from './iso';
 
@@ -79,31 +78,21 @@ export function drawTractorSide(c: CanvasRenderingContext2D, x: number, y: numbe
   c.fillStyle = RED_D; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.moveTo(-40, -40); c.quadraticCurveTo(-40, -74, -8, -74); c.lineTo(6, -74); c.lineTo(6, -40); c.closePath(); c.fill(); c.stroke();
   c.fillStyle = '#5a4a42'; c.beginPath(); c.roundRect(-24, -84, 20, 10, 3); c.fill(); c.stroke(); // scaunul
   // stalpul din spate al cabinei (in spatele soferului)
-  c.fillStyle = '#3d3d47'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(-96, -194, 5, 118, 2); c.fill(); c.stroke();
+  c.fillStyle = '#3d3d47'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(-40, -194, 5, 122, 2); c.fill(); c.stroke();
   c.fillStyle = '#5a4a42'; c.beginPath(); c.roundRect(-32, -118, 9, 36, 4); c.fill(); c.stroke(); // spatarul scaunului
   // soferul (sprite din profil, asezat, cu labutele pe volan)
   const steer = Math.sin(t * 1.7) * 0.18 + Math.sin(t * 4.3) * 0.05;
-  // pedalele de la picioarele soferului si perna ei de pe aripa din spate
+  // tractorul are un singur loc: doar soferul (pedalele de la picioare, volanul)
   c.strokeStyle = O; c.lineWidth = 4; c.beginPath(); c.moveTo(6, -66); c.lineTo(2, -76); c.stroke(); c.strokeStyle = '#9aa3ad'; c.lineWidth = 2; c.stroke();
   c.fillStyle = '#3a3a44'; c.beginPath(); c.roundRect(-4, -79, 10, 4, 2); c.fill();
-    if (opt.passenger) { // lada din spate pe care sta ea (prinsa de sasiu), cu perna deasupra
-    c.fillStyle = RED; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.roundRect(-88, -71, 46, 33, 4); c.fill(); c.stroke();
-    c.fillStyle = RED_L; c.beginPath(); c.roundRect(-85, -68, 40, 4, 2); c.fill();
-    c.strokeStyle = RED_D; c.lineWidth = 2; c.beginPath(); c.moveTo(-84, -52); c.lineTo(-46, -52); c.stroke();
-    c.fillStyle = '#9aa5ad'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(-68, -50, 8, 5, 2); c.fill(); c.stroke();
-    c.fillStyle = '#5a4a42'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(-86, -78, 42, 8, 4); c.fill(); c.stroke();
-  }
-  const hugArm = opt.passenger ? ride(c, opt.passenger, -66, -78, t + 1, [{ x: -52, y: -64 }, { x: -49, y: -63 }],
-    opt.driver ? [{ x: -40, y: -104 }, { x: -37, y: -100 }] : [{ x: -42, y: -100 }, { x: -42, y: -100 }], !!opt.driver) : null;
   if (opt.driver) {
     ride(c, opt.driver, -14, -84, t, [{ x: -2, y: -79 }, { x: 2, y: -79 }], [{ x: 26, y: -96 }, { x: 22, y: -94 }], false, steer, true);
     if (opt.driver.id === 'bubu' || opt.driver.id === 'dudu') drawWheelSide(c, -5, -71, 1, 0, steer);
   }
-  hugArm?.();
   // stalpul din fata + acoperisul (cadru peste sofer)
   c.fillStyle = '#3d3d47'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(30, -194, 5, 124, 2); c.fill(); c.stroke();
-  c.fillStyle = RED; c.beginPath(); c.roundRect(-104, -202, 144, 11, 5); c.fill(); c.stroke();
-  c.fillStyle = RED_L; c.beginPath(); c.roundRect(-100, -200, 132, 3, 2); c.fill();
+  c.fillStyle = RED; c.beginPath(); c.roundRect(-48, -202, 88, 11, 5); c.fill(); c.stroke();
+  c.fillStyle = RED_L; c.beginPath(); c.roundRect(-44, -200, 76, 3, 2); c.fill();
   // aripa fata
   c.fillStyle = RED_D; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.arc(52, -28, 17, Math.PI * 1.05, Math.PI * 1.95); c.lineTo(66, -30); c.lineTo(38, -30); c.closePath(); c.fill(); c.stroke();
   c.restore();
@@ -243,8 +232,15 @@ export const RIDE_OUTFIT: Partial<Record<string, Outfit>> = {};
  */
 function ride(c: CanvasRenderingContext2D, spec: CharSpec, x: number, y: number, t: number, feet: [Pt, Pt], hands: [Pt, Pt], hug: boolean, steer = 0, wheel = true): (() => void) | null {
   if (spec.id === 'bubu' || spec.id === 'dudu') {
-    const loc = (p: Pt): Pt => ({ x: (p.x - x) / HS, y: (p.y - y) / HS });
-    return drawHamsterSide(c, spec.id, x, y, 1, t, { feet: [loc(feet[0]), loc(feet[1])], hands: [loc(hands[0]), loc(hands[1])], hug, eyes: hug ? 'happy' : 'dot', mouth: hug ? 'smile' : 'open', outfit: RIDE_OUTFIT[spec.id] });
+    // hamsterii asa cum ii stii, intorsi trei sferturi spre drum, asezati pe sa (originea desenului = intre talpi)
+    const oy = y + 4, rel = (p: Pt) => ({ x: p.x - x, y: p.y - oy });
+    const P = basePose(); P.turn = 1; P.eyes = hug ? 'happy' : 'dot'; P.mouth = hug ? 'smile' : 'open'; P.blush = 1;
+    P.headRot = Math.sin(t * 2.1) * 0.03 + (hug ? -0.06 : 0.02); P.dy = Math.sin(t * 9) * 0.4;
+    P.reach = [rel(hands[0]), rel(hands[1])]; P.feetAt = [rel(feet[0]), rel(feet[1])];
+    const draw = () => drawCharacter(c, spec, P, x, oy, 1, 1, t, RIDE_OUTFIT[spec.id]);
+    // pasagera se deseneaza dupa sofer: sta lipita de spatele lui si il tine in brate
+    if (hug) return draw;
+    draw(); return null;
   }
   drawDriverSide(c, spec, x, y, 0.8, t, steer, !hug, wheel); return null;
 }

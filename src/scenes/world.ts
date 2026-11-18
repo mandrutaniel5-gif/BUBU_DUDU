@@ -1643,7 +1643,8 @@ export class WorldScene implements Scene {
     this.ride = { kind, path, len: polyLen(path), s: 0, v: 0, dest, duo, t: 0, from: fromDest };
     this.hud.closeMenus(); this.hud.setRide('riding');
     const pa = this.partner;
-    if (!duo && pa.control !== 'remote' && pa.follow && this.sameArea() && Math.hypot(pa.gx - me.gx, pa.gy - me.gy) < 6) { duo = true; this.ride.duo = true; }
+    if (kind === 'tractor') duo = false; // tractorul e de un singur loc
+    if (!duo && kind !== 'tractor' && pa.control !== 'remote' && pa.follow && this.sameArea() && Math.hypot(pa.gx - me.gx, pa.gy - me.gy) < 6) { duo = true; this.ride.duo = true; }
     if (duo && pa.control !== 'remote') { pa.passenger = true; this.stopActivity(pa); pa.path = []; pa.callBoard = false; }
     else if (duo && pa.control === 'remote') this.net.sendEvent({ t: 'cotravel', who: this.myId, to: dest, vehicle: kind });
     if (kind === 'bike' || kind === 'scooter' || kind === 'tractor') this.syncPlaced(); // vehiculul pleaca din parcare
@@ -1936,6 +1937,7 @@ export class WorldScene implements Scene {
     }
     if (id === 'ride') {
       if (!A.riding) { if (A === this.me) this.hud.toast('Întâi urcă tu pe scuter (butonul 🛵)'); }
+      else if (A.rideKind === 'tractor') { if (A === this.me) this.hud.toast('🚜 Tractorul are un singur loc'); }
       else if (B.control !== 'remote') { B.passenger = true; this.stopActivity(B); B.path = []; this.hud.toast(`🛵 ${B.actor.spec.name} a urcat în spate!`); }
     }
     if (id === 'steal') {

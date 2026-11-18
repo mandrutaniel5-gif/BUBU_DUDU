@@ -33,6 +33,11 @@ export interface Pose {
   dizzy: number; shadowScale: number;
   earWiggle: number;
   headOnly: boolean;             // doar capul (in pat / in cada)
+  /** 1.14.2: cat e intors spre dreapta (0 = din fata, 1 = trei sferturi); fata si burtica se muta pe rotunjimea capului */
+  turn?: number;
+  /** 1.14.2 (pe vehicule): unde ajung labutele [stanga, dreapta] si talpile, in unitatile personajului (originea = intre talpi) */
+  reach?: [{ x: number; y: number }, { x: number; y: number }];
+  feetAt?: [{ x: number; y: number }, { x: number; y: number }];
 }
 
 export const basePose = (): Pose => ({

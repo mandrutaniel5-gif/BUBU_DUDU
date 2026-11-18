@@ -35,6 +35,17 @@ export function toPath(pts: Pt[]) { const p = new Path2D(); p.moveTo(pts[0][0], 
 let seed = 1; export const setSeed = (n: number) => { seed = n; }; export const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 export function soft(c: CanvasRenderingContext2D, px: number, fn: () => void) { c.save(); try { c.filter = `blur(${Math.max(0.5, px)}px)`; } catch { /* fara blur pe browserele vechi */ } fn(); c.restore(); }
 
+// ---------- intoarcerea in trei sferturi (1.14.2) ----------
+// Capul si corpul sunt rotunde: cand personajul se intoarce, ce e pe ele (ochi, bot, burtica, labute) aluneca pe rotunjime
+// spre partea in care priveste, iar ce e in partea cealalta se ingusteaza. TURN e unghiul (rad), pus de drawHamster.
+let TURN = 0;
+const tq = (turn: number) => Math.round(turn * 8) / 8;
+/** unde ajunge x de pe o sfera de raza r cand se roteste cu TURN */
+export function turnX(x: number, r = 62, k = 1) { if (!TURN) return x; const a = Math.asin(Math.max(-1, Math.min(1, x / r))); return r * Math.sin(Math.max(-1.45, Math.min(1.45, a + TURN * k))); }
+/** cat de ingust apare un lucru de la x (in partea departata se strange) */
+export function turnK(x: number, r = 62, k = 1) { if (!TURN) return 1; const a = Math.asin(Math.max(-1, Math.min(1, x / r))); return Math.max(0.25, Math.cos(Math.max(-1.45, Math.min(1.45, a + TURN * k))) / Math.max(0.3, Math.cos(a))); }
+function at(c: CanvasRenderingContext2D, x: number, fn: () => void, r = 62, k = 1) { if (!TURN) { fn(); return; } c.save(); c.translate(turnX(x, r, k), 0); c.scale(turnK(x, r, k), 1); c.translate(-x, 0); fn(); c.restore(); }
+
 // ---------- forma capului si a corpului (unitati de desen) ----------
 /** centrul capului fata de talpi; gatul (pivotul) e mai jos */
 export const HEAD_Y = -102;
@@ -94,20 +105,23 @@ export function bucket(ctx: CanvasRenderingContext2D) {
 export function blit(ctx: CanvasRenderingContext2D, s: Sprite) { ctx.drawImage(s.cv, s.x, s.y, s.w, s.h); }
 
 function headSprite(id: HamId, back: boolean, k: number) {
-  return sprite(`h-${id}-${back ? 'b' : 'f'}`, k, -78, -72, 156, 142, (c, kk) => {
+  return sprite(`h-${id}-${back ? 'b' : 'f'}${TURN ? '-t' + TURN : ''}`, k, -78, -72, 156, 142, (c, kk) => {
     const L = LOOK[id], g = geo(id); seed = id === 'bubu' ? 11 : 23;
     c.fillStyle = L.body; c.fill(g.headP);
     c.save(); c.clip(g.headP);
+    c.save(); if (TURN && !back) c.translate(turnX(0) * 0.6, 0);
     if (L.patch) {
       soft(c, 2.2 * kk, () => { c.fillStyle = L.patch!; ell(c, 0, back ? -18 : -46, back ? 44 : 36, back ? 38 : 21); c.fill(); });
       soft(c, 3 * kk, () => { c.fillStyle = rgba(L.patchShade!, 0.5); ell(c, 0, back ? -26 : -52, back ? 34 : 28, back ? 24 : 12); c.fill(); });
     }
+    c.restore(); c.save(); if (TURN && !back) { c.translate(turnX(0) * 0.85, 0); c.scale(turnK(0), 1); }
     if (L.white && !back) {
       soft(c, 1.4 * kk, () => { c.fillStyle = L.white!; ell(c, 0, 26, 44, 25); c.fill(); for (const side of [-1, 1]) { ell(c, side * 45, 21, 25, 22); c.fill(); } ell(c, 0, 8, 10, 16); c.fill(); });
       c.strokeStyle = rgba(L.white, 0.95); c.lineCap = 'round';
       for (let i = 0; i < 50; i++) { const t = i / 49, a = Math.PI * (1.05 - t * 1.1) + Math.PI; const ex = Math.cos(a) * 58, ey = 14 + Math.sin(a) * -18 - Math.abs(Math.cos(a)) * 6; c.lineWidth = 1.1 + rnd() * 0.6; c.beginPath(); c.moveTo(ex * 0.98, ey + 3); c.lineTo(ex * 0.98 + (rnd() - 0.5) * 2, ey - 1 - rnd() * 3); c.stroke(); }
     }
     if (L.white && back) soft(c, 3 * kk, () => { c.fillStyle = rgba(L.white!, 0.5); ell(c, 0, 52, 50, 14); c.fill(); });
+    c.restore();
     const gr = c.createRadialGradient(-20, -26, 8, 0, 4, 82); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.62, 'rgba(255,255,255,0)'); gr.addColorStop(1, rgba(L.shade, 0.75));
     c.fillStyle = gr; c.fillRect(-100, -80, 200, 160);
     soft(c, 4 * kk, () => { c.fillStyle = rgba(L.shade, 0.45); ell(c, 6, 52, 64, 12); c.fill(); });
@@ -119,13 +133,15 @@ function headSprite(id: HamId, back: boolean, k: number) {
   });
 }
 function bodySprite(id: HamId, back: boolean, k: number) {
-  return sprite(`b-${id}-${back ? 'b' : 'f'}`, k, -62, -94, 124, 98, (c, kk) => {
+  return sprite(`b-${id}-${back ? 'b' : 'f'}${TURN ? '-t' + TURN : ''}`, k, -62, -94, 124, 98, (c, kk) => {
     const L = LOOK[id], g = geo(id); seed = id === 'bubu' ? 5 : 9;
     c.fillStyle = L.body; c.fill(g.bodyP);
     c.save(); c.clip(g.bodyP);
     if (!back) {
+      c.save(); if (TURN) { c.translate(turnX(0, 50, 0.7), 0); c.scale(turnK(0, 50, 0.7), 1); }
       soft(c, 1.8 * kk, () => { c.fillStyle = L.belly; ell(c, 0, -28, 32, 26); c.fill(); });
       if (L.white) { c.strokeStyle = rgba(L.white, 0.95); c.lineCap = 'round'; for (let i = 0; i < 24; i++) { const a = Math.PI * 1.15 + (i / 23) * Math.PI * 0.7; const ex = Math.cos(a) * 32, ey = -28 + Math.sin(a) * 26; c.lineWidth = 1.2 + rnd() * 0.6; c.beginPath(); c.moveTo(ex * 0.95, ey * 0.97 - 2); c.lineTo(ex * 1.05 + (rnd() - 0.5) * 3, ey - 5 - rnd() * 3); c.stroke(); } }
+      c.restore();
     } else if (L.patch) soft(c, 3 * kk, () => { c.fillStyle = rgba(L.patch!, 0.55); ell(c, 0, -58, 30, 18); c.fill(); });
     const gr = c.createRadialGradient(-16, -62, 6, 0, -40, 66); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.6, 'rgba(255,255,255,0)'); gr.addColorStop(1, rgba(L.shade, 0.75)); c.fillStyle = gr; c.fillRect(-80, -110, 160, 120);
     soft(c, 5 * kk, () => { c.fillStyle = rgba(L.shade, 0.65); ell(c, 0, -62, 50, 13); c.fill(); });
@@ -137,7 +153,7 @@ function bodySprite(id: HamId, back: boolean, k: number) {
 
 // ---------- bucatile desenate la fiecare cadru ----------
 function drawEar(c: CanvasRenderingContext2D, L: HamLook, side: number, part: 'back' | 'front', wig: number, fromBehind: boolean) {
-  c.save(); c.translate(side * 36, -44); c.rotate(side * (0.42 + wig * 0.35));
+  c.save(); c.translate(turnX(side * 36, 62, 0.8), -44); c.rotate(side * (0.42 + wig * 0.35));
   if (part === 'back') { ell(c, 0, 0, 16.5, 15.5); c.fillStyle = L.ear; c.fill(); c.lineWidth = 3.2; c.strokeStyle = O; c.stroke(); c.restore(); return; }
   c.save(); c.beginPath(); c.rect(-30, -30, 60, 36); c.clip();
   ell(c, 0, 0, 16.5, 15.5); c.fillStyle = L.ear; c.fill();
@@ -249,11 +265,13 @@ function drawFace(c: CanvasRenderingContext2D, id: HamId, p: Pose, t: number) {
   const ex = 25, ey = 4 + p.pupilDy / HS, pdx = p.pupilDx / HS;
   const bl = p.blush;
   if (bl > 0) for (const side of [-1, 1]) {
+    c.save(); if (TURN) { c.translate(turnX(side * 42) - side * 42, 0); c.scale(1, 1); }
     const bx = side * 42, by = 19, a = Math.min(1, bl);
     const g = c.createRadialGradient(bx, by, 1, bx, by, 17); g.addColorStop(0, rgba(L.blush, 0.85 * a)); g.addColorStop(0.6, rgba(L.blush, 0.45 * a)); g.addColorStop(1, rgba(L.blush, 0));
     c.fillStyle = g; ell(c, bx, by, 17, 14); c.fill();
     c.fillStyle = `rgba(255,255,255,${0.75 * a})`; ell(c, bx - 4, by - 4, 2.4, 1.6); c.fill();
     if (bl > 1) { c.strokeStyle = rgba('#e0607e', 0.8); c.lineWidth = 1.6; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(bx - 6 + i * 5, by - 2); c.lineTo(bx - 9 + i * 5, by + 4); c.stroke(); } }
+    c.restore();
   }
   if (p.brows !== 'none') {
     c.strokeStyle = O; c.lineWidth = 2.6; c.lineCap = 'round';
@@ -265,14 +283,16 @@ function drawFace(c: CanvasRenderingContext2D, id: HamId, p: Pose, t: number) {
       c.stroke();
     }
   }
-  drawEye(c, L, -ex + pdx, ey, -1, p.eyes, t);
-  drawEye(c, L, ex + pdx, ey, 1, p.eyesR ?? p.eyes, t);
+  at(c, -ex, () => drawEye(c, L, -ex + pdx, ey, -1, p.eyes, t));
+  at(c, ex, () => drawEye(c, L, ex + pdx, ey, 1, p.eyesR ?? p.eyes, t));
+  c.save(); if (TURN) { c.translate(turnX(0), 0); c.scale(turnK(0), 1); }
   c.strokeStyle = rgba(O, 0.2); c.lineWidth = 1;
   for (const side of [-1, 1]) for (const [dy, e2] of [[-1, -5], [2, 1], [5, 7]]) { c.beginPath(); c.moveTo(side * 14, 20 + dy); c.quadraticCurveTo(side * 24, 18 + dy, side * 32, 18 + e2); c.stroke(); }
   c.beginPath(); c.moveTo(-5, 13); c.quadraticCurveTo(0, 11, 5, 13); c.quadraticCurveTo(3.5, 17.5, 0, 18.2); c.quadraticCurveTo(-3.5, 17.5, -5, 13); c.closePath();
   c.fillStyle = L.nose; c.fill(); c.lineWidth = 1.6; c.strokeStyle = O; c.stroke();
   c.fillStyle = 'rgba(255,255,255,0.8)'; ell(c, -1.8, 13.4, 1.6, 0.9); c.fill();
   drawMouth(c, p.mouth, t, id);
+  c.restore();
   if (p.tears > 0) {
     c.fillStyle = 'rgba(120,195,255,0.85)';
     for (const side of [-1, 1]) {
@@ -298,14 +318,14 @@ function drawHead(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, t: number, 
   if (p.sickTint > 0) { ctx.save(); ctx.clip(geo(id).headP); ctx.fillStyle = `rgba(150,210,120,${0.42 * p.sickTint})`; ctx.fillRect(-80, -70, 160, 140); ctx.restore(); }
   if (!hide.ears) for (const side of [-1, 1]) drawEar(ctx, L, side, 'front', p.earWiggle, back);
   if (!back) {
-    drawFace(ctx, id, p, t);
+    if (TURN) { ctx.save(); ctx.clip(geo(id).headP); drawFace(ctx, id, p, t); ctx.restore(); } else drawFace(ctx, id, p, t); // intors: obrajii nu ies din contur
     const face = o?.face && o.face !== 'none' ? o.face : '';
-    if (face) drawFaceWear(ctx, face, t);
+    if (face) at(ctx, 0, () => drawFaceWear(ctx, face, t));
   } else {
     ctx.strokeStyle = rgba(O, 0.5); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-8, 44); ctx.quadraticCurveTo(0, 40, 8, 44); ctx.stroke();
   }
-  if (!head && id === 'bubu') drawBowId(ctx, back ? 31 : -31, back ? 0.28 : -0.28);
-  if (head) drawHeadWear(ctx, head, 'front', back, t);
+  if (!head && id === 'bubu') drawBowId(ctx, back ? 31 : turnX(-31, 62, 0.8), back ? 0.28 : -0.28);
+  if (head) { ctx.save(); ctx.translate(turnX(0) * 0.35, 0); drawHeadWear(ctx, head, 'front', back, t); ctx.restore(); }
   if (p.vein > 0) { ctx.save(); ctx.translate(back ? -34 : 34, -26); ctx.scale(1 / HS, 1 / HS); drawVein(ctx, 0, 0, p.vein, t); ctx.restore(); }
   if (p.sweat > 0) { ctx.save(); ctx.translate(-48, -12); ctx.scale(1 / HS, 1 / HS); drawSweat(ctx, 0, 0, p.sweat, t); ctx.restore(); }
   if (p.dizzy > 0) { ctx.save(); ctx.scale(1 / HS, 1 / HS); ctx.translate(0, -8); drawDizzy(ctx, p.dizzy, t); ctx.restore(); }
@@ -314,13 +334,17 @@ function drawHead(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, t: number, 
 const ARM_OFS = -0.25;
 function drawArm(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, side: -1 | 1, ang: number, hipD: number, o: Outfit | undefined, t: number) {
   const L = LOOK[id];
-  ctx.save(); ctx.translate(side * 36 + hipD * 0.5, -52); ctx.rotate(side < 0 ? ang + ARM_OFS : -(ang + ARM_OFS));
+  const sx = turnX(side * 36, 50, 0.7) + hipD * 0.5, tg = p.reach?.[side < 0 ? 0 : 1];
+  // spre o tinta (ghidon, volan, mijlocul lui): bratul se intinde pana acolo, cu aceeasi forma
+  const len = tg ? Math.max(8, Math.min(34, Math.hypot(tg.x / HS - sx, tg.y / HS + 52) - 18)) : 15;
+  ctx.save(); ctx.translate(sx, -52); ctx.rotate(tg ? Math.atan2(tg.y / HS + 52, tg.x / HS - sx) - Math.PI / 2 : side < 0 ? ang + ARM_OFS : -(ang + ARM_OFS));
+  ctx.translate(0, len - 15);
   ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 15); ctx.lineWidth = 16; ctx.strokeStyle = O; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, 15 - len); ctx.lineTo(0, 15); ctx.lineWidth = 16; ctx.strokeStyle = O; ctx.stroke();
   ctx.lineWidth = 10.4; ctx.strokeStyle = L.body; ctx.stroke();
   const sl = o?.body && o.body !== 'none' ? sleeveOf(o.body) : null;
   if (sl) {
-    ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(0, sl.len); ctx.lineWidth = 17.5; ctx.strokeStyle = O; ctx.stroke(); ctx.lineWidth = 12; ctx.strokeStyle = sl.col; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, 13 - len); ctx.lineTo(0, sl.len); ctx.lineWidth = 17.5; ctx.strokeStyle = O; ctx.stroke(); ctx.lineWidth = 12; ctx.strokeStyle = sl.col; ctx.stroke();
     if (sl.cuff) { ctx.beginPath(); ctx.moveTo(-6, sl.len - 1); ctx.lineTo(6, sl.len - 1); ctx.lineWidth = 3.4; ctx.strokeStyle = sl.cuff; ctx.stroke(); }
     ctx.lineCap = 'round';
   }
@@ -330,11 +354,20 @@ function drawArm(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, side: -1 | 1
   if (pr !== 'none') { ctx.translate(0, 13 / HS); ctx.scale(1 / HS, 1 / HS); ctx.rotate(prr * (side < 0 ? 1 : -1) - (side < 0 ? ARM_OFS : -ARM_OFS)); drawProp(ctx, pr, O, t); }
   ctx.restore();
 }
+function drawLegs(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, legCol?: string) {
+  if (!p.feetAt) return;
+  const L = LOOK[id];
+  for (const side of [-1, 1] as const) {
+    const fa = p.feetAt[side < 0 ? 0 : 1], hx = turnX(side * 20, 50, 0.7), hy = -16;
+    ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(fa.x / HS, fa.y / HS - 3);
+    ctx.lineWidth = 19; ctx.strokeStyle = O; ctx.stroke(); ctx.lineWidth = 13.4; ctx.strokeStyle = legCol ?? L.body; ctx.stroke();
+  }
+}
 function drawFeet(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, back: boolean) {
   const L = LOOK[id];
   for (const side of [-1, 1] as const) {
-    const lift = (side < 0 ? p.legL : p.legR) / HS, ox = (side < 0 ? p.legLx : p.legRx) / HS;
-    ctx.save(); ctx.translate(side * 23 + ox, -4 - lift);
+    const lift = (side < 0 ? p.legL : p.legR) / HS, ox = (side < 0 ? p.legLx : p.legRx) / HS, fa = p.feetAt?.[side < 0 ? 0 : 1];
+    ctx.save(); if (fa) ctx.translate(fa.x / HS, fa.y / HS); else ctx.translate(turnX(side * 23, 50, 0.7) + ox, -4 - lift);
     ell(ctx, 0, 0, 14.5, 8.2); ctx.fillStyle = back ? L.body : L.paw; ctx.fill(); ctx.lineWidth = 2.8; ctx.strokeStyle = O; ctx.stroke();
     ctx.fillStyle = L.pawDark;
     if (!back) { ell(ctx, 0, 1.5, 5, 3.4); ctx.fill(); for (const tx of [-7, 0, 7]) { ell(ctx, tx, -3.6, 2.1, 1.8); ctx.fill(); } }
@@ -347,6 +380,10 @@ function drawFeet(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, back: boole
  * Deseneaza hamsterul cu originea la mijlocul talpilor (ca drawCharacter). flip = -1 priveste spre stanga.
  */
 export function drawHamster(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, x: number, y: number, scale: number, flip: 1 | -1, t: number, o?: Outfit) {
+  TURN = p.back ? 0 : tq(p.turn ?? 0) * 0.6;
+  try { drawHamsterAt(ctx, id, p, x, y, scale, flip, t, o); } finally { TURN = 0; }
+}
+function drawHamsterAt(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, x: number, y: number, scale: number, flip: 1 | -1, t: number, o?: Outfit) {
   ctx.save(); ctx.translate(x, y); ctx.scale(scale * flip, scale); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   if (p.headOnly) {
     ctx.translate(p.dx, p.dy); ctx.rotate(p.rot); ctx.scale(HS, HS);
@@ -362,6 +399,7 @@ export function drawHamster(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, x
   const arms: [-1 | 1, number][] = [[-1, p.armL], [1, p.armR]];
   const up = (a: number) => a + ARM_OFS >= 1.75;
   if (back) for (const [side, ang] of arms) if (!up(ang)) drawArm(ctx, id, p, side, ang, hipD, o, t);
+  if (p.feetAt) drawLegs(ctx, id, p, ({ salopeta: '#4a7bd0', costum: '#2f3b5c', mire: '#23232b', pijama: '#bfe0ff' } as Record<string, string>)[body]);
   if (longGown) drawFeet(ctx, id, p, back);
   if (body) drawBodyWear(ctx, body, 'behind', back, geo(id).bodyP, hipD, t);
   ctx.save(); ctx.translate(hipD, 0); blit(ctx, bodySprite(id, back, k));
@@ -376,7 +414,7 @@ export function drawHamster(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, x
   drawHead(ctx, id, p, t, o, k);
   ctx.restore();
   if (neck) drawNeckWear(ctx, neck, back, t);
-  else if (id === 'dudu' && !back && body !== 'costum' && body !== 'mire' && body !== 'hanorac' && body !== 'geaca') drawBowtieId(ctx);
+  else if (id === 'dudu' && !back && body !== 'costum' && body !== 'mire' && body !== 'hanorac' && body !== 'geaca') { ctx.save(); ctx.translate(turnX(0, 50, 0.7), 0); ctx.scale(turnK(0, 50, 0.7), 1); drawBowtieId(ctx); ctx.restore(); }
   if (body) drawBodyWear(ctx, body, 'collar', back, geo(id).bodyP, hipD, t);
   for (const [side, ang] of arms) if (up(ang)) drawArm(ctx, id, p, side, ang, hipD, o, t);
   ctx.restore();
