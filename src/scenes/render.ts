@@ -387,8 +387,8 @@ export function drawPawn(scene: WorldScene, ctx: CanvasRenderingContext2D, p: Pa
     // praful din spatele rotilor cand merge repede pe drum
     if (p.actor.moving && p.rideKind !== 'bike') for (let i = 0; i < 4; i++) { const q = (scene.time * 1.6 + i / 4) % 1; ctx.globalAlpha = 0.35 * (1 - q); ctx.fillStyle = '#e6d3b0'; ctx.beginPath(); ctx.arc(-30 - q * 60, 2 - q * 10, 4 + q * 9, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
     RIDE_OUTFIT[p.id] = p.actor.outfit; if (other.passenger) RIDE_OUTFIT[other.id] = other.actor.outfit;
-    if (p.rideKind === 'bike') drawTandemSide(ctx, 0, 0, 0.5, scene.time, opt);
-    else if (p.rideKind === 'tractor') drawTractorSide(ctx, 0, 0, 0.42, scene.time, { ...opt, logs: p.fieldOp ? 0 : Math.min(9, Math.floor((scene.w.res?.wood ?? 0) / 2)), trailer: !p.fieldOp });
+    if (p.rideKind === 'bike') drawTandemSide(ctx, 0, 0, 0.68, scene.time, opt); // 1.14.2: vehiculele mai mari, pe masura hamsterilor
+    else if (p.rideKind === 'tractor') drawTractorSide(ctx, 0, 0, 0.5, scene.time, { ...opt, logs: p.fieldOp ? 0 : Math.min(9, Math.floor((scene.w.res?.wood ?? 0) / 2)), trailer: !p.fieldOp });
     else if (p.rideKind === 'bus') drawBusSide(ctx, 0, 0, 0.38, scene.time, opt);
     else if (p.rideKind === 'taxi') drawTaxiSide(ctx, 0, 0, 0.46, scene.time, opt);
     else drawScooterSide(ctx, 0, 0, 0.58, scene.time, opt);
