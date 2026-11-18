@@ -79,7 +79,7 @@ export function drawBuildType(ctx: CanvasRenderingContext2D, f: Furn, t: number,
       if (f.id === 'a-exit') { drawRoadSign(ctx, gx, gy, $t('Ieșire'), ''); return true; }
       if (f.id === 'st-farmgate') { drawRoadSign(ctx, gx, gy, $t('🐔 Ferma voastră'), 'N', true); return true; } // inainte scria „Spre sat” si ferma nu se gasea
       if (f.id === 'v-home') drawRoadSign(ctx, gx, gy, $t('🏡 Spre casă'), 'W');
-      else drawRoadSign(ctx, gx, gy, '🏘️ Spre sat', 'E');
+      else drawRoadSign(ctx, gx, gy, $t('🏘️ Spre sat'), 'E');
       return true;
     }
     case 'fireplace': {

@@ -340,10 +340,10 @@ export class LozShow extends Show {
         play: () => this.cells.every(c2 => c2.cover <= 0),
         draw: (c, W, H) => { this.card(c, W, H); } },
       { id: 'res', cap: '', dur: 3.6, enter: () => { if (this.prize) { Sfx.play('victory'); this.boom(this.prize >= 100 ? 100 : 40); this.me.play('dance_hop'); } else { Sfx.play('boing'); this.me.play('laugh'); } },
-        draw: (c, W, H) => { this.card(c, W, H); this.phases[this.pi].cap = this.prize >= 300 ? '⭐⭐⭐ MARELE PREMIU! +300 lei!!!' : this.prize ? $t('{0} Ai câștigat {1} lei! 🎉', SYM[this.win].repeat(3), this.prize) : $t('🍋🍋 Lămâi… Ești o lămâie norocoasă, dar nu azi 😅'); } },
+        draw: (c, W, H) => { this.card(c, W, H); this.phases[this.pi].cap = this.prize >= 300 ? $t('⭐⭐⭐ MARELE PREMIU! +300 lei!!!') : this.prize ? $t('{0} Ai câștigat {1} lei! 🎉', SYM[this.win].repeat(3), this.prize) : $t('🍋🍋 Lămâi… Ești o lămâie norocoasă, dar nu azi 😅'); } },
     ];
   }
-  endText() { return this.prize ? `+${this.prize} lei! 🎟️` : 'Data viitoare! 🍀'; }
+  endText() { return this.prize ? $t('+{0} lei! 🎟️', this.prize) : $t('Data viitoare! 🍀'); }
   reward() { const s = this.scene; s.op({ k: 'stat', key: 'loz', delta: 1 }); if (this.prize && !this.quit) s.op({ k: 'money', delta: this.prize }); else if (this.prize && this.quit) s.op({ k: 'money', delta: this.prize }); }
 }
 void ease;

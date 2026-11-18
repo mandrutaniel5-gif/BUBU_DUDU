@@ -58,7 +58,7 @@ export class MenuScene implements Scene {
       <div class="menu-card">
         <h1>${GAME_NAME.includes(' & ') ? GAME_NAME.split(' & ').map(esc).join(' <span>&</span> ') : esc(GAME_NAME)}</h1>
         <p class="tag">${$t('Căsuța noastră 🏡💕')}</p>
-        <label class="myname">${$t('Numele tău')} <input name="myname" maxlength="14" autocomplete="nickname" placeholder="ex. Ana" value="${esc(cleanName(s.myName))}" /></label>
+        <label class="myname">${$t('Numele tău')} <input name="myname" maxlength="14" autocomplete="nickname" placeholder="${$t('ex. Ana')}" value="${esc(cleanName(s.myName))}" /></label>
         <div class="tabs2">
           <button data-tab="online">${$t('🌍 Online')}<small>${$t('cu partenerul')}</small></button>
           <button data-tab="offline">${$t('📴 Offline')}<small>${$t('singur, fără internet')}</small></button>
@@ -73,11 +73,11 @@ export class MenuScene implements Scene {
             <button data-who="bubu">🐹<b>${$t('Ea')}</b><small>${$t('hamsterița albă')}</small></button>
             <button data-who="dudu">🐹<b>${$t('El')}</b><small>${$t('hamsterul auriu')}</small></button>
           </div>
-          <label class="myname">${$t('Numele partenerului')} <input name="pname" maxlength="14" placeholder="ex. Mihai" value="${esc(cleanName(s.partnerName))}" /></label>
+          <label class="myname">${$t('Numele partenerului')} <input name="pname" maxlength="14" placeholder="${$t('ex. Mihai')}" value="${esc(cleanName(s.partnerName))}" /></label>
           <button class="play">${$t('▶ Joacă')}</button>
           <div class="row2"><button class="reset">${$t('🔄 Joc nou (Offline)')}</button></div>
         </div>
-        <div class="row2"><button class="export" title="Salvează progresul într-un fișier">${$t('💾 Salvează')}</button><button class="import" title="Încarcă progresul dintr-un fișier">${$t('📂 Încarcă')}</button><button class="more">${$t('⚙ Setări')}</button></div>
+        <div class="row2"><button class="export" title="${$t('Salvează progresul într-un fișier')}">${$t('💾 Salvează')}</button><button class="import" title="${$t('Încarcă progresul dintr-un fișier')}">${$t('📂 Încarcă')}</button><button class="more">${$t('⚙ Setări')}</button></div>
         <p class="ver">${$t('v{0} · făcut cu 💕 pentru noi doi', pkg.version)}</p>
       </div>`;
     document.getElementById('ui')!.appendChild(this.ui);
@@ -131,7 +131,7 @@ export class MenuScene implements Scene {
         return `<button data-seat="${w}" data-room="${h.room}" class="${st === 'busy' ? 'busy' : ''} ${pick === w ? 'mine' : ''}">${ICON[w]} ${esc(label(w, h.room))}<small>${sub}</small></button>`;
       };
       return `<div class="hcard"><div class="hc-top"><b>🏠 ${esc(h.code)}</b><small>${esc(saveInfo(h.room))}</small>
-        <span class="hc-n" title="Câți sunteți acum în casă">${known ? `${n}/2` : '·/2'}</span><button class="hc-x" data-forget="${h.room}" title="Scoate casa din listă">✕</button></div>
+        <span class="hc-n" title="${$t('Câți sunteți acum în casă')}">${known ? `${n}/2` : '·/2'}</span><button class="hc-x" data-forget="${h.room}" title="${$t('Scoate casa din listă')}">✕</button></div>
         <div class="hc-seats">${seat('bubu')}${seat('dudu')}</div>
         <button class="hc-enter" data-enter="${h.room}" ${pick ? '' : 'disabled'}>${pick ? $t('▶ Intră ca {0}', esc(pick === h.who && cleanName(Settings.get().myName) ? cleanName(Settings.get().myName) : label(pick, h.room))) : $t('Casa e plină')}</button></div>`;
     }).join('');
@@ -162,8 +162,8 @@ export class MenuScene implements Scene {
     if (c.contains('errs')) { this.showErrors(); return; }
     if (c.contains('errcopy')) { const t = `${GAME_NAME} v${pkg.version} · ${navigator.userAgent}\n` + ErrorLog.text(); navigator.clipboard?.writeText(t).then(() => { b.textContent = '✔ Copiat'; }).catch(() => { b.textContent = $t('Ține apăsat pe text → Copiază'); }); return; }
     if (c.contains('errclear')) { ErrorLog.clear(); this.showErrors(); return; }
-    if (c.contains('eco')) { const on = !isEco(); Settings.set({ eco: on }); b.textContent = on ? '🔋 Eco: pornit' : '⚡ Eco: oprit'; dispatchEvent(new Event('resize')); return; }
-    if (c.contains('mute')) { const m = !Settings.get().muted; Settings.set({ muted: m }); Sfx.setMuted(m); b.textContent = m ? '🔇 Sunet: oprit' : '🔊 Sunet: pornit'; return; }
+    if (c.contains('eco')) { const on = !isEco(); Settings.set({ eco: on }); b.textContent = on ? $t('🔋 Eco: pornit') : $t('⚡ Eco: oprit'); dispatchEvent(new Event('resize')); return; }
+    if (c.contains('mute')) { const m = !Settings.get().muted; Settings.set({ muted: m }); Sfx.setMuted(m); b.textContent = m ? $t('🔇 Sunet: oprit') : $t('🔊 Sunet: pornit'); return; }
     if (c.contains('studio')) { this.game.go('studio'); return; }
     if (c.contains('export')) { this.exportSave(b); return; }
     if (c.contains('import')) { this.importSave(); return; }
@@ -174,7 +174,7 @@ export class MenuScene implements Scene {
     if (c.contains('tester')) { const v = !(localStorage.getItem('bd-tester') === '1'); Bugs.setOn(v); b.textContent = v ? $t('🐞 Mod tester: pornit') : $t('🐞 Pornește modul tester'); Sfx.play(v ? 'good' : 'click'); return; }
     if (c.contains('bugs')) { this.showBugs(); return; }
     if (c.contains('bugexp')) { Bugs.exportFile(); return; }
-    if (c.contains('bugup')) { b.textContent = 'Se trimite…'; Bugs.upload().then(() => { const n = Bugs.all().filter(r => !r.up).length; b.textContent = n ? $t('☁️ {0} n-au ajuns (fără internet sau fără reguli)', n) : $t('✔ Toate au ajuns'); }); return; }
+    if (c.contains('bugup')) { b.textContent = $t('Se trimite…'); Bugs.upload().then(() => { const n = Bugs.all().filter(r => !r.up).length; b.textContent = n ? $t('☁️ {0} n-au ajuns (fără internet sau fără reguli)', n) : $t('✔ Toate au ajuns'); }); return; }
     if (c.contains('bugclr')) { if (confirm($t('Ștergi toate rapoartele de pe telefon?'))) { Bugs.clear(); this.showBugs(); } return; }
     if (c.contains('devoff')) { lockDev(); location.reload(); return; }
     if (c.contains('devok')) { const inp = this.ui.querySelector('[name=devcode]') as HTMLInputElement; if (unlockDev(inp.value)) { Sfx.play('good'); location.reload(); } else { Sfx.play('bad'); inp.value = ''; inp.placeholder = $t('Cod greșit'); } return; }
@@ -190,7 +190,7 @@ export class MenuScene implements Scene {
   resetOffline(b: HTMLButtonElement) {
     if (!confirm($t('Începi un joc nou Offline?\n\nSe șterge progresul Offline de pe telefonul ăsta și o iei de la Capitolul 0. Casele voastre online nu se schimbă.'))) return;
     try { localStorage.removeItem('bd-save-' + OFFLINE_ROOM); } catch { /* */ }
-    Sfx.play('good'); b.textContent = $t('✔ Șters!'); setTimeout(() => (b.textContent = '🔄 Joc nou (Offline)'), 1500);
+    Sfx.play('good'); b.textContent = $t('✔ Șters!'); setTimeout(() => (b.textContent = $t('🔄 Joc nou (Offline)')), 1500);
   }
 
   // ------------------------------------------------------------------ Online: intri intr-o casa din lista
@@ -257,7 +257,7 @@ export class MenuScene implements Scene {
   showJoin() {
     this.dialog(`<h3>${$t('🔑 Intră în casa partenerului')}</h3>
       <p class="sub">${$t('Scrie codul și parola pe care ți le-a dat partenerul. Casa rămâne apoi în listă: data viitoare doar o atingi.')}</p>
-      <div class="house-box"><label>${$t('Codul casei')}<input name="hcode" placeholder="LALEA-7K3P" maxlength="14" autocapitalize="characters" /></label>
+      <div class="house-box"><label>${$t('Codul casei')}<input name="hcode" placeholder="${$t('LALEA-7K3P')}" maxlength="14" autocapitalize="characters" /></label>
         <label>${$t('Parola')}<input name="hjpass" type="password" autocomplete="current-password" maxlength="40" /></label>
         <button type="button" class="h-join">${$t('🔑 Caută casa')}</button></div>
       <p class="house-msg"></p><div class="row2"><button class="xcred">${$t('Închide')}</button></div>`, 'house');
@@ -311,14 +311,14 @@ export class MenuScene implements Scene {
   showSettings() {
     const s = Settings.get();
     this.dialog(`<h3>${$t('⚙ Setări')}</h3>
-      <div class="row2"><button class="mute">${s.muted ? '🔇 Sunet: oprit' : '🔊 Sunet: pornit'}</button><button class="eco" title="Economisire baterie: mai puține cadre pe secundă când stați">${isEco() ? '🔋 Eco: pornit' : '⚡ Eco: oprit'}</button></div>
-      <div class="row2"><button class="errs" title="Erorile jocului (le poți copia și trimite)">${$t('📋 Erori ({0})', ErrorLog.all().length)}</button><button class="credits">${$t('📜 Credite')}</button></div>
+      <div class="row2"><button class="mute">${s.muted ? $t('🔇 Sunet: oprit') : $t('🔊 Sunet: pornit')}</button><button class="eco" title="${$t('Economisire baterie: mai puține cadre pe secundă când stați')}">${isEco() ? $t('🔋 Eco: pornit') : $t('⚡ Eco: oprit')}</button></div>
+      <div class="row2"><button class="errs" title="${$t('Erorile jocului (le poți copia și trimite)')}">${$t('📋 Erori ({0})', ErrorLog.all().length)}</button><button class="credits">${$t('📜 Credite')}</button></div>
       ${DEV ? `<div class="devbox"><h4>${$t('🧪 Modul dezvoltator')}</h4><p class="sub">${$t('Uneltele (totul nelimitat, capitole, zile, sărbători) merg doar în lumea de test: nu se scrie nimic în casele voastre online.')}</p>
         <div class="row2"><button class="devworld">${$t('🧪 Lumea de test')}</button><button class="devlocal">${$t('👥 Test în 2 tab-uri')}</button></div>
         <div class="row2"><button class="studio">${$t('🎬 Studio')}</button><button class="devreset">${$t('🗑️ Șterge lumea de test')}</button><button class="devoff">${$t('🔒 Oprește')}</button></div></div>` : ''}
       ${Bugs.on() || Bugs.count() ? `<div class="row2"><button class="bugs">${$t('🐞 Rapoarte de la testeri ({0})', Bugs.count())}</button></div>` : ''}
       <p class="vtap">${esc(GAME_NAME)} v${pkg.version}</p>
-      <div class="devcode hidden"><input name="devcode" type="password" placeholder="Cod dezvoltator" autocomplete="off" /><button class="devok">${$t('OK')}</button>
+      <div class="devcode hidden"><input name="devcode" type="password" placeholder="${$t('Cod dezvoltator')}" autocomplete="off" /><button class="devok">${$t('OK')}</button>
         <button class="tester">${Bugs.on() ? $t('🐞 Mod tester: pornit') : $t('🐞 Pornește modul tester')}</button></div>
       <div class="row2"><button class="xcred">${$t('Închide')}</button></div>`);
     // ascuns: atingi de 5 ori versiunea si apare locul pentru cod
@@ -356,7 +356,7 @@ export class MenuScene implements Scene {
   showBugs() {
     const list = Bugs.all().slice().reverse();
     const e2 = (t: string) => t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
-    const kind = { eroare: '💥 Eroare', auto: $t('🔎 Găsit automat'), tester: '🐞 Tester' } as Record<string, string>;
+    const kind = { eroare: $t('💥 Eroare'), auto: $t('🔎 Găsit automat'), tester: $t('🐞 Tester') } as Record<string, string>;
     this.dialog(`<h3>${$t('🐞 Rapoarte ({0})', list.length)}</h3><p class="sub">${$t('Modul tester strânge singur erorile și problemele vizuale; testerul adaugă cu 🐞 ce vede. Trimite-mi fișierul (se deschide cu tools/erori.html).')}</p>
       <div class="buglist">${list.map(r => `<div class="bi">${/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(r.shot ?? '') ? `<img src="${r.shot}" alt="">` : ''}<div><b>${kind[r.kind] ?? r.kind} · ${e2(r.cat)}</b>${e2(r.title)}<br><small>${new Date(r.ts).toLocaleString('ro-RO')} · ${e2(String(r.ctx.zona ?? ''))} · cap. ${e2(String(r.ctx.capitol ?? ''))}${r.up ? ' · ☁️' : ''}</small></div></div>`).join('') || `<p class="sub">${$t('Niciun raport încă.')}</p>`}</div>
       <div class="row2"><button class="bugexp">${$t('📤 Trimite fișierul')}</button><button class="bugup">${$t('☁️ Trimite pe internet')}</button><button class="bugclr">${$t('🗑️ Șterge')}</button></div>

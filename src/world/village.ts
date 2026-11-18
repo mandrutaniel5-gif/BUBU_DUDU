@@ -52,14 +52,14 @@ export function villageFloorW(x: number, y: number): Floor {
 export interface BuildingDef { id: string; gx: number; gy: number; w: number; d: number; h: number; front: 'x' | 'y'; wall: string; roof: string; sign: string; awning?: string; action: { id: string; label: string; icon: string }; tower?: boolean }
 export const BUILDINGS: BuildingDef[] = [
   // la Ulita Mare (usa spre drum)
-  { id: 'v-grocery', gx: 103, gy: 19, w: 4, d: 4, h: 58, front: 'y', wall: '#fff1d6', roof: '#7cb870', sign: $t('Magazin Alimentar'), awning: '#7cc576', action: act('v-grocery', 'Magazinul alimentar', '🛒') },
-  { id: 'v-clothes', gx: 107, gy: 19, w: 4, d: 4, h: 58, front: 'y', wall: '#ffe1ea', roof: '#e5809a', sign: $t('Croitoria'), awning: '#ff9ab8', action: act('v-clothes', 'Croitoria (haine)', '🧵') },
+  { id: 'v-grocery', gx: 103, gy: 19, w: 4, d: 4, h: 58, front: 'y', wall: '#fff1d6', roof: '#7cb870', sign: $t('Magazin Alimentar'), awning: '#7cc576', action: act('v-grocery', $t('Magazinul alimentar'), '🛒') },
+  { id: 'v-clothes', gx: 107, gy: 19, w: 4, d: 4, h: 58, front: 'y', wall: '#ffe1ea', roof: '#e5809a', sign: $t('Croitoria'), awning: '#ff9ab8', action: act('v-clothes', $t('Croitoria (haine)'), '🧵') },
   // pe latura de vest a pietei (usa spre piata)
   { id: 'v-bakery', gx: 107, gy: 13, w: 4, d: 4, h: 54, front: 'x', wall: '#fff3e0', roof: '#d9a05a', sign: $t('Brutăria'), awning: '#e8b06a', action: act('v-bakery', $t('Brutăria (pâine / lucru)'), '🍞') },
   // pe latura de nord a pietei
   { id: 'v-post', gx: 113, gy: 8, w: 4, d: 4, h: 56, front: 'y', wall: '#e8f1ff', roof: '#5b7fbf', sign: $t('Poșta'), awning: '#7ab8ff', action: act('v-post', $t('Poșta (lucrează ca poștaș)'), '💌') },
   { id: 'v-hall', gx: 119, gy: 6, w: 6, d: 6, h: 74, front: 'y', wall: '#e8f1ff', roof: '#5b7fbf', sign: $t('Primăria'), action: act('v-hall', $t('Primăria'), '🏛️'), tower: true },
-  { id: 'v-clinic', gx: 126, gy: 8, w: 4, d: 4, h: 58, front: 'y', wall: '#ffffff', roof: '#e63946', sign: $t('Dispensar · Farmacie'), awning: '#ff9a9a', action: act('v-clinic', 'Dispensarul (doctor, farmacie)', '🩺') },
+  { id: 'v-clinic', gx: 126, gy: 8, w: 4, d: 4, h: 58, front: 'y', wall: '#ffffff', roof: '#e63946', sign: $t('Dispensar · Farmacie'), awning: '#ff9a9a', action: act('v-clinic', $t('Dispensarul (doctor, farmacie)'), '🩺') },
   // la sud de drum: Ulita Florilor (usa spre ulita) si Ulita Scolii
   { id: 'v-florarie', gx: 119, gy: 27, w: 4, d: 4, h: 54, front: 'x', wall: '#fff0f5', roof: '#ff9ab8', sign: $t('Florăria lui Bubu'), awning: '#ff7aa2', action: act('v-florarie', $t('Florăria lui Bubu'), '💐') },
   { id: 'v-workshop', gx: 119, gy: 32, w: 4, d: 4, h: 54, front: 'x', wall: '#e7c08f', roof: '#8a5d32', sign: $t('Tâmplăria lui Dudu'), awning: '#c98e5f', action: act('v-workshop', $t('Tâmplăria lui Dudu'), '🪚') },
@@ -81,7 +81,7 @@ const HOME_OF: [string | null, number, number, 'x' | 'y'][] = [
   [null, 132, 42, 'x'], [null, 132, 46, 'x'], [null, 103, 42, 'x'], // dupa Ulita Scolii
 ];
 export const VILLAGER_HOMES: Record<string, { x: number; y: number }> = {};
-const NAMES: Record<string, string> = { leana: 'Bunica Leana', gogu: 'Nea Gogu', ina: 'Ina', rex: 'Rex', rita: 'Rita', miti: $t('Miți') };
+const NAMES: Record<string, string> = { leana: $t('Bunica Leana'), gogu: $t('Nea Gogu'), ina: $t('Ina'), rex: $t('Rex'), rita: $t('Rita'), miti: $t('Miți') };
 HOME_OF.forEach(([who, gx, gy, front], i) => {
   const [wall, roof] = VCOL[i % VCOL.length], id = who ? `vh-${who}` : `vh-${gx}-${gy}`;
   HOUSES.push({ id, gx, gy, w: 3, d: 3, h: 44 + (i % 3) * 4, front, wall, roof, name: who ? $t('Casa: {0}', NAMES[who]) : undefined });
@@ -92,19 +92,19 @@ HOME_OF.forEach(([who, gx, gy, front], i) => {
   for (const k of [0, 2]) put({ id: `${id}-fl${k}`, type: 'flowers' as any, gx: front === 'y' ? gx + k : gx + 3, gy: front === 'y' ? gy + 3 : gy + k, w: 1, d: 1, solid: false });
 });
 // biserica (clopotele bat la 8, 12 si 18), cu fata spre piateta
-put({ id: 'w-church', type: 'church' as any, gx: 126, gy: -8, w: 4, d: 4, solid: true, action: act('v-church', 'Biserica satului', '⛪') });
+put({ id: 'w-church', type: 'church' as any, gx: 126, gy: -8, w: 4, d: 4, solid: true, action: act('v-church', $t('Biserica satului'), '⛪') });
 
 // --- piata: fantana in mijloc, bancute in jur, taraba pietei, avizierul langa primarie, statia de autobuz la drum
 put({ id: 'v-fountain', type: 'fountain' as any, gx: 120.5, gy: 17.5, w: 1, d: 1, solid: true, action: act('v-fountain', $t('Aruncă o monedă'), '🪙') });
 for (const [x, y] of [[116, 17], [123, 20]]) put({ id: `v-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', $t('Băncuța din piață'), '🌅') });
 put({ id: 'v-market', type: 'stalls' as any, gx: 126, gy: 15, w: 3, d: 2, solid: true, action: act('v-market', $t('Piața (vinde)'), '💱') });
-put({ id: 'v-board', type: 'noticeboard' as any, gx: 114, gy: 13, w: 1, d: 1, solid: true, action: act('v-board', 'Avizierul satului (cereri)', '📜') });
+put({ id: 'v-board', type: 'noticeboard' as any, gx: 114, gy: 13, w: 1, d: 1, solid: true, action: act('v-board', $t('Avizierul satului (cereri)'), '📜') });
 put({ id: 'v-bus', type: 'busstop' as any, gx: 129, gy: 22, w: 1, d: 1, solid: true, action: act('v-bus', $t('Autobuzul spre oraș'), '🚌') });
 // la intrarea in sat: indicatorul spre casa (parcarea bicicletei si a scuterului e vizavi, la sud de drum)
 put({ id: 'v-home', type: 'signpost' as any, gx: 103, gy: 27, w: 1, d: 1, solid: true, action: act('v-home', $t('Înapoi acasă'), '🏡') });
 // --- gradinita cu calusei (la est de piata) si parcul cu roata mare (dupa ulita de est)
 put({ id: 'v-carousel', type: 'carousel' as any, gx: 131, gy: 16, w: 2, d: 2, solid: true, action: act('v-carousel', $t('Călușeii (8 lei)'), '🎠') });
-put({ id: 'v-ferris', type: 'ferris' as any, gx: 141, gy: 8, w: 3, d: 2, solid: true, action: act('v-ferris', 'Roata mare (15 lei)', '🎡') });
+put({ id: 'v-ferris', type: 'ferris' as any, gx: 141, gy: 8, w: 3, d: 2, solid: true, action: act('v-ferris', $t('Roata mare (15 lei)'), '🎡') });
 for (const [x, y] of [[139, 19], [144, 19], [131, 21]]) put({ id: `v-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', $t('Băncuța din parc'), '🌅') });
 // --- curtea scolii si gradinile satenilor
 for (const [x, y] of [[106, 29], [110, 28]]) put({ id: `v-bench${x}-${y}`, type: 'bench' as any, gx: x, gy: y, w: 2, d: 1, solid: true, action: act('bench', $t('Banca din curtea școlii'), '🌅') });

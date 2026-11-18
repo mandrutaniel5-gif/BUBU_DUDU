@@ -10,16 +10,16 @@ const O = '#4a2a22';
 const QUESTIONS: { q: string; a: string[]; ok: number }[] = [
   { q: $t('Ce îi trebuie unei plante ca să crească?'), a: [$t('Apă și soare 🌞💧'), $t('Ciocolată 🍫'), $t('Muzică rock 🎸')], ok: 0 },
   { q: $t('Din ce se face pâinea?'), a: [$t('Din lapte'), $t('Din făină 🌾'), $t('Din pietre')], ok: 1 },
-  { q: $t('Ce pui pe foc ca să nu îngheți?'), a: [$t('Zăpadă ❄️'), 'Lemne 🪵', $t('Apă')], ok: 1 },
-  { q: $t('Ce culoare are o roșie coaptă?'), a: [$t('Albastră'), $t('Roșie 🍅'), 'Violet'], ok: 1 },
-  { q: $t('Cine trezește satul dimineața?'), a: [$t('Cocoșul 🐓'), $t('Peștele'), 'Luna'], ok: 0 },
+  { q: $t('Ce pui pe foc ca să nu îngheți?'), a: [$t('Zăpadă ❄️'), $t('Lemne 🪵'), $t('Apă')], ok: 1 },
+  { q: $t('Ce culoare are o roșie coaptă?'), a: [$t('Albastră'), $t('Roșie 🍅'), $t('Violet')], ok: 1 },
+  { q: $t('Cine trezește satul dimineața?'), a: [$t('Cocoșul 🐓'), $t('Peștele'), $t('Luna')], ok: 0 },
   { q: $t('Ce faci când partenerul e bolnav?'), a: [$t('Îl lași singur'), $t('Îi faci supă și îl îngrijești 🍲'), $t('Te uiți la TV')], ok: 1 },
   { q: $t('Cu ce uzi grădina?'), a: [$t('Cu apă din fântână 🪣'), $t('Cu suc'), $t('Cu nisip')], ok: 0 },
-  { q: $t('Ce aduce îngrășământul?'), a: [$t('Plantele cresc mai repede ✨'), $t('Plantele zboară'), 'Nimic'], ok: 0 },
+  { q: $t('Ce aduce îngrășământul?'), a: [$t('Plantele cresc mai repede ✨'), $t('Plantele zboară'), $t('Nimic')], ok: 0 },
   { q: $t('Ce animal face miere?'), a: ['Vaca', 'Albina 🐝', 'Ariciul'], ok: 1 },
   { q: $t('Câte ore are o zi?'), a: ['12', '24 ⏰', '100'], ok: 1 },
   { q: $t('Ce e o ie?'), a: [$t('O bluză tradițională românească 👚'), $t('Un fel de supă'), $t('O pasăre')], ok: 0 },
-  { q: $t('Ce faci după ce culegi legumele?'), a: ['Le arunci', $t('Le gătești sau le vinzi 🥕'), $t('Le îngropi iar')], ok: 1 },
+  { q: $t('Ce faci după ce culegi legumele?'), a: [$t('Le arunci'), $t('Le gătești sau le vinzi 🥕'), $t('Le îngropi iar')], ok: 1 },
 ];
 
 export class QuizGame extends Panel {
@@ -67,7 +67,7 @@ export class FerrisGame extends Panel {
   k = 0; kissed = false; holding = false; kissT = 0; duo: boolean;
   birds = Array.from({ length: 5 }, (_, i) => ({ x: Math.random(), y: 0.12 + Math.random() * 0.25, s: 0.6 + Math.random() * 0.5, ph: i }));
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, '🎡 Roata mare', s.duo ? $t('Sus de tot, ține apăsat pentru un pupic 💕') : $t('Sus de tot, ține apăsat și pune-ți o dorință ✨'));
+    super(s, d, $t('🎡 Roata mare'), s.duo ? $t('Sus de tot, ține apăsat pentru un pupic 💕') : $t('Sus de tot, ține apăsat și pune-ți o dorință ✨'));
     this.duo = s.duo;
   }
   get top() { return this.k > 0.4 && this.k < 0.6; }

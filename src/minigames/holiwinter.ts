@@ -181,7 +181,7 @@ export class CarolShow extends Show {
     const sing = (i: number): Phase => ({ id: 'sing' + i, cap: CAROL_LINES[i], dur: 3.1, enter: () => { Sfx.play('carol'); if (i === 1) setTimeout(() => { Sfx.play('howl'); rexG.play('dance_wave'); }, 900); if (i === 2) goguG.play('shy'); },
       draw: (c, W, H) => { this.door(c, W, H, 1); this.troupe(c, W, H, 5); for (let k = 0; k < 4; k++) icon(c, ['🎵', '🎶'][k % 2], W * (0.45 + k * 0.12) + Math.sin(this.t * 2 + k) * 10, H * 0.42 - ((this.t * 30 + k * 20) % 60), 18); const s = this.sz() * 0.66; this.put(this.me, W * 0.13, H * 0.86, s, 1); this.put(this.pa, W * 0.25, H * 0.88, s, 1); this.me.draw(c); this.pa.draw(c);
         if (i === 1) this.bub(c, $t('Rex: „AUUUUU 🎶” (fals, dar din suflet)'), this.spots[this.guests.indexOf(rexG)]?.x ?? W / 2, H * 0.55, 13);
-        if (i === 2) this.bub(c, 'Nea Gogu: „…na-na-na… am uitat versurile 😅”', this.spots[this.guests.indexOf(goguG)]?.x ?? W / 2, H * 0.55, 13); } });
+        if (i === 2) this.bub(c, $t('Nea Gogu: „…na-na-na… am uitat versurile 😅”'), this.spots[this.guests.indexOf(goguG)]?.x ?? W / 2, H * 0.55, 13); } });
     return [
       { id: 'bell', cap: $t('🔔 Ding-dong! Cine sună la ușă la ora asta?'), dur: 2.6, enter: () => { Sfx.play('doorbell'); setTimeout(() => Sfx.play('doorbell'), 700); },
         draw: (c, W, H, k) => { this.door(c, W, H, ease(clamp((k - 0.5) * 2))); if (k > 0.5) this.troupe(c, W, H); const s = this.sz() * 0.66; this.put(this.me, W * 0.13, H * 0.86, s, 1); this.put(this.pa, W * 0.25, H * 0.88, s, 1); this.me.draw(c); this.pa.draw(c); } },
@@ -323,7 +323,7 @@ export class SantaShow extends Show {
   react() { if (this.answer === 2) { (this.scene.myId === 'bubu' ? this.dudu : this.bubu).play('shy'); Sfx.play('gasp'); } else Sfx.play('chimes', { vol: 0.5 }); }
   snap(_c: CanvasRenderingContext2D, W: number, H: number) { try { const cv = document.createElement('canvas'); cv.width = 320; cv.height = 272; const c2 = cv.getContext('2d')!; c2.scale(320 / W, 272 / (H * 0.85)); this.booth(c2, W, H, 1); this.couple(c2, W, H); this.photo = cv; } catch { /* */ } }
   onNet(d: any) { if (d.ans != null && this.answer < 0) { this.answer = d.ans; this.react(); } if (d.pose != null && this.pose < 0) this.pose = d.pose; }
-  endText() { return 'Ho-ho-ho! 🎅'; }
+  endText() { return $t('Ho-ho-ho! 🎅'); }
   reward() { const s = this.scene; if (this.quit && this.pi < 4) return; if (Hol.once(s, Hol.yearKey(s, 'santa'))) { s.log($t('Ați făcut o poză cu Moș Crăciun la târgul din oraș 🎅📸')); } Hol.memory(s, 'santa'); Hol.feel(s, s.myId, { fun: 20, love: 10 }); if (this.partnerAI) Hol.feel(s, s.partner.id, { fun: 20, love: 10 }); }
 }
 
@@ -465,7 +465,7 @@ export class NewYearShow extends Show {
           const gx0 = this.guest('gogu').x || W * 0.32, ck = clamp(k * 2.2), cx = lerp(W * 0.5, gx0, ck), cy = H * 0.7 - Math.sin(ck * Math.PI) * H * 0.4; if (ck < 1) ell(c, cx, cy, 6, 9, '#c98e5f'); else if (!this.corkHit) { this.corkHit = true; this.guest('gogu').play('dizzy'); Sfx.play('bonk'); this.fx.text(gx0, H * 0.58, $t('Nea Gogu: dop în frunte! 🍾😵'), '#ff4d6d', 1); } } },
       { id: 'fw', cap: '', hint: $t('Alege forma, apoi atinge cerul: lansezi artificii!'), max: 26,
         tap: (type, x, y) => { if (type !== 'down') return; const i = this.btns.findIndex(r => this.hit(r, x, y)); if (i >= 0) { this.kind = i; Sfx.play('pop'); return; } if (y > 124 && y < this.H * 0.66) this.launch(x, y, this.kind, true); },
-        play: dt => { for (const r of this.rockets) { r.t += dt; if (r.t >= 0.8 && r.t - dt < 0.8) { this.shape(r.tx, r.ty, FW_KINDS[r.k].k, FW_COLS[r.k], 60 + Math.random() * 20); Sfx.play('boom'); if (Math.random() < 0.3) this.fx.text(r.tx, r.ty + 60, ['Ooooh!', 'Uaaau!', $t('Ce frumos! 😍')][Math.floor(Math.random() * 3)], '#fff', 0.8); } } this.rockets = this.rockets.filter(r => r.t < 0.85);
+        play: dt => { for (const r of this.rockets) { r.t += dt; if (r.t >= 0.8 && r.t - dt < 0.8) { this.shape(r.tx, r.ty, FW_KINDS[r.k].k, FW_COLS[r.k], 60 + Math.random() * 20); Sfx.play('boom'); if (Math.random() < 0.3) this.fx.text(r.tx, r.ty + 60, [$t('Ooooh!'), $t('Uaaau!'), $t('Ce frumos! 😍')][Math.floor(Math.random() * 3)], '#fff', 0.8); } } this.rockets = this.rockets.filter(r => r.t < 0.85);
           if (this.aiPlays) { this.aiT -= dt; if (this.aiT <= 0) { this.aiT = 1.3 + Math.random(); this.launch(this.W * (0.15 + Math.random() * 0.7), this.H * (0.36 + Math.random() * 0.22), Math.floor(Math.random() * FW_KINDS.length), false); } }
           return this.pt > 24; },
         draw: (c, W, H) => { this.square(c, W, H); c.fillStyle = 'rgba(10,10,40,0.35)'; c.fillRect(0, 0, W, H * 0.6); this.crowd(c, W, H, 2); this.couple(c, W, H);

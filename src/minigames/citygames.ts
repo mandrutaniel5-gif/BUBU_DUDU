@@ -228,7 +228,7 @@ export class CinemaGame extends Panel {
     if (sc >= 2 && this.romance) { const hy = fy - 70 - (k - 0.55) * 80; heartPath(ctx, (ax + bx) / 2, hy, 12 + Math.sin(t * 6) * 2); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.stroke(); }
     if (sc === 3) for (let i = 0; i < 3; i++) { const fx0 = x + w * (0.25 + i * 0.25), fy0 = y + h * (0.25 + (i % 2) * 0.1), fr = ((t * 50 + i * 25) % 45); ctx.strokeStyle = ['#ffd23f', '#ff7aa2', '#7ab8ff'][i]; ctx.lineWidth = 2; for (let r = 0; r < 10; r++) { const a = r * Math.PI / 5; ctx.beginPath(); ctx.moveTo(fx0 + Math.cos(a) * fr * 0.5, fy0 + Math.sin(a) * fr * 0.5); ctx.lineTo(fx0 + Math.cos(a) * fr, fy0 + Math.sin(a) * fr); ctx.stroke(); } }
     // titlul scenei, ca in filme
-    const title = [$t('Capitolul 1 · Cum s-au cunoscut'), 'Capitolul 2 · Ploaia', $t('Capitolul 3 · Noaptea cu stele'), $t('SFÂRȘIT 💕')][sc];
+    const title = [$t('Capitolul 1 · Cum s-au cunoscut'), $t('Capitolul 2 · Ploaia'), $t('Capitolul 3 · Noaptea cu stele'), $t('SFÂRȘIT 💕')][sc];
     const tk = sc === 0 ? (k - 0.06) / 0.08 : sc === 1 ? (k - 0.3) / 0.08 : sc === 2 ? (k - 0.55) / 0.08 : 1;
     if (tk > 0 && tk < 1.6 || sc === 3) { ctx.globalAlpha = sc === 3 ? 1 : Math.max(0, Math.min(1, tk < 1 ? tk * 2 : (1.6 - tk) * 2)); ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(x, y + h - 26, w, 26); ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(title, x + w / 2, y + h - 8); ctx.globalAlpha = 1; }
     // banda de film: putin "praf" pe imagine
@@ -285,7 +285,7 @@ const COURSES: { name: string; opts: string[] }[] = [
   { name: $t('Felul principal'), opts: ['🍕', '🐟', '🍔'] },
   { name: $t('Desertul'), opts: ['🍰', '🍓', '🍫'] },
 ];
-const DISH_NAMES: Record<string, string> = { '🍲': $t('Supă cremă'), '🥗': $t('Salată cu ierburi'), '🍄': $t('Ciuperci la grătar'), '🍕': $t('Pizza cu inimioare'), '🐟': $t('Pește la cuptor'), '🍔': 'Burger gurmand', '🍰': $t('Tort cu frișcă'), '🍓': $t('Căpșuni cu ciocolată'), '🍫': $t('Fondant de ciocolată') };
+const DISH_NAMES: Record<string, string> = { '🍲': $t('Supă cremă'), '🥗': $t('Salată cu ierburi'), '🍄': $t('Ciuperci la grătar'), '🍕': $t('Pizza cu inimioare'), '🐟': $t('Pește la cuptor'), '🍔': $t('Burger gurmand'), '🍰': $t('Tort cu frișcă'), '🍓': $t('Căpșuni cu ciocolată'), '🍫': $t('Fondant de ciocolată') };
 /** felurile preferate (cate unul la fiecare fel), marcate clar in meniu */
 const FAV: Record<string, number[]> = { bubu: [1, 0, 1], dudu: [0, 2, 2] };
 export class RestoGame extends Panel {
@@ -305,7 +305,7 @@ export class RestoGame extends Panel {
   pick(k: number) {
     if (this.wait > 0 || this.i >= COURSES.length) return;
     this.picked.push(k); this.wait = 1.4;
-    if (!this.duo) { this.wants[this.i] = k; Sfx.play('clink'); this.fx.text(this.box.x + this.box.w / 2, this.box.y + 150, ['Mmm, delicios! 😋', $t('Ce bun! 🤤'), 'Perfect! ✨'][this.i % 3], '#ff4d6d', 0.9); return; }
+    if (!this.duo) { this.wants[this.i] = k; Sfx.play('clink'); this.fx.text(this.box.x + this.box.w / 2, this.box.y + 150, [$t('Mmm, delicios! 😋'), $t('Ce bun! 🤤'), $t('Perfect! ✨')][this.i % 3], '#ff4d6d', 0.9); return; }
     const ok = k === this.wants[this.i];
     const B = this.box;
     if (ok) { Sfx.play('clink'); Sfx.play('kiss', { delay: 0.3 }); this.fx.hearts(B.x + B.w * 0.7, B.y + 170, 6); this.fx.text(B.x + B.w * 0.7, B.y + 140, $t('Preferatul {0}! 💕', g(this.pa.id, $t('lui'), 'ei')), '#ff4d6d', 0.9); }

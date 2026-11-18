@@ -57,7 +57,7 @@ export function openDev(s: S) {
     </div><div class="devrow">${[7, 10, 12, 15, 18, 20, 23].map(h => b(`data-h="${h}"`, `${h}:00`)).join('')}</div>
     <div class="devrow">${[1, 5, 20, 60].map(k => b(`data-spd="${k}"`, `⏩ ×${k}`, s.devSpeed === k)).join('')}</div>
     <h4>${$t('Sărbătorile')}</h4><div class="devrow">${Object.keys(SHOWS).map(id => `<span class="devhol">${showName(id)} ${b(`data-hday="${id}"`, $t('📅 ziua ei'))}${b(`data-hplay="${id}"`, '▶ acum')}</span>`).join('')}</div>
-    <h4>${$t('Drumuri rapide')}</h4><div class="devrow">${[['home', $t('🏡 Acasă')], ['forest', $t('🌲 Pădurea')], ['village', '🏘️ Satul'], ['city', $t('🏙️ Orașul')], ['apartment', '🛋️ Apartamentul']].map(([k, l]) => b(`data-go="${k}"`, l)).join('')}</div>
+    <h4>${$t('Drumuri rapide')}</h4><div class="devrow">${[[/*ro*/'home', $t('🏡 Acasă')], [/*ro*/'forest', $t('🌲 Pădurea')], ['village', '🏘️ Satul'], [/*ro*/'city', $t('🏙️ Orașul')], ['apartment', '🛋️ Apartamentul']].map(([k, l]) => b(`data-go="${k}"`, l)).join('')}</div>
     <h4>${$t('Afișaj și date')}</h4><div class="devrow">
       ${b('data-d="overlay"', $t('📊 FPS și poziția: {0}', s.devOverlay ? 'pornit' : 'oprit'), s.devOverlay)}
       ${b('data-d="copy"', $t('📋 Copiază lumea (JSON)'))}
@@ -80,7 +80,7 @@ export function openDev(s: S) {
   on('[data-go]', el => { s.hud.closeModal(); s.debugGo(el.dataset.go!, 'duo'); });
   on('[data-d="overlay"]', () => { s.devOverlay = !s.devOverlay; again(); });
   on('[data-d="copy"]', el => { navigator.clipboard?.writeText(JSON.stringify(s.w)).then(() => { el.textContent = '✔ Copiat'; }).catch(() => {}); });
-  on('[data-d="errs"]', el => { navigator.clipboard?.writeText(ErrorLog.text()).then(() => { el.textContent = '✔ Erorile copiate'; }).catch(() => {}); });
+  on('[data-d="errs"]', el => { navigator.clipboard?.writeText(ErrorLog.text()).then(() => { el.textContent = $t('✔ Erorile copiate'); }).catch(() => {}); });
 }
 
 /** sus in stanga: FPS, pozitia, zona, capitolul, ziua (pentru teste) */

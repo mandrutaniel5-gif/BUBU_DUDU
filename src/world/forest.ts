@@ -25,12 +25,12 @@ const F: Furn[] = [];
 const rnd = (i: number) => { const s = Math.sin(i * 91.7 + 13.1) * 43758.5; return s - Math.floor(s); };
 // brazi si foioase (taiere)
 const treeSpots: [number, number][] = [[1, 2], [3, 1], [6, 2], [8, 1], [10, 3], [2, 6], [5, 5], [8, 6], [1, 10], [4, 9], [7, 10], [10, 12], [2, 14], [7, 14], [12, 16], [15, 14], [18, 3], [20, 6], [19, 12], [9, 18], [14, 19], [18, 18], [20, 21], [1, 19], [11, 8]];
-treeSpots.forEach(([x, y], i) => F.push({ id: 'f-tree' + i, type: (i % 3 ? 'pine' : 'tree') as any, gx: x, gy: y, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') }));
+treeSpots.forEach(([x, y], i) => F.push({ id: 'f-tree' + i, type: (i % 3 ? 'pine' : 'tree') as any, gx: x, gy: y, w: 1, d: 1, solid: true, action: act('chop', $t('Taie lemne'), '🪓') }));
 // ciuperci si mure
-([[3, 4], [9, 9], [5, 12], [16, 16], [11, 20], [19, 9], [2, 17]] as [number, number][]).forEach(([x, y], i) => F.push({ id: 'f-mush' + i, type: 'mushroom' as any, gx: x, gy: y, w: 1, d: 1, solid: false, action: act('mushroom', 'Culege ciuperci', '🍄') }));
-([[6, 8], [12, 4], [17, 12], [8, 16], [3, 21]] as [number, number][]).forEach(([x, y], i) => F.push({ id: 'f-berry' + i, type: 'berrybush' as any, gx: x, gy: y, w: 1, d: 1, solid: true, action: act('berries', 'Culege mure', '🫐') }));
+([[3, 4], [9, 9], [5, 12], [16, 16], [11, 20], [19, 9], [2, 17]] as [number, number][]).forEach(([x, y], i) => F.push({ id: 'f-mush' + i, type: 'mushroom' as any, gx: x, gy: y, w: 1, d: 1, solid: false, action: act('mushroom', $t('Culege ciuperci'), '🍄') }));
+([[6, 8], [12, 4], [17, 12], [8, 16], [3, 21]] as [number, number][]).forEach(([x, y], i) => F.push({ id: 'f-berry' + i, type: 'berrybush' as any, gx: x, gy: y, w: 1, d: 1, solid: true, action: act('berries', $t('Culege mure'), '🫐') }));
 // bolovani: piatra pentru pod, felinare, drum si magazin (in curte sunt doar 5); se refac in 2,5 minute
-([[12, 1], [15, 3], [3, 7], [13, 12], [9, 14], [20, 15], [6, 19], [16, 21]] as [number, number][]).forEach(([x, y], i) => F.push({ id: 'f-rock' + i, type: 'rock' as any, gx: x, gy: y, w: 1, d: 1, solid: true, action: act('mine', 'Sparge piatra', '⛏️') }));
+([[12, 1], [15, 3], [3, 7], [13, 12], [9, 14], [20, 15], [6, 19], [16, 21]] as [number, number][]).forEach(([x, y], i) => F.push({ id: 'f-rock' + i, type: 'rock' as any, gx: x, gy: y, w: 1, d: 1, solid: true, action: act('mine', $t('Sparge piatra'), '⛏️') }));
 // lacul: podetul de pescuit
 F.push({ id: 'f-pier', type: 'pier' as any, gx: 15, gy: 11, w: 1, d: 1, solid: false, action: act('fish', $t('Pescuiește'), '🎣') });
 F.push({ id: 'f-logs', type: 'logpile' as any, gx: 7, gy: 24, w: 1, d: 1, solid: true });
@@ -110,7 +110,7 @@ export function drawForestType(ctx: CanvasRenderingContext2D, f: Furn, t: number
 // ------------------------------------------------------------------ animalele padurii
 export type CritterKind = 'deer' | 'squirrel' | 'hedgehog' | 'bird';
 export interface Critter { id: number; kind: CritterKind; x: number; y: number; tx: number; ty: number; t: number; flip: 1 | -1; friend: number; flee: number }
-export const CRITTER_NAMES: Record<CritterKind, string> = { deer: $t('Căprioara'), squirrel: $t('Veverița'), hedgehog: 'Ariciul', bird: $t('Vrăbiuța') };
+export const CRITTER_NAMES: Record<CritterKind, string> = { deer: $t('Căprioara'), squirrel: $t('Veverița'), hedgehog: $t('Ariciul'), bird: $t('Vrăbiuța') };
 
 export function drawCritter(ctx: CanvasRenderingContext2D, c: Critter, x: number, y: number, t: number) {
   ctx.save(); ctx.translate(x, y); ctx.scale(c.flip, 1); ctx.lineJoin = 'round';

@@ -104,7 +104,7 @@ export function drawHolidayType(c: CanvasRenderingContext2D, f: Furn, t: number)
       for (const [u, v] of [[0.3, 1.8], [1.6, 1.8]]) { const q = iso(gx + u, gy + v, 8); e(c, q.x, q.y, 9, 9, '#8a5d32'); e(c, q.x, q.y, 3, 3, '#ffd23f', false); }
       const fl = iso(gx + 1, gy + 0.9, 60); c.strokeStyle = '#8a5d32'; c.lineWidth = 2; c.beginPath(); c.moveTo(fl.x, fl.y); c.lineTo(fl.x, fl.y - 30); c.stroke(); c.fillStyle = '#ffd23f'; c.beginPath(); c.moveTo(fl.x, fl.y - 30); c.lineTo(fl.x + 18 + sway, fl.y - 25); c.lineTo(fl.x, fl.y - 20); c.closePath(); c.fill(); c.stroke();
       for (let i = 0; i < 4; i++) ic(c, ['🧪', '🎟️', '🗺️', '🔮'][i], p.x - 22 + i * 15, p.y - 34 + Math.sin(t * 2 + i) * 2, 13);
-      label(c, '🧳 Negustorul ambulant', p.x, p.y - 96, '#7a3a8a'); return true;
+      label(c, $t('🧳 Negustorul ambulant'), p.x, p.y - 96, '#7a3a8a'); return true;
     }
     case 'wedarch': {
       const alongY = d > w, a = alongY ? iso(gx + w / 2, gy) : iso(gx, gy + 0.2), b = alongY ? iso(gx + w / 2, gy + d) : iso(gx + w, gy + 0.2);
@@ -112,7 +112,7 @@ export function drawHolidayType(c: CanvasRenderingContext2D, f: Furn, t: number)
       c.strokeStyle = '#fff'; c.lineWidth = 6; c.beginPath(); c.moveTo(a.x, a.y - 56); c.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 - 92, b.x, b.y - 56); c.stroke();
       for (let i = 0; i <= 10; i++) { const u = i / 10, x = a.x + (b.x - a.x) * u, y = a.y + (b.y - a.y) * u - 56 - Math.sin(u * Math.PI) * 30; e(c, x, y, 4.5, 4.5, ['#ff9ab8', '#fff', '#ffd6e0'][i % 3], true, 1); }
       const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; heartPath(c, m.x, m.y - 94 + Math.sin(t * 3) * 2, 7); c.fillStyle = '#ff4d6d'; c.fill(); c.strokeStyle = O; c.lineWidth = 1.2; c.stroke();
-      label(c, '💒 Nunta Inei', m.x, m.y - 116); return true;
+      label(c, $t('💒 Nunta Inei'), m.x, m.y - 116); return true;
     }
     case 'festable': {
       isoBox(c, gx + 0.15, gy + 0.15, 0.7, 0.7, 18, { top: '#fff1d6', left: '#c98e5f', right: '#a0703f' });

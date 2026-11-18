@@ -140,7 +140,7 @@ export function drawFull(c: CanvasRenderingContext2D, W: number, H: number, m: M
   c.textAlign = 'center'; c.textBaseline = 'middle';
   const zoomed = G.px >= 6;
   // numele regiunilor (cand harta e mica); cand o maresti, apar numele fiecarei cladiri
-  const labels: [string, string, number, number][] = [['🏡', $t('Acasă'), 4, 6], ['🌲', $t('Pădurea'), 19, -24], ['🏞️', 'Lacul', 70, 18], ['🌉', 'Podul Mare', 66, 44], ['🏘️', 'Satul', 121, 14], ['🏙️', $t('Orașul'), 214, 30], ['🌾', $t('Câmpurile'), 20, 41], ['🪚', $t('Cheresteaua (scânduri)'), 26, 27], ['🐓', 'Ferma', 40, -1], ['🌾', 'Moara', 42, 47]];
+  const labels: [string, string, number, number][] = [['🏡', $t('Acasă'), 4, 6], ['🌲', $t('Pădurea'), 19, -24], ['🏞️', 'Lacul', 70, 18], ['🌉', $t('Podul Mare'), 66, 44], ['🏘️', 'Satul', 121, 14], ['🏙️', $t('Orașul'), 214, 30], ['🌾', $t('Câmpurile'), 20, 41], ['🪚', $t('Cheresteaua (scânduri)'), 26, 27], ['🐓', 'Ferma', 40, -1], ['🌾', 'Moara', 42, 47]];
   const pill = (ic: string, name: string, q: { x: number; y: number }, fs: number, hot = false) => {
     c.font = `800 ${fs}px "Baloo 2", sans-serif`; const tw = c.measureText(name).width + fs * 2.5;
     c.fillStyle = hot ? '#ffe3ea' : '#fffaf5ee'; c.strokeStyle = hot ? '#ff4d6d' : '#4a2a22'; c.lineWidth = 2; c.beginPath(); c.roundRect(q.x - tw / 2, q.y - fs * 0.92, tw, fs * 1.84, fs * 0.92); c.fill(); c.stroke();

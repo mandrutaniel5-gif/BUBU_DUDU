@@ -9,7 +9,7 @@ const O = '#3a2a22';
 /** 🔥 Aprinde focul: sufla (atinge des) ca flacara sa stea peste linie 3 secunde */
 export class FireGame extends Panel {
   flame = 0; held = 0; puffs = 0;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '🔥 Aprinde focul', $t('Atinge des ca să sufli în jar! Ține flacăra peste linie')); this.hero.play('kiss'); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('🔥 Aprinde focul'), $t('Atinge des ca să sufli în jar! Ține flacăra peste linie')); this.hero.play('kiss'); }
   tick(dt: number) {
     this.flame = Math.max(0, this.flame - dt * 0.32);
     if (this.flame > 0.6) this.held += dt; else this.held = Math.max(0, this.held - dt * 0.5);
@@ -51,7 +51,7 @@ export class FireGame extends Panel {
 export class MowGame extends Panel {
   cols = 9; rows = 6; tall: number[] = []; cut = 0; total = 0; mx = -1; my = -1; down = false; dur = 25; keys = new Set<string>(); px = 0.5; py = 0.5;
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, '✂️ Tunde iarba', $t('Trage mașina (deget / WASD) peste toată iarba înaltă'));
+    super(s, d, $t('✂️ Tunde iarba'), $t('Trage mașina (deget / WASD) peste toată iarba înaltă'));
     const n = Math.max(14, Math.min(this.cols * this.rows, Object.keys(s.w.grass ?? {}).length * 2 + 10));
     const idx = [...Array(this.cols * this.rows).keys()].sort(() => Math.random() - 0.5).slice(0, n);
     this.tall = Array(this.cols * this.rows).fill(0); for (const i of idx) this.tall[i] = 1 + Math.floor(Math.random() * 3);

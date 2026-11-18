@@ -41,7 +41,7 @@ export class StudioScene implements Scene {
     const dances = ANIM_LIST.filter(a => a.kind === 'dance');
     const bs = ANIM_LIST.filter(a => a.who === 'bubu');
     const ds = ANIM_LIST.filter(a => a.who === 'dudu');
-    const moods: [Mood, string, string][] = [['happy', '😊', 'Fericit'], ['love', '🥰', $t('Îndrăgostit')], ['sad', '😢', 'Trist'], ['angry', '😠', 'Furios'], ['sulky', '😒', 'Bosumflat'], ['sleepy', '😪', 'Obosit'], ['hungry', '🤤', $t('Flămând')], ['sick', '🤒', 'Bolnav']];
+    const moods: [Mood, string, string][] = [['happy', '😊', 'Fericit'], [/*ro*/'love', '🥰', $t('Îndrăgostit')], ['sad', '😢', 'Trist'], ['angry', '😠', 'Furios'], ['sulky', '😒', 'Bosumflat'], ['sleepy', '😪', 'Obosit'], [/*ro*/'hungry', '🤤', $t('Flămând')], ['sick', '🤒', 'Bolnav']];
     this.ui.innerHTML = `
       <div class="topbar">
         <div class="title">🐹 ${GAME_NAME} 🐹 <small>${$t('Studio animații')}</small></div>

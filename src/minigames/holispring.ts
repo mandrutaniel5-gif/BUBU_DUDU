@@ -155,7 +155,7 @@ export class DragobeteShow extends Show {
     ];
   }
   onNet(d: any) { if (d.caught && !this.caught) { this.caught = true; this.caughtT = this.t; } }
-  endText() { return 'Dragobete fericit! 💞'; }
+  endText() { return $t('Dragobete fericit! 💞'); }
   reward() { const s = this.scene; if (this.quit && !this.caught) return; if (Hol.once(s, Hol.yearKey(s, 'drago'))) { s.op({ k: 'res', res: 'ghiocel', delta: -Math.min(3, s.w.res?.ghiocel ?? 0) }); s.log($t('Dragobete: ghiocei și un pupic 💞')); s.syncPlaced(); } Hol.memory(s, 'dragobete'); Hol.feelBoth(s, { love: 35, fun: 15 }); }
 }
 

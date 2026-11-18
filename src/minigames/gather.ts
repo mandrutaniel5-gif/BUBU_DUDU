@@ -10,7 +10,7 @@ const O = '#3a2a22';
 export class ChopGame extends Panel {
   hits = 0; need = 5; marker = 0; zone = 0.34; swing = 0; tilt = 0; fall = 0; miss = 0;
   constructor(s: WorldScene, d: (n: number) => void) {
-    super(s, d, '🪓 Taie lemne', s.myId === 'dudu' ? $t('Lovește în zona verde! (Dudu e mai puternic 💪)') : $t('Lovește în zona verde!'));
+    super(s, d, $t('🪓 Taie lemne'), s.myId === 'dudu' ? $t('Lovește în zona verde! (Dudu e mai puternic 💪)') : $t('Lovește în zona verde!'));
     if (s.myId === 'dudu') { this.need = 4; this.zone = 0.42; }
   }
   tick(dt: number) {
@@ -57,7 +57,7 @@ export class ChopGame extends Panel {
 /** ⛏️ Sparge piatra: atinge crapaturile care apar */
 export class MineGame extends Panel {
   cracks: { x: number; y: number; t: number }[] = []; broken = 0; need = 8; spawn = 0; dur = 15; hp = 1;
-  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, '⛏️ Sparge piatra', $t('Atinge crăpăturile strălucitoare înainte să dispară!')); }
+  constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('⛏️ Sparge piatra'), $t('Atinge crăpăturile strălucitoare înainte să dispară!')); }
   tick(dt: number) {
     this.spawn -= dt;
     if (this.spawn <= 0 && this.cracks.length < 3) { this.spawn = 0.6; this.cracks.push({ x: 0.3 + Math.random() * 0.4, y: 0.45 + Math.random() * 0.25, t: 0 }); }

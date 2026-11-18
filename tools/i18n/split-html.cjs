@@ -23,7 +23,7 @@ function textPiece(txt, args) {
 }
 /** o eticheta <...>: atributele de text se traduc, restul ramane */
 function tagPiece(tag, args) {
-  return tag.replace(/([\w-]+)="([^"]*)"|\{(\d+)\}|([^{"]+|["{])/g, (all, name, val, ph, other) => {
+  return tag.replace(/([\w-]+)="([^"]*)"|\{(\d+)\}|([\s\S])/g, (all, name, val, ph, other) => {
     if (name !== undefined) {
       if (TEXT_ATTR.test(name) && hasWords(val)) return name + '="' + textPiece(val, args) + '"';
       return name + '="' + esc(val).replace(/\{(\d+)\}/g, (_, i) => '${' + args[+i] + '}') + '"';

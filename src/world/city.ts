@@ -51,18 +51,18 @@ export function cityFloorW(x: number, y: number): Floor {
 export interface CityBuilding { id: string; gx: number; gy: number; w: number; d: number; h: number; front: 'x' | 'y'; wall: string; trim: string; sign: string; signCol: string; awning?: string; action: { id: string; label: string; icon: string }; marquee?: boolean; floors: number }
 export const CITY_BUILDINGS: CityBuilding[] = [
   // Strada Teilor (usile spre ea): banca, universitatea, birourile
-  { id: 'c-bank', gx: 187, gy: 3, w: 5, d: 6, h: 132, floors: 5, front: 'y', wall: '#f5ead6', trim: '#c9a24a', sign: $t('Banca'), signCol: '#a07a2a', action: act('c-bank', 'Banca (economii, credit, apartament)', '🏦') },
-  { id: 'c-uni', gx: 193, gy: 3, w: 6, d: 6, h: 122, floors: 4, front: 'y', wall: '#e8e0ff', trim: '#6a5acd', sign: $t('Universitatea'), signCol: '#5a4abd', action: act('c-uni', 'Universitatea (cursuri, diplome)', '🎓') },
+  { id: 'c-bank', gx: 187, gy: 3, w: 5, d: 6, h: 132, floors: 5, front: 'y', wall: '#f5ead6', trim: '#c9a24a', sign: $t('Banca'), signCol: '#a07a2a', action: act('c-bank', $t('Banca (economii, credit, apartament)'), '🏦') },
+  { id: 'c-uni', gx: 193, gy: 3, w: 6, d: 6, h: 122, floors: 4, front: 'y', wall: '#e8e0ff', trim: '#6a5acd', sign: $t('Universitatea'), signCol: '#5a4abd', action: act('c-uni', $t('Universitatea (cursuri, diplome)'), '🎓') },
   { id: 'c-office', gx: 203, gy: 2, w: 6, d: 7, h: 196, floors: 8, front: 'y', wall: '#d8e6f5', trim: '#3f5f8f', sign: $t('Turnul de birouri'), signCol: '#3f5f8f', action: act('c-office', $t('Birourile (lucrează la birou)'), '💻') },
   // Bulevardul (usile spre el): magazinele si distractiile
   { id: 'c-super', gx: 187, gy: 18, w: 6, d: 5, h: 92, floors: 3, front: 'y', wall: '#e7f6e2', trim: '#5aa35a', sign: $t('Supermarket'), signCol: '#3f8f5a', awning: '#7cc576', action: act('c-super', 'Supermarketul', '🛒') },
   { id: 'c-cafe', gx: 194, gy: 19, w: 4, d: 4, h: 70, floors: 2, front: 'y', wall: '#f5e1c8', trim: '#8a5d32', sign: $t('Cafeneaua'), signCol: '#8a5d32', awning: '#c98e5f', action: act('c-cafe', $t('Cafeneaua (lucrează ca barista)'), '🧋') },
-  { id: 'c-cinema', gx: 203, gy: 16, w: 7, d: 7, h: 104, floors: 3, front: 'y', wall: '#e9e2ff', trim: '#7a5ad6', sign: $t('CINEMA'), signCol: '#e63946', marquee: true, action: act('c-cinema', 'Cinema (35 lei / doi)', '🎬') },
+  { id: 'c-cinema', gx: 203, gy: 16, w: 7, d: 7, h: 104, floors: 3, front: 'y', wall: '#e9e2ff', trim: '#7a5ad6', sign: $t('CINEMA'), signCol: '#e63946', marquee: true, action: act('c-cinema', $t('Cinema (35 lei / doi)'), '🎬') },
   { id: 'c-resto', gx: 211, gy: 18, w: 6, d: 5, h: 84, floors: 3, front: 'y', wall: '#fff1d6', trim: '#c0573e', sign: $t('Restaurant La Doi'), signCol: '#c0573e', awning: '#e07a5f', action: act('c-resto', $t('Restaurant (cină romantică)'), '🍽️') },
-  { id: 'c-boutique', gx: 218, gy: 17, w: 7, d: 6, h: 118, floors: 4, front: 'y', wall: '#ffe1ea', trim: '#e5809a', sign: $t('Buticul Elegant'), signCol: '#ff4d8d', awning: '#ff9ab8', action: act('c-boutique', 'Buticul (haine elegante)', '🛍️') },
+  { id: 'c-boutique', gx: 218, gy: 17, w: 7, d: 6, h: 118, floors: 4, front: 'y', wall: '#ffe1ea', trim: '#e5809a', sign: $t('Buticul Elegant'), signCol: '#ff4d8d', awning: '#ff9ab8', action: act('c-boutique', $t('Buticul (haine elegante)'), '🛍️') },
   { id: 'c-mall', gx: 229, gy: 16, w: 12, d: 7, h: 86, floors: 3, front: 'y', wall: '#fff0f5', trim: '#ff7aa2', sign: $t('Mall'), signCol: '#ff4d8d', awning: '#ffb3c7', action: act('c-mall', $t('Mall-ul (mobilă pentru apartament)'), '🛍️') },
   // Strada Scolii (usile spre ea): spitalul, blocul vostru
-  { id: 'c-hospital', gx: 187, gy: 30, w: 7, d: 7, h: 112, floors: 4, front: 'y', wall: '#ffffff', trim: '#e63946', sign: $t('Spitalul'), signCol: '#e63946', action: act('c-hospital', 'Spitalul (doctor, farmacie, lucru)', '🏥') },
+  { id: 'c-hospital', gx: 187, gy: 30, w: 7, d: 7, h: 112, floors: 4, front: 'y', wall: '#ffffff', trim: '#e63946', sign: $t('Spitalul'), signCol: '#e63946', action: act('c-hospital', $t('Spitalul (doctor, farmacie, lucru)'), '🏥') },
   { id: 'c-tower', gx: 203, gy: 31, w: 5, d: 6, h: 176, floors: 7, front: 'y', wall: '#e8f1ff', trim: '#5b7fbf', sign: $t('Blocul Lalelelor'), signCol: '#5b7fbf', action: act('c-tower', $t('Blocul cu apartamente'), '🏙️') },
   // Strada Garii
   { id: 'c-gara', gx: 187, gy: 45, w: 12, d: 6, h: 70, floors: 2, front: 'y', wall: '#f5ead6', trim: '#a0703f', sign: $t('Gara'), signCol: '#a0703f', awning: '#c98e5f', action: act('c-gara', $t('Gara orașului'), '🚂') },
@@ -99,7 +99,7 @@ const doors = CITY_BUILDINGS.map(b => b.front === 'y' ? { x: b.gx + b.w / 2, y: 
 const nearDoor = (x: number, y: number) => doors.some(d => Math.abs(d.x - (x + 0.5)) < 1.6 && Math.abs(d.y - (y + 0.5)) < 1.2);
 
 // ------------------------------------------------------------------ strada: statiile, semafoarele, felinarele
-F.push({ id: 'c-bus', type: 'busstop' as any, gx: 209, gy: 26, w: 1, d: 1, solid: true, action: act('c-bus', 'Autobuzul spre sat', '🚌') });
+F.push({ id: 'c-bus', type: 'busstop' as any, gx: 209, gy: 26, w: 1, d: 1, solid: true, action: act('c-bus', $t('Autobuzul spre sat'), '🚌') });
 F.push({ id: 'c-taxi', type: 'taxistand' as any, gx: 203, gy: 26, w: 1, d: 1, solid: true, action: act('c-taxi', $t('Taxi direct acasă (70 lei)'), '🚕') });
 F.push({ id: 'c-lights', type: 'trafficlight' as any, gx: 199, gy: 23, w: 1, d: 1, solid: true });
 F.push({ id: 'c-lights2', type: 'trafficlight' as any, gx: 202, gy: 26, w: 1, d: 1, solid: true });
@@ -475,7 +475,7 @@ function aptWalls(): Wall[] {
   return W;
 }
 const AF: Furn[] = [
-  { id: 'bed', type: 'bed', gx: 4, gy: 3, w: 2, d: 3, solid: true, action: act('sleep', 'Patul cel mare', '🛏️') },
+  { id: 'bed', type: 'bed', gx: 4, gy: 3, w: 2, d: 3, solid: true, action: act('sleep', $t('Patul cel mare'), '🛏️') },
   { id: 'a-ns', type: 'nightstand', gx: 6, gy: 3, w: 1, d: 1, solid: true, action: act('lamp', 'Lampa', '💡') },
   { id: 'ward', type: 'wardrobe', gx: 3, gy: 6, w: 1, d: 1, solid: true, action: act('dress', 'Garderoba', '👗') },
   { id: 'a-rugB', type: 'rug', gx: 7, gy: 4, w: 3, d: 2, solid: false, color: '#e3c8ff' },
@@ -491,9 +491,9 @@ const AF: Furn[] = [
   { id: 'table', type: 'table', gx: 13, gy: 11, w: 2, d: 1, solid: true, action: act('eat', 'Masa', '🍰') },
   { id: 'a-rugL', type: 'rug', gx: 5, gy: 9, w: 4, d: 3, solid: false, color: '#ffd6e4' },
   { id: 'sofa', type: 'sofa', gx: 8, gy: 10, w: 1, d: 2, solid: true, action: act('cuddle', 'Canapeaua', '🛋️') },
-  { id: 'tv', type: 'tv', gx: 3, gy: 10, w: 1, d: 2, solid: true, action: act('tv', 'Televizor mare', '📺') },
+  { id: 'tv', type: 'tv', gx: 3, gy: 10, w: 1, d: 2, solid: true, action: act('tv', $t('Televizor mare'), '📺') },
   { id: 'shelf', type: 'bookshelf', gx: 3, gy: 8, w: 1, d: 1, solid: true, action: act('read', $t('Citește'), '📚') },
-  { id: 'laptop', type: 'laptop', gx: 10, gy: 9, w: 1, d: 1, solid: true, action: act('online', 'Laptopul (magazin online)', '💻') },
+  { id: 'laptop', type: 'laptop', gx: 10, gy: 9, w: 1, d: 1, solid: true, action: act('online', $t('Laptopul (magazin online)'), '💻') },
   { id: 'a-plantL', type: 'plant', gx: 5, gy: 13, w: 1, d: 1, solid: true, action: act('water_plant', $t('Udă floarea'), '🪴') },
   // usa de la intrare e pe peretele din stanga (y = 12): stai pe pres si iesi pe usa, pe scara blocului
   { id: 'a-door', type: 'doormat', gx: 3, gy: 12, w: 1, d: 1, solid: false, action: act('a-exit', $t('Ieși pe ușă (scara blocului)'), '🔑') },
@@ -523,5 +523,5 @@ export function drawAptBuilding(c: CanvasRenderingContext2D, night: number) {
     }
   }
   // firma blocului pe colt
-  const p = faceY(0.08, -40); if (!(globalThis as any).__cinema) drawSign(c, p.x + 30, p.y, 'Blocul Lalelelor · et. 4', '🏙️', '#fff8ef', trim, 10);
+  const p = faceY(0.08, -40); if (!(globalThis as any).__cinema) drawSign(c, p.x + 30, p.y, $t('Blocul Lalelelor · et. 4'), '🏙️', '#fff8ef', trim, 10);
 }

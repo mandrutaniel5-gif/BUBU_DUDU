@@ -42,7 +42,7 @@ export class Hud {
     root.className = 'hud';
     const emotes = ANIM_LIST.filter(a => a.kind === 'emote' || a.kind === 'dance' || (a.kind === 'special' && a.who === s.myId));
     root.innerHTML = `
-      ${Bugs.on() ? `<button class="bugbtn" data-a="bug" title="Raportează o problemă">🐞</button>` : ''}
+      ${Bugs.on() ? `<button class="bugbtn" data-a="bug" title="${$t('Raportează o problemă')}">🐞</button>` : ''}
       <div class="card me">
         <div class="name">🐹 <span class="nm">${me.name}</span> <span class="mood"></span></div>
         <div class="needs">${NEEDS.map(n => `<div class="need" data-n="${n}" title="${NEED_INFO[n].label}"><span>${NEED_INFO[n].icon}</span><i><b style="background:${NEED_INFO[n].color}"></b></i></div>`).join('')}</div>
@@ -53,21 +53,21 @@ export class Hud {
       <div class="card partner">
         <div class="name">🐹 <span class="nm">${pa.name}</span> <span class="pst">${$t('🤖 AI')}</span></div>
         <div class="pmood"></div>
-        <div class="netline"><i class="dot"></i><span class="net">${$t('solo')}</span> <button class="mini-btn" data-a="menu">⚙</button>${s.devWorld ? '<button class="mini-btn" data-a="dev" title="Dezvoltator">🧪</button>' : ''}<button class="mini-btn" data-a="albums" title="Albumele (pești, flori, rețete, haine)">📒</button></div>
+        <div class="netline"><i class="dot"></i><span class="net">${$t('solo')}</span> <button class="mini-btn" data-a="menu">⚙</button>${s.devWorld ? '<button class="mini-btn" data-a="dev" title="Dezvoltator">🧪</button>' : ''}<button class="mini-btn" data-a="albums" title="${$t('Albumele (pești, flori, rețete, haine)')}">📒</button></div>
       </div>
       <div class="actions">
         <button class="act big" data-a="action"><span class="ic">✋</span><span class="lb">${$t('Acțiune')}</span></button>
         <div class="row">
-          <button class="act" data-a="emotes" title="Emote-uri (Q)"><span class="ic">😊</span></button>
-          <button class="act" data-a="pairs" title="Împreună (R)"><span class="ic">💞</span></button>
-          <button class="act fart" data-a="fart" title="Super-salt (F)"><span class="ic">💨</span><i class="fill"></i></button>
-          <button class="act" data-a="build" title="Construiește (B)"><span class="ic">🔨</span></button>
-          <button class="act scooter" data-a="scooter" title="Scuterul"><span class="ic">🛵</span></button>
+          <button class="act" data-a="emotes" title="${$t('Emote-uri (Q)')}"><span class="ic">😊</span></button>
+          <button class="act" data-a="pairs" title="${$t('Împreună (R)')}"><span class="ic">💞</span></button>
+          <button class="act fart" data-a="fart" title="${$t('Super-salt (F)')}"><span class="ic">💨</span><i class="fill"></i></button>
+          <button class="act" data-a="build" title="${$t('Construiește (B)')}"><span class="ic">🔨</span></button>
+          <button class="act scooter" data-a="scooter" title="${$t('Scuterul')}"><span class="ic">🛵</span></button>
         </div>
       </div>
-      <div class="pop emotes hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>${$t('Emote-uri & dansuri')}</h4><div class="grid">${emotes.map(a => `<button data-emote="${a.id}"><span>${a.icon}</span>${a.label}</button>`).join('')}</div></div>
-      <div class="pop pairs hidden"><button class="popx" data-a="closepop" aria-label="Închide">✕</button><h4>${$t('Împreună 💞')}</h4><div class="grid">${PAIRS.filter(p => !p.only || p.only === s.myId).map(p => `<button data-pair="${p.id}"><span>${p.icon}</span>${p.label}</button>`).join('')}<button data-pair="follow" class="pfollow"><span>🚶</span><i>${$t('Vino cu mine')}</i></button></div></div>
-      <canvas class="minimap" data-a="map" title="Harta (atinge: toată lumea)"></canvas><button class="mapsize" data-a="mapsize" title="Mărește / micșorează harta">⤢</button><button class="mapopen" data-a="map" title="Harta mare a lumii: toate clădirile">${$t('🗺️ Harta')}</button>
+      <div class="pop emotes hidden"><button class="popx" data-a="closepop" aria-label="${$t('Închide')}">✕</button><h4>${$t('Emote-uri & dansuri')}</h4><div class="grid">${emotes.map(a => `<button data-emote="${a.id}"><span>${a.icon}</span>${a.label}</button>`).join('')}</div></div>
+      <div class="pop pairs hidden"><button class="popx" data-a="closepop" aria-label="${$t('Închide')}">✕</button><h4>${$t('Împreună 💞')}</h4><div class="grid">${PAIRS.filter(p => !p.only || p.only === s.myId).map(p => `<button data-pair="${p.id}"><span>${p.icon}</span>${p.label}</button>`).join('')}<button data-pair="follow" class="pfollow"><span>🚶</span><i>${$t('Vino cu mine')}</i></button></div></div>
+      <canvas class="minimap" data-a="map" title="${$t('Harta (atinge: toată lumea)')}"></canvas><button class="mapsize" data-a="mapsize" title="${$t('Mărește / micșorează harta')}">⤢</button><button class="mapopen" data-a="map" title="${$t('Harta mare a lumii: toate clădirile')}">${$t('🗺️ Harta')}</button>
       <div class="regionbanner hidden"><span class="ri"></span><b class="rn"></b></div>
       <div class="ridebar hidden"><span class="rt"></span><div class="rbtns"><span class="rdest"></span><button data-a="rgo" class="go">${$t('▶ Pornește')}</button><button data-a="rpause">${$t('⏸ Oprește')}</button><button data-a="rback">${$t('↩ Întoarce')}</button><button data-a="rstop"></button><button data-a="rcall">${$t('📣 Cheamă')}</button><button data-a="roff">${$t('⬇ Coboară')}</button></div></div>
       <div class="buildbar hidden"><span class="bt"></span><button data-a="bok">${$t('✔ Pune')}</button><button data-a="bend">${$t('✖ Gata')}</button></div>
@@ -214,9 +214,10 @@ export class Hud {
       const a = f.action, t = f.type as string; if (!a?.id || !a.icon) continue;
       if (!MAP_TYPES.has(t) && !(a.id.startsWith('st-') && !['st-parcel', 'st-roof', 'st-fieldsign'].includes(a.id)) && !MAP_IDS.has(f.id)) continue;
       const key = a.id + (a.id.startsWith('st-') && a.id !== 'st-flot' ? '' : f.id); if (seen.has(key)) continue; seen.add(key);
-      // eticheta e tradusa: cautam dupa forma ei in limba jocului (numele vecinului e locul {0})
+      // etichetele sunt traduse: le recunoastem dupa forma lor in limba jocului (numele vecinului e locul {0})
       const visit = new RegExp('^()' + $t('Bate la ușa: {0}').replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('\\{0\\}', '(.+)') + '$').exec(a.label);
-      const name = MAP_NAMES[f.id] ?? (visit ? $t('Casa: {0}', visit[2]) : ((lb: string) => lb === $t('Aruncă o monedă') ? $t('Fântâna') : lb === $t('Intră în bloc') ? $t('Blocul (apartamentul)') : lb)(a.label.replace(/\s*\(.*\)\s*/g, '')));
+      const lb = a.label.replace(/\s*\(.*\)\s*/g, '');
+      const name = MAP_NAMES[f.id] ?? (visit ? $t('Casa: {0}', visit[2]) : lb === $t('Aruncă o monedă') ? $t('Fântâna') : lb === $t('Intră în bloc') ? $t('Blocul (apartamentul)') : lb);
       out.push({ id: f.id, x: f.gx + f.w / 2, y: f.gy + f.d / 2, icon: visit ? '🏠' : a.icon, name, label: visit ? $t('Casa lui {0}: bate la ușă și vorbiți', visit[2]) : a.label, major: !visit && !MAP_LABELED.has(f.id) && !['busstop', 'taxistand', 'cfountain', 'fountain', 'icecart', 'noticeboard', 'carousel', 'gazebo', 'pier'].includes(t) });
     }
     return out;
@@ -225,7 +226,7 @@ export class Hud {
   openMap() {
     const s = this.s;
     const r = s.space === 'apartment' ? null : REGION_BY_ID[s.area];
-    const m = this.modal(`<h3>${$t('🗺️ Harta lumii')}</h3><p class="sub">${$t('{0} · trage cu degetul, mărește cu ＋ și atinge o clădire', r ? $t('Ești {0}', WHERE[s.area]?.replace(' · ', '') ?? r.name) : $t('Ești în apartament (Blocul Lalelelor)'))}</p><div class="bigmapwrap"><canvas class="bigmap"></canvas><div class="mapzoom"><button data-z="in" aria-label="Mărește">＋</button><button data-z="out" aria-label="Micșorează">－</button><button data-z="me" aria-label="Unde sunt">📍</button></div></div><div class="mapinfo"><small>${$t('👆 Atinge o iconiță ca să vezi ce clădire e')}</small></div>${s.space === 'world' ? this.placesHtml() : ''}<div class="mapgo">${s.space === 'world' ? DESTS.map(d => `<button data-mapgo="${d.id}" class="${s.reachWhy(d.id) ? 'off' : ''}">${d.icon} ${d.name}</button>`).join('') : ''}</div>`);
+    const m = this.modal(`<h3>${$t('🗺️ Harta lumii')}</h3><p class="sub">${$t('{0} · trage cu degetul, mărește cu ＋ și atinge o clădire', r ? $t('Ești {0}', WHERE[s.area]?.replace(' · ', '') ?? r.name) : $t('Ești în apartament (Blocul Lalelelor)'))}</p><div class="bigmapwrap"><canvas class="bigmap"></canvas><div class="mapzoom"><button data-z="in" aria-label="${$t('Mărește')}">＋</button><button data-z="out" aria-label="${$t('Micșorează')}">－</button><button data-z="me" aria-label="${$t('Unde sunt')}">📍</button></div></div><div class="mapinfo"><small>${$t('👆 Atinge o iconiță ca să vezi ce clădire e')}</small></div>${s.space === 'world' ? this.placesHtml() : ''}<div class="mapgo">${s.space === 'world' ? DESTS.map(d => `<button data-mapgo="${d.id}" class="${s.reachWhy(d.id) ? 'off' : ''}">${d.icon} ${d.name}</button>`).join('') : ''}</div>`);
     m.querySelector('.box')?.classList.add('mapbox');
     m.querySelectorAll('[data-mapgo]').forEach(b => b.addEventListener('click', () => { this.closeModal(); s.mapGo((b as HTMLElement).dataset.mapgo!); }));
     m.querySelectorAll('[data-place]').forEach(b => b.addEventListener('click', () => { const p = PLACES.find(x => x.id === (b as HTMLElement).dataset.place)!; const lock = p.ch && s.chapter < p.ch; if (lock) { this.toast($t('🔒 {0}: din Capitolul {1}', p.name, p.ch)); Sfx.play('bad'); return; } this.closeModal(); s.walkToPlace(p.x, p.y, `${p.icon} ${p.name}`); }));
@@ -328,7 +329,7 @@ export class Hud {
   setNet(st: NetStatus, msg?: string) {
     // 1.12.0: jucatorul vede doar Offline / Online (nu Firebase, server...)
     const t = this.s.net.kind;
-    this.els['.net'].textContent = t === 'solo' ? 'Offline' : t === 'local' ? 'Test 2 tab-uri' : `Online: ${st === 'online' ? 'conectat' : st === 'connecting' ? $t('se conectează…') : st === 'error' ? $t('fără legătură') : $t('deconectat')}`;
+    this.els['.net'].textContent = t === 'solo' ? 'Offline' : t === 'local' ? $t('Test 2 tab-uri') : $t('Online: {0}', st === 'online' ? 'conectat' : st === 'connecting' ? $t('se conectează…') : st === 'error' ? $t('fără legătură') : $t('deconectat'));
     this.els['.dot'].className = 'dot ' + st;
     if (msg && st === 'error') this.toast('⚠️ ' + msg);
   }
@@ -348,17 +349,17 @@ export class Hud {
   togglePairs(force?: boolean) { this.els['.emotes'].classList.add('hidden'); if (force) this.els['.pairs'].classList.remove('hidden'); else this.els['.pairs'].classList.toggle('hidden'); }
   closeMenus() { this.els['.emotes'].classList.add('hidden'); this.els['.pairs'].classList.add('hidden'); }
 
-  modal(html: string) { { const t = /<h3>(.*?)<\/h3>/.exec(html)?.[1]; if (t) Bugs.crumb('fereastra: ' + t.replace(/<[^>]+>/g, '').slice(0, 60)); } this.closeMenus(); const m = this.els['.modal']; m.innerHTML = `<div class="box"><button class="xclose" data-close aria-label="Închide">✕</button>${html}<button class="close" data-close>${$t('Închide')}</button></div>`; m.classList.remove('hidden'); return m; }
+  modal(html: string) { { const t = /<h3>(.*?)<\/h3>/.exec(html)?.[1]; if (t) Bugs.crumb('fereastra: ' + t.replace(/<[^>]+>/g, '').slice(0, 60)); } this.closeMenus(); const m = this.els['.modal']; m.innerHTML = `<div class="box"><button class="xclose" data-close aria-label="${$t('Închide')}">✕</button>${html}<button class="close" data-close>${$t('Închide')}</button></div>`; m.classList.remove('hidden'); return m; }
   closeModal() { this.els['.modal'].classList.add('hidden'); }
   /** 🐞 testerul raporteaza o problema: poza de acum, atinge locul pe ea, alege ce e gresit, scrie ce vede */
   async openBug() {
     const raw = await Bugs.shot();
-    const CATS = ['Se suprapun', $t('Desenat greșit'), $t('Prin obiecte / în locul greșit'), $t('Text greșit sau tăiat'), 'M-am blocat', $t('Nu merge ceva'), 'Altceva'];
+    const CATS = [$t('Se suprapun'), $t('Desenat greșit'), $t('Prin obiecte / în locul greșit'), $t('Text greșit sau tăiat'), $t('M-am blocat'), $t('Nu merge ceva'), $t('Altceva')];
     let cat = '', mark: { x: number; y: number } | null = null;
     const m = this.modal(`<h3>${$t('🐞 Raportează o problemă')}</h3><p class="sub">${$t('Atinge pe poză locul cu problema, alege ce e greșit și scrie pe scurt ce vezi.')}</p>
       <div class="bugshot">${raw ? `<img src="${raw}" alt=""><i class="bugmark hidden"></i>` : `<p class="sub">${$t('(fără poză)')}</p>`}</div>
       <div class="bugcats">${CATS.map((c, i) => `<button data-bc="${i}">${c}</button>`).join('')}</div>
-      <textarea class="bugnote" maxlength="600" placeholder="Ce s-a întâmplat? (ex. „Dudu stă în copac lângă fântână”)"></textarea>
+      <textarea class="bugnote" maxlength="600" placeholder="${$t('Ce s-a întâmplat? (ex. „Dudu stă în copac lângă fântână”)')}"></textarea>
       <button class="bugsend">${$t('📤 Trimite raportul')}</button>`);
     const img = m.querySelector('.bugshot img') as HTMLImageElement | null, dot = m.querySelector('.bugmark') as HTMLElement | null;
     img?.addEventListener('click', e => { const r = img.getBoundingClientRect(); mark = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }; if (dot) { dot.classList.remove('hidden'); dot.style.left = mark.x * 100 + '%'; dot.style.top = mark.y * 100 + '%'; } });
@@ -393,7 +394,7 @@ export class Hud {
     const items = [...s.w.jar].reverse().slice(0, 30);
     const m = this.modal(`<h3>${$t('🫙 Borcanul cu iubire')}</h3>
       <p class="sub">${$t('Scrie-i ceva frumos lui {0}. Rămâne aici pentru totdeauna 💕', s.partner.actor.spec.name)}</p>
-      <textarea maxlength="280" placeholder="Te iubesc pentru că…"></textarea>
+      <textarea maxlength="280" placeholder="${$t('Te iubesc pentru că…')}"></textarea>
       <button class="send">${$t('Trimite 💌')}</button>
       <div class="jar">${items.map(j => `<div class="note ${j.from}"><b>${j.from === 'bubu' ? '🐹 Bubu' : '🐹 Dudu'}</b><span>${esc(j.text)}</span><small>${new Date(j.ts).toLocaleString('ro-RO')}</small></div>`).join('') || `<p class="sub">${$t('Încă e gol… fii primul/prima! 🥺')}</p>`}</div>`);
     m.querySelector('.send')!.addEventListener('click', () => {
@@ -409,7 +410,7 @@ export class Hud {
   openWardrobe() {
     const s = this.s; const c = s.w.chars[s.myId];
     c.owned ??= []; c.outfit ??= { ...NO_OUTFIT };
-    const slots: Record<string, string> = { body: 'Haine', head: $t('Pe cap'), face: $t('Pe față'), neck: $t('La gât') };
+    const slots: Record<string, string> = { body: $t('Haine'), head: $t('Pe cap'), face: $t('Pe față'), neck: $t('La gât') };
     const mine = ITEMS.filter(i => c.owned!.includes(i.id));
     const m = this.modal(`<h3>${$t('👗 Garderoba lui {0}', s.me.actor.spec.name)}</h3><p class="sub">${$t('Haine noi găsești la')} <b>${$t('Croitoria din sat')}</b> ${$t('🧵 (cele elegante, la oraș)')}</p>
       ${mine.length ? Object.entries(slots).map(([slot, name]) => { const list = mine.filter(i => i.slot === slot); return list.length ? `<h4>${name}</h4><div class="shop">${list.map(i => { const on = (c.outfit as any)[slot] === i.id; return `<button data-item="${i.id}" class="${on ? 'on' : ''}"><span>${this.preview(i.id)}</span><b>${i.label}</b><small>${on ? $t('✔ porți') : $t('Îmbracă')}</small></button>`; }).join('')}</div>` : ''; }).join('') : `<p>${$t('Dulapul e gol… 🙂')}</p>`}`);
@@ -595,7 +596,7 @@ export class Hud {
   openVillage(tab = 'shop') {
     const s = this.s, w = s.w, r = w.res ?? {};
     const online = tab === 'online', city = tab === 'city';
-    const tabs: [string, string][] = online || city ? [] : [['shop', '🛒 Magazin'], ['sell', $t('💱 Piața')], ['hall', $t('🏛️ Primăria')], ['town', $t('🏙️ Orașul')]];
+    const tabs: [string, string][] = online || city ? [] : [['shop', '🛒 Magazin'], [/*ro*/'sell', $t('💱 Piața')], [/*ro*/'hall', $t('🏛️ Primăria')], [/*ro*/'town', $t('🏙️ Orașul')]];
     if (online || city) tab = 'shop';
     let body = '';
     const LIST = online ? SHOP_ONLINE : city ? SHOP_CITY : SHOP_BUY;
@@ -732,14 +733,14 @@ export class Hud {
 /** unde e partenerul (eticheta din coltul lui) */
 const WHERE: Record<string, string> = { home: $t('🏡 acasă · '), forest: $t('🌲 la pădure · '), woods: $t('🌲 în pădure · '), village: $t('🏘️ în sat · '), city: $t('🏙️ la oraș · '), lake: $t('🏞️ la lac · '), country: $t('🌾 pe câmp · '), apartment: $t('🔑 în apartament · ') };
 const VEH_ICON: Record<string, string> = { bike: '🚲', scooter: '🛵', tractor: '🚜', bus: '🚌', taxi: '🚕' };
-const DEST_TXT: Record<string, string> = { village: 'Spre sat', home: $t('Spre casă'), city: $t('Spre oraș'), forest: $t('Spre pădure') };
+const DEST_TXT: Record<string, string> = { village: $t('Spre sat'), home: $t('Spre casă'), city: $t('Spre oraș'), forest: $t('Spre pădure') };
 /** locurile greu de gasit pentru cine e nou (harta → „Unde e?”); x, y = unde ajungi pe jos */
 /** ce apare pe harta mare: toate cladirile si locurile la care faci ceva */
 const MAP_TYPES = new Set(['building', 'cbuilding', 'farmhouse', 'church', 'barn', 'windmill', 'sawmill', 'stalls', 'busstop', 'ferris', 'carousel', 'towerdoor', 'taxistand', 'stand', 'bridgegap', 'gazebo', 'noticeboard', 'cfountain', 'fountain', 'icecart', 'roadblock', 'forestgate']);
 /** au deja eticheta mare pe harta intreaga (iconita lor apare doar cand mărești) */
 const MAP_LABELED = new Set(['w-sawmill', 'w-mill', 'w-bridge-gap', 'w-forestgate', 'st-farmgate']);
 const MAP_IDS = new Set(['f-pier', 'w-lakepier', 'well', 'c-lot']);
-const MAP_NAMES: Record<string, string> = { 'f-pier': $t('Pescuit (pădure)'), 'w-lakepier': $t('Pescuit la lac'), 'w-sawmill': 'Cheresteaua', 'w-mill': 'Moara', 'w-bridge-gap': 'Podul Mare', 'w-roadblock': $t('Drumul spre oraș'), 'w-forestgate': $t('Poarta pădurii'), stand: 'Taraba', well: $t('Fântâna'), 'v-bus': 'Autobuz', 'c-bus': 'Autobuz', 'c-taxi': 'Taxi', 'c-towerdoor': 'Blocul (apartamentul)', 'v-board': 'Avizierul', 'c-lot': $t('Teren de vânzare') };
+const MAP_NAMES: Record<string, string> = { 'f-pier': $t('Pescuit (pădure)'), 'w-lakepier': $t('Pescuit la lac'), 'w-sawmill': $t('Cheresteaua'), 'w-mill': $t('Moara'), 'w-bridge-gap': $t('Podul Mare'), 'w-roadblock': $t('Drumul spre oraș'), 'w-forestgate': $t('Poarta pădurii'), stand: $t('Taraba'), well: $t('Fântâna'), 'v-bus': $t('Autobuz'), 'c-bus': $t('Autobuz'), 'c-taxi': $t('Taxi'), 'c-towerdoor': $t('Blocul (apartamentul)'), 'v-board': $t('Avizierul'), 'c-lot': $t('Teren de vânzare') };
 const PLACES: { id: string; icon: string; name: string; where: string; what: string; x: number; y: number; ch?: number }[] = [
   { id: 'sawmill', icon: '🪚', name: $t('Cheresteaua lui Nea Vasile'), where: $t('pe drum, la dreapta casei'), what: $t('aici tai scânduri și vinzi lemne'), x: 29, y: 22.6 },
   { id: 'farm', icon: '🐔', name: $t('Ferma voastră'), where: $t('ieși din curte spre dreapta, indicatorul de lângă gard'), what: $t('găini, vacă, stupi'), x: 24.5, y: 14.3, ch: FARM_CHAPTER },

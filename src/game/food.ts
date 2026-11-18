@@ -53,7 +53,7 @@ const have = (r: Res, k: string) => (GROUPS[k] ? GROUPS[k].keys.reduce((s, x) =>
 export function missingFor(r: Res, rc: Recipe) { return Object.entries(rc.need).filter(([k, n]) => have(r, k) < n).map(([k, n]) => ({ k, n, has: have(r, k) })); }
 export const canCook = (r: Res, rc: Recipe) => missingFor(r, rc).length === 0;
 export function ingIcon(k: string) { return GROUPS[k]?.icon ?? INGREDIENTS[k]?.icon ?? ({ water: '💧', flour: '🥡', lemon: '🍋', fish: '🐟', mushroom: '🍄', berry: '🫐', strawberry: '🍓', carrot: '🥕', potato: '🥔', tomato: '🍅', cabbage: '🥬', veg: '🥕', flower: '🌸', tulip: '🌷', rose: '🌹', sunflower: '🌻', honey: '🍯', corn: '🌽', grain: '🌾' } as Record<string, string>)[k] ?? '🥄'; } // 1.14.1: florile (ceaiul) nu aveau iconita si nu se puteau atinge
-export function ingLabel(k: string) { return GROUPS[k]?.label ?? INGREDIENTS[k]?.label.toLowerCase() ?? ({ water: $t('apă'), flour: $t('făină'), lemon: $t('lămâi'), fish: $t('pește'), mushroom: 'ciuperci', berry: 'mure', strawberry: $t('căpșuni'), carrot: 'morcovi', potato: 'cartofi', tomato: $t('roșii'), cabbage: $t('varză') } as Record<string, string>)[k] ?? k; }
+export function ingLabel(k: string) { return GROUPS[k]?.label ?? INGREDIENTS[k]?.label.toLowerCase() ?? ({ water: $t('apă'), flour: $t('făină'), lemon: $t('lămâi'), fish: $t('pește'), mushroom: $t('ciuperci'), berry: $t('mure'), strawberry: $t('căpșuni'), carrot: $t('morcovi'), potato: $t('cartofi'), tomato: $t('roșii'), cabbage: $t('varză') } as Record<string, string>)[k] ?? k; }
 /** lista de consum concret (grupurile se iau din ce ai mai mult) */
 export function consumeList(r: Res, rc: Recipe): [string, number][] {
   const out: [string, number][] = []; const left = { ...r };

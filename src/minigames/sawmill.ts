@@ -312,7 +312,7 @@ export class SawmillGame extends Panel {
       btn('minus', x + 10, top + 52, bh, bh, '−', can > 0); line(`${n}`, x + 18 + bh, top + 52 + bh / 2, O, 16); btn('plus', x + 46 + bh, top + 52, bh, bh, '+', can > 0);
       btn('sell', x + 10, top + ch - bh - 8, cw - 20, bh, this.carrying ? $t('Se cântărește…') : $t('Pune pe cântar · +{0} lei', n * this.price()), can > 0 && !this.carrying, '#ffe08a'); }
     // 2. comenzile zilei
-    { const x = card(1, '📜 Comenzile zilei', '#7a5ad6'); const rowH = (ch - 30) / 2;
+    { const x = card(1, $t('📜 Comenzile zilei'), '#7a5ad6'); const rowH = (ch - 30) / 2;
       this.orders().forEach((o, i) => { const y = top + 28 + i * rowH, done = this.orderDone(i), have = this.res(o.res) >= o.qty;
         line(`${o.res === 'wood' ? '🪵' : '📏'} ${o.res === 'wood' ? nWood(o.qty) : nPlanks(o.qty)} · ${o.pay} lei`, x + 10, y + 10, O, 12);
         ctx.font = '600 10px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.textAlign = 'left'; ctx.fillText(o.text.length > 44 ? o.text.slice(0, 43) + '…' : o.text, x + 10, y + 25);

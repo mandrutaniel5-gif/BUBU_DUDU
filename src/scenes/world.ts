@@ -774,7 +774,7 @@ export class WorldScene implements Scene {
       return;
     }
     if (act.id === 'coffee' && pawn === this.me && (this.w.stats[`coffee-${pawn.id}-${this.w.day}`] ?? 0) > 0) { this.hud.toast($t('☕ Ai băut deja cafeaua de azi. Mâine încă una!')); return; }
-    if (act.id === 'console' && pawn === this.me && this.w.chars[pawn.id].needs.energy < 10) { this.hud.toast('😴 Prea obosit' + (pawn.id === 'bubu' ? $t('ă') : '') + $t(' pentru jocuri')); return; }
+    if (act.id === 'console' && pawn === this.me && this.w.chars[pawn.id].needs.energy < 10) { this.hud.toast($t('😴 Prea obosit') + (pawn.id === 'bubu' ? $t('ă') : '') + $t(' pentru jocuri')); return; }
     const a = ACTIVITIES[act.id]; if (!a) return;
     if (act.id === 'sleep') { const why = this.canSleep(pawn.id); if (why) { if (pawn === this.me) { this.hud.toast(why); Sfx.play('bad'); } return; } (this.w.chars[pawn.id] as any).napStart = (this.w.minutes / 60 >= 6 && this.w.minutes / 60 < 20) ? (this.w.gameMin ?? 0) : null; }
     const need = this.missing(act.id);
@@ -826,7 +826,7 @@ export class WorldScene implements Scene {
     const say = (t: string) => this.fx.text(P.x, P.y, t, '#2ec4b6', 0.8);
     switch (a.id) {
       case 'addwood': this.op({ k: 'res', res: 'wood', delta: -1 }); this.op({ k: 'furn', key: 'fire', value: Math.min(100, ((this.w.furn.fire as number) ?? 0) + 25) }); say('-1 🪵  +🔥'); break;
-      case 'lightfire': this.op({ k: 'res', res: 'wood', delta: -1 }); this.op({ k: 'furn', key: 'fire', value: 30 }); this.op({ k: 'stat', key: 'fireLit', delta: 1 }); say('Focul arde! 🔥'); this.log($t('{0} a aprins focul în sobă 🔥', pawn.actor.spec.name)); break;
+      case 'lightfire': this.op({ k: 'res', res: 'wood', delta: -1 }); this.op({ k: 'furn', key: 'fire', value: 30 }); this.op({ k: 'stat', key: 'fireLit', delta: 1 }); say($t('Focul arde! 🔥')); this.log($t('{0} a aprins focul în sobă 🔥', pawn.actor.spec.name)); break;
       case 'snack': { if ((r.meals ?? 0) > 0) { this.op({ k: 'res', res: 'meals', delta: -1 }); break; } const k = catPick(r, 'veg'); if (k) { this.op({ k: 'res', res: k, delta: -1 }); break; } const d = dishesOwned(r).sort((x, y) => (x.rc.needs.hunger ?? 0) - (y.rc.needs.hunger ?? 0))[0]; if (d) this.op({ k: 'res', res: d.key, delta: -1 }); break; }
       case 'eat': { const key = (a as any).dish ?? bestDish(r)?.key ?? 'meals'; if ((r[key] ?? 0) > 0) this.op({ k: 'res', res: key, delta: -1 }); this.op({ k: 'stat', key: 'mealsEaten', delta: 1 }); break; }
       case 'cook': {
@@ -1319,7 +1319,7 @@ export class WorldScene implements Scene {
         // te urci pe un calut si faci cateva ture (cu muzica)
         this.startActivity(this.me, ACTIVITIES.carousel, f); Sfx.play('chimes'); Sfx.play('good', { delay: 0.4, vol: 0.5 }); break;
       case 'v-ferris':
-        this.askCompany('ferris', 'Roata mare', '🎡', duo => {
+        this.askCompany('ferris', $t('Roata mare'), '🎡', duo => {
           const cost = duo ? PRICE.ferris : Math.ceil(PRICE.ferris / 2);
           if ((this.w.money ?? 0) < cost) { this.hud.toast($t('Roata mare costă {0} lei 🎡', cost)); return; }
           this.op({ k: 'money', delta: -cost }); this.duo = duo; this.startCustom('ferris');
@@ -1339,7 +1339,7 @@ export class WorldScene implements Scene {
     const pay = (n: number, what: string) => { if (money < n) { this.hud.toast($t('Nu ajung banii: {0} costă {1} lei 💰', what, n)); Sfx.play('bad'); return false; } this.op({ k: 'money', delta: -n }); Sfx.play('coin'); return true; };
     const h = this.w.minutes / 60;
     switch (id) {
-      case 'c-bus': this.askCompany('cbus', 'Autobuzul spre sat', '🚌', duo => {
+      case 'c-bus': this.askCompany('cbus', $t('Autobuzul spre sat'), '🚌', duo => {
         const cost = PRICE.bus * (duo ? 2 : 1);
         if (!pay(cost, duo ? $t('Două bilete de autobuz') : $t('Biletul de autobuz'))) return;
         this.startRide('bus', 'village', duo);
@@ -1438,7 +1438,7 @@ export class WorldScene implements Scene {
     const op = (need: string, d: number, who = me) => this.op({ k: 'need', who, need, delta: d });
     if (id === 'aquarium') { op('fun', 10); op('love', 2); this.me.actor.play('love'); this.hud.toast($t('🐟 Peștișorii înoată liniștiți… ce relaxant')); }
     if (id === 'piano') { op('fun', 14); this.me.actor.play('dance_wave'); Sfx.play('good'); if (near) { op('love', 12); op('love', 12, this.partner.id); this.hud.toast($t('🎹 Un cântec pentru doi 💕')); } else this.hud.toast($t('🎹 Cânți o melodie frumoasă')); this.op({ k: 'stat', key: 'pianoPlays', delta: 1 }); }
-    if (id === 'console') { if (this.w.chars[me].needs.energy < 10) { this.hud.toast('😴 Prea obosit' + (me === 'bubu' ? $t('ă') : '') + $t(' pentru jocuri')); return; } op('fun', 22); op('energy', -5); if (near) { op('fun', 22, this.partner.id); op('love', 5); } this.me.actor.play('laugh'); this.hud.toast(near ? $t('🎮 Meci în doi! Cine câștigă? 😄') : $t('🎮 Ce joc bun!')); }
+    if (id === 'console') { if (this.w.chars[me].needs.energy < 10) { this.hud.toast($t('😴 Prea obosit') + (me === 'bubu' ? $t('ă') : '') + $t(' pentru jocuri')); return; } op('fun', 22); op('energy', -5); if (near) { op('fun', 22, this.partner.id); op('love', 5); } this.me.actor.play('laugh'); this.hud.toast(near ? $t('🎮 Meci în doi! Cine câștigă? 😄') : $t('🎮 Ce joc bun!')); }
     if (id === 'coffee') { if ((this.w.stats[`coffee-${me}-${this.w.day}`] ?? 0) > 0) { this.hud.toast($t('☕ Ai băut deja cafeaua de azi')); return; } this.op({ k: 'stat', key: `coffee-${me}-${this.w.day}`, delta: 1 }); op('energy', 18); this.me.actor.play('boba'); this.hud.toast($t('☕ Cafeluța de dimineață: +energie!')); }
   }
   /** pune mobila cumparata in apartament */

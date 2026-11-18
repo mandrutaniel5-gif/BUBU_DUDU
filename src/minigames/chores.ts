@@ -126,7 +126,7 @@ export class DishesGame extends Panel {
   plate = 0; dirt = 1; total = 5; lx = 0; ly = 0; down = false; foam: { x: number; y: number; r: number }[] = []; dur = 25;
   constructor(s: WorldScene, d: (n: number) => void) { super(s, d, $t('🍽️ Spălat vase'), $t('Freacă farfuria înainte-înapoi până strălucește')); }
   tick(dt: number) {
-    if (this.dirt <= 0) { this.plate++; Sfx.play('clink'); Sfx.play('good', { vol: 0.6 }); this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, [$t('Scârț-scârț!'), $t('Lună!'), $t('Ca nouă!'), $t('Strălucește!'), 'Gata!'][this.plate % 5], '#2ec4b6', 1.1); this.dirt = 1; this.foam = []; }
+    if (this.dirt <= 0) { this.plate++; Sfx.play('clink'); Sfx.play('good', { vol: 0.6 }); this.fx.text(this.box.x + this.box.w / 2, this.box.y + this.box.h * 0.3, [$t('Scârț-scârț!'), $t('Lună!'), $t('Ca nouă!'), $t('Strălucește!'), $t('Gata!')][this.plate % 5], '#2ec4b6', 1.1); this.dirt = 1; this.foam = []; }
     if (this.plate >= this.total) this.finish(1 + (this.dur - this.t) / this.dur, $t('Vase curate! 🍽️✨'));
     else if (this.t > this.dur) this.finish(this.plate >= 3 ? 0.6 : 0, this.plate >= 3 ? $t('Restul… mâine 😅') : $t('Chiuveta a câștigat 😩'));
   }

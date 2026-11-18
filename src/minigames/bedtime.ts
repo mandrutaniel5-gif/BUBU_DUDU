@@ -189,7 +189,7 @@ export class BedtimeGame extends Panel {
   showInput() {
     const d = document.createElement('div');
     d.className = 'bed-input';
-    d.innerHTML = `<textarea maxlength="200" placeholder="Spune-i ceva frumos înainte de culcare…"></textarea><div><button class="skip">${$t('Sari peste')}</button><button class="ok">${$t('Trimite 💌')}</button></div>`;
+    d.innerHTML = `<textarea maxlength="200" placeholder="${$t('Spune-i ceva frumos înainte de culcare…')}"></textarea><div><button class="skip">${$t('Sari peste')}</button><button class="ok">${$t('Trimite 💌')}</button></div>`;
     document.getElementById('ui')!.appendChild(d);
     this.input = d;
     d.addEventListener('pointerdown', e => e.stopPropagation());
@@ -302,7 +302,7 @@ export class BedtimeGame extends Panel {
       case 'intro':
         drawBed('none'); T($t('E timpul de culcare… 🌙'), y + 120, 26); T($t('Rutina noastră de seară'), y + 156, 16, '#ffd6e4'); break;
       case 'msg':
-        drawBed('none'); T('💌 Spune-i ceva frumos', y + 60, 22);
+        drawBed('none'); T($t('💌 Spune-i ceva frumos'), y + 60, 22);
         if (this.myMsg) T(this.partnerAI || this.theirMsg ? '…' : $t('Aștept mesajul lui {0}…', this.scene.partner.actor.spec.name), y + 250, 15, '#ffd6e4');
         break;
       case 'msgShow': {
@@ -362,7 +362,7 @@ export class BedtimeGame extends Panel {
         if (this.dutchBy === null) {
           T($t('Burtica ta e plină de gaze… 😏'), y + 70, 20); T($t('Ce faci?'), y + 100, 16, '#ffd6e4');
           const by = y + h * 0.62;
-          for (const [i, label] of [$t('😈 Pârț sub pătură'), '😇 Fii cuminte'].entries()) {
+          for (const [i, label] of [$t('😈 Pârț sub pătură'), $t('😇 Fii cuminte')].entries()) {
             const bx = x + 30 + i * (w / 2 - 15);
             ctx.fillStyle = i ? '#7ab8ff' : '#b8e08c'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(bx, by, w / 2 - 45, 56, 18); ctx.fill(); ctx.stroke();
             ctx.fillStyle = O; ctx.font = '800 16px "Baloo 2", sans-serif'; ctx.fillText(label, bx + (w / 2 - 45) / 2, by + 28);

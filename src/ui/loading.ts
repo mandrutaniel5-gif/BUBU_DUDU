@@ -9,7 +9,7 @@ import { $t } from '../i18n';
 export async function showLoading(): Promise<void> {
   const el = document.createElement('div');
   el.className = 'loading';
-  el.innerHTML = `<div class="ld-in"><img class="ld-logo" src="${logoUrl}" alt="ACM / Code"><div class="ld-bar"><i></i></div><div class="ld-txt">${$t('Se încarcă…')}</div></div>`;
+  el.innerHTML = `<div class="ld-in"><img class="ld-logo" src="${logoUrl}" alt="${$t('ACM / Code')}"><div class="ld-bar"><i></i></div><div class="ld-txt">${$t('Se încarcă…')}</div></div>`;
   (document.getElementById('stage') ?? document.body).appendChild(el);
   const bar = el.querySelector('.ld-bar i') as HTMLElement, txt = el.querySelector('.ld-txt') as HTMLElement;
   let shown = 0;

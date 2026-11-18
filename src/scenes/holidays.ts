@@ -73,7 +73,7 @@ export function place(s: S, push: (f: Furn) => void) {
   // --- iarna: bradul din piata (de la inceputul iernii), cadourile de sub el (de Craciun)
   if (winter(s) && s.chapter >= 3) {
     const dec = st(s, 'xtree-' + y) > 0;
-    push({ id: 'st-h-tree', type: 'xmastree' as any, kind: dec ? 'lit' : 'bare', gx: SPOT.tree.gx, gy: SPOT.tree.gy, w: 2, d: 2, solid: true, action: dec ? a('st-h-tree', 'Bradul satului ✨', '🎄') : a('st-h-tree', $t('Împodobiți bradul satului'), '🎄') });
+    push({ id: 'st-h-tree', type: 'xmastree' as any, kind: dec ? 'lit' : 'bare', gx: SPOT.tree.gx, gy: SPOT.tree.gy, w: 2, d: 2, solid: true, action: dec ? a('st-h-tree', $t('Bradul satului ✨'), '🎄') : a('st-h-tree', $t('Împodobiți bradul satului'), '🎄') });
     if (afterXmas(s) && !st(s, 'xgifts-' + y)) push({ id: 'st-h-gifts', type: 'giftpile' as any, gx: SPOT.tree.gx - 0.2, gy: SPOT.tree.gy + 2.1, w: 2.4, d: 0.8, solid: false, action: a('st-h-gifts', $t('Cadourile de la săteni'), '🎁') });
     // targul de Craciun din oras (toata iarna)
     const M = SPOT.market;
@@ -93,7 +93,7 @@ export function place(s: S, push: (f: Furn) => void) {
   if (bday && h >= 6) push({ id: 'st-h-party', type: 'partyset' as any, kind: (h >= 17.5 ? 'open-' : 'hidden-') + bday, gx: SPOT.party.gx, gy: SPOT.party.gy, w: 3, d: 1, solid: true, action: a('st-h-party', h >= 17.5 ? $t('🎂 Petrecerea lui {0}', bday === 'bubu' ? 'Bubu' : 'Dudu') : $t('Pregătiri secrete… 🤫'), '🎉') });
   if (evr(s, 'revelion') && h >= 18) push({ id: 'st-h-party', type: 'partyset' as any, kind: 'revelion', gx: SPOT.party.gx, gy: SPOT.party.gy, w: 3, d: 1, solid: true, action: a('st-h-party', h >= 21 ? $t('Petrecerea de Revelion!') : $t('Revelionul: de la 21:00'), '🎆') });
   // --- targul lunar: caruta negustorului ambulant
-  if (ev(s, 'fairday') && h >= 6 && h < 20 && s.chapter >= 3) push({ id: 'st-h-caravan', type: 'caravan' as any, gx: SPOT.caravan.gx, gy: SPOT.caravan.gy, w: 2, d: 2, solid: true, action: a('st-h-caravan', 'Negustorul ambulant', '🧳') });
+  if (ev(s, 'fairday') && h >= 6 && h < 20 && s.chapter >= 3) push({ id: 'st-h-caravan', type: 'caravan' as any, gx: SPOT.caravan.gx, gy: SPOT.caravan.gy, w: 2, d: 2, solid: true, action: a('st-h-caravan', $t('Negustorul ambulant'), '🧳') });
   // --- nunta Inei: arcada cu flori la biserica
   if (ev(s, 'villwed') && h >= 6 && s.chapter >= 3) push({ id: 'st-h-arch', type: 'wedarch' as any, gx: SPOT.arch.gx, gy: SPOT.arch.gy, w: 0.4, d: 1.4, solid: false, action: a('st-h-arch', h >= 11 && h < 18 ? $t('Nunta Inei (11:00 – 18:00)') : $t('Nunta Inei: de la 11:00'), '💒') });
   // --- masa de sarbatoare din curte (Paste, Martisor, Dragobete, bunicii)
@@ -105,7 +105,7 @@ export function place(s: S, push: (f: Furn) => void) {
     push({ id: 'st-h-picnic', type: 'picnic' as any, gx: SPOT.picnic.gx, gy: SPOT.picnic.gy, w: 2, d: 1.4, solid: false, action: a('st-h-picnic', $t('Picnic pe malul lacului'), '🧺') });
   }
   // --- Dragobete: ghioceii din padure
-  if (ev(s, 'dragobete') && s.chapter >= 2) DROPS.forEach(([x, yy], i) => { if (!st(s, `drop-${i}-${s.w.day}`)) push({ id: 'st-h-drop' + i, type: 'snowdrop' as any, gx: x, gy: yy, w: 1, d: 1, solid: false, action: a('st-h-drop', 'Culege ghiocei', '🤍') }); });
+  if (ev(s, 'dragobete') && s.chapter >= 2) DROPS.forEach(([x, yy], i) => { if (!st(s, `drop-${i}-${s.w.day}`)) push({ id: 'st-h-drop' + i, type: 'snowdrop' as any, gx: x, gy: yy, w: 1, d: 1, solid: false, action: a('st-h-drop', $t('Culege ghiocei'), '🤍') }); });
   // --- comoara de pe harta negustorului
   if (st(s, 'treasure')) { const t = treasureSpot(s); push({ id: 'st-h-dig', type: 'xmark' as any, gx: t.x, gy: t.y, w: 1, d: 1, solid: false, action: a('st-h-dig', $t('Sapă după comoară!'), '⛏️') }); }
 }
@@ -332,4 +332,4 @@ export function withPin(s: S, who: CharId, o: Outfit | undefined): Outfit | unde
   const k = PINNED.get(o); if (k) { Object.assign(k.out, o); k.out.pin = id; k.pin = id; return k.out; }
   const out = { ...o, pin: id }; PINNED.set(o, { pin: id, out }); return out;
 }
-export const showName = (id: string) => ({ xmastree: $t('împodobitul bradului'), colinde: 'colindul', gifts: 'deschisul cadourilor', santa: $t('poza cu Moș Crăciun'), skate: 'patinajul', carusel: $t('tura cu căluțeii'), revelion: $t('petrecerea de Revelion'), bday: $t('petrecerea surpriză'), paste: $t('ciocnitul ouălor'), martisor: $t('mărțișorul'), dragobete: 'Dragobetele', inawed: 'nunta Inei', grand: 'vizita bunicilor', fishcontest: $t('concursul de pescuit'), picnic: 'picnicul', loz: 'lozul' } as Record<string, string>)[id] ?? $t('o sărbătoare');
+export const showName = (id: string) => ({ xmastree: $t('împodobitul bradului'), colinde: $t('colindul'), gifts: $t('deschisul cadourilor'), santa: $t('poza cu Moș Crăciun'), skate: $t('patinajul'), carusel: $t('tura cu căluțeii'), revelion: $t('petrecerea de Revelion'), bday: $t('petrecerea surpriză'), paste: $t('ciocnitul ouălor'), martisor: $t('mărțișorul'), dragobete: $t('Dragobetele'), inawed: $t('nunta Inei'), grand: $t('vizita bunicilor'), fishcontest: $t('concursul de pescuit'), picnic: $t('picnicul'), loz: $t('lozul') } as Record<string, string>)[id] ?? $t('o sărbătoare');

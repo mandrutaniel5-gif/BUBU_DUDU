@@ -5,7 +5,7 @@ import { isWinter } from './seasonlook';
 import { $t } from '../i18n';
 
 export type CropCat = 'veg' | 'flower';
-export interface Crop { id: string; name: string; cat: CropCat; grow: number; yield: number; seed: number; sell: number; where: 'online' | 'sat' }
+export interface Crop { id: string; name: string; cat: CropCat; grow: number; yield: number; seed: number; sell: number; where: /*ro*/'online' | 'sat' }
 
 /** grow = minute de joc pana e gata (cu apa). O ora de joc = 1 minut real. */
 export const CROPS: Record<string, Crop> = {

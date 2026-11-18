@@ -125,7 +125,7 @@ export class MedicineGame extends CarePanel {
   spoonX = 0.5; headX = 0.5; headV = 0.24; mouthOpen = 0; fed = 0; flying = 0; miss = 0;
   keysDown = new Set<string>();
   constructor(scene: WorldScene, done: (s: number) => void) {
-    super(scene, done, '💊 Vine avionul!', $t('Mișcă lingurița (deget / ← →) și apasă când gura e deschisă'));
+    super(scene, done, $t('💊 Vine avionul!'), $t('Mișcă lingurița (deget / ← →) și apasă când gura e deschisă'));
     this.patient.play('sick');
   }
   tick(dt: number) {
@@ -146,7 +146,7 @@ export class MedicineGame extends CarePanel {
         this.flying = 0;
         const hit = Math.abs(this.spoonX - this.headX) < 0.13 && this.mouthOpen > 0.2;
         const b = this.box;
-        if (hit) { this.fed++; Sfx.play('gulp'); Sfx.play('good', { vol: 0.5 }); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, ['Hamm!', 'Mmm!', $t('Bleah... dar bun!')][this.fed % 3], '#2ec4b6', 1.1); this.patient.play('shy'); }
+        if (hit) { this.fed++; Sfx.play('gulp'); Sfx.play('good', { vol: 0.5 }); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, [$t('Hamm!'), $t('Mmm!'), $t('Bleah... dar bun!')][this.fed % 3], '#2ec4b6', 1.1); this.patient.play('shy'); }
         else { this.miss++; Sfx.play('bad'); this.fx.text(b.x + this.headX * b.w, b.y + b.h * 0.25, $t('Nu vreau! 🙅'), '#e63946', 1.1); this.patient.play('angry'); this.fx.burst('drop', b.x + this.spoonX * b.w, b.y + b.h * 0.3, 10, 3, 150, { grav: 300, color: '#ff6f91', max: 0.7 }); }
         if (this.fed >= 3) { this.finish(1.4, $t('A luat medicamentul! 💊✨')); this.patient.play('love'); }
         if (this.miss >= 6) this.finish(0, $t('S-a ascuns sub pătură 🙈'));

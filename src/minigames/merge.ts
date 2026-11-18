@@ -28,13 +28,13 @@ export interface ChainInfo { id: string; src: string; srcLabel: string; where: s
 export const CHAIN_INFO: ChainInfo[] = [
   { id: 'flower', src: 'cat:flower', srcLabel: 'Flori', where: $t('culege sau crește în grădină 🌸') },
   { id: 'veg', src: 'cat:veg', srcLabel: 'Legume', where: $t('crește-le în grădină 🥕') },
-  { id: 'sweet', src: 'flour', srcLabel: $t('Făină'), where: $t('magazinul online 🛒') },
-  { id: 'drink', src: 'lemon', srcLabel: $t('Lămâi'), where: $t('magazinul online 🛒') },
+  { id: 'sweet', src: /*ro*/'flour', srcLabel: $t('Făină'), where: $t('magazinul online 🛒') },
+  { id: 'drink', src: /*ro*/'lemon', srcLabel: $t('Lămâi'), where: $t('magazinul online 🛒') },
 ];
 /** florăria lui Bubu vinde DOAR flori: de câmp și din grădină (din 1.10.0 fără răsaduri: se vindeau în pierdere și încurcau) */
 export const FLORIST_CHAINS: ChainInfo[] = [
-  { id: 'flower', src: 'wild', srcLabel: $t('Flori de câmp'), where: $t('culege-le din curte și de lângă drum 🌸') },
-  { id: 'garden', src: 'gflower', srcLabel: $t('Flori din grădină'), where: $t('crește lalele, trandafiri sau floarea-soarelui 🌷') },
+  { id: 'flower', src: /*ro*/'wild', srcLabel: $t('Flori de câmp'), where: $t('culege-le din curte și de lângă drum 🌸') },
+  { id: 'garden', src: /*ro*/'gflower', srcLabel: $t('Flori din grădină'), where: $t('crește lalele, trandafiri sau floarea-soarelui 🌷') },
 ];
 /** ce poate cere un client: lanturile pentru care ai (sau ai avut) resursa */
 export function orderableChains(res: Record<string, number>, stats: Record<string, number>, florist = false) {

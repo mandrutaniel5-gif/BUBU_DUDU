@@ -35,12 +35,12 @@ function cup(c: C, x: number, y: number, w: number, h: number, fill: string) {
 }
 
 export const ITEM_NAMES: Record<string, string[]> = {
-  flower: [$t('Floricică'), $t('Două flori'), $t('Buchețel'), 'Buchet mare', $t('Coș cu flori'), $t('Coroniță')],
-  veg: ['Morcov', $t('Legătură de morcovi'), $t('Coș cu legume'), $t('Ladă de legume'), $t('Oala cu ciorbă')],
-  sweet: [$t('Făină'), 'Aluat', $t('Biscuiți'), $t('Brioșă'), 'Tort'],
-  drink: [$t('Lămâie'), $t('Limonadă'), 'Bubble tea', $t('Cocktail de fructe')],
+  flower: [$t('Floricică'), $t('Două flori'), $t('Buchețel'), $t('Buchet mare'), $t('Coș cu flori'), $t('Coroniță')],
+  veg: [$t('Morcov'), $t('Legătură de morcovi'), $t('Coș cu legume'), $t('Ladă de legume'), $t('Oala cu ciorbă')],
+  sweet: [$t('Făină'), $t('Aluat'), $t('Biscuiți'), $t('Brioșă'), $t('Tort')],
+  drink: [$t('Lămâie'), $t('Limonadă'), $t('Bubble tea'), $t('Cocktail de fructe')],
   // florăria lui Bubu (doar flori): florile din grădină și plantele în ghiveci
-  garden: ['Lalea', 'Trei lalele', $t('Buchet în hârtie'), $t('Aranjament în vază'), $t('Buchet de mireasă')],
+  garden: [$t('Lalea'), $t('Trei lalele'), $t('Buchet în hârtie'), $t('Aranjament în vază'), $t('Buchet de mireasă')],
   pot: [$t('Răsad'), $t('Ghiveci înflorit'), $t('Jardinieră'), $t('Coș suspendat')],
 };
 export const MAX_LVL: Record<string, number> = { flower: 5, veg: 4, sweet: 4, drink: 3, garden: 4, pot: 3 };

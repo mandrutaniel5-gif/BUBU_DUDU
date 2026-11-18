@@ -105,10 +105,10 @@ export const FURNITURE: Furn[] = [
   { id: 'plantL', type: 'plant', gx: 2, gy: 11, w: 1, d: 1, solid: true, action: act('water_plant', $t('Udă floarea'), '🪴') },
   // curte
   { id: 'mat', type: 'doormat', gx: 5, gy: 12, w: 1, d: 1, solid: false },
-  { id: 'tree1', type: 'tree', gx: 18, gy: 11, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
-  { id: 'tree2', type: 'tree', gx: 9, gy: 18, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
-  { id: 'tree3', type: 'tree', gx: 1, gy: 13, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
-  { id: 'tree4', type: 'tree', gx: 17, gy: 4, w: 1, d: 1, solid: true, action: act('chop', 'Taie lemne', '🪓') },
+  { id: 'tree1', type: 'tree', gx: 18, gy: 11, w: 1, d: 1, solid: true, action: act('chop', $t('Taie lemne'), '🪓') },
+  { id: 'tree2', type: 'tree', gx: 9, gy: 18, w: 1, d: 1, solid: true, action: act('chop', $t('Taie lemne'), '🪓') },
+  { id: 'tree3', type: 'tree', gx: 1, gy: 13, w: 1, d: 1, solid: true, action: act('chop', $t('Taie lemne'), '🪓') },
+  { id: 'tree4', type: 'tree', gx: 17, gy: 4, w: 1, d: 1, solid: true, action: act('chop', $t('Taie lemne'), '🪓') },
   { id: 'bench', type: 'bench', gx: 2, gy: 14, w: 2, d: 1, solid: true, action: act('bench', $t('Băncuța'), '🌅') },
   { id: 'mail', type: 'mailbox', gx: 6, gy: 13, w: 1, d: 1, solid: true, action: act('mail', $t('Cutia poștală'), '💌') },
   { id: 'fl1', type: 'flowers', gx: 7, gy: 14, w: 1, d: 1, solid: false },
@@ -119,11 +119,11 @@ export const FURNITURE: Furn[] = [
   ...RESOURCE_NODES,
   // supravietuire si economie
   { id: 'well', type: 'well', gx: 14, gy: 14, w: 1, d: 1, solid: true, action: act('drawwater', $t('Scoate apă din fântână'), '🪣') },
-  { id: 'laptop', type: 'laptop', gx: 6, gy: 2, w: 1, d: 1, solid: true, action: act('online', 'Laptopul (magazin online)', '💻') },
+  { id: 'laptop', type: 'laptop', gx: 6, gy: 2, w: 1, d: 1, solid: true, action: act('online', $t('Laptopul (magazin online)'), '💻') },
   { id: 'fireplace', type: 'fireplace', gx: 7, gy: 7, w: 1, d: 1, solid: true, action: act('stove', 'Soba', '🔥') },
   { id: 'shed', type: 'mower', gx: 16, gy: 13, w: 1, d: 1, solid: true, action: act('mow', $t('Mașina de tuns iarba'), '✂️') },
   { id: 'stand', type: 'stand', gx: 7, gy: 23, w: 2, d: 1, solid: true, action: act('stand', $t('Taraba lui Bubu'), '🧺') },
-  { id: 'gateway', type: 'signpost', gx: 3, gy: 23, w: 1, d: 1, solid: true, action: act('village', 'Spre sat', '🏘️') },
+  { id: 'gateway', type: 'signpost', gx: 3, gy: 23, w: 1, d: 1, solid: true, action: act('village', $t('Spre sat'), '🏘️') },
 ];
 
 /** ce se poate muta in curte (copaci, pietre, tufe, flori, banca, cutia postala, fantana, masina de tuns) si ce se poate scoate */

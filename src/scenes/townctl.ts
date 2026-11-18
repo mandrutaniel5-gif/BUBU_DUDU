@@ -148,7 +148,7 @@ export function cityMall(s: WorldScene) {
     s.log($t('Ați cumpărat {0} pentru apartament {1}', d.label.toLowerCase(), d.icon));
     return null;
   } }));
-  openShop(s, { title: $t('🏬 Mall-ul orașului'), wall: '#f3ecff', floor: '#dcd3ea', keeper: 'fox', hello: $t('Mobilă și decor pentru apartamentul vostru! ✨'), items, footer: $t('Ce cumpărați apare în apartament') });
+  openShop(s, { title: $t('🏬 Mall-ul orașului'), wall: '#f3ecff', floor: '#dcd3ea', keeper: /*ro*/'fox', hello: $t('Mobilă și decor pentru apartamentul vostru! ✨'), items, footer: $t('Ce cumpărați apare în apartament') });
 }
 
 // ------------------------------------------------------------------ cererile satenilor (avizierul + discutii)

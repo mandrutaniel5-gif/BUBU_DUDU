@@ -21,7 +21,11 @@ function isRo(text) {
   if (/^(https?:|data:|\.\/|\/|#|rgba?\(|var\(|calc\()/.test(text.trim())) return false;
   if (/[{};]\s*$/.test(text.trim()) && /:/.test(text)) return false; // css
   const ws = text.toLowerCase().replace(/<[^>]*>/g, ' ').match(/[a-z]+/g) || [];
-  return ws.length >= 2 && ws.some(w => WORDS.has(w));
+  if (ws.length >= 2 && ws.some(w => WORDS.has(w))) return true;
+  // propozitie / eticheta pentru oameni: cel putin doua cuvinte, cu majuscula sau semne (nu liste de clase CSS, fonturi, selectori)
+  const t = text.replace(/<[^>]*>/g, ' ').trim();
+  if (/\d+px|sans-serif|serif|monospace|rgba?\(|#[0-9a-f]{3,6}\b|=>|\(\)|[{};=]/i.test(t)) return false;
+  return ws.length >= 2 && /[A-ZĂÂÎȘȚ]/.test(t) && /[a-z]{2,}/.test(t);
 }
 const SKIP_CALL = /^(Bugs\.|console\.|ErrorLog\.|\$t$|i18n|document\.querySelector|querySelector|root\.querySelector|m\.querySelector|this\.root\.querySelector|closest|getElementById|setAttribute|getAttribute|import|require|localStorage|matchMedia|addEventListener|createElement|Sfx\.play)/;
 
@@ -33,7 +37,16 @@ const TEXT_PROPS = /^(label|text|name|title|hint|desc|info|msg|prodLabel|help|in
 const TEXT_CALLS = /(\.toast|\.text|\.log|\.choice|\.modal|\.say|\.bubble|regionBanner|fillText|strokeText|\.finish|fillTextIcons|\.confirm|staffSay|\.speak|\.note|\.popup|\.banner|^g)$/;
 function textCtx(node, sf) {
   const p = node.parent; if (!p) return false;
-  if (ts.isPropertyAssignment(p) && p.initializer === node) { const n = p.name.getText(sf).replace(/['"]/g, ''); if (ID_PROPS.test(n)) return 'id'; if (TEXT_PROPS.test(n)) return true; }
+  if (ts.isPropertyAssignment(p) && p.initializer === node) {
+    const n = p.name.getText(sf).replace(/['"]/g, ''); if (ID_PROPS.test(n)) return 'id'; if (TEXT_PROPS.test(n)) return true;
+    // un dictionar de texte ({ colinde: 'colindul', santa: $t('poza cu Moș Crăciun') }): daca vecinii sunt text, si el e
+    const sib = p.parent.properties.filter(x => x !== p && ts.isPropertyAssignment(x)).map(x => x.initializer);
+    if (sib.length && sib.filter(x => (ts.isCallExpression(x) && x.expression.getText(sf) === '$t') || ((ts.isStringLiteral(x) || ts.isNoSubstitutionTemplateLiteral(x)) && isRo(x.text))).length * 2 >= sib.length) return true;
+  }
+  if (ts.isArrayLiteralExpression(p)) {
+    const sib = p.elements.filter(x => x !== node);
+    if (sib.length && sib.filter(x => (ts.isCallExpression(x) && x.expression.getText(sf) === '$t') || ((ts.isStringLiteral(x) || ts.isNoSubstitutionTemplateLiteral(x)) && isRo(x.text))).length * 2 >= sib.length) return true;
+  }
   if (ts.isCallExpression(p) && p.arguments.includes(node) && TEXT_CALLS.test(calleeText(p, sf))) return true;
   if (ts.isConditionalExpression(p)) {
     // perechile el / ea: daca cealalta ramura e text (romanesc sau deja in $t), si asta e
@@ -45,7 +58,7 @@ function textCtx(node, sf) {
   return false;
 }
 /** fara diacritice, dar in loc de text: are litere si arata a cuvant / propozitie, nu a identificator */
-function looksText(s) { const t = s.trim(); if (!/[a-zA-Z]{2,}/.test(t)) return false; if (/^(#|https?:|\.|\/|rgba?\(|var\()/.test(t)) return false; if (/^[a-z0-9_-]+$/.test(t) && !/^[a-z]{3,}$/.test(t)) return false; return true; }
+function looksText(s) { const t = s.replace(/<[^>]*>/g, " ").replace(/{x}/g, " ").trim(); if (!/[a-zA-Z]{2,}/.test(t)) return false; if (/^(#|https?:|\.|\/|rgba?\(|var\()/.test(t)) return false; if (/^[a-z0-9_-]+$/.test(t) && !/^[a-z]{3,}$/.test(t)) return false; return true; }
 function skipCtx(node, sf) {
   const p = node.parent;
   if (!p) return 'nop';

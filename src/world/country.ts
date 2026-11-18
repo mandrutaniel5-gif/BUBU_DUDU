@@ -172,10 +172,10 @@ const sign = (x: number, y: number, text: string, dir: SignDir, welcome = false)
   const ns = dir === 'N' || dir === 'S';
   for (let i = -2; i <= 2; i++) for (let j = -1; j <= 1; j++) taken.add(ns ? `${x + j},${y + i}` : `${x + i},${y + j}`);
 };
-sign(41, 22, '🏘️ Satul · 🏞️ Lacul', 'E');
+sign(41, 22, $t('🏘️ Satul · 🏞️ Lacul'), 'E');
 sign(23, 22, $t('🏡 Acasă'), 'W');
 sign(98, 34, '🏘️ Satul', 'N');
-sign(61, 34, '🌉 Podul Mare', 'E');
+sign(61, 34, $t('🌉 Podul Mare'), 'E');
 sign(99, 21, $t('🏘️ Bun venit în sat!'), '', true);
 sign(147, 22, $t('🏙️ Orașul'), 'E');
 sign(154, 27, $t('🏘️ Satul · 🏡 Acasă'), 'W');

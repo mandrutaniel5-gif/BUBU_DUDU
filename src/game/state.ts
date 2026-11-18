@@ -18,9 +18,9 @@ export const NEED_INFO: Record<NeedKey, { icon: string; label: string; color: st
 
 export type Sickness = 'cold' | 'fever' | 'tummy';
 export const REQUESTS: Record<string, { icon: string; label: string; mini?: string }> = {
-  soup: { icon: '🍲', label: $t('supă caldă'), mini: 'soup' },
-  medicine: { icon: '💊', label: $t('medicamentul'), mini: 'medicine' },
-  compress: { icon: '🧊', label: $t('o compresă rece'), mini: 'compress' },
+  soup: { icon: '🍲', label: $t('supă caldă'), mini: /*ro*/'soup' },
+  medicine: { icon: '💊', label: $t('medicamentul'), mini: /*ro*/'medicine' },
+  compress: { icon: '🧊', label: $t('o compresă rece'), mini: /*ro*/'compress' },
   kiss: { icon: '💋', label: $t('un pupic de vindecare') },
   water: { icon: '💧', label: $t('un pahar cu apă') },
 };

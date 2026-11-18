@@ -27,7 +27,7 @@ export class SnoreGame extends Panel {
     this.hand = 1;
     const b = this.box;
     if (this.breath < 0.3) {
-      this.pinches++; Sfx.play('pop'); this.fx.text(b.x + b.w / 2, b.y + b.h * 0.35, ['Mmmf…', '…', $t('Liniște! 🤫')][Math.min(2, this.pinches - 1)], '#2ec4b6', 1);
+      this.pinches++; Sfx.play('pop'); this.fx.text(b.x + b.w / 2, b.y + b.h * 0.35, [$t('Mmmf…'), '…', $t('Liniște! 🤫')][Math.min(2, this.pinches - 1)], '#2ec4b6', 1);
       if (this.pinches >= 3) this.finish(1.5, $t('Liniște în sfârșit 🤫💤'));
     } else {
       this.wake += 0.45; Sfx.play('bad'); this.shake = 4;

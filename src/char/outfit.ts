@@ -233,7 +233,7 @@ export function drawBodyItem(ctx: CanvasRenderingContext2D, id: string, clipBody
 }
 
 /** martisorul prins in piept (1.11.0): snurul alb-rosu cu fundita si talismanul ales */
-export const CHARMS = [{ id: 'trifoi', icon: '🍀', label: $t('Trifoi cu 4 foi'), text: $t('aduce noroc') }, { id: 'inima', icon: '❤️', label: $t('Inimioară'), text: $t('pentru dragoste') }, { id: 'potcoava', icon: '🧲', label: $t('Potcoavă'), text: $t('aduce noroc în casă') }, { id: /*ro*/'coșar', icon: '🎩', label: $t('Coșar'), text: $t('alungă necazurile') }, { id: 'ghiocel', icon: '🤍', label: $t('Ghiocel'), text: $t('vestește primăvara') }];
+export const CHARMS = [{ id: 'trifoi', icon: '🍀', label: $t('Trifoi cu 4 foi'), text: $t('aduce noroc') }, { id: 'inima', icon: '❤️', label: $t('Inimioară'), text: $t('pentru dragoste') }, { id: 'potcoava', icon: '🧲', label: $t('Potcoavă'), text: $t('aduce noroc în casă') }, { id: 'coșar', icon: '🎩', label: $t('Coșar'), text: $t('alungă necazurile') }, { id: 'ghiocel', icon: '🤍', label: $t('Ghiocel'), text: $t('vestește primăvara') }];
 export function drawPin(ctx: CanvasRenderingContext2D, id: string, t: number) {
   ctx.save(); ctx.translate(-12, -16); ctx.rotate(Math.sin(t * 2) * 0.05);
   // snurul rasucit, alb si rosu, cu fundita
