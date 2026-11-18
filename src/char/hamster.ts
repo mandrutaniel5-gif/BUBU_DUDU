@@ -24,16 +24,16 @@ export const LOOK: Record<HamId, HamLook> = {
 };
 
 // ---------- utilitare ----------
-const ell = (c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, rot = 0) => { c.beginPath(); c.ellipse(x, y, Math.max(0.1, rx), Math.max(0.1, ry), rot, 0, TAU); };
+export const ell = (c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, rot = 0) => { c.beginPath(); c.ellipse(x, y, Math.max(0.1, rx), Math.max(0.1, ry), rot, 0, TAU); };
 export const rgba = (hex: string, a: number) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
-const angd = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
-const gauss = (d: number, w: number) => Math.exp(-(d * d) / (2 * w * w));
-const bumpc = (d: number, w: number) => (Math.abs(d) < w ? (Math.cos(Math.PI * d / w) + 1) / 2 : 0);
-type Pt = [number, number];
-function polar(cx: number, cy: number, rf: (a: number) => number, N: number): Pt[] { const o: Pt[] = []; for (let i = 0; i < N; i++) { const a = i / N * TAU, r = rf(a); o.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } return o; }
-function toPath(pts: Pt[]) { const p = new Path2D(); p.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) p.lineTo(pts[i][0], pts[i][1]); p.closePath(); return p; }
-let seed = 1; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-function soft(c: CanvasRenderingContext2D, px: number, fn: () => void) { c.save(); try { c.filter = `blur(${Math.max(0.5, px)}px)`; } catch { /* fara blur pe browserele vechi */ } fn(); c.restore(); }
+export const angd = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+export const gauss = (d: number, w: number) => Math.exp(-(d * d) / (2 * w * w));
+export const bumpc = (d: number, w: number) => (Math.abs(d) < w ? (Math.cos(Math.PI * d / w) + 1) / 2 : 0);
+export type Pt = [number, number];
+export function polar(cx: number, cy: number, rf: (a: number) => number, N: number): Pt[] { const o: Pt[] = []; for (let i = 0; i < N; i++) { const a = i / N * TAU, r = rf(a); o.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } return o; }
+export function toPath(pts: Pt[]) { const p = new Path2D(); p.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) p.lineTo(pts[i][0], pts[i][1]); p.closePath(); return p; }
+let seed = 1; export const setSeed = (n: number) => { seed = n; }; export const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+export function soft(c: CanvasRenderingContext2D, px: number, fn: () => void) { c.save(); try { c.filter = `blur(${Math.max(0.5, px)}px)`; } catch { /* fara blur pe browserele vechi */ } fn(); c.restore(); }
 
 // ---------- forma capului si a corpului (unitati de desen) ----------
 /** centrul capului fata de talpi; gatul (pivotul) e mai jos */
@@ -63,7 +63,7 @@ export function geo(id: HamId) {
 }
 
 /** fire de blana pe marginea interioara (forma e deja decupata) */
-function furEdge(c: CanvasRenderingContext2D, pts: Pt[], col: string, alpha: number, len: number, step: number, cx: number, cy: number) {
+export function furEdge(c: CanvasRenderingContext2D, pts: Pt[], col: string, alpha: number, len: number, step: number, cx: number, cy: number) {
   c.save(); c.strokeStyle = rgba(col, alpha); c.lineCap = 'round';
   for (let i = 0; i < pts.length; i += step) {
     const [x, y] = pts[i]; let nx = x - cx, ny = y - cy; const l = Math.hypot(nx, ny) || 1; nx /= l; ny /= l;
@@ -77,7 +77,7 @@ function furEdge(c: CanvasRenderingContext2D, pts: Pt[], col: string, alpha: num
 // ---------- imaginile pastrate (blana) ----------
 interface Sprite { cv: HTMLCanvasElement; x: number; y: number; w: number; h: number }
 const SPR = new Map<string, Sprite>();
-function sprite(key: string, k: number, x: number, y: number, w: number, h: number, draw: (c: CanvasRenderingContext2D, k: number) => void): Sprite {
+export function sprite(key: string, k: number, x: number, y: number, w: number, h: number, draw: (c: CanvasRenderingContext2D, k: number) => void): Sprite {
   const id = key + '@' + k; let s = SPR.get(id);
   if (!s) {
     const cv = document.createElement('canvas'); cv.width = Math.ceil(w * k); cv.height = Math.ceil(h * k);
@@ -87,11 +87,11 @@ function sprite(key: string, k: number, x: number, y: number, w: number, h: numb
   return s;
 }
 /** rezolutia imaginii: dupa cat de mare apare personajul pe ecran (trepte, ca sa nu refacem mereu) */
-function bucket(ctx: CanvasRenderingContext2D) {
+export function bucket(ctx: CanvasRenderingContext2D) {
   let e = 1; try { const m = ctx.getTransform(); e = Math.hypot(m.a, m.b); } catch { /* */ }
   return Math.min(6, Math.max(0.5, 2 ** (Math.ceil(Math.log2(Math.max(0.01, e)) * 2) / 2)));
 }
-function blit(ctx: CanvasRenderingContext2D, s: Sprite) { ctx.drawImage(s.cv, s.x, s.y, s.w, s.h); }
+export function blit(ctx: CanvasRenderingContext2D, s: Sprite) { ctx.drawImage(s.cv, s.x, s.y, s.w, s.h); }
 
 function headSprite(id: HamId, back: boolean, k: number) {
   return sprite(`h-${id}-${back ? 'b' : 'f'}`, k, -78, -72, 156, 142, (c, kk) => {
@@ -148,7 +148,7 @@ function drawEar(c: CanvasRenderingContext2D, L: HamLook, side: number, part: 'b
   c.fillStyle = L.body; c.globalAlpha = 0.9; ell(c, 0, 9, 13, 4.6); c.fill(); c.globalAlpha = 1;
   c.restore();
 }
-function drawBowId(c: CanvasRenderingContext2D, x: number, rot: number) {
+export function drawBowId(c: CanvasRenderingContext2D, x: number, rot: number) {
   c.save(); c.translate(x, -46); c.rotate(rot);
   const loop = (side: number) => { c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(side * 6, -15, side * 26, -16, side * 25, -1); c.bezierCurveTo(side * 26, 13, side * 6, 13, 0, 0); c.closePath(); };
   for (const side of [-1, 1]) { c.beginPath(); c.moveTo(side * 2, 2); c.quadraticCurveTo(side * 8, 8, side * 7, 13); c.lineTo(side * 10.5, 11); c.lineTo(side * 13, 14); c.quadraticCurveTo(side * 13, 7, side * 5, 1); c.closePath(); c.fillStyle = '#ff6f97'; c.fill(); c.lineWidth = 2.4; c.strokeStyle = O; c.stroke(); }
@@ -173,12 +173,12 @@ export function drawBowtieId(c: CanvasRenderingContext2D, col1 = '#7db4ff', col2
 }
 
 // ---------- fata ----------
-function eyeShape(c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number) {
+export function eyeShape(c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number) {
   ell(c, x, y, rx, ry); const g = c.createLinearGradient(0, y - ry, 0, y + ry); g.addColorStop(0, '#24130e'); g.addColorStop(0.65, '#3a1f17'); g.addColorStop(1, '#6b3727'); c.fillStyle = g; c.fill();
   c.save(); ell(c, x, y, rx, ry); c.clip(); c.fillStyle = 'rgba(190,105,70,0.55)'; ell(c, x + 0.5, y + ry * 0.62, rx * 0.68, ry * 0.36); c.fill(); c.restore();
   c.fillStyle = '#fff'; ell(c, x - rx * 0.33, y - ry * 0.36, rx * 0.42, ry * 0.4); c.fill(); ell(c, x + rx * 0.38, y + ry * 0.36, rx * 0.17, rx * 0.17); c.fill();
 }
-function lashes(c: CanvasRenderingContext2D, x: number, y: number, side: number, rx: number, ry: number) { c.strokeStyle = O; c.lineWidth = 2.2; c.beginPath(); c.moveTo(x + side * rx * 0.75, y - ry * 0.6); c.lineTo(x + side * (rx + 4), y - ry * 0.95); c.moveTo(x + side * rx * 0.95, y - ry * 0.2); c.lineTo(x + side * (rx + 5), y - ry * 0.35); c.stroke(); }
+export function lashes(c: CanvasRenderingContext2D, x: number, y: number, side: number, rx: number, ry: number) { c.strokeStyle = O; c.lineWidth = 2.2; c.beginPath(); c.moveTo(x + side * rx * 0.75, y - ry * 0.6); c.lineTo(x + side * (rx + 4), y - ry * 0.95); c.moveTo(x + side * rx * 0.95, y - ry * 0.2); c.lineTo(x + side * (rx + 5), y - ry * 0.35); c.stroke(); }
 function drawEye(c: CanvasRenderingContext2D, L: HamLook, x: number, y: number, side: number, type: EyeType, t: number) {
   c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = O; c.fillStyle = O;
   const lid = (y0: number, y1: number, fn: () => void) => { // pleoapa: o linie inclinata; ochiul se vede doar sub ea

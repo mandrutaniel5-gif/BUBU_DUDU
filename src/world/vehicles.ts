@@ -4,7 +4,8 @@ import { drawCharacter, type CharSpec } from '../char/draw';
 import { basePose } from '../char/pose';
 import { IDLE, WALK } from '../char/anims';
 import type { Outfit } from '../char/outfit';
-import { drawHamRider, type RideOpt } from '../char/hamrider';
+import { drawHamsterSide } from '../char/hamside';
+import { HS } from '../char/hamster';
 import { iso, isoBox, boxOf, shade } from './iso';
 
 const O = '#4a2a22';
@@ -78,21 +79,31 @@ export function drawTractorSide(c: CanvasRenderingContext2D, x: number, y: numbe
   c.fillStyle = RED_D; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.moveTo(-40, -40); c.quadraticCurveTo(-40, -74, -8, -74); c.lineTo(6, -74); c.lineTo(6, -40); c.closePath(); c.fill(); c.stroke();
   c.fillStyle = '#5a4a42'; c.beginPath(); c.roundRect(-24, -84, 20, 10, 3); c.fill(); c.stroke(); // scaunul
   // stalpul din spate al cabinei (in spatele soferului)
-  c.fillStyle = '#3d3d47'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(-40, -194, 5, 122, 2); c.fill(); c.stroke();
+  c.fillStyle = '#3d3d47'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(-96, -194, 5, 118, 2); c.fill(); c.stroke();
   c.fillStyle = '#5a4a42'; c.beginPath(); c.roundRect(-32, -118, 9, 36, 4); c.fill(); c.stroke(); // spatarul scaunului
   // soferul (sprite din profil, asezat, cu labutele pe volan)
   const steer = Math.sin(t * 1.7) * 0.18 + Math.sin(t * 4.3) * 0.05;
-  const hugArm = opt.passenger ? ride(c, opt.passenger, -54, -82, 1.05, t + 1, { feet: [{ x: -40, y: -50 }, { x: -36, y: -48 }], hands: opt.driver ? [{ x: -34, y: -112 }, { x: -30, y: -108 }] : [{ x: -30, y: -110 }, { x: -26, y: -106 }], hug: !!opt.driver, lean: 0.15 }, 0, false) : null;
+  // pedalele de la picioarele soferului si perna ei de pe aripa din spate
+  c.strokeStyle = O; c.lineWidth = 4; c.beginPath(); c.moveTo(6, -66); c.lineTo(2, -76); c.stroke(); c.strokeStyle = '#9aa3ad'; c.lineWidth = 2; c.stroke();
+  c.fillStyle = '#3a3a44'; c.beginPath(); c.roundRect(-4, -79, 10, 4, 2); c.fill();
+    if (opt.passenger) { // lada din spate pe care sta ea (prinsa de sasiu), cu perna deasupra
+    c.fillStyle = RED; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.roundRect(-88, -71, 46, 33, 4); c.fill(); c.stroke();
+    c.fillStyle = RED_L; c.beginPath(); c.roundRect(-85, -68, 40, 4, 2); c.fill();
+    c.strokeStyle = RED_D; c.lineWidth = 2; c.beginPath(); c.moveTo(-84, -52); c.lineTo(-46, -52); c.stroke();
+    c.fillStyle = '#9aa5ad'; c.strokeStyle = O; c.lineWidth = 1.5; c.beginPath(); c.roundRect(-68, -50, 8, 5, 2); c.fill(); c.stroke();
+    c.fillStyle = '#5a4a42'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(-86, -78, 42, 8, 4); c.fill(); c.stroke();
+  }
+  const hugArm = opt.passenger ? ride(c, opt.passenger, -66, -78, t + 1, [{ x: -52, y: -64 }, { x: -49, y: -63 }],
+    opt.driver ? [{ x: -40, y: -104 }, { x: -37, y: -100 }] : [{ x: -42, y: -100 }, { x: -42, y: -100 }], !!opt.driver) : null;
   if (opt.driver) {
-    const W = { x: 15, y: -111 }; // volanul
-    ride(c, opt.driver, -14, -84, 1.2, t, { feet: [{ x: 2, y: -50 }, { x: 6, y: -48 }], hands: [{ x: W.x - 3, y: W.y + 6 }, { x: W.x, y: W.y + 2 }], lean: 0.1 }, steer, true);
-    if (opt.driver.id === 'bubu' || opt.driver.id === 'dudu') drawWheelSide(c, -14, -84, 1, 0, steer);
+    ride(c, opt.driver, -14, -84, t, [{ x: -2, y: -79 }, { x: 2, y: -79 }], [{ x: 26, y: -96 }, { x: 22, y: -94 }], false, steer, true);
+    if (opt.driver.id === 'bubu' || opt.driver.id === 'dudu') drawWheelSide(c, -5, -71, 1, 0, steer);
   }
   hugArm?.();
   // stalpul din fata + acoperisul (cadru peste sofer)
   c.fillStyle = '#3d3d47'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(30, -194, 5, 124, 2); c.fill(); c.stroke();
-  c.fillStyle = RED; c.beginPath(); c.roundRect(-48, -202, 88, 11, 5); c.fill(); c.stroke();
-  c.fillStyle = RED_L; c.beginPath(); c.roundRect(-44, -200, 76, 3, 2); c.fill();
+  c.fillStyle = RED; c.beginPath(); c.roundRect(-104, -202, 144, 11, 5); c.fill(); c.stroke();
+  c.fillStyle = RED_L; c.beginPath(); c.roundRect(-100, -200, 132, 3, 2); c.fill();
   // aripa fata
   c.fillStyle = RED_D; c.strokeStyle = O; c.lineWidth = 2.5; c.beginPath(); c.arc(52, -28, 17, Math.PI * 1.05, Math.PI * 1.95); c.lineTo(66, -30); c.lineTo(38, -30); c.closePath(); c.fill(); c.stroke();
   c.restore();
@@ -226,11 +237,18 @@ export function irisWipe(c: CanvasRenderingContext2D, w: number, h: number, open
  */
 /** hainele cu care apar pe vehicul (le pune lumea inainte sa deseneze; altfel fara haine) */
 export const RIDE_OUTFIT: Partial<Record<string, Outfit>> = {};
-/** hamsterii pe vehicul (1.14.2, char/hamrider.ts); ceilalti (sateni) raman cu desenul vechi din profil */
-function ride(c: CanvasRenderingContext2D, spec: CharSpec, x: number, y: number, s: number, t: number, opt: RideOpt, steer = 0, wheel = true): (() => void) | null {
-  if (spec.id === 'bubu' || spec.id === 'dudu') return drawHamRider(c, spec, x, y, s, t, RIDE_OUTFIT[spec.id], opt);
-  drawDriverSide(c, spec, x, y, s * 0.9, t, steer, !opt.hug, wheel); return null;
+/**
+ * 1.14.2: hamsterii pe vehicul, desenati din profil (char/hamside.ts). (x,y) = locul de pe sa, in unitatile vehiculului
+ * (= personajul la scara 1); feet / hands = unde ajung talpile si labutele. Satenii raman cu desenul vechi.
+ */
+function ride(c: CanvasRenderingContext2D, spec: CharSpec, x: number, y: number, t: number, feet: [Pt, Pt], hands: [Pt, Pt], hug: boolean, steer = 0, wheel = true): (() => void) | null {
+  if (spec.id === 'bubu' || spec.id === 'dudu') {
+    const loc = (p: Pt): Pt => ({ x: (p.x - x) / HS, y: (p.y - y) / HS });
+    return drawHamsterSide(c, spec.id, x, y, 1, t, { feet: [loc(feet[0]), loc(feet[1])], hands: [loc(hands[0]), loc(hands[1])], hug, eyes: hug ? 'happy' : 'dot', mouth: hug ? 'smile' : 'open', outfit: RIDE_OUTFIT[spec.id] });
+  }
+  drawDriverSide(c, spec, x, y, 0.8, t, steer, !hug, wheel); return null;
 }
+type Pt = { x: number; y: number };
 export function drawDriverSide(c: CanvasRenderingContext2D, spec: CharSpec, x: number, y: number, s: number, t: number, steer: number, drive: boolean, wheel = true) {
   const body = spec.body, dark = spec.shade, isDudu = spec.id === 'dudu';
   const pad = isDudu ? '#c8917a' : '#4a2a22';
@@ -303,82 +321,104 @@ function simpleWheel(c: CanvasRenderingContext2D, x: number, y: number, r: numbe
   c.restore();
 }
 
-/** scuterul albastru (ca in desenele lor): sofer in fata, pasager in spate */
+/**
+ * scuterul albastru (ca in desenele lor): sofer in fata, pasager in spate. 1.14.2: pe masura hamsterilor (unitatile =
+ * personajul la scara 1): puntea ridicata cat sa ajunga cu talpile, ghidonul tras spre el, scarita pentru ea.
+ */
 export function drawScooterSide(c: CanvasRenderingContext2D, x: number, y: number, s: number, t: number, opt: { rot: number; bump: number; driver?: CharSpec; passenger?: CharSpec }) {
   c.save(); c.translate(x, y); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round';
   const BL = '#8ecdf0', BL_D = '#5fa9d6', BL_L = '#c2e6fa';
-  c.fillStyle = 'rgba(40,20,20,0.2)'; c.beginPath(); c.ellipse(0, 2, 62, 7, 0, 0, 7); c.fill();
+  c.fillStyle = 'rgba(40,20,20,0.2)'; c.beginPath(); c.ellipse(-12, 2, 70, 6, 0, 0, 7); c.fill();
   c.save(); c.translate(0, opt.bump);
-  // esapament
-  c.fillStyle = '#c0c6cc'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(-58, -24, 34, 8, 4); c.fill(); c.stroke();
-  // caroseria din spate (rotunjita, ca la Vespa)
-  c.fillStyle = BL; c.strokeStyle = O; c.lineWidth = 2.6;
-  c.beginPath(); c.moveTo(-52, -28); c.bezierCurveTo(-58, -62, -12, -66, -4, -40); c.lineTo(10, -40); c.lineTo(10, -22); c.lineTo(-40, -22); c.quadraticCurveTo(-54, -22, -52, -28); c.closePath(); c.fill(); c.stroke();
-  c.strokeStyle = BL_L; c.lineWidth = 3; c.beginPath(); c.moveTo(-44, -46); c.quadraticCurveTo(-30, -56, -16, -50); c.stroke();
-  // podeaua si coloana din fata
-  c.fillStyle = BL_D; c.strokeStyle = O; c.lineWidth = 2.4; c.beginPath(); c.roundRect(-8, -34, 36, 16, 4); c.fill(); c.stroke();
-  c.fillStyle = BL; c.beginPath(); c.moveTo(22, -22); c.quadraticCurveTo(46, -26, 44, -70); c.lineTo(34, -72); c.quadraticCurveTo(34, -36, 18, -30); c.closePath(); c.fill(); c.stroke();
-  c.strokeStyle = BL_L; c.lineWidth = 3; c.beginPath(); c.moveTo(38, -64); c.quadraticCurveTo(40, -40, 28, -30); c.stroke();
-  // aripa fata
-  c.fillStyle = BL; c.strokeStyle = O; c.lineWidth = 2.4; c.beginPath(); c.arc(42, -14, 15, Math.PI * 1.05, Math.PI * 1.95); c.closePath(); c.fill(); c.stroke();
+  const S1 = { x: -58, y: -58 }, S2 = { x: -4, y: -57 };   // locurile de pe sa
+  const G = { x: 22, y: -87 };                              // manerul ghidonului
+  // esapamentul
+  c.fillStyle = '#c0c6cc'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(-82, -24, 30, 7, 3.5); c.fill(); c.stroke();
+  // caroseria din spate: rotunda, ca la Vespa
+  c.fillStyle = BL; c.strokeStyle = O; c.lineWidth = 2.4;
+  c.beginPath(); c.moveTo(-80, -26); c.bezierCurveTo(-86, -58, -20, -62, -8, -44); c.lineTo(-8, -22); c.lineTo(-68, -22); c.quadraticCurveTo(-80, -22, -80, -26); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = BL_L; c.lineWidth = 3; c.beginPath(); c.moveTo(-72, -44); c.quadraticCurveTo(-52, -55, -28, -51); c.stroke();
+  c.fillStyle = '#e63946'; c.strokeStyle = O; c.lineWidth = 1.6; c.beginPath(); c.roundRect(-85, -40, 6, 9, 2.5); c.fill(); c.stroke(); // stopul
+  // puntea (unde isi tine el talpile), ridicata pana la picioarele lui
+  c.fillStyle = BL_D; c.strokeStyle = O; c.lineWidth = 2.4; c.beginPath(); c.moveTo(-10, -22); c.lineTo(-10, -44); c.quadraticCurveTo(-10, -48, -5, -48); c.lineTo(20, -48); c.lineTo(20, -22); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#3a3a44'; c.beginPath(); c.roundRect(-6, -51, 24, 4, 2); c.fill(); // covorasul
+  // coloana din fata (scutul de picioare) pana la ghidon
+  c.fillStyle = BL; c.strokeStyle = O; c.lineWidth = 2.4; c.beginPath(); c.moveTo(16, -22); c.quadraticCurveTo(44, -24, 40, -78); c.lineTo(30, -80); c.quadraticCurveTo(32, -44, 14, -40); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = BL_L; c.lineWidth = 3; c.beginPath(); c.moveTo(35, -72); c.quadraticCurveTo(36, -44, 26, -32); c.stroke();
+  // aripa din fata
+  c.fillStyle = BL; c.strokeStyle = O; c.lineWidth = 2.4; c.beginPath(); c.arc(40, -13, 16, Math.PI * 1.05, Math.PI * 1.95); c.closePath(); c.fill(); c.stroke();
   // sa (lunga, pentru doi)
-  c.fillStyle = '#5a4a42'; c.beginPath(); c.roundRect(-54, -62, 58, 10, 5); c.fill(); c.stroke();
+  c.fillStyle = '#6b4a3a'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(-74, -54); c.quadraticCurveTo(-74, -61, -64, -61); c.lineTo(2, -60); c.quadraticCurveTo(8, -60, 7, -54); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = 'rgba(255,255,255,0.3)'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(-68, -59); c.lineTo(0, -58.5); c.stroke();
+  // scarita pentru ea
+  const peg = { x: -44, y: -50 };
+  c.strokeStyle = O; c.lineWidth = 4; c.beginPath(); c.moveTo(peg.x - 6, peg.y + 2); c.lineTo(peg.x + 6, peg.y + 2); c.stroke(); c.strokeStyle = '#9aa3ad'; c.lineWidth = 2; c.stroke();
   // ghidonul si farul
-  c.strokeStyle = '#5a4a42'; c.lineWidth = 4; c.beginPath(); c.moveTo(38, -72); c.lineTo(30, -82); c.stroke();
-  c.fillStyle = '#c0c6cc'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(20, -88, 18, 7, 3); c.fill(); c.stroke();
-  c.fillStyle = '#fff6b0'; c.beginPath(); c.arc(44, -76, 6, 0, 7); c.fill(); c.stroke();
-  c.fillStyle = '#e63946'; c.beginPath(); c.arc(-56, -42, 3.5, 0, 7); c.fill(); c.stroke(); // stop
-  // pasagerul (in spate) si soferul (in fata)
-  const G = { x: 24, y: -85 }; // manerul ghidonului
-  const hugArm = opt.passenger ? ride(c, opt.passenger, -46, -62, 1.05, t + 1.3, { feet: [{ x: -28, y: -38 }, { x: -24, y: -36 }], hands: opt.driver ? [{ x: -27, y: -88 }, { x: -22, y: -83 }] : [G, G], hug: !!opt.driver, lean: opt.driver ? 0.02 : 0.1 }) : null;
-  if (opt.driver) ride(c, opt.driver, -6, -62, 1.05, t, { feet: [{ x: 10, y: -36 }, { x: 15, y: -35 }], hands: [{ x: G.x - 3, y: G.y + 1 }, G], lean: 0.1 }, Math.sin(t * 1.5) * 0.12, false);
+  c.strokeStyle = O; c.lineWidth = 5; c.beginPath(); c.moveTo(36, -79); c.lineTo(G.x + 3, G.y); c.stroke(); c.strokeStyle = '#9aa3ad'; c.lineWidth = 2.6; c.stroke();
+  c.fillStyle = '#3a3a44'; c.strokeStyle = O; c.lineWidth = 1.2; c.beginPath(); c.roundRect(G.x - 6, G.y - 2.2, 10, 4.6, 2); c.fill(); c.stroke();
+  c.fillStyle = '#c0c6cc'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(32, -86, 12, 8, 3); c.fill(); c.stroke();
+  c.fillStyle = '#fff6b0'; c.beginPath(); c.arc(45, -80, 5.5, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#ffffffcc'; c.beginPath(); c.arc(43.5, -81.5, 1.6, 0, 7); c.fill();
+  // cei doi: el cu talpile pe punte si labutele pe ghidon; ea cu talpile pe scarita, il tine in brate
+  const hugArm = opt.passenger ? ride(c, opt.passenger, S1.x, S1.y, t + 1.3, [{ x: peg.x - 2, y: peg.y }, { x: peg.x + 2, y: peg.y + 1 }],
+    opt.driver ? [{ x: S2.x - 24, y: S2.y - 22 }, { x: S2.x - 21, y: S2.y - 18 }] : [{ x: S1.x + 28, y: S1.y - 20 }, { x: S1.x + 28, y: S1.y - 20 }], !!opt.driver) : null;
+  if (opt.driver) ride(c, opt.driver, S2.x, S2.y, t, [{ x: 6, y: -51 }, { x: 11, y: -51 }], [{ x: G.x + 1, y: G.y }, { x: G.x - 2, y: G.y + 1 }], false, Math.sin(t * 1.5) * 0.12, false);
   hugArm?.();
   c.restore();
-  simpleWheel(c, -36, -12, 13, opt.rot, '#2b2b33', '#d9d9d9');
-  simpleWheel(c, 42, -12, 13, opt.rot, '#2b2b33', '#d9d9d9');
+  simpleWheel(c, -56, -13, 13, opt.rot, '#2b2b33', '#d9d9d9');
+  simpleWheel(c, 40, -13, 13, opt.rot, '#2b2b33', '#d9d9d9');
   c.restore();
 }
 
 /**
- * bicicleta in tandem (pentru doi). 1.14.2: sei mai joase si pedalierele sub ele, ca hamsterii sa ajunga cu talpile la pedale;
- * ea (in spate) il tine in brate.
+ * bicicleta in tandem (pentru doi). 1.14.2: desenata pe masura hamsterilor (unitatile = personajul la scara 1):
+ * pedalierele chiar in fata seilor, ghidonul ridicat spre labutele lui; ea sta in spate si il tine in brate.
  */
 export function drawTandemSide(c: CanvasRenderingContext2D, x: number, y: number, s: number, t: number, opt: { rot: number; bump: number; driver?: CharSpec; passenger?: CharSpec }) {
   c.save(); c.translate(x, y); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round';
-  c.fillStyle = 'rgba(40,20,20,0.2)'; c.beginPath(); c.ellipse(0, 2, 70, 7, 0, 0, 7); c.fill();
-  const F = '#ff7aa2';
-  simpleWheel(c, -52, -18, 18, opt.rot, '#2b2b33', '#fff');
-  simpleWheel(c, 52, -18, 18, opt.rot, '#2b2b33', '#fff');
-  // cadrul
-  const fr = (a: Pt, b: Pt) => { c.strokeStyle = O; c.lineWidth = 6; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); c.strokeStyle = F; c.lineWidth = 3.5; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); };
+  c.fillStyle = 'rgba(40,20,20,0.2)'; c.beginPath(); c.ellipse(-4, 1, 82, 6, 0, 0, 7); c.fill();
   type Pt = { x: number; y: number };
-  const A = { x: -52, y: -18 }, B = { x: 52, y: -18 }, P1 = { x: -20, y: -27 }, P2 = { x: 20, y: -27 }, S1 = { x: -30, y: -40 }, S2 = { x: 15, y: -40 }, H = { x: 38, y: -48 };
-  fr(A, P1); fr(P1, S1); fr(S1, A); fr(P1, P2); fr(S1, S2); fr(P2, S2); fr(S2, H); fr(H, B); fr(P2, B);
-  // pedalele: fiecare pedalier are doua (stanga / dreapta, opuse)
-  const cr = opt.rot * 0.8, CR = 5;
-  const ped = (pc: Pt, k: number): Pt => ({ x: pc.x + Math.cos(cr + k * Math.PI) * CR, y: pc.y + Math.sin(cr + k * Math.PI) * CR - 2 });
-  const crank = (pc: Pt, k: number) => { const q = ped(pc, k); c.strokeStyle = '#555'; c.lineWidth = 3; c.beginPath(); c.moveTo(pc.x, pc.y); c.lineTo(q.x, q.y + 2); c.stroke(); c.fillStyle = '#333'; c.beginPath(); c.roundRect(q.x - 4, q.y + 1, 8, 3, 1.5); c.fill(); };
-  for (const pc of [P1, P2]) crank(pc, 1); // pedalele din partea cealalta
-  // sei + ghidon + cos cu flori
-  for (const sp of [S1, S2]) { c.fillStyle = '#5a4a42'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.ellipse(sp.x, sp.y - 2, 10, 4, 0, 0, 7); c.fill(); c.stroke(); }
-  const G = { x: H.x - 7, y: H.y - 8 }; // manerul ghidonului
-  c.fillStyle = '#d9a273'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.roundRect(H.x + 2, H.y - 2, 18, 14, 3); c.fill(); c.stroke();
-  for (let i = 0; i < 3; i++) { c.fillStyle = ['#ff7aa2', '#ffd23f', '#c77dff'][i]; c.beginPath(); c.arc(H.x + 6 + i * 5, H.y - 4, 3.5, 0, 7); c.fill(); }
-  const bar = () => { c.strokeStyle = '#555'; c.lineWidth = 3; c.beginPath(); c.moveTo(H.x, H.y); c.lineTo(G.x, G.y); c.stroke(); c.fillStyle = '#3a3a44'; c.beginPath(); c.roundRect(G.x - 4, G.y - 2, 7, 4, 2); c.fill(); };
-  bar();
-  // ciclistii: corpul sare usor cand pedaleaza; talpile pe pedale, ea il tine in brate
-  const bob = Math.abs(Math.sin(cr)) * 0.8;
-  const hugArm = opt.passenger ? ride(c, opt.passenger, S1.x, S1.y - 5 - bob, 0.9, t + 1.3, { feet: [ped(P1, 1), ped(P1, 0)], hands: opt.driver ? [{ x: S2.x - 15, y: S2.y - 27 }, { x: S2.x - 10, y: S2.y - 22 }] : [G, G], hug: !!opt.driver, lean: opt.driver ? 0.02 : 0.14 }) : null;
-  if (opt.driver) ride(c, opt.driver, S2.x, S2.y - 5 - bob, 0.9, t, { feet: [ped(P2, 1), ped(P2, 0)], hands: [{ x: G.x - 2, y: G.y + 1 }, G], lean: 0.14 }, Math.sin(t * 1.5) * 0.1, false);
+  const F = '#ff7aa2', FD = '#e0517f';
+  const A = { x: -72, y: -19 }, B = { x: 62, y: -19 };            // osiile
+  const S1 = { x: -44, y: -44 }, S2 = { x: 16, y: -44 };          // seile (unde stau)
+  const P1 = { x: S1.x + 13, y: S1.y + 8 }, P2 = { x: S2.x + 13, y: S2.y + 8 }; // pedalierele
+  const H = { x: 48, y: -52 }, G = { x: 42, y: -60 };             // furca sus, manerul ghidonului
+  simpleWheel(c, A.x, A.y, 19, opt.rot, '#2b2b33', '#fff');
+  simpleWheel(c, B.x, B.y, 19, opt.rot, '#2b2b33', '#fff');
+  const fr = (a: Pt, b: Pt, w = 4) => { c.strokeStyle = O; c.lineWidth = w + 2.6; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); c.strokeStyle = F; c.lineWidth = w; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); };
+  const T1 = { x: S1.x, y: S1.y + 4 }, T2 = { x: S2.x, y: S2.y + 4 };
+  // cadrul: tub de jos, tuburile seilor, furca
+  fr(A, T1); fr(A, P1); fr(P1, P2); fr(T1, T2); fr(P1, T1); fr(P2, T2); fr(T2, H); fr(P2, H); fr(H, B, 4.5);
+  c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(T1.x + 3, T1.y - 1); c.lineTo(T2.x - 3, T2.y - 1); c.stroke();
+  // aparatoarea de noroi a rotii din spate
+  c.strokeStyle = O; c.lineWidth = 5; c.beginPath(); c.arc(A.x, A.y, 23, Math.PI * 1.08, Math.PI * 1.72); c.stroke(); c.strokeStyle = FD; c.lineWidth = 2.6; c.stroke();
+  // pedalele (fiecare pedalier are doua, opuse)
+  const cr = opt.rot * 0.8, CR = 5.5;
+  const ped = (pc: Pt, k: number): Pt => ({ x: pc.x + Math.cos(cr + k * Math.PI) * CR, y: pc.y + Math.sin(cr + k * Math.PI) * CR });
+  const crank = (pc: Pt, k: number) => { const q = ped(pc, k); c.strokeStyle = O; c.lineWidth = 4.2; c.beginPath(); c.moveTo(pc.x, pc.y); c.lineTo(q.x, q.y); c.stroke(); c.strokeStyle = '#9aa3ad'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#3a3a44'; c.beginPath(); c.roundRect(q.x - 4.5, q.y - 1, 9, 3.4, 1.5); c.fill(); };
+  for (const pc of [P1, P2]) crank(pc, 1);
+  // seile
+  for (const sp of [S1, S2]) { c.fillStyle = '#6b4a3a'; c.strokeStyle = O; c.lineWidth = 1.8; c.beginPath(); c.moveTo(sp.x - 12, sp.y + 1); c.quadraticCurveTo(sp.x - 12, sp.y - 4, sp.x - 2, sp.y - 3); c.quadraticCurveTo(sp.x + 10, sp.y - 3, sp.x + 11, sp.y + 1); c.quadraticCurveTo(sp.x, sp.y + 4, sp.x - 12, sp.y + 1); c.fill(); c.stroke(); }
+  // cosul cu flori din fata
+  c.fillStyle = '#d9a273'; c.strokeStyle = O; c.lineWidth = 1.8; c.beginPath(); c.roundRect(H.x + 4, H.y - 6, 20, 15, 3); c.fill(); c.stroke();
+  c.strokeStyle = 'rgba(74,42,34,0.35)'; c.lineWidth = 1; for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(H.x + 4 + i * 5, H.y - 5); c.lineTo(H.x + 4 + i * 5, H.y + 8); c.stroke(); }
+  for (let i = 0; i < 3; i++) { c.fillStyle = ['#ff7aa2', '#ffd23f', '#c77dff'][i]; c.strokeStyle = O; c.lineWidth = 1; c.beginPath(); c.arc(H.x + 9 + i * 5, H.y - 7 - (i % 2) * 2, 3.6, 0, 7); c.fill(); c.stroke(); }
+  // ghidonul (tija + manerul)
+  c.strokeStyle = O; c.lineWidth = 4.6; c.beginPath(); c.moveTo(H.x, H.y); c.lineTo(G.x + 2, G.y + 1); c.stroke(); c.strokeStyle = '#9aa3ad'; c.lineWidth = 2.2; c.stroke();
+  c.fillStyle = '#3a3a44'; c.strokeStyle = O; c.lineWidth = 1.2; c.beginPath(); c.roundRect(G.x - 6, G.y - 2, 9, 4.4, 2); c.fill(); c.stroke();
+  // ciclistii: talpile pe pedale, labutele lui pe ghidon, ea il tine in brate
+  const bob = Math.abs(Math.sin(cr)) * 0.6;
+  const hugArm = opt.passenger ? ride(c, opt.passenger, S1.x, S1.y - bob, t + 1.3, [ped(P1, 1), ped(P1, 0)],
+    opt.driver ? [{ x: S2.x - 22, y: S2.y - 22 }, { x: S2.x - 19, y: S2.y - 18 }] : [{ x: G.x - 50, y: G.y + 2 }, { x: G.x - 50, y: G.y + 2 }], !!opt.driver) : null;
+  if (opt.driver) ride(c, opt.driver, S2.x, S2.y - bob, t, [ped(P2, 1), ped(P2, 0)], [{ x: G.x + 1, y: G.y }, { x: G.x - 2, y: G.y + 1 }], false);
   hugArm?.();
-  for (const pc of [P1, P2]) { crank(pc, 0); c.fillStyle = '#666'; c.beginPath(); c.arc(pc.x, pc.y, 4, 0, 7); c.fill(); } // pedalele din fata, peste picioare
+  for (const pc of [P1, P2]) { c.fillStyle = '#9aa3ad'; c.strokeStyle = O; c.lineWidth = 1.4; c.beginPath(); c.arc(pc.x, pc.y, 3.6, 0, 7); c.fill(); c.stroke(); }
   c.restore();
 }
 
 /** vehiculele parcate (in lume) */
 export function drawParked(c: CanvasRenderingContext2D, kind: 'bike' | 'scooter', x: number, y: number, t: number) {
   c.save(); c.translate(x, y);
-  if (kind === 'bike') drawTandemSide(c, 0, 0, 0.68, t, { rot: 0, bump: 0 }); else drawScooterSide(c, 0, 0, 0.58, t, { rot: 0, bump: 0 });
+  if (kind === 'bike') drawTandemSide(c, 0, 0, 0.62, t, { rot: 0, bump: 0 }); else drawScooterSide(c, 0, 0, 0.62, t, { rot: 0, bump: 0 });
   c.restore();
 }
 

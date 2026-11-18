@@ -6,7 +6,7 @@ import type { WorldScene } from '../scenes/world';
 import { drawCharacter, heartPath, NPC_SPECS, type CharSpec } from '../char/draw';
 import { basePose, type Pose } from '../char/pose';
 import { iconCanvas } from '../ui/icons';
-import { drawTandemSide } from '../world/vehicles';
+import { drawTandemSide, RIDE_OUTFIT } from '../world/vehicles';
 import { COURSES, type CourseDef } from '../game/town';
 
 const O = '#4a2a22';
@@ -94,6 +94,7 @@ export class PostGame extends Panel {
     // catelul care alearga dupa bicicleta (doar de rasul lumii)
     if (this.dogX > -100 && this.dogX < w) { const dx = x + this.dogX, dy = ground + 26; const P = pose({ eyes: 'happy', mouth: 'open', legL: Math.abs(Math.sin(this.t * 14)) * 6, legR: Math.abs(Math.cos(this.t * 14)) * 6 }); drawCharacter(ctx, NPC_SPECS.dog, P, dx, dy, 0.55, 1, this.t); }
     // bicicleta cu tine
+    RIDE_OUTFIT[this.scene.me.id] = this.scene.me.actor.outfit; // pe bicicleta cu hainele lui
     ctx.save(); ctx.translate(0, 0); drawTandemSide(ctx, this.bikeX, ground + 30, 0.95, this.t, { rot: this.scroll / 18, bump: Math.sin(this.t * 18) * 0.6, driver: this.scene.me.actor.spec }); ctx.restore();
     // scrisoarea care zboara
     if (this.fly) { const f = this.fly, k = f.k; const fx = f.x + (f.tx - f.x) * k, fy = f.y + (f.ty - f.y) * k - Math.sin(k * Math.PI) * 60; ctx.save(); ctx.translate(fx, fy); ctx.rotate(k * 8); icon(ctx, '💌', 0, 0, 34); ctx.restore(); }
