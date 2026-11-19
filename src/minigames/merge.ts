@@ -227,7 +227,7 @@ export class MergeGame extends Panel {
   deliver(npcId: string) {
     const npc = this.scene.shopNpcs().find(n => n.id === npcId); if (!npc || npc.state !== 'wait') return;
     const idx: number[] = [];
-    for (const want of npc.wants) { const i = this.b.cells.findIndex((v, k) => v === want && !idx.includes(k)); if (i < 0) { Sfx.play('bad'); this.fx.text(this.W / 2, this.counterY - 20, $t('Încă nu ai ce cere ') + (npc.spec?.name.split(' ')[1] ?? 'clientul'), '#e63946', 0.9); npc.actor?.play('puppy'); return; } idx.push(i); }
+    for (const want of npc.wants) { const i = this.b.cells.findIndex((v, k) => v === want && !idx.includes(k)); if (i < 0) { Sfx.play('bad'); this.fx.text(this.W / 2, this.counterY - 20, $t('Încă nu ai ce cere {0}', npc.spec?.name.split(' ')[1] ?? $t('clientul')), '#e63946', 0.9); npc.actor?.play('puppy'); return; } idx.push(i); }
     for (const i of idx) this.b.cells[i] = null;
     this.commit();
     let pay = npc.pay;

@@ -314,7 +314,7 @@ export class SawmillGame extends Panel {
     // 2. comenzile zilei
     { const x = card(1, $t('📜 Comenzile zilei'), '#7a5ad6'); const rowH = (ch - 30) / 2;
       this.orders().forEach((o, i) => { const y = top + 28 + i * rowH, done = this.orderDone(i), have = this.res(o.res) >= o.qty;
-        line(`${o.res === 'wood' ? '🪵' : '📏'} ${o.res === 'wood' ? nWood(o.qty) : nPlanks(o.qty)} · ${o.pay} lei`, x + 10, y + 10, O, 12);
+        line($t('{0} {1} · {2} lei', o.res === 'wood' ? '🪵' : '📏', o.res === 'wood' ? nWood(o.qty) : nPlanks(o.qty), o.pay), x + 10, y + 10, O, 12);
         ctx.font = '600 10px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.textAlign = 'left'; ctx.fillText(o.text.length > 44 ? o.text.slice(0, 43) + '…' : o.text, x + 10, y + 25);
         btn('ord' + i, x + cw - 92, y + 2, 82, Math.min(26, rowH * 0.45), done ? $t('✔ Livrată') : $t('Livrează'), !done && have, '#d6f5d0'); }); }
     // 3. gaterul

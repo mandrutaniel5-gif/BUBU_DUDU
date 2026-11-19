@@ -295,7 +295,7 @@ export class Hud {
     sk.classList.toggle('hidden', !c.sick);
     if (c.sick) { const t = `${SICK_INFO[c.sick].icon} ${SICK_INFO[c.sick].label}${c.request ? ' · vrei ' + (REQUESTS[c.request]?.icon ?? '') : ''}`; if (sk.dataset.t !== t) { sk.dataset.t = t; sk.innerHTML = `${t} <button class="mini-btn" data-a="bell">${$t('🔔 Cheamă')}</button>`; } }
     this.txt(this.els['.clock .time'], (nightAmount(w.minutes) > 0.5 ? '🌙 ' : '☀️ ') + clockText(w.minutes));
-    { const se = Story.seasonOf(w.day), ev = Story.eventsOf(w.day, w.stats)[0]; this.txt(this.els['.clock .day'], `${se.icon} Ziua ${w.day}${ev ? ' · ' + ev.icon : ''} 📅`); }
+    { const se = Story.seasonOf(w.day), ev = Story.eventsOf(w.day, w.stats)[0]; this.txt(this.els['.clock .day'], $t('{0} Ziua {1}{2} 📅', se.icon, w.day, ev ? ' · ' + ev.icon : '')); }
     this.txt(this.root.querySelector('.clock .money'), `💰 ${w.money ?? 0} lei`);
     const rs = (this.root.querySelector('.clock .res') as HTMLElement); const R = w.res ?? {}; const seeds = Object.keys(CROPS).reduce((a, c) => a + (R[seedKey(c)] ?? 0), 0); const rt = `🪵${R.wood ?? 0} 🪨${R.stone ?? 0} 🥕${catCount(R, 'veg')} 🌸${catCount(R, 'flower')} 🍲${dishCount(R)} 💧${R.water ?? 0} 🌰${seeds} · 🔥${Math.round((w.furn.fire as number) ?? 0)}% 🎒`; this.txt(rs, rt);
     const pc = w.chars[s.partner.id];
@@ -313,8 +313,8 @@ export class Hud {
     else {
       const f = s.nearestFurn(s.me); const act = f && s.actionFor(f);
       if (act) { label = act.label; icon = act.icon; }
-      else if (s.nearCritter()) { const c = s.nearCritter()!; label = $t('Mângâie ') + CRITTER_NAMES[c.kind].toLowerCase(); icon = '🤗'; }
-      else if (s.nearVillager()) { label = $t('Vorbește cu ') + s.nearVillager()!.name; icon = '💬'; }
+      else if (s.nearCritter()) { const c = s.nearCritter()!; label = $t('Mângâie {0}', CRITTER_NAMES[c.kind].toLowerCase()); icon = '🤗'; }
+      else if (s.nearVillager()) { label = $t('Vorbește cu {0}', s.nearVillager()!.name); icon = '💬'; }
       else if (s.nearPartner()) { label = $t('Împreună'); icon = '💞'; }
     }
     const key = icon + label;
@@ -520,7 +520,7 @@ export class Hud {
     const w = this.s.w; const cur = currentGoal(w); const ch = chapterOf(w);
     const m = this.modal(`<h3>📜 ${ch.title}</h3>
       <p class="sub">${$t('{0} Aveți grijă să nu înghețați 🥶 și să aveți ce mânca 🍲.', ch.intro)}</p>
-      ${this.s.devWorld ? `<div class="devrow"><button data-dev="skip">${$t('⏭️ Capitolul următor')}</button><button data-dev="inf" class="${this.s.infinite ? 'on' : ''}">${$t('♾️ Resurse infinite: {0}', this.s.infinite ? 'pornit' : 'oprit')}</button></div>
+      ${this.s.devWorld ? `<div class="devrow"><button data-dev="skip">${$t('⏭️ Capitolul următor')}</button><button data-dev="inf" class="${this.s.infinite ? 'on' : ''}">${$t('♾️ Resurse infinite: {0}', this.s.infinite ? $t('pornit') : $t('oprit'))}</button></div>
       <p class="sub devnote">${$t('🧪 Pentru testare. Resursele infinite umplu mereu banii, materialele, ingredientele, semințele și soba (doar pe acest dispozitiv).')}</p>` : ''}
       <ul class="goals">${ch.goals.map(g => { const done = !!w.stats['goal-' + g.id]; return `<li class="${done ? 'done' : g === cur ? 'cur' : ''}"><b>${done ? '✅' : g.icon} ${g.text}${g.who ? ` <em class="who ${g.who}">${g.who === 'dudu' ? 'Dudu' : 'Bubu'}</em>` : ''}</b>${!done ? `<small>${g.hint}</small>` : ''}<i>${g.reward.money ? '+' + g.reward.money + ' lei ' : ''}</i></li>`; }).join('')}</ul>
       <h4>${$t('🗺️ Povestea voastră')}</h4><p class="sub">${CHAPTERS.map(c => (c.id < ch.id ? '✅ ' : c.id === ch.id ? '👉 ' : '🔒 ') + c.title).join('<br>')}</p>
@@ -551,9 +551,9 @@ export class Hud {
     const SECT: [string, (k: string) => boolean][] = [
       [$t('🍲 Mâncare gătită'), k => k.startsWith('dish_') || k === 'meals'],
       [$t('🧺 Produse pentru tarabă'), k => k.startsWith('prod_')],
-      ['🥚 Ingrediente', k => ['flour', 'egg', 'milk', 'cheese', 'meat', 'cornmeal', 'rice', 'lemon', 'water'].includes(k)],
+      [$t('🥚 Ingrediente'), k => ['flour', 'egg', 'milk', 'cheese', 'meat', 'cornmeal', 'rice', 'lemon', 'water'].includes(k)],
       [$t('🥕 Recolte și pădure'), k => ['veg', 'carrot', 'potato', 'tomato', 'cabbage', 'strawberry', 'mushroom', 'berry', 'fish'].includes(k)],
-      ['🌸 Flori', k => ['flower', 'tulip', 'rose', 'sunflower'].includes(k)],
+      [$t('🌸 Flori'), k => ['flower', 'tulip', 'rose', 'sunflower'].includes(k)],
       [$t('🪵 Materiale și semințe'), k => ['wood', 'stone', 'hay', 'fert', 'soil'].includes(k) || k.startsWith('seed_')],
     ];
     const used = new Set<string>();
@@ -709,8 +709,8 @@ export class Hud {
     }
     else if (this.rideMode === 'passenger') { txt = pa.riding && !pa.board ? $t('{0} Mergeți împreună 💕', vic) : $t('{0} Stai în spate. Așteaptă să pornească {1}', vic, nm); go = ''; }
     else if (pa.passenger) { txt = $t('{0} {1} a urcat în spate 💕', vic, nm); go = `▶ Pornim ${dest}!`; }
-    else if (pa.callBoard) { txt = $t('{0} {1} vine să urce…', vic, nm); go = $t('▶ Pornește singur{0}', s.myId === 'bubu' ? $t('ă') : ''); show = false; }
-    else { txt = $t('{0} Ești pe {1}. Unde mergi{2}?', vic, vname, pa.passenger ? '' : $t(', singur{0} sau cu {1}', s.myId === 'bubu' ? $t('ă') : '', nm)); go = ''; call = pa.passenger ? '' : `📣 ${pa.id === 'bubu' ? $t('Cheam-o pe') : $t('Cheamă-l pe')} ${nm}`; }
+    else if (pa.callBoard) { txt = $t('{0} {1} vine să urce…', vic, nm); go = (s.myId === 'bubu' ? $t('▶ Pornește singură') : $t('▶ Pornește singur')); show = false; }
+    else { txt = $t('{0} Ești pe {1}. Unde mergi{2}?', vic, vname, pa.passenger ? '' : (s.myId === 'bubu' ? $t(', singură sau cu {0}', nm) : $t(', singur sau cu {0}', nm))); go = ''; call = pa.passenger ? '' : (pa.id === 'bubu' ? $t('📣 Cheam-o pe {0}', nm) : $t('📣 Cheamă-l pe {0}', nm)); }
     if (this.rideMode === 'driver') { const here = s.vehAt(veh); dests = DESTS.filter(d => d.id !== here).map(d => { const why = s.reachWhy(d.id); return `<button data-go="${d.id}" class="go${why ? ' off' : ''}" title="${why ?? ''}">${d.icon} ${d.name}</button>`; }).join(''); if (pa.passenger) txt = $t('{0} {1} a urcat în spate 💕 Unde mergeți?', vic, nm); }
     if (!s.sameArea()) call = '';
     const key = txt + go + call + show + dests + pause + back + stopAt;

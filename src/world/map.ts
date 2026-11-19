@@ -81,26 +81,26 @@ const act = (id: string, label: string, icon: string) => ({ id, label, icon });
 
 export const FURNITURE: Furn[] = [
   // dormitor
-  { id: 'bed', type: 'bed', gx: 3, gy: 2, w: 2, d: 3, solid: true, action: act('sleep', 'Culcarea', '🛏️') },
-  { id: 'ns1', type: 'nightstand', gx: 5, gy: 2, w: 1, d: 1, solid: true, action: act('lamp', 'Lampa', '💡') },
-  { id: 'ward', type: 'wardrobe', gx: 2, gy: 5, w: 1, d: 1, solid: true, action: act('dress', 'Garderoba', '👗') },
+  { id: 'bed', type: 'bed', gx: 3, gy: 2, w: 2, d: 3, solid: true, action: act('sleep', $t('Culcarea'), '🛏️') },
+  { id: 'ns1', type: 'nightstand', gx: 5, gy: 2, w: 1, d: 1, solid: true, action: act('lamp', $t('Lampa'), '💡') },
+  { id: 'ward', type: 'wardrobe', gx: 2, gy: 5, w: 1, d: 1, solid: true, action: act('dress', $t('Garderoba'), '👗') },
   { id: 'rugB', type: 'rug', gx: 5, gy: 4, w: 2, d: 2, solid: false, color: '#ffb6c9' },
   { id: 'plantB', type: 'plant', gx: 7, gy: 2, w: 1, d: 1, solid: true, action: act('water_plant', $t('Udă floarea'), '🪴') },
   // baie
-  { id: 'toilet', type: 'toilet', gx: 9, gy: 2, w: 1, d: 1, solid: true, action: act('toilet', 'Toaleta', '🚽') },
+  { id: 'toilet', type: 'toilet', gx: 9, gy: 2, w: 1, d: 1, solid: true, action: act('toilet', $t('Toaleta'), '🚽') },
   { id: 'tub', type: 'bathtub', gx: 11, gy: 2, w: 2, d: 1, solid: true, action: act('bath', $t('Baie cu spumă'), '🛁') },
   { id: 'sink', type: 'sink', gx: 13, gy: 4, w: 1, d: 1, solid: true, action: act('teeth', $t('Spălat pe dinți'), '🪥') },
-  { id: 'washer', type: 'washer', gx: 13, gy: 2, w: 1, d: 1, solid: true, action: act('laundry', 'Rufe', '🧺') },
+  { id: 'washer', type: 'washer', gx: 13, gy: 2, w: 1, d: 1, solid: true, action: act('laundry', $t('Rufe'), '🧺') },
   // bucatarie
   // frigiderul in coltul bucatariei; aragazul si blatul cu vasele pe peretele din dreapta
-  { id: 'fridge', type: 'fridge', gx: 13, gy: 6, w: 1, d: 1, solid: true, action: act('snack', 'Frigiderul', '🧊') },
+  { id: 'fridge', type: 'fridge', gx: 13, gy: 6, w: 1, d: 1, solid: true, action: act('snack', $t('Frigiderul'), '🧊') },
   { id: 'stove', type: 'stove', gx: 13, gy: 8, w: 1, d: 1, solid: true, action: act('cook', $t('Gătește'), '🍳') },
   { id: 'counter', type: 'counter', gx: 13, gy: 9, w: 1, d: 1, solid: true, action: act('dishes', $t('Spălat vase'), '🍽️') },
-  { id: 'table', type: 'table', gx: 10, gy: 9, w: 2, d: 1, solid: true, action: act('eat', 'Masa', '🍰') },
+  { id: 'table', type: 'table', gx: 10, gy: 9, w: 2, d: 1, solid: true, action: act('eat', $t('Masa'), '🍰') },
   // sufragerie
   { id: 'rugL', type: 'rug', gx: 3, gy: 8, w: 3, d: 3, solid: false, color: '#c9e4ff' },
-  { id: 'sofa', type: 'sofa', gx: 5, gy: 9, w: 1, d: 2, solid: true, action: act('cuddle', 'Canapeaua', '🛋️') },
-  { id: 'tv', type: 'tv', gx: 2, gy: 9, w: 1, d: 2, solid: true, action: act('tv', 'Televizor', '📺') },
+  { id: 'sofa', type: 'sofa', gx: 5, gy: 9, w: 1, d: 2, solid: true, action: act('cuddle', $t('Canapeaua'), '🛋️') },
+  { id: 'tv', type: 'tv', gx: 2, gy: 9, w: 1, d: 2, solid: true, action: act('tv', $t('Televizor'), '📺') },
   { id: 'shelf', type: 'bookshelf', gx: 2, gy: 7, w: 1, d: 1, solid: true, action: act('read', $t('Citește'), '📚') },
   { id: 'plantL', type: 'plant', gx: 2, gy: 11, w: 1, d: 1, solid: true, action: act('water_plant', $t('Udă floarea'), '🪴') },
   // curte
@@ -120,7 +120,7 @@ export const FURNITURE: Furn[] = [
   // supravietuire si economie
   { id: 'well', type: 'well', gx: 14, gy: 14, w: 1, d: 1, solid: true, action: act('drawwater', $t('Scoate apă din fântână'), '🪣') },
   { id: 'laptop', type: 'laptop', gx: 6, gy: 2, w: 1, d: 1, solid: true, action: act('online', $t('Laptopul (magazin online)'), '💻') },
-  { id: 'fireplace', type: 'fireplace', gx: 7, gy: 7, w: 1, d: 1, solid: true, action: act('stove', 'Soba', '🔥') },
+  { id: 'fireplace', type: 'fireplace', gx: 7, gy: 7, w: 1, d: 1, solid: true, action: act('stove', $t('Soba'), '🔥') },
   { id: 'shed', type: 'mower', gx: 16, gy: 13, w: 1, d: 1, solid: true, action: act('mow', $t('Mașina de tuns iarba'), '✂️') },
   { id: 'stand', type: 'stand', gx: 7, gy: 23, w: 2, d: 1, solid: true, action: act('stand', $t('Taraba lui Bubu'), '🧺') },
   { id: 'gateway', type: 'signpost', gx: 3, gy: 23, w: 1, d: 1, solid: true, action: act('village', $t('Spre sat'), '🏘️') },

@@ -17,7 +17,7 @@ export const INV_INFO: Record<string, { icon: string; label: string }> = {
   carrot: { icon: '🥕', label: $t('Morcovi') }, potato: { icon: '🥔', label: $t('Cartofi') }, tomato: { icon: '🍅', label: $t('Roșii') },
   cabbage: { icon: '🥬', label: $t('Varză') }, strawberry: { icon: '🍓', label: $t('Căpșuni') },
   tulip: { icon: '🌷', label: $t('Lalele') }, rose: { icon: '🌹', label: $t('Trandafiri') }, sunflower: { icon: '🌻', label: $t('Floarea-soarelui') },
-  ...Object.fromEntries(Object.values(CROPS).map(c => [seedKey(c.id), { icon: '🌰', label: $t('Semințe: ') + c.name }])),
+  ...Object.fromEntries(Object.values(CROPS).map(c => [seedKey(c.id), { icon: '🌰', label: $t('Semințe: {0}', c.name) }])),
   ...INGREDIENTS,
   ...Object.fromEntries(RECIPES.map(r => [dishKey(r.id), { icon: r.icon, label: r.name }])),
 };

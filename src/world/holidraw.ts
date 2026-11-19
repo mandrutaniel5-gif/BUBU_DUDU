@@ -71,7 +71,7 @@ export function drawHolidayType(c: CanvasRenderingContext2D, f: Furn, t: number)
   const { gx, gy, w, d } = f, kind = (f as any).kind as string | undefined;
   switch (f.type as string) {
     case 'xmastree': { const p = iso(gx + w / 2, gy + d / 2); tree(c, p.x, p.y, w > 1 ? 1.45 : 0.8, kind === 'lit', t); return true; }
-    case 'giftpile': { const cols = ['#ff7aa2', '#4cc9f0', '#ffd23f', '#7cc576', '#c77dff', '#e63946']; for (let i = 0; i < 6; i++) { const p = iso(gx + 0.3 + (i % 3) * 0.75, gy + 0.2 + Math.floor(i / 3) * 0.4); giftBox(c, p.x, p.y - Math.abs(Math.sin(t * 2 + i)) * 1.5, 16 + (i % 2) * 6, 13 + (i % 3) * 4, cols[i]); } label(c, '🎁 Cadouri!', iso(gx + 1.2, gy).x, iso(gx + 1.2, gy).y - 40); return true; }
+    case 'giftpile': { const cols = ['#ff7aa2', '#4cc9f0', '#ffd23f', '#7cc576', '#c77dff', '#e63946']; for (let i = 0; i < 6; i++) { const p = iso(gx + 0.3 + (i % 3) * 0.75, gy + 0.2 + Math.floor(i / 3) * 0.4); giftBox(c, p.x, p.y - Math.abs(Math.sin(t * 2 + i)) * 1.5, 16 + (i % 2) * 6, 13 + (i % 3) * 4, cols[i]); } label(c, $t('🎁 Cadouri!'), iso(gx + 1.2, gy).x, iso(gx + 1.2, gy).y - 40); return true; }
     case 'carolers': {
       tickCast(t);
       const outfits = [{ head: 'beanie', face: 'none', neck: 'scarf', body: 'pulover' }, { head: 'batic', face: 'none', neck: 'scarf', body: 'ie' }, { head: 'beanie', face: 'none', neck: 'scarf', body: 'vesta' }];
@@ -118,14 +118,14 @@ export function drawHolidayType(c: CanvasRenderingContext2D, f: Furn, t: number)
       isoBox(c, gx + 0.15, gy + 0.15, 0.7, 0.7, 18, { top: '#fff1d6', left: '#c98e5f', right: '#a0703f' });
       const p = iso(gx + 0.5, gy + 0.5, 18);
       if (kind === 'paste') { e(c, p.x, p.y - 4, 14, 6, '#c98e5f'); for (let i = 0; i < 5; i++) e(c, p.x - 9 + i * 4.5, p.y - 9 - (i % 2) * 3, 3.5, 4.5, ['#e63946', '#e63946', '#4cc9f0', '#ffd23f', '#7cc576'][i], true, 1); ic(c, '🍞', p.x + 14, p.y - 8, 14); label(c, $t('🥚 Paște fericit!'), p.x, p.y - 40); }
-      else if (kind === 'martisor') { ic(c, '🎀', p.x, p.y - 10, 18); label(c, '🎀 1 Martie', p.x, p.y - 38); }
-      else if (kind === 'drago') { e(c, p.x, p.y - 8, 6, 8, '#cfe9fb'); for (let i = 0; i < 3; i++) { c.strokeStyle = '#4caf50'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(p.x, p.y - 12); c.lineTo(p.x - 4 + i * 4, p.y - 24); c.stroke(); e(c, p.x - 4 + i * 4, p.y - 26, 2.5, 3.5, '#fff', true, 1); } label(c, '💞 Dragobete', p.x, p.y - 44); }
+      else if (kind === 'martisor') { ic(c, '🎀', p.x, p.y - 10, 18); label(c, $t('🎀 1 Martie'), p.x, p.y - 38); }
+      else if (kind === 'drago') { e(c, p.x, p.y - 8, 6, 8, '#cfe9fb'); for (let i = 0; i < 3; i++) { c.strokeStyle = '#4caf50'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(p.x, p.y - 12); c.lineTo(p.x - 4 + i * 4, p.y - 24); c.stroke(); e(c, p.x - 4 + i * 4, p.y - 26, 2.5, 3.5, '#fff', true, 1); } label(c, $t('💞 Dragobete'), p.x, p.y - 44); }
       else if (kind === 'grand') {
         tickCast(t);
         const gm = npc('granma', 'granny', { head: 'batic', face: 'ochelari', neck: 'none', body: 'ie' }); (gm as any).loopAnim = 'wave';
         const gp = npc('granpa', 'pig', { head: 'palarie', face: 'mustata', neck: 'none', body: 'vesta' }); (gp as any).loopAnim = 'laugh';
         const q0 = iso(gx - 0.3, gy + 0.9), q1 = iso(gx + 1.1, gy + 0.6); gm.x = q0.x; gm.y = q0.y; gm.flip = 1; gp.x = q1.x; gp.y = q1.y; gp.flip = -1; gm.draw(c); gp.draw(c);
-        ic(c, '🧺', p.x, p.y - 8, 16); label(c, '👵👴 Bunicii', p.x, p.y - 70);
+        ic(c, '🧺', p.x, p.y - 8, 16); label(c, $t('👵👴 Bunicii'), p.x, p.y - 70);
       }
       return true;
     }
@@ -163,7 +163,7 @@ export function drawHolidayType(c: CanvasRenderingContext2D, f: Furn, t: number)
       tickCast(t); const m = iso(gx + w / 2, gy + d / 2);
       for (let i = 0; i < 2; i++) { const a = npc('skater' + i, i ? 'bunny' : 'cat', { head: 'beanie', face: 'none', neck: 'scarf', body: i ? 'rochita' : 'pulover' }); const ang = t * 0.9 + i * Math.PI; a.x = m.x + Math.cos(ang) * 46; a.y = m.y + Math.sin(ang) * 18; a.flip = Math.sin(ang) > 0 ? 1 : -1; a.scale = 0.36; a.draw(c); }
       for (const p of [pts[0], pts[1], pts[3]]) { c.strokeStyle = '#c0573e'; c.lineWidth = 3; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x, p.y - 16); c.stroke(); }
-      label(c, '⛸️ Patinoar', m.x, m.y - 50, '#2b6a9a'); return true;
+      label(c, $t('⛸️ Patinoar'), m.x, m.y - 50, '#2b6a9a'); return true;
     }
     case 'santa': { const p = iso(gx + w / 2, gy + d / 2); isoBox(c, gx, gy, w, d, 8, { top: '#fff', left: '#d6e0ec', right: '#c0cbd8' }); c.fillStyle = '#c1121f'; c.strokeStyle = O; c.lineWidth = 2; c.beginPath(); c.moveTo(p.x - 34, p.y - 8); c.lineTo(p.x + 30, p.y - 8); c.quadraticCurveTo(p.x + 42, p.y - 8, p.x + 40, p.y - 28); c.lineTo(p.x - 36, p.y - 20); c.closePath(); c.fill(); c.stroke(); drawSanta(c, p.x, p.y - 10, 0.36, t, 1, Math.sin(t * 0.7) > 0.6 ? 1 : 0); label(c, $t('🎅 Moș Crăciun'), p.x, p.y - 90, '#c1121f'); return true; }
     case 'xmasarch': { const a = iso(gx + 0.5, gy), b = iso(gx + 0.5, gy + d); for (const p of [a, b]) { c.strokeStyle = '#c1121f'; c.lineWidth = 5; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x, p.y - 70); c.stroke(); c.strokeStyle = '#fff'; c.lineWidth = 2; c.setLineDash([5, 5]); c.stroke(); c.setLineDash([]); }

@@ -45,23 +45,23 @@ export function openDev(s: S) {
   const html = `<h3>${$t('🧪 Dezvoltator')}</h3>
     <p class="sub">${$t('Lumea de test (doar pe telefonul ăsta). Capitolul {0} · Ziua {1} ({2} {3}, ziua {4}) · {5}{6}', s.chapter, w.day, se.icon, se.name, dayOfSeason(w.day), clockText(w.minutes), ev.length ? ' · azi: ' + ev.map(e => e.icon + ' ' + e.name).join(', ') : '')}</p>
     <h4>${$t('Resurse')}</h4><div class="devrow">
-      ${b('data-d="inf"', `♾️ Totul nelimitat: ${s.infinite ? 'pornit' : 'oprit'}`, s.infinite)}
+      ${b('data-d="inf"', $t('♾️ Totul nelimitat: {0}', s.infinite ? $t('pornit') : $t('oprit')), s.infinite)}
       ${b('data-d="needs"', $t('😊 Nevoi pline, vindecați'))}
       ${b('data-d="buyall"', $t('🛒 Cumpără tot (vehicule, florărie, tâmplărie, apartament)'))}
       ${b('data-d="staff"', $t('🧑‍🌾 Câte un angajat din fiecare meserie'))}
     </div>
     <h4>${$t('Capitolul')}</h4><div class="devrow">${CHAPTERS.map(c => b(`data-ch="${c.id}"`, `${c.id} · ${c.title.split('·')[1]?.trim() ?? ''}`, c.id === s.chapter)).join('')}</div>
     <h4>${$t('Timpul')}</h4><div class="devrow">
-      ${b('data-day="-1"', '◀ Ziua −1')}${b('data-day="1"', 'Ziua +1 ▶')}${b('data-day="7"', '+7 zile (alt anotimp)')}
+      ${b('data-day="-1"', $t('◀ Ziua −1'))}${b('data-day="1"', $t('Ziua +1 ▶'))}${b('data-day="7"', $t('+7 zile (alt anotimp)'))}
       <label class="devday">${$t('Ziua')} <input name="devday" type="number" min="1" value="${w.day}" /><button data-d="goday">${$t('Du-mă')}</button></label>
     </div><div class="devrow">${[7, 10, 12, 15, 18, 20, 23].map(h => b(`data-h="${h}"`, `${h}:00`)).join('')}</div>
     <div class="devrow">${[1, 5, 20, 60].map(k => b(`data-spd="${k}"`, `⏩ ×${k}`, s.devSpeed === k)).join('')}</div>
-    <h4>${$t('Sărbătorile')}</h4><div class="devrow">${Object.keys(SHOWS).map(id => `<span class="devhol">${showName(id)} ${b(`data-hday="${id}"`, $t('📅 ziua ei'))}${b(`data-hplay="${id}"`, '▶ acum')}</span>`).join('')}</div>
+    <h4>${$t('Sărbătorile')}</h4><div class="devrow">${Object.keys(SHOWS).map(id => `<span class="devhol">${showName(id)} ${b(`data-hday="${id}"`, $t('📅 ziua ei'))}${b(`data-hplay="${id}"`, $t('▶ acum'))}</span>`).join('')}</div>
     <h4>${$t('Drumuri rapide')}</h4><div class="devrow">${[[/*ro*/'home', $t('🏡 Acasă')], [/*ro*/'forest', $t('🌲 Pădurea')], ['village', '🏘️ Satul'], [/*ro*/'city', $t('🏙️ Orașul')], ['apartment', '🛋️ Apartamentul']].map(([k, l]) => b(`data-go="${k}"`, l)).join('')}</div>
     <h4>${$t('Afișaj și date')}</h4><div class="devrow">
-      ${b('data-d="overlay"', $t('📊 FPS și poziția: {0}', s.devOverlay ? 'pornit' : 'oprit'), s.devOverlay)}
+      ${b('data-d="overlay"', $t('📊 FPS și poziția: {0}', s.devOverlay ? $t('pornit') : $t('oprit')), s.devOverlay)}
       ${b('data-d="copy"', $t('📋 Copiază lumea (JSON)'))}
-      ${b('data-d="errs"', `🐞 Erori: ${ErrorLog.all().length}`)}
+      ${b('data-d="errs"', $t('🐞 Erori: {0}', ErrorLog.all().length))}
     </div>`;
   const m = s.hud.modal(html); m.classList.add('devpanel');
   const on = (sel: string, fn: (el: HTMLElement) => void) => m.querySelectorAll(sel).forEach(el => el.addEventListener('click', () => fn(el as HTMLElement)));

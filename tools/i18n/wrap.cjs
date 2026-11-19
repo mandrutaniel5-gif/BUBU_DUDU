@@ -19,7 +19,7 @@ function isRo(text) {
   // fara diacritice: macar doua cuvinte, dintre care unul romanesc des intalnit; nu cod / css / selectori / adrese
   if (/^[\s.#:[\]()=>,\-\w"'%/]*$/.test(text) && !/\s/.test(text.trim())) return false;
   if (/^(https?:|data:|\.\/|\/|#|rgba?\(|var\(|calc\()/.test(text.trim())) return false;
-  if (/[{};]\s*$/.test(text.trim()) && /:/.test(text)) return false; // css
+  if (/[{};]\s*$/.test(text.replace(/\{x\}/g, '').trim()) && /:/.test(text)) return false; // css (un {x} de la capat e un loc de valoare, nu o regula)
   const ws = text.toLowerCase().replace(/<[^>]*>/g, ' ').match(/[a-z]+/g) || [];
   if (ws.length >= 2 && ws.some(w => WORDS.has(w))) return true;
   // propozitie / eticheta pentru oameni: cel putin doua cuvinte, cu majuscula sau semne (nu liste de clase CSS, fonturi, selectori)
@@ -48,6 +48,11 @@ function textCtx(node, sf) {
     if (sib.length && sib.filter(x => (ts.isCallExpression(x) && x.expression.getText(sf) === '$t') || ((ts.isStringLiteral(x) || ts.isNoSubstitutionTemplateLiteral(x)) && isRo(x.text))).length * 2 >= sib.length) return true;
   }
   if (ts.isCallExpression(p) && p.arguments.includes(node) && TEXT_CALLS.test(calleeText(p, sf))) return true;
+  // act('cuddle', 'Canapeaua', '🛋️'): al doilea e eticheta; label(c, '🎀 1 Martie', …) / line('…') / b(attr, '…'): textul
+  if (ts.isCallExpression(p)) {
+    const c = calleeText(p, sf), i = p.arguments.indexOf(node);
+    if ((c === 'act' && i === 1) || (c === 'b' && i === 1) || (/^(label|line|sign)$/.test(c) && i >= 0)) return true;
+  }
   if (ts.isConditionalExpression(p)) {
     // perechile el / ea: daca cealalta ramura e text (romanesc sau deja in $t), si asta e
     const other = p.whenTrue === node ? p.whenFalse : p.whenTrue;

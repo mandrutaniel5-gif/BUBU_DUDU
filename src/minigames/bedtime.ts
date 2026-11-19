@@ -323,7 +323,7 @@ export class BedtimeGame extends Panel {
       case 'pos': case 'posShow': {
         if (this.step === 'posShow') {
           drawBed(POSES[this.myPos === this.theirPos ? this.myPos : this.theirPos].id);
-          T(this.myPos === this.theirPos ? `Perfect sincron! ${POSES[this.myPos].icon} 💞` : `Tu: ${POSES[this.myPos].label} · ${this.scene.partner.actor.spec.name}: ${POSES[this.theirPos].label}`, y + 70, 18);
+          T(this.myPos === this.theirPos ? $t('Perfect sincron! {0} 💞', POSES[this.myPos].icon) : $t('Tu: {0} · {1}: {2}', POSES[this.myPos].label, this.scene.partner.actor.spec.name, POSES[this.theirPos].label), y + 70, 18);
           if (this.myPos !== this.theirPos) T($t('…așa că ați făcut cum a vrut {0} 😅', gen(this.scene.partner.id, 'el', 'ea')), y + 100, 14, '#ffd6e4');
           break;
         }

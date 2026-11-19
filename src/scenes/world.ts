@@ -305,7 +305,7 @@ export class WorldScene implements Scene {
     this.offlineTimer = setTimeout(() => {
       this.offlineTimer = null; if (!this.partnerOnline) return;
       this.partnerOnline = false; this.partner.control = 'ai'; this.hud.setPartner(false);
-      this.hud.toast($t('{0} a ieșit. {1} joacă AI-ul 🤖', this.partner.actor.spec.name, g(this.partner.id, $t('Îl'), 'O')));
+      this.hud.toast(g(this.partner.id, $t('{0} a ieșit. Îl joacă AI-ul 🤖', this.partner.actor.spec.name), $t('{0} a ieșit. O joacă AI-ul 🤖', this.partner.actor.spec.name)));
     }, 6000);
   }
   onRemoteState(s: PlayerState) {
@@ -386,7 +386,7 @@ export class WorldScene implements Scene {
       }
       case 'ridecall': {
         const nm = this.partner.actor.spec.name;
-        this.hud.toast($t('{0} {1} te așteaptă pe {2}! Atinge-{3} ca să urci în spate', e.vehicle === 'bike' ? '🚲' : '🛵', nm, e.vehicle === 'bike' ? $t('bicicletă') : $t('scuter'), e.vehicle === 'bike' ? 'o' : 'l'));
+        this.hud.toast((e.vehicle === 'bike' ? $t('🚲 {0} te așteaptă pe bicicletă! Atinge-o ca să urci în spate', nm) : $t('🛵 {0} te așteaptă pe scuter! Atinge-l ca să urci în spate', nm)));
         Sfx.play('kiss'); break;
       }
       case 'chat': this.hud.toast(`🐹 ${e.text}`); break;
@@ -774,7 +774,7 @@ export class WorldScene implements Scene {
       return;
     }
     if (act.id === 'coffee' && pawn === this.me && (this.w.stats[`coffee-${pawn.id}-${this.w.day}`] ?? 0) > 0) { this.hud.toast($t('☕ Ai băut deja cafeaua de azi. Mâine încă una!')); return; }
-    if (act.id === 'console' && pawn === this.me && this.w.chars[pawn.id].needs.energy < 10) { this.hud.toast($t('😴 Prea obosit') + (pawn.id === 'bubu' ? $t('ă') : '') + $t(' pentru jocuri')); return; }
+    if (act.id === 'console' && pawn === this.me && this.w.chars[pawn.id].needs.energy < 10) { this.hud.toast((pawn.id === 'bubu' ? $t('😴 Prea obosită pentru jocuri') : $t('😴 Prea obosit pentru jocuri'))); return; }
     const a = ACTIVITIES[act.id]; if (!a) return;
     if (act.id === 'sleep') { const why = this.canSleep(pawn.id); if (why) { if (pawn === this.me) { this.hud.toast(why); Sfx.play('bad'); } return; } (this.w.chars[pawn.id] as any).napStart = (this.w.minutes / 60 >= 6 && this.w.minutes / 60 < 20) ? (this.w.gameMin ?? 0) : null; }
     const need = this.missing(act.id);
@@ -1286,11 +1286,11 @@ export class WorldScene implements Scene {
     const st = this.w.stats;
     if (this.closed(id)) return;
     // satul renaste: cladirile inchise pana la proiectul lor de la Primarie
-    { const cl = Story.villageClosed(this, id); if (cl) { this.hud.toast($t('🔒 {0} {1} e închis{2} de ani de zile. Îl redeschideți prin proiectul de la Primărie', cl.icon, cl.name, cl.id === 'school' || cl.id === 'market' ? $t('ă') : '')); Sfx.play('bad'); return; } }
+    { const cl = Story.villageClosed(this, id); if (cl) { this.hud.toast((cl.id === 'school' || cl.id === 'market' ? $t('🔒 {0} {1} e închisă de ani de zile. O redeschideți prin proiectul de la Primărie', cl.icon, cl.name) : $t('🔒 {0} {1} e închis de ani de zile. Îl redeschideți prin proiectul de la Primărie', cl.icon, cl.name))); Sfx.play('bad'); return; } }
     switch (id) {
       case 'v-grocery': Town.villageGrocery(this); break;
       case 'v-post': TownUI.openJob(this, 'post'); break;
-      case 'v-bakery': this.choice($t('🥖 Brutăria'), $t('Cumperi pâine sau lucrezi o tură?'), [['🛒', $t('Cumpără pâine'), () => Town.villageBakeryShop(this)], ['👩‍🍳', $t('Lucrează ca brutar') + (this.myId === 'bubu' ? $t('iță') : ''), () => TownUI.openJob(this, 'bakery')], ...(this.chapter >= WEDDING_CHAPTER ? [['🎂', $t('Tortul de nuntă (300 lei)'), () => Story.buyCake(this)] as [string, string, () => void]] : [])]); break;
+      case 'v-bakery': this.choice($t('🥖 Brutăria'), $t('Cumperi pâine sau lucrezi o tură?'), [['🛒', $t('Cumpără pâine'), () => Town.villageBakeryShop(this)], ['👩‍🍳', (this.myId === 'bubu' ? $t('Lucrează ca brutăriță') : $t('Lucrează ca brutar')), () => TownUI.openJob(this, 'bakery')], ...(this.chapter >= WEDDING_CHAPTER ? [['🎂', $t('Tortul de nuntă (300 lei)'), () => Story.buyCake(this)] as [string, string, () => void]] : [])]); break;
       case 'v-clinic': this.choice($t('🩺 Dispensarul satului'), $t('Doctorița Rita vă îngrijește și vă dă medicamente.'), [['🩺', $t('Consult (vindecă boala) · {0} lei', PRICE.consultVillage), () => { const e = Town.cure(this, PRICE.consultVillage); this.hud.toast(e ?? $t('🩺 Gata, sănătoși! Să nu mai răciți 💕')); Sfx.play(e ? 'bad' : 'good'); }], ['💊', 'Farmacia', () => Town.pharmacy(this, false)]]); break;
       case 'v-board': TownUI.openBoard(this); break;
       case 'v-clothes': this.hud.openClothes('sat'); break;
@@ -1438,7 +1438,7 @@ export class WorldScene implements Scene {
     const op = (need: string, d: number, who = me) => this.op({ k: 'need', who, need, delta: d });
     if (id === 'aquarium') { op('fun', 10); op('love', 2); this.me.actor.play('love'); this.hud.toast($t('🐟 Peștișorii înoată liniștiți… ce relaxant')); }
     if (id === 'piano') { op('fun', 14); this.me.actor.play('dance_wave'); Sfx.play('good'); if (near) { op('love', 12); op('love', 12, this.partner.id); this.hud.toast($t('🎹 Un cântec pentru doi 💕')); } else this.hud.toast($t('🎹 Cânți o melodie frumoasă')); this.op({ k: 'stat', key: 'pianoPlays', delta: 1 }); }
-    if (id === 'console') { if (this.w.chars[me].needs.energy < 10) { this.hud.toast($t('😴 Prea obosit') + (me === 'bubu' ? $t('ă') : '') + $t(' pentru jocuri')); return; } op('fun', 22); op('energy', -5); if (near) { op('fun', 22, this.partner.id); op('love', 5); } this.me.actor.play('laugh'); this.hud.toast(near ? $t('🎮 Meci în doi! Cine câștigă? 😄') : $t('🎮 Ce joc bun!')); }
+    if (id === 'console') { if (this.w.chars[me].needs.energy < 10) { this.hud.toast((me === 'bubu' ? $t('😴 Prea obosită pentru jocuri') : $t('😴 Prea obosit pentru jocuri'))); return; } op('fun', 22); op('energy', -5); if (near) { op('fun', 22, this.partner.id); op('love', 5); } this.me.actor.play('laugh'); this.hud.toast(near ? $t('🎮 Meci în doi! Cine câștigă? 😄') : $t('🎮 Ce joc bun!')); }
     if (id === 'coffee') { if ((this.w.stats[`coffee-${me}-${this.w.day}`] ?? 0) > 0) { this.hud.toast($t('☕ Ai băut deja cafeaua de azi')); return; } this.op({ k: 'stat', key: `coffee-${me}-${this.w.day}`, delta: 1 }); op('energy', 18); this.me.actor.play('boba'); this.hud.toast($t('☕ Cafeluța de dimineață: +energie!')); }
   }
   /** pune mobila cumparata in apartament */
@@ -1502,7 +1502,7 @@ export class WorldScene implements Scene {
     const toVillage = this.area !== 'village';
     if (!this.bridgeFixed()) { this.hud.toast($t('🌉 Drumul spre sat trece peste Podul Mare, care e rupt… încă nu se poate trece')); Sfx.play('bad'); return; }
     const owned = (['scooter', 'bike'] as const).filter(k => (this.w.stats[k] ?? 0) > 0);
-    const where = owned.length ? ` (${owned[0] === 'bike' ? $t('bicicleta e') : $t('scuterul e')} ${this.vehAt(owned[0]) === 'village' ? $t('în sat') : $t('acasă')})` : '';
+    const where = owned.length ? (owned[0] === 'bike' ? (this.vehAt(owned[0]) === 'village' ? $t(' (bicicleta e în sat)') : $t(' (bicicleta e acasă)')) : (this.vehAt(owned[0]) === 'village' ? $t(' (scuterul e în sat)') : $t(' (scuterul e acasă)'))) : '';
     this.hud.toast(toVillage ? $t('🚶 Satul e la vreun minut de mers pe drum, spre dreapta, peste Podul Mare{0}', where) : $t('🚶 Casa e la vreun minut de mers pe drum, spre stânga, peste Podul Mare{0}', where));
   }
   rideStart() {
@@ -1586,7 +1586,7 @@ export class WorldScene implements Scene {
   rideCall() {
     const pa = this.partner, kind = this.me.rideKind ?? 'bike';
     if (!this.me.board) return;
-    if (!this.partnerClose(10)) { this.hud.toast($t('{0} nu e aici 🙂 Poți porni singur{1}', pa.actor.spec.name, this.me.id === 'bubu' ? $t('ă') : '')); return; }
+    if (!this.partnerClose(10)) { this.hud.toast((this.me.id === 'bubu' ? $t('{0} nu e aici 🙂 Poți porni singură', pa.actor.spec.name) : $t('{0} nu e aici 🙂 Poți porni singur', pa.actor.spec.name))); return; }
     if (pa.control === 'remote') { this.net.sendEvent({ t: 'ridecall', who: this.myId, vehicle: kind }); this.hud.toast($t('📣 L-ai chemat pe {0}. Când urcă, apasă Pornim!', pa.actor.spec.name).replace($t('L-ai chemat pe'), pa.id === 'bubu' ? $t('Ai chemat-o pe') : $t('L-ai chemat pe'))); }
     else { pa.callBoard = true; pa.path = []; this.hud.toast($t('📣 {0} vine să urce în spate…', pa.actor.spec.name)); }
     this.me.actor.play('wave'); this.net.sendEvent({ t: 'emote', who: this.myId, anim: 'wave' });
@@ -1613,7 +1613,7 @@ export class WorldScene implements Scene {
     const f = this.nearVehicle(40);
     if (f) { this.goInteract(this.me, f); return; }
     const k = owned[0];
-    this.hud.toast($t('{0} e parcat{1} {2}', k === 'bike' ? '🚲 Bicicleta' : '🛵 Scuterul', k === 'bike' ? $t('ă') : '', this.vehAt(k) === 'village' ? $t('în sat, la intrare') : $t('acasă, la indicatorul de lângă drum')));
+    this.hud.toast((k === 'bike' ? $t('🚲 Bicicleta e parcată {0}', this.vehAt(k) === 'village' ? $t('în sat, la intrare') : $t('acasă, la indicatorul de lângă drum')) : $t('🛵 Scuterul e parcat {0}', this.vehAt(k) === 'village' ? $t('în sat, la intrare') : $t('acasă, la indicatorul de lângă drum'))));
   }
 
   /** tractorasul: de la poarta din spate pana in padure (si inapoi), cu partenerul AI daca e langa tine */
@@ -2021,7 +2021,7 @@ export class WorldScene implements Scene {
       const morning = nap == null && hr >= 7 && hr < 12;
       if (napDone || morning) {
         this.stopActivity(p, true); p.actor.play('wave');
-        if (p === this.me) { if (morning) { this.morningT = 3; if (this.area === 'apartment') this.op({ k: 'stat', key: 'aptNights', delta: 1 }); } else this.hud.toast($t('😊 Te-ai odihnit! Energie: ') + Math.round(this.w.chars[p.id].needs.energy) + '%'); }
+        if (p === this.me) { if (morning) { this.morningT = 3; if (this.area === 'apartment') this.op({ k: 'stat', key: 'aptNights', delta: 1 }); } else this.hud.toast($t('😊 Te-ai odihnit! Energie: {0}%', Math.round(this.w.chars[p.id].needs.energy))); }
       }
     }
 
@@ -2081,7 +2081,7 @@ export class WorldScene implements Scene {
           else if (high) wk[key] = false;
         };
         warn('hunger', nd.hunger < 30, nd.hunger > 50, $t('🍽️ {0}, ți-e foame! Mănâncă ceva (frigider, aragaz sau masa)', nm), $t('Mi-e foame… 🍽️'));
-        warn('hunger2', nd.hunger < 12, nd.hunger > 30, $t('⚠️ {0} e lihnit{1} de foame: merge mai încet și se poate îmbolnăvi!', nm, p.id === 'bubu' ? $t('ă') : ''), 'Lihnit' + (p.id === 'bubu' ? $t('ă') : '') + '! 😩');
+        warn('hunger2', nd.hunger < 12, nd.hunger > 30, p.id === 'bubu' ? $t('⚠️ {0} e lihnită de foame: merge mai încet și se poate îmbolnăvi!', nm) : $t('⚠️ {0} e lihnit de foame: merge mai încet și se poate îmbolnăvi!', nm), p.id === 'bubu' ? $t('Lihnită! 😩') : $t('Lihnit! 😩'));
         warn('energy', nd.energy < 20 && !asleep, nd.energy > 40, $t('😴 {0}, ești {1}. Seara te culci (după 20:00) sau tragi un pui de somn', nm, p.id === 'bubu' ? $t('obosită') : $t('obosit')), $t('Mi-e somn… 😴'));
         warn('hygiene', nd.hygiene < 22, nd.hygiene > 45, $t('🛁 {0}, e timpul pentru o baie!', nm), $t('Miros a… 🙈'));
       }

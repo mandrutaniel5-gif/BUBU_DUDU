@@ -351,7 +351,7 @@ export class MenuScene implements Scene {
         localStorage.setItem('bd-save-' + OFFLINE_ROOM, JSON.stringify({ json: save.json, ts: Date.now() }));
         this.showTab('offline');
         this.notice($t('📂 Salvarea a fost încărcată'), `${$t('A intrat în jocul')} <b>${$t('Offline')}</b>${$t('. Ca s-o jucați în doi: Online → ✨ Casă nouă → bifează „Mută aici progresul din Offline”.')}`);
-      } catch { this.notice($t('📂 Fișier greșit'), $t('Fișierul nu e o salvare ') + esc(GAME_NAME) + '.'); }
+      } catch { this.notice($t('📂 Fișier greșit'), $t('Fișierul nu e o salvare {0}.', esc(GAME_NAME))); }
     };
     inp.click();
   }

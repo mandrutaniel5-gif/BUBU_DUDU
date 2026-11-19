@@ -269,7 +269,7 @@ export const ANIMALS: Record<string, { name: string; icon: string; price: number
 };
 export function openFarmGate(s: S) {
   if (s.chapter < FARM_CHAPTER) { s.hud.toast($t('🐔 Ferma voastră începe în Capitolul 5')); return; }
-  const rows = Object.entries(ANIMALS).map(([k, a]) => { const n = st(s, a.stat); return `<button data-buy="${k}" class="${(s.w.money ?? 0) < a.price ? 'poor' : ''}"><span>${a.icon}</span><b>${a.name}</b><small>${$t('{0} · 💰 {1} lei · {2} {3} la {4}{5}', n ? $t('aveți {0}', n) : $t('niciunul'), a.price, a.per, a.prodLabel, a.every === 1 ? 'zi' : a.every + ' zile', k === 'hens' ? $t(' de fiecare') : '')}</small></button>`; }).join('');
+  const rows = Object.entries(ANIMALS).map(([k, a]) => { const n = st(s, a.stat); return `<button data-buy="${k}" class="${(s.w.money ?? 0) < a.price ? 'poor' : ''}"><span>${a.icon}</span><b>${a.name}</b><small>${$t('{0} · 💰 {1} lei · {2} {3} la {4}{5}', n ? $t('aveți {0}', n) : $t('niciunul'), a.price, a.per, a.prodLabel, a.every === 1 ? $t('zi') : $t('{0} zile', a.every), k === 'hens' ? $t(' de fiecare') : '')}</small></button>`; }).join('');
   const m = s.hud.modal(`<h3>${$t('🐔 Ferma voastră')}</h3><p class="sub">${$t('Animalele dau produse în fiecare zi: le strângeți voi (sau îngrijitorul angajat). Luați câte vreți: fiecare animal în plus dă mai mult. Produsele merg în rețete, pe tarabă, la magazinul din oraș și la contracte.')}</p><div class="shop">${rows}</div>`);
   m.querySelectorAll('[data-buy]').forEach(b => b.addEventListener('click', () => {
     const k = (b as HTMLElement).dataset.buy!, a = ANIMALS[k];
@@ -660,7 +660,7 @@ export function showMorning(s: S, day: number, lines: string[]) {
   morningShown = day; pendingMorning = null;
   const se = seasonOf(day), ev = eventsOf(day, s.w.stats).filter(e => Hol.reachable(s, e.id));
   const card = [`${se.icon} ${se.name}, ziua ${dayOfSeason(day)}`, ...ev.map(e => Hol.morning(s, e.id) ?? `${e.icon} ${e.name}: ${e.text}`), ...Hol.morningExtra(s), ...lines, ...todo(s)];
-  card.push($t('📅 Detaliile zilei le vezi oricând: atinge „Ziua ') + day + '” sus');
+  card.push($t('📅 Detaliile zilei le vezi oricând: atinge „Ziua {0}” sus', day));
   s.hud.showLog(card, $t('☀️ Bună dimineața!'));
 }
 let morningShown = -1, pendingMorning: { day: number; lines: string[] } | null = null;
@@ -683,7 +683,7 @@ function todo(s: S): string[] {
   const fp = Object.values(parcelsOf(s)); if (fp.some(p => p.stage === 'ripe')) d.push($t('recoltează câmpul copt')); else if (fp.some(p => p.owned && p.stage !== 'sown')) d.push($t('lucrează parcelele'));
   if (s.w.furn.roofBroken) d.push($t('repară acoperișul după furtună'));
   if (s.chapter >= VILLAGE_CHAPTER && PROJECTS.some(p => !projectDone(s, p.id))) b.push($t('contribuie la un proiect al satului'));
-  return [b.length ? `🐹 Bubu azi: ${b.slice(0, 3).join(', ')}` : '', d.length ? `🐹 Dudu azi: ${d.slice(0, 3).join(', ')}` : ''].filter(Boolean);
+  return [b.length ? $t('🐹 Bubu azi: {0}', b.slice(0, 3).join(', ')) : '', d.length ? $t('🐹 Dudu azi: {0}', d.slice(0, 3).join(', ')) : ''].filter(Boolean);
 }
 /** Primaria: afacerile (vechi), proiectele satului, oamenii de munca, nunta */
 export function openHallMenu(s: S) {
