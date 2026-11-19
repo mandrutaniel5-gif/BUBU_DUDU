@@ -61,7 +61,7 @@ export const passOk = (p: string) => (p || '').length >= 4;
 /** amprenta codului (ce vede baza de date in loc de cod) */
 export const codeKey = (code: string) => 'c' + sha256('bubududu|cod|' + normCode(code)).slice(0, 31);
 /** camera: din cod + parola; fara parola nu se poate afla */
-export const roomOf = (code: string, pass: string) => 'h' + sha256($t('bubududu|casa|v2|') + normCode(code) + '|' + pass).slice(0, 39);
+export const roomOf = (code: string, pass: string) => 'h' + sha256(/*ro*/'bubududu|casa|v2|' + normCode(code) + '|' + pass).slice(0, 39);
 /** camerele noi (sigure) au 40 de caractere si incep cu h */
 export const isSecureRoom = (room: string) => /^h[0-9a-f]{39}$/.test(room || '');
 

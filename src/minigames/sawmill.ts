@@ -26,8 +26,8 @@ export const PLANK_PRICE = 12;
 /** lemnele care raman mereu pentru soba */
 export const KEEP_WOOD = 5;
 /** „1 scândură”, „2 scânduri”, „20 de scânduri” */
-export const nPlanks = (n: number) => n === 1 ? $t('o scândură') : $t('{0}{1} scânduri', n, n >= 20 ? ' de' : '');
-export const nWood = (n: number) => n === 1 ? $t('un lemn') : $t('{0}{1} lemne', n, n >= 20 ? ' de' : '');
+export const nPlanks = (n: number) => n === 1 ? $t('o scândură') : (n >= 20 ? $t('{0} de scânduri', n) : $t('{0} scânduri', n));
+export const nWood = (n: number) => n === 1 ? $t('un lemn') : (n >= 20 ? $t('{0} de lemne', n) : $t('{0} lemne', n));
 
 export interface SawOrder { idx: number; text: string; res: 'wood' | 'plank'; qty: number; pay: number }
 const ORDERS: { text: string; res: 'wood' | 'plank'; min: number; max: number }[] = [

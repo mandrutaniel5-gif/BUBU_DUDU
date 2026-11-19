@@ -117,7 +117,7 @@ export class MartisorShow extends Show {
       s.op({ k: 'stat', key: `mart-${pid}-${y}`, delta: 1 });
       s.op({ k: 'stat', key: 'mpin-' + me, delta: c + 1 - (s.w.stats['mpin-' + me] ?? 0) }); s.op({ k: 'stat', key: 'mday-' + me, delta: s.w.day - (s.w.stats['mday-' + me] ?? 0) });
       s.op({ k: 'need', who: me, need: 'love', delta: 30 });
-      s.log($t('{0} i-a făcut și {1} lui {2} un mărțișor {3}', s.partner.actor.spec.name, pid === 'bubu' ? 'ea' : 'el', s.me.actor.spec.name, CHARMS[c].icon));
+      s.log((pid === 'bubu' ? $t('{0} i-a făcut și ea lui {1} un mărțișor {2}', s.partner.actor.spec.name, s.me.actor.spec.name, CHARMS[c].icon) : $t('{0} i-a făcut și el lui {1} un mărțișor {2}', s.partner.actor.spec.name, s.me.actor.spec.name, CHARMS[c].icon)));
       setTimeout(() => { s.partner.actor.play('love'); s.gotMartisor(); }, 1800);
     }
   }

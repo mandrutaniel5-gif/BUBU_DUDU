@@ -308,7 +308,7 @@ export class RestoGame extends Panel {
     if (!this.duo) { this.wants[this.i] = k; Sfx.play('clink'); this.fx.text(this.box.x + this.box.w / 2, this.box.y + 150, [$t('Mmm, delicios! 😋'), $t('Ce bun! 🤤'), $t('Perfect! ✨')][this.i % 3], '#ff4d6d', 0.9); return; }
     const ok = k === this.wants[this.i];
     const B = this.box;
-    if (ok) { Sfx.play('clink'); Sfx.play('kiss', { delay: 0.3 }); this.fx.hearts(B.x + B.w * 0.7, B.y + 170, 6); this.fx.text(B.x + B.w * 0.7, B.y + 140, $t('Preferatul {0}! 💕', g(this.pa.id, $t('lui'), 'ei')), '#ff4d6d', 0.9); }
+    if (ok) { Sfx.play('clink'); Sfx.play('kiss', { delay: 0.3 }); this.fx.hearts(B.x + B.w * 0.7, B.y + 170, 6); this.fx.text(B.x + B.w * 0.7, B.y + 140, $t('Preferatul {0}! 💕', g(this.pa.id, $t('lui'), $t('ei'))), '#ff4d6d', 0.9); }
     else { Sfx.play('clink'); this.fx.text(B.x + B.w * 0.7, B.y + 140, $t('Mmm, bun! 🙂'), '#7a5a4a', 0.85); }
   }
   pointer(t: string, x: number, y: number) {
