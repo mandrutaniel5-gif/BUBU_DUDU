@@ -58,3 +58,15 @@ public class MainActivity extends BridgeActivity {{
 }}
 ''')
 print(f'{act}: ecran complet (imersiv), fara barele sistemului')
+
+# Jocul sta pe orizontala (screenOrientation, pus de workflow). Android deduce de aici ca ecranul orizontal e
+# OBLIGATORIU (android.hardware.screen.landscape), iar Google Play ascunde aplicatia de pe dispozitivele care nu
+# declara asa ceva (tablete, Chromebook, Play Games pe PC, XR). Il declaram optional: orientarea ramane aceeasi.
+man = root / 'app/src/main/AndroidManifest.xml'
+xml = man.read_text()
+feats = ''.join(f'\n    <uses-feature android:name="android.hardware.screen.{o}" android:required="false" />'
+                for o in ('landscape', 'portrait') if f'android.hardware.screen.{o}' not in xml)
+if feats:
+    xml = re.sub(r'(<manifest\b[^>]*>)', lambda m: m.group(1) + feats, xml, count=1)
+    man.write_text(xml)
+print(f'{man}: ecranul orizontal / vertical declarate optionale (aplicatia apare pe toate dispozitivele)')
