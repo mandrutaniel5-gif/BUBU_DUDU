@@ -149,7 +149,7 @@ export class Hud {
   /** harta mare: ultima marire (la redeschidere se centreaza pe tine) */
   mapView: MapView | null = null;
   mapBig = (() => { try { return !!localStorage.getItem('bd-mapbig'); } catch { return false; } })();
-  private mapLayoutAt = 0; private mapKey = '';
+  private mapLayoutAt = 0; private mapKey = ''; private mapCardObs: HTMLElement | null = null; private mapCardRO: ResizeObserver | null = null;
   /**
    * locul minihartii: sub cartonasul partenerului, aliniata la dreapta lui, si niciodata peste butoanele de jos.
    * Mica: cat cartonasul (cel mult 150 px). Marita: mai lata si mai inalta, cat incape pana la butoane.
@@ -159,6 +159,9 @@ export class Hud {
     if (!force && performance.now() - this.mapLayoutAt < 700) return; this.mapLayoutAt = performance.now();
     const R = this.root.getBoundingClientRect();
     let card = (this.els['.pst'] as HTMLElement | undefined) ?? null; while (card && card.parentElement && card.parentElement !== this.root) card = card.parentElement;
+    // 1.14.3: cartonasul partenerului isi schimba inaltimea (randuri noi, starea lui): harta se muta imediat sub el,
+    // nu la urmatoarea masurare (raport 22.11: cartonasul acoperea 8 px din harta)
+    if (card && this.mapCardObs !== card && typeof ResizeObserver !== 'undefined') { this.mapCardRO?.disconnect(); this.mapCardObs = card; this.mapCardRO = new ResizeObserver(() => this.layoutMinimap(true)); this.mapCardRO.observe(card); }
     const cr = card?.getBoundingClientRect(), act = (this.root.querySelector('[data-a="action"]') as HTMLElement | null)?.getBoundingClientRect();
     const gw = R.width, gh = R.height;
     const right = cr ? Math.max(6, R.right - cr.right) : 10, top = cr ? cr.bottom - R.top + 8 : 96;

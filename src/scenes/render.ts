@@ -192,7 +192,7 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
   // sortare in adancime: obiectele vii, personajele, masinile, satenii...
   const items: DItem[] = [];
   // 1.14.1: iarba inalta se sorteaza in adancime (desenata pe podea trecea prin copacii din fata ei)
-  if (!ch0 && home) for (const k in scene.w.grass ?? {}) { const [x, y] = k.split(',').map(Number); if (!seen(x, y)) continue; const lv = scene.w.grass![k]; items.push({ x0: x + 0.15, y0: y + 0.15, x1: x + 0.85, y1: y + 0.85, mx: 40, h: 40, draw: () => drawTallGrass(ctx, x, y, lv, scene.time) }); }
+  if (!ch0 && home) for (const k in scene.w.grass ?? {}) { const [x, y] = k.split(',').map(Number); if (!seen(x, y)) continue; const lv = scene.w.grass![k]; items.push({ x0: x + 0.15, y0: y + 0.15, x1: x + 0.85, y1: y + 0.85, mx: 40, h: 40, draw: () => drawTallGrass(ctx, x, y, lv, scene.time), k: 'iarba' }); }
   const onBike = (scene.me.riding && scene.me.rideKind === 'bike') || (scene.sameArea() && scene.partner.riding && scene.partner.rideKind === 'bike');
   const onScoot = (scene.me.riding && scene.me.rideKind === 'scooter') || (scene.sameArea() && scene.partner.riding && scene.partner.rideKind === 'scooter');
   const onTractor = (scene.me.riding && scene.me.rideKind === 'tractor') || (scene.sameArea() && scene.partner.riding && scene.partner.rideKind === 'tractor');
@@ -233,8 +233,8 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
       if (hasQ) { const by = q.y - 92 * ACTOR_SCALE * 0.92 - 18 + Math.sin(scene.time * 4) * 2; ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = '#4a2a22'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q.x, by, 9, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#4a2a22'; ctx.font = '900 13px "Baloo 2", sans-serif'; ctx.textBaseline = 'middle'; ctx.fillText('!', q.x, by + 1); ctx.textBaseline = 'alphabetic'; }
     }
   } }); }
-  if (home) for (const c of scene.critters) { if (!seen(c.x, c.y)) continue; items.push({ x0: c.x - 0.2, y0: c.y - 0.2, x1: c.x + 0.2, y1: c.y + 0.2, h: 70, draw: () => { const q = iso(c.x, c.y); drawCritter(ctx, c, q.x, q.y, scene.time); } }); }
-  if (home) for (const n of scene.npcs) { if (!seen(n.x, n.y)) continue; items.push({ x0: n.x - 0.2, y0: n.y - 0.2, x1: n.x + 0.2, y1: n.y + 0.2, draw: () => drawNpc(scene, ctx, n) }); }
+  if (home) for (const c of scene.critters) { if (!seen(c.x, c.y)) continue; items.push({ x0: c.x - 0.2, y0: c.y - 0.2, x1: c.x + 0.2, y1: c.y + 0.2, h: 70, draw: () => { const q = iso(c.x, c.y); drawCritter(ctx, c, q.x, q.y, scene.time); }, k: 'animal' }); }
+  if (home) for (const n of scene.npcs) { if (!seen(n.x, n.y)) continue; items.push({ x0: n.x - 0.2, y0: n.y - 0.2, x1: n.x + 0.2, y1: n.y + 0.2, draw: () => drawNpc(scene, ctx, n), k: 'npc' }); }
   for (const p of [scene.me, scene.partner]) {
     if (p === scene.partner && !scene.sameArea()) continue;
     if (!seen(p.gx, p.gy, 260)) continue;
@@ -246,8 +246,8 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
       // desenat imediat dupa obiectul pe care sta
       const f = p.activity!.furn;
       const eps = inside === 'sofa' ? 0.01 : 0.001;
-      items.push({ x0: f.gx + f.w - eps, y0: f.gy + f.d - eps, x1: f.gx + f.w, y1: f.gy + f.d, box: personBox(p.gx, p.gy, pb.mx, pb.h), draw: () => drawPawn(scene, ctx, p), id: 'p:' + p.id });
-    } else items.push({ x0: p.gx - 0.2, y0: p.gy - 0.2, x1: p.gx + 0.2, y1: p.gy + 0.2, ...pb, draw: () => drawPawn(scene, ctx, p), id: 'p:' + p.id });
+      items.push({ x0: f.gx + f.w - eps, y0: f.gy + f.d - eps, x1: f.gx + f.w, y1: f.gy + f.d, box: personBox(p.gx, p.gy, pb.mx, pb.h), draw: () => drawPawn(scene, ctx, p), id: 'p:' + p.id, k: 'personaj' });
+    } else items.push({ x0: p.gx - 0.2, y0: p.gy - 0.2, x1: p.gx + 0.2, y1: p.gy + 0.2, ...pb, draw: () => drawPawn(scene, ctx, p), id: 'p:' + p.id, k: 'personaj' });
   }
   if (baking) {
     // ce e "copt" si sta IN FATA celor vii se redeseneaza peste ei, doar in jurul lor (cele din spate sunt deja in podea)
@@ -453,6 +453,10 @@ const HOME_BAKE = new Set(['bed', 'nightstand', 'wardrobe', 'rug', 'plant', 'toi
 export const parkedHidden = (bike: boolean, scoot: boolean, tractor: boolean, id: string) => (bike && /-bike$/.test(id)) || (scoot && /-scooter$/.test(id)) || (tractor && /-tractor$/.test(id));
 export function bakeable(f: Furn) {
   if (isWorldStatic(f.id)) return cacheable(f);
+  // 1.14.3: gardul si padurea parcelelor cumparate (st-fence*, st-fl-*) nu se misca: se schimba doar cand cumparati o parcela
+  // (forestKey e in bakeKey -> se recoace tot) sau cand taiati un copac (dep -> se reface doar bucata lui). Desenate vii,
+  // ~120 de obiecte (78 de bucati de gard) duceau padurea iarna la ~21 fps pe tableta (raport 20.11, v1.14.2).
+  if (/^st-(fence|fl-|flot-)/.test(f.id)) return cacheable(f);
   if (/^(h|v|f)-/.test(f.id)) return false; // vehiculele si gramada de lemne se misca dintr-un loc in altul
   return HOME_BAKE.has(f.type as string);
 }

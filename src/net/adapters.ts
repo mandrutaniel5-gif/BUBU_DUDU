@@ -125,10 +125,18 @@ export class FirebaseAdapter extends Base {
     this.setStatus('offline');
   }
   private lastState = 0;
+  /** 1.14.3: cel mult O scriere de pozitie in zbor. „.info/connected” ramane true inca ~1 minut dupa ce telefonul a pierdut
+   *  netul / a stins ecranul; in timpul asta Firebase strangea in coada sute de scrieri pe acelasi nod si, la reconectare,
+   *  le aplica recursiv -> „Maximum call stack size exceeded” (raport 22.11, v1.14.2). Acum asteptam confirmarea celei
+   *  dinainte: offline nu se mai aduna nimic, iar la reconectare pleaca doar pozitia de acum. */
+  private stateInFlight = 0;
   sendState(s: PlayerState) {
-    if (!this.db || this.taken || !this.connected || Date.now() - this.lastState < 100) return; // max 10/s, doar cu legatura
-    this.lastState = Date.now();
-    try { this.fb.update(this.fb.ref(this.db, `rooms/${this.room}/players/${this.me}`), { online: true, state: clean(s), ts: this.fb.serverTimestamp() }).catch(() => { /* offline: urmatoarea */ }); } catch (err) { console.warn('stare netrimisa', err); }
+    const now = Date.now();
+    if (!this.db || this.taken || !this.connected || document.hidden || now - this.lastState < 100) return; // max 10/s, doar cu legatura
+    if (this.stateInFlight && now - this.stateInFlight < 20000) return; // asteptam confirmarea (dupa 20 s o socotim pierduta)
+    this.lastState = now; this.stateInFlight = now;
+    const done = () => { this.stateInFlight = 0; };
+    try { this.fb.update(this.fb.ref(this.db, `rooms/${this.room}/players/${this.me}`), { online: true, state: clean(s), ts: this.fb.serverTimestamp() }).then(done, done); } catch (err) { done(); console.warn('stare netrimisa', err); }
   }
   sendEvent(e: NetEvent) { if (!this.db || this.taken) return; try { this.fb.push(this.fb.ref(this.db, `rooms/${this.room}/events`), { from: this.me, e: clean(e), ts: Date.now() }).catch(() => { /* offline */ }); } catch (err) { console.warn('eveniment netrimis', err); } }
   // lumea intreaga se urca in Firebase cel mult o data la 45 s (si imediat la inchidere / minimizare) -> mai putina baterie si date mobile
