@@ -154,7 +154,7 @@ export class MergeGame extends Panel {
     this.scene.op({ k: 'res', res: key, delta: -1 }); Sfx.play('pop');
   }
   bagProds() { const r = this.scene.w.res ?? {}; return Object.keys(r).filter(k => k.startsWith('prod_') && r[k] > 0 && (this.which === 'florist' ? FLORIST_CHAINS.some(c => k.startsWith('prod_' + c.id + '_')) : CHAIN_INFO.some(c => k.startsWith('prod_' + c.id + '_')))).sort(); }
-  abort() { this.scene.sendCharSync(); this.finish(this.served > 0 ? 1 : 0.2, this.served ? $t('Ai câștigat {0} lei! 💰', this.earned) : $t('Taraba se închide 👋')); }
+  abort() { this.scene.sendCharSync(); if (this.earned > 0) { const e = this.earned; this.scene.afterMini = () => this.scene.stallBonus(e); } this.finish(this.served > 0 ? 1 : 0.2, this.served ? $t('Ai câștigat {0} lei! 💰', this.earned) : $t('Taraba se închide 👋')); }
   tick(dt: number) {
     const enc = this.scene.w.boards?.[this.which];
     if (enc && enc !== this.lastEnc && !this.drag) { this.b = decBoard(enc); this.lastEnc = enc; }

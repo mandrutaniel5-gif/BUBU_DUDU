@@ -8,6 +8,20 @@ de la margine si se ascund singure. Se reaplica la revenirea in aplicatie si can
 import pathlib, re, sys
 
 root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'android')
+
+# ---- reclamele (1.15.0): pluginul AdMob doar pentru Android. Nu sta in package.json: cere Capacitor 8, iar iOS-ul e inca
+# pe Capacitor 6. Il instalam aici impreuna cu acelasi Capacitor 8 pe care l-a pus workflow-ul (un `npm i` separat ar
+# intoarce @capacitor/* la versiunea din package-lock), apoi `cap sync` il leaga in proiectul Android.
+import json, subprocess, os
+ADMOB_PLUGIN = '@capacitor-community/admob@8.3.0'
+ADMOB_APP_ID = 'ca-app-pub-6912029136609798~9879750558'
+if os.environ.get('SKIP_ADMOB') != '1':
+    cap = json.loads(pathlib.Path('node_modules/@capacitor/android/package.json').read_text())['version']
+    sh = os.name == 'nt'
+    subprocess.run(['npm', 'i', '--no-save', '--legacy-peer-deps', f'@capacitor/cli@{cap}', f'@capacitor/core@{cap}', f'@capacitor/android@{cap}', ADMOB_PLUGIN], check=True, shell=sh)
+    subprocess.run(['npx', 'cap', 'sync', 'android'], check=True, shell=sh)
+    print(f'AdMob: {ADMOB_PLUGIN} (Capacitor {cap})')
+
 acts = list(root.glob('app/src/main/java/**/MainActivity.java'))
 if not acts:
     sys.exit('Nu gasesc MainActivity.java')
@@ -68,5 +82,8 @@ feats = ''.join(f'\n    <uses-feature android:name="android.hardware.screen.{o}"
                 for o in ('landscape', 'portrait') if f'android.hardware.screen.{o}' not in xml)
 if feats:
     xml = re.sub(r'(<manifest\b[^>]*>)', lambda m: m.group(1) + feats, xml, count=1)
-    man.write_text(xml)
+# codul aplicatiei AdMob: fara el, SDK-ul de reclame opreste aplicatia la pornire
+if 'com.google.android.gms.ads.APPLICATION_ID' not in xml:
+    xml = re.sub(r'(<application\b[^>]*>)', lambda m: m.group(1) + f'\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="{ADMOB_APP_ID}" />', xml, count=1)
+man.write_text(xml)
 print(f'{man}: ecranul orizontal / vertical declarate optionale (aplicatia apare pe toate dispozitivele)')

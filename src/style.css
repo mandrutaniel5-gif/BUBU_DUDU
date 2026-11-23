@@ -192,6 +192,11 @@ html.tabmid .hud .clock { top:auto; bottom:12px; left:12px; right:auto; margin:0
 
 /* butonul de inchidere: mereu vizibil sus, nu mai trebuie scroll */
 .modal .box { position:relative; }
+.modal .xback { position:sticky; top:0; float:left; z-index:5; width:38px; height:38px; margin:-6px 8px 0 -8px; border-radius:50%; border:3px solid var(--ink); background:#fff; font-size:18px; font-weight:900; color:var(--ink); box-shadow:0 3px 0 var(--ink); line-height:1; }
+.modal .tabs { display:flex; gap:6px; margin:6px 0 8px; clear:both; }
+.modal .tabs button { flex:1; border:3px solid var(--ink); border-radius:14px; padding:6px 8px; font-weight:800; background:#fff; color:var(--ink); box-shadow:0 2px 0 var(--ink); }
+.modal .tabs button.on { background:var(--pink); color:#fff; }
+.modal .adbtn { background:#ffd23f !important; color:var(--ink) !important; }
 .modal .xclose { position:sticky; top:0; float:right; z-index:5; width:38px; height:38px; margin:-6px -8px 0 8px; border-radius:50%; border:3px solid var(--ink); background:#fff; font-size:18px; font-weight:900; color:var(--ink); box-shadow:0 3px 0 var(--ink); line-height:1; }
 .modal .xclose:active { transform:translateY(2px); box-shadow:0 1px 0 var(--ink); }
 
@@ -469,3 +474,12 @@ html.h520l .menu-card .myname { margin-top:3px; font-size:12px; } html.h520l .me
 @supports (height: 1dvh) { .modal .box { max-height: min(86vh, 86dvh); } }
 @media (max-height: 320px) { .modal { align-items: flex-start; padding: 6px; } .modal .box { max-height: calc(100dvh - 12px); padding: 8px 12px; } .bugshot { width: fit-content; margin: 4px auto; } .bugshot img { width: auto; max-width: 100%; max-height: 28dvh; } }
 .langrow label { display:flex; gap:8px; align-items:center; justify-content:center; font-weight:800; width:100%; } .langrow select { font:700 15px "Baloo 2", sans-serif; border:3px solid var(--ink); border-radius:12px; padding:3px 8px; background:#fff; color:var(--ink); }
+
+/* 1.15.0: reclamele cu recompensa pentru nevoi (energie, foame, baie, boala): sub bara de sus, la mijloc */
+.hud .adchips { position:absolute; top:calc(var(--safe-t, 0px) + 58px); left:50%; transform:translateX(-50%); display:flex; flex-wrap:wrap; justify-content:center; max-width:min(560px, 62vw); gap:6px; pointer-events:auto; z-index:6; }
+.hud .adchips:empty { display:none; }
+.hud .adchips button { border:3px solid var(--ink); border-radius:16px; background:#ffd23f; color:var(--ink); font-family:inherit; font-size:12px; font-weight:800; padding:3px 10px; box-shadow:0 3px 0 var(--ink); white-space:nowrap; animation:adpulse 2.4s ease-in-out infinite; }
+.hud .adchips button b { font-weight:800; }
+@keyframes adpulse { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-2px); } }
+html.h500 .hud .adchips { top:46px; } html.h500 .hud .adchips button { font-size:11px; padding:2px 8px; }
+.hud.in-mini .adchips { display:none; }

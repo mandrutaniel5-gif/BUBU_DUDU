@@ -3,6 +3,7 @@
 // magazinul „Bubu & Dudu” din oras, contractele cu camionul, targul, nunta la biserica din sat,
 // anotimpurile, sarbatorile, evenimentele, prieteniile pe 5 trepte si albumele.
 // Tot ce se schimba trece prin s.op (se trimite si partenerului si se salveaza).
+import { Ads } from '../engine/ads';
 import type { WorldScene } from './world';
 import { type Furn } from '../world/map';
 import * as Hol from './holidays';
@@ -348,24 +349,46 @@ function candidates(s: S, role: string): Staff[] {
   }
   return out;
 }
-export function openStaff(s: S, role?: string) {
+/**
+ * Oamenii de munca (1.15.0): doua file, ca sa nu mai derulezi peste angajatii tai de fiecare data.
+ *  - „Angajații voștri”: cine lucreaza la voi (concediezi; 📺 o reclama = +1 stea de pricepere, o data pe zi de fiecare)
+ *  - „Angajează”: meseriile, apoi cei 3 oameni ai zilei pentru meseria aleasa
+ * Butonul ⬅ fix sus duce la pagina de dinainte (meserie -> lista meseriilor -> angajatii vostri).
+ */
+export function openStaff(s: S, role?: string, tab?: 'mine' | 'hire') {
   if (s.chapter < 1) { s.hud.toast($t('🧑‍🌾 Oamenii de muncă se angajează din Capitolul 1 (de la cherestea sau de la Primărie)')); return; }
   const staff = staffOf(s), hiredIds = new Set(staff.map(x => x.id));
-  const now = staff.map(e => `<li><b>${ROLES[e.role].icon} ${esc(e.name)} · ${ROLES[e.role].name[e.f ? 1 : 0]}</b><small>${$t('pricepere {0}{1} · salariu {2} lei/zi{3}', '★'.repeat(Math.round(e.skill)), '☆'.repeat(5 - Math.round(e.skill)), e.wage, e.unpaid ? $t(' · ⚠️ neplătit {0} zi', e.unpaid) : '')}</small><button data-fire="${e.id}">${$t('Concediază')}</button></li>`).join('') || `<li><small>${$t('Nu aveți încă angajați.')}</small></li>`;
-  let pick: string;
-  if (!role) {
-    pick = `<h4>${$t('Pe cine căutați?')}</h4><div class="shop">${Object.entries(ROLES).map(([k, r]) => { const why = r.need?.(s), n = staff.filter(e => e.role === k).length;
+  const view: 'mine' | 'hire' = role ? 'hire' : tab ?? (staff.length ? 'mine' : 'hire');
+  const ad = Ads.can();
+  const boosted = (e: Staff) => st(s, `staffAd-${e.id}-${s.w.day}`) > 0;
+  let body: string;
+  if (view === 'mine') {
+    body = staff.map(e => `<li><b>${ROLES[e.role].icon} ${esc(e.name)} · ${ROLES[e.role].name[e.f ? 1 : 0]}</b><small>${$t('pricepere {0}{1} · salariu {2} lei/zi{3}', '★'.repeat(Math.round(e.skill)), '☆'.repeat(5 - Math.round(e.skill)), e.wage, e.unpaid ? $t(' · ⚠️ neplătit {0} zi', e.unpaid) : '')}</small>${ad && e.skill < 5 && !boosted(e) ? `<button class="adbtn" data-boost="${e.id}">${$t('📺 +1 ★ pricepere')}</button>` : ''}<button data-fire="${e.id}">${$t('Concediază')}</button></li>`).join('') || `<li><small>${$t('Nu aveți încă angajați.')}</small></li>`;
+    body = `<ul class="goals give">${body}</ul>`;
+  } else if (!role) {
+    body = `<h4>${$t('Pe cine căutați?')}</h4><div class="shop">${Object.entries(ROLES).map(([k, r]) => { const why = r.need?.(s), n = staff.filter(e => e.role === k).length;
       return `<button data-role="${k}" class="${why ? 'poor' : ''}"><span>${r.icon}</span><b>${r.name[0]}</b><small>${why ?? r.text}${n ? $t(' · aveți {0}', n) : ''}</small></button>`; }).join('')}</div>`;
   } else {
     const R = ROLES[role], why = R.need?.(s);
     const cand = candidates(s, role).filter(c => !hiredIds.has(c.id)).map(c => `<li><b>${R.icon} ${esc(c.name)} · ${R.name[c.f ? 1 : 0]}</b><small>pricepere ${'★'.repeat(c.skill)}${'☆'.repeat(5 - c.skill)} · ${c.wage} lei/zi</small>${why ? `<small class="need">${why}</small>` : `<button data-hire="${c.id}">${$t('Angajează')}</button>`}</li>`).join('') || `<li><small>${$t('Azi i-ați angajat pe toți. Mâine vin alții.')}</small></li>`;
-    pick = `<h4>${$t('{0} {1}: vor să lucreze azi', R.icon, R.name[0])}</h4><p class="sub">${$t('{0}. Cu cât pricepe mai bine, cu atât face mai mult (și cere mai mult).', R.text)}</p><ul class="goals give">${cand}</ul><button data-back>${$t('⬅ Altă meserie')}</button>`;
+    body = `<h4>${$t('{0} {1}: vor să lucreze azi', R.icon, R.name[0])}</h4><p class="sub">${$t('{0}. Cu cât pricepe mai bine, cu atât face mai mult (și cere mai mult).', R.text)}</p><ul class="goals give">${cand}</ul>`;
   }
-  const m = s.hud.modal(`<h3>${$t('🧑‍🌾 Oameni de muncă')}</h3><p class="sub">${$t('Angajații muncesc în fiecare zi de la 8 la 18 și îi vezi la treabă; ce fac intră pe loc la voi. Salariul se plătește dimineața; dacă nu aveți bani două zile, pleacă. Pricepere crește cu fiecare zi. Angajați câți vreți.')}</p><h4>${$t('Angajații voștri')}</h4><ul class="goals give">${now}</ul>${pick}`);
+  // ⬅: din meserie inapoi la meserii; din meserii la angajatii vostri (daca aveti); altfel inchide
+  const back = role ? () => openStaff(s, undefined, 'hire') : view === 'hire' && staff.length ? () => openStaff(s, undefined, 'mine') : () => s.hud.closeModal();
+  const tabs = `<div class="tabs"><button data-tab="mine" class="${view === 'mine' ? 'on' : ''}">${$t('Angajații voștri ({0})', staff.length)}</button><button data-tab="hire" class="${view === 'hire' ? 'on' : ''}">${$t('➕ Angajează')}</button></div>`;
+  const intro = view === 'mine' ? `<p class="sub">${$t('Angajații muncesc în fiecare zi de la 8 la 18 și îi vezi la treabă; ce fac intră pe loc la voi. Salariul se plătește dimineața; dacă nu aveți bani două zile, pleacă. Pricepere crește cu fiecare zi. Angajați câți vreți.')}</p>` : '';
+  const m = s.hud.modal(`<h3>${$t('🧑‍🌾 Oameni de muncă')}</h3>${tabs}${intro}${body}`, back);
+  m.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => openStaff(s, undefined, (b as HTMLElement).dataset.tab as 'mine' | 'hire')));
   m.querySelectorAll('[data-role]').forEach(b => b.addEventListener('click', () => openStaff(s, (b as HTMLElement).dataset.role)));
-  m.querySelector('[data-back]')?.addEventListener('click', () => openStaff(s));
   m.querySelectorAll('[data-hire]').forEach(b => b.addEventListener('click', () => { const c = candidates(s, role!).find(x => x.id === (b as HTMLElement).dataset.hire)!; const list = staffOf(s); list.push(c); setT(s, 'staff', list); s.op({ k: 'stat', key: 'hired', delta: 1 }); s.log($t('L-ați angajat pe {0} ({1}) {2}', c.name, ROLES[c.role].name[c.f ? 1 : 0].toLowerCase(), ROLES[c.role].icon).replace($t('L-ați angajat pe'), c.f ? $t('Ați angajat-o pe') : $t('L-ați angajat pe'))); Sfx.play('good'); s.syncWalkers(); openStaff(s, role); }));
-  m.querySelectorAll('[data-fire]').forEach(b => b.addEventListener('click', () => { setT(s, 'staff', staffOf(s).filter(x => x.id !== (b as HTMLElement).dataset.fire)); s.syncWalkers(); openStaff(s, role); }));
+  m.querySelectorAll('[data-fire]').forEach(b => b.addEventListener('click', () => { setT(s, 'staff', staffOf(s).filter(x => x.id !== (b as HTMLElement).dataset.fire)); s.syncWalkers(); openStaff(s, undefined, 'mine'); }));
+  m.querySelectorAll('[data-boost]').forEach(b => b.addEventListener('click', async () => {
+    const id = (b as HTMLElement).dataset.boost!;
+    if (!(await Ads.rewarded(t => s.hud.toast(t)))) return;
+    const list = staffOf(s), e = list.find(x => x.id === id); if (!e) return;
+    e.skill = Math.min(5, Math.floor(e.skill) + 1); setT(s, 'staff', list); s.op({ k: 'stat', key: `staffAd-${id}-${s.w.day}`, delta: 1 });
+    Sfx.play('good'); s.hud.toast($t('⭐ {0} a învățat ceva nou: pricepere {1}/5', e.name, Math.round(e.skill))); openStaff(s, undefined, 'mine');
+  }));
 }
 // Angajatii muncesc PAS CU PAS, de la 8 la 18: fiecare copac taiat, piatra sparta, floare culeasa, planta semanata /
 // udata / culeasa, client servit, drum la cherestea etc. intra pe loc in inventar / bani (staffWork, chemat de
@@ -656,7 +679,9 @@ export function daily(s: S) {
 export function showMorning(s: S, day: number, lines: string[]) {
   if (morningShown === day) return;
   // nu peste o fereastra deschisa (ex. chemarea partenerului la o sarbatoare): vine cand o inchizi
-  if (s.hud.modalOpen() || s.minigame) { pendingMorning = { day, lines }; return; }
+  // 1.14.3: si nu cat dormi. Ziua noua incepe la miezul noptii, cand abia v-ati culcat: cartonasul venea seara, peste somn.
+  // Acum il vezi dimineata, cand te dai jos din pat (sau dupa un pui de somn, daca ziua a trecut cat ai dormit)
+  if (s.hud.modalOpen() || s.minigame || s.me.activity?.a.id === 'sleep') { pendingMorning = { day, lines }; return; }
   morningShown = day; pendingMorning = null;
   const se = seasonOf(day), ev = eventsOf(day, s.w.stats).filter(e => Hol.reachable(s, e.id));
   const card = [`${se.icon} ${se.name}, ziua ${dayOfSeason(day)}`, ...ev.map(e => Hol.morning(s, e.id) ?? `${e.icon} ${e.name}: ${e.text}`), ...Hol.morningExtra(s), ...lines, ...todo(s)];

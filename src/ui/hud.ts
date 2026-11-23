@@ -352,7 +352,8 @@ export class Hud {
   togglePairs(force?: boolean) { this.els['.emotes'].classList.add('hidden'); if (force) this.els['.pairs'].classList.remove('hidden'); else this.els['.pairs'].classList.toggle('hidden'); }
   closeMenus() { this.els['.emotes'].classList.add('hidden'); this.els['.pairs'].classList.add('hidden'); }
 
-  modal(html: string) { { const t = /<h3>(.*?)<\/h3>/.exec(html)?.[1]; if (t) Bugs.crumb('fereastra: ' + t.replace(/<[^>]+>/g, '').slice(0, 60)); } this.closeMenus(); const m = this.els['.modal']; m.innerHTML = `<div class="box"><button class="xclose" data-close aria-label="${$t('Închide')}">✕</button>${html}<button class="close" data-close>${$t('Închide')}</button></div>`; m.classList.remove('hidden'); return m; }
+  /** fereastra jocului; `back` = butonul ⬅ fix sus (ca la Chrome): duce la pagina de dinainte a aceleiasi ferestre */
+  modal(html: string, back?: () => void) { { const t = /<h3>(.*?)<\/h3>/.exec(html)?.[1]; if (t) Bugs.crumb('fereastra: ' + t.replace(/<[^>]+>/g, '').slice(0, 60)); } this.closeMenus(); const m = this.els['.modal']; m.innerHTML = `<div class="box">${back ? `<button class="xback" data-xback aria-label="${$t('Înapoi')}">⬅</button>` : ''}<button class="xclose" data-close aria-label="${$t('Închide')}">✕</button>${html}<button class="close" data-close>${$t('Închide')}</button></div>`; m.classList.remove('hidden'); if (back) m.querySelector('[data-xback]')!.addEventListener('click', e => { e.stopPropagation(); back(); }); return m; }
   closeModal() { this.els['.modal'].classList.add('hidden'); }
   /** 🐞 testerul raporteaza o problema: poza de acum, atinge locul pe ea, alege ce e gresit, scrie ce vede */
   async openBug() {
@@ -730,6 +731,14 @@ export class Hud {
     bs.textContent = stopName; bs.dataset.dest = stopAt; bs.style.display = stopAt ? '' : 'none';
   }
 
+  /** 1.15.0: butoanele 📺 de sus (energie, foame, baie, boala): apar doar cand ai nevoie si se pot vedea reclame */
+  private adKey = '';
+  setAdChips(list: { k: string; icon: string; label: string }[]) {
+    const key = list.map(x => x.k).join(','); if (key === this.adKey) return; this.adKey = key;
+    let box = this.root.querySelector('.adchips') as HTMLElement | null;
+    if (!box) { box = document.createElement('div'); box.className = 'adchips'; this.root.appendChild(box); box.addEventListener('click', e => { const b = (e.target as HTMLElement).closest('[data-adk]') as HTMLElement | null; if (b) void this.s.adNeed(b.dataset.adk as any); }); }
+    box.innerHTML = list.map(x => `<button data-adk="${x.k}" title="${x.label}">📺 ${x.icon} <b>${x.label}</b></button>`).join('');
+  }
   setMinigame(on: boolean, scene = false) { this.root.classList.toggle('in-mini', on); this.root.classList.toggle('in-scene', on && scene); if (on && !scene) this.els['.modal'].classList.add('hidden'); }
 }
 

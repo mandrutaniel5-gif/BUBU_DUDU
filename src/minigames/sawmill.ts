@@ -5,6 +5,7 @@
 // - 📜 Comenzile zilei: două comenzi pe zi (lemne de foc sau scânduri), plătite mai bine; aceleași pe ambele telefoane.
 // - 🪚 Gaterul: 2 lemne → 1 scândură. Ții linia de cretă a bușteanului pe pânza gaterului;
 //   o tăietură perfectă dă o scândură în plus.
+import { Ads } from '../engine/ads';
 import { Panel } from './base';
 import { Sfx } from '../engine/sfx';
 import { Actor } from '../char/actor';
@@ -81,7 +82,9 @@ export class SawmillGame extends Panel {
   res(k: string) { return this.scene.w.res?.[k] ?? 0; }
   /** lemnele de care te poti atinge (5 raman pentru soba) */
   spare() { return Math.max(0, this.res('wood') - KEEP_WOOD); }
-  leftToday() { return Math.max(0, PRICE.sawmillDay - (this.scene.w.stats['woodSold-' + this.day] ?? 0)); }
+  /** 1.15.0: cu o reclama (📺) Nea Vasile cumpara azi fara limita */
+  unlimited() { return (this.scene.w.stats['sawUnl-' + this.day] ?? 0) > 0; }
+  leftToday() { return this.unlimited() ? 9999 : Math.max(0, PRICE.sawmillDay - (this.scene.w.stats['woodSold-' + this.day] ?? 0)); }
   price() { return sawPrice(this.day, this.me); }
   orders() { return sawOrders(this.day, this.me); }
   orderDone(i: number) { return (this.scene.w.stats[orderKey(this.day, i)] ?? 0) > 0; }
@@ -94,9 +97,17 @@ export class SawmillGame extends Panel {
   startSell() {
     if (this.carrying) return;
     const n = Math.min(this.sellN, this.leftToday(), this.spare());
+    if (n <= 0 && !this.leftToday() && Ads.can()) { void this.adUnlimited(); return; }
     if (n <= 0) { this.say(this.leftToday() ? $t('Păstrează {0} lemne pentru sobă 🔥', KEEP_WOOD) : $t('Am cumpărat destule azi. Vino mâine! 🙂')); Sfx.play('bad'); return; }
     this.carrying = { n, done: 0, t: 0, price: this.price() };
     this.hero.play('act_carry');
+  }
+  /** limita zilei e atinsa: o reclama scurta si azi iti cumpara tot */
+  private async adUnlimited() {
+    this.say($t('Am cumpărat destule azi… 📺 O reclamă scurtă și azi îți cumpăr tot!'));
+    if (!(await Ads.rewarded(t => this.scene.hud.toast(t)))) return;
+    this.scene.op({ k: 'stat', key: 'sawUnl-' + this.day, delta: 1 }); Sfx.play('good');
+    this.say($t('Bine, azi îți cumpăr tot lemnul! 🤝')); this.sellN = Math.max(1, this.spare());
   }
   finishSell() {
     const c = this.carrying!; this.carrying = null;
@@ -307,7 +318,7 @@ export class SawmillGame extends Panel {
     btn('staff', W - 196, top - bh - 10, 186, bh, $t('🪓 Angajează ajutoare'), true, '#d6f5d0');
     // 1. cantarul
     { const x = card(0, $t('⚖️ Cântarul'), '#c98e5f'); const can = Math.min(this.leftToday(), this.spare());
-      line(can ? $t('Poți vinde {0} ({1} rămân pentru sobă)', can, KEEP_WOOD) : this.leftToday() ? $t('Ai doar {0} lemne ({1} pentru sobă)', this.res('wood'), KEEP_WOOD) : $t('Gata pe azi: vino mâine'), x + 10, top + 38, can ? O : '#c0392b', 11);
+      line(can ? $t('Poți vinde {0} ({1} rămân pentru sobă)', can, KEEP_WOOD) : this.leftToday() ? $t('Ai doar {0} lemne ({1} pentru sobă)', this.res('wood'), KEEP_WOOD) : (Ads.can() ? $t('Limita zilei: 📺 vinde fără limită') : $t('Gata pe azi: vino mâine')), x + 10, top + 38, can ? O : '#c0392b', 11);
       const n = Math.max(0, Math.min(this.sellN, can));
       btn('minus', x + 10, top + 52, bh, bh, '−', can > 0); line(`${n}`, x + 18 + bh, top + 52 + bh / 2, O, 16); btn('plus', x + 46 + bh, top + 52, bh, bh, '+', can > 0);
       btn('sell', x + 10, top + ch - bh - 8, cw - 20, bh, this.carrying ? $t('Se cântărește…') : $t('Pune pe cântar · +{0} lei', n * this.price()), can > 0 && !this.carrying, '#ffe08a'); }

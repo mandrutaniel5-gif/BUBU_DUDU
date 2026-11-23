@@ -1,4 +1,5 @@
 import { DEV } from '../game/dev';
+import { Ads } from '../engine/ads';
 import { drawDevOverlay } from '../ui/devpanel';
 import { Bugs } from '../engine/bugs';
 import { setNames, cleanName } from '../game/names';
@@ -112,6 +113,12 @@ export const PAIRS = [
   { id: 'pinch', label: $t('Astupă-i nasul (sforăie!)'), icon: '😴', aAnim: 'wave', bAnim: 'act_sleepbed', delay: 0, needs: {}, needsB: {} },
   { id: 'care', label: $t('Îngrijește'), icon: '🩹', aAnim: 'love', bAnim: 'shy', delay: 0.3, needs: { love: 8 }, needsB: { health: 26, love: 12 }, sickOnly: true },
 ];
+
+/** sub cata energie esti prea obosit(a) ca sa muncesti (mersul e deja mai incet sub 12) */
+const TIRED = 15;
+/** ce poti face si obosit(a): sa mananci, sa te speli, sa dormi, sa te odihnesti, sa mergi cu vehiculele, focul din soba */
+const REST_OK = new Set(['sleep', 'snack', 'eat', 'cook', 'toilet', 'bath', 'teeth', 'tv', 'cuddle', 'read', 'bench', 'swing', 'gazebo', 'aquarium', 'coffee', 'gohome', 'forest', 'addwood', 'lightfire', 'read_mail', 'piano', 'carousel']);
+type AdNeed = 'energy' | 'hunger' | 'hygiene' | 'sick';
 
 export class WorldScene implements Scene {
   fx = new Fx();
@@ -746,6 +753,7 @@ export class WorldScene implements Scene {
     if (act.id === 'village') { if (pawn === this.me) this.boardBest(); return; }
     if (act.id === 'bridgeinfo') { if (pawn === this.me) this.hud.toast(this.bridgeFixed() ? $t('🌉 Podul Mare') : $t('🌉 Podul Mare e rupt: lipsesc scânduri. Satul e dincolo de el…')); return; }
     // cheresteaua: tu intri in curtea ei (cantarul, comenzile, gaterul); partenerul AI duce lemnele la cantar
+    if (act.id === 'sawmill' && pawn === this.me && this.tired(pawn.id)) { this.tiredOffer(); return; }
     if (act.id === 'sawmill') { if (pawn === this.me) { if (!this.closed('w-sawmill')) this.startCustom('sawmill'); } else if ((this.w.res?.wood ?? 0) > 5 + 2) this.startActivity(pawn, ACTIVITIES.sellwood, f); return; }
     if (act.id === 'woodpile') { if (pawn === this.me) this.hud.toast($t('🪵 Stiva voastră: {0}{1}. Le vindeți la Cheresteaua lui Nea Vasile, pe drum spre lac (azi {2} lei lemnul)', nWood(this.w.res?.wood ?? 0), (this.w.res?.plank ?? 0) ? $t(' și {0}', nPlanks(this.w.res?.plank ?? 0)) : '', sawPrice(this.w.day, this.myId))); return; }
     if (act.id === 'roadblock') { if (pawn === this.me) this.hud.toast(this.cityOpen() ? $t('🏙️ Drumul spre oraș e deschis') : $t('🚧 Drumul spre oraș e închis (lucrări). Se deschide în Capitolul 6')); return; }
@@ -776,6 +784,8 @@ export class WorldScene implements Scene {
     if (act.id === 'coffee' && pawn === this.me && (this.w.stats[`coffee-${pawn.id}-${this.w.day}`] ?? 0) > 0) { this.hud.toast($t('☕ Ai băut deja cafeaua de azi. Mâine încă una!')); return; }
     if (act.id === 'console' && pawn === this.me && this.w.chars[pawn.id].needs.energy < 10) { this.hud.toast((pawn.id === 'bubu' ? $t('😴 Prea obosită pentru jocuri') : $t('😴 Prea obosit pentru jocuri'))); return; }
     const a = ACTIVITIES[act.id]; if (!a) return;
+    // 1.15.0: obosit(a) nu mai muncesti; poti doar sa mergi (si cu bicicleta), sa te speli, sa mananci si sa dormi
+    if (pawn === this.me && !REST_OK.has(act.id) && this.tired(pawn.id)) { this.tiredOffer(); return; }
     if (act.id === 'sleep') { const why = this.canSleep(pawn.id); if (why) { if (pawn === this.me) { this.hud.toast(why); Sfx.play('bad'); } return; } (this.w.chars[pawn.id] as any).napStart = (this.w.minutes / 60 >= 6 && this.w.minutes / 60 < 20) ? (this.w.gameMin ?? 0) : null; }
     const need = this.missing(act.id);
     if (need) { if (pawn === this.me) { this.hud.toast(need); Sfx.play('bad'); pawn.actor.play('puppy'); } return; }
@@ -1427,6 +1437,50 @@ export class WorldScene implements Scene {
       ['🙅', $t('Nu acum'), () => reply(false)],
     ]);
   }
+  // ------------------------------------------------------------------ reclamele (1.15.0): totul se poate si fara ele
+  /** prea obosit(a) ca sa muncesti (energia sub TIRED) */
+  tired(id: CharId) { return this.w.chars[id].needs.energy < TIRED && !(Hol.partyNight(this)); }
+  /** ai incercat sa muncesti obosit(a): odihna, sau o reclama scurta pentru +30 energie */
+  tiredOffer() {
+    const msg = g(this.myId, $t('Ești prea obosit ca să mai muncești. Poți să mergi (și cu bicicleta), să te speli, să mănânci și să dormi.'), $t('Ești prea obosită ca să mai muncești. Poți să mergi (și cu bicicleta), să te speli, să mănânci și să dormi.'));
+    Sfx.play('bad'); this.me.actor.play('sleepy');
+    if (!Ads.can()) { this.hud.toast('😴 ' + msg); return; }
+    this.choice(g(this.myId, $t('😴 Prea obosit'), $t('😴 Prea obosită')), msg, [['📺', $t('Reclamă scurtă: +30 energie'), () => void this.adNeed('energy')], ['🛏️', $t('Mă odihnesc'), () => {}]]);
+  }
+  /** butoanele 📺 de sus: ce nevoie iti poate rezolva o reclama acum (null = nimic) */
+  adOffers(): { k: AdNeed; icon: string; label: string }[] {
+    if (!Ads.can() || this.minigame || this.ride || this.hud.modalOpen() || Ads.showing) return [];
+    const c = this.w.chars[this.myId], n = c.needs, out: { k: AdNeed; icon: string; label: string }[] = [];
+    if (this.me.activity?.a.id === 'sleep') return out;
+    if (c.sick) out.push({ k: 'sick', icon: '🩺', label: $t('Vindecă-te') });
+    if (n.energy < 20) out.push({ k: 'energy', icon: '⚡', label: $t('+30 energie') });
+    if (n.hunger < 30) out.push({ k: 'hunger', icon: '🍽️', label: $t('Sătul(ă)') });
+    if (n.hygiene < 22) out.push({ k: 'hygiene', icon: '🛁', label: $t('Curat(ă)') });
+    return out;
+  }
+  /** reclama cu recompensa pentru o nevoie: doar daca reclama s-a vazut pana la capat */
+  async adNeed(k: AdNeed) {
+    if (!(await Ads.rewarded(t => this.hud.toast(t)))) return;
+    const me = this.myId, n = this.w.chars[me].needs, up = (need: string, to: number, add = 0) => this.op({ k: 'need', who: me, need, delta: add || Math.max(0, to - (n as any)[need]) });
+    if (k === 'energy') { up('energy', 0, 30); this.hud.toast($t('⚡ +30 energie! Gata de treabă')); this.me.actor.play('flex'); }
+    if (k === 'hunger') { up('hunger', 85); this.hud.toast($t('🍽️ Burtica e plină!')); this.me.actor.play('happy'); }
+    if (k === 'hygiene') { up('hygiene', 85); this.hud.toast($t('🛁 Curat și pufos!')); this.me.actor.play('happy'); }
+    if (k === 'sick') { this.op({ k: 'sick', who: me, value: null }); up('health', 80); this.hud.toast($t('🩺 Te-ai vindecat! Sănătate multă 💪')); this.me.actor.play('happy'); }
+    Sfx.play('good'); this.sendCharSync();
+  }
+  /** taraba s-a inchis: o reclama si incasarile cresc cu jumatate (o data pe zi) */
+  stallBonus(earned: number) {
+    const key = 'stallAd-' + this.w.day; if (!Ads.can() || (this.w.stats[key] ?? 0) > 0 || earned <= 0) return;
+    const bonus = Math.max(1, Math.round(earned / 2));
+    this.choice($t('🧺 Taraba s-a închis'), $t('Ai câștigat {0} lei. Vezi o reclamă scurtă și mai primești {1} lei (o dată pe zi).', earned, bonus), [
+      ['📺', $t('+{0} lei', bonus), async () => { if (!(await Ads.rewarded(t => this.hud.toast(t)))) return; this.op({ k: 'stat', key, delta: 1 }); this.op({ k: 'money', delta: bonus }); Sfx.play('register'); this.hud.toast($t('💰 +{0} lei din reclamă', bonus)); this.log($t('{0} a dublat încasările tarabei: +{1} lei 📺', this.me.actor.spec.name, bonus)); }],
+      ['👋', $t('Nu, mulțumesc'), () => {}],
+    ]);
+  }
+  /** ce ramane de facut dupa ce se inchide minijocul (ex. bonusul tarabei) */
+  afterMini: (() => void) | null = null;
+  private sleepAd = false; private sleepFastT = 0;
+
   /** fereastra mica cu cateva optiuni (ex. Brutaria: cumpar / lucrez) */
   choice(title: string, sub: string, opts: [string, string, () => void][]) {
     const m = this.hud.modal(`<h3>${title}</h3><p class="sub">${sub}</p><div class="shop">${opts.map(([ic, lb], i) => `<button data-ch="${i}"><span>${ic}</span><b>${lb}</b></button>`).join('')}</div>`);
@@ -1795,7 +1849,7 @@ export class WorldScene implements Scene {
     }
     if (ctrl && a.id === 'chop' && this.area === 'forest') this.op({ k: 'stat', key: 'forestWood', delta: pawn.id === 'dudu' ? 3 : 2 });
     if (ctrl && a.id === 'sellwood') {
-      const dayKey = 'woodSold-' + this.w.day, left = Math.max(0, PRICE.sawmillDay - (this.w.stats[dayKey] ?? 0));
+      const dayKey = 'woodSold-' + this.w.day, left = (this.w.stats['sawUnl-' + this.w.day] ?? 0) > 0 ? 9999 : Math.max(0, PRICE.sawmillDay - (this.w.stats[dayKey] ?? 0));
       const per = sawPrice(this.w.day, pawn.id), n = Math.min(left, 6, Math.max(0, (this.w.res?.wood ?? 0) - KEEP_WOOD)), lei = n * per;
       if (!n && !left) this.hud.toast($t('🪵 Cheresteaua a cumpărat azi destule lemne ({0}). Mai vino mâine!', PRICE.sawmillDay));
       if (n) { this.op({ k: 'res', res: 'wood', delta: -n }); this.op({ k: 'money', delta: lei }); this.op({ k: 'stat', key: 'woodSold', delta: n }); this.op({ k: 'stat', key: dayKey, delta: n }); if (pawn === this.me) this.hud.toast($t('🪵 Ai vândut {0} lemne la cherestea: +{1} lei ({2} lei bucata{3}; cel mult {4} pe zi)', n, lei, per, pawn.id === 'dudu' ? $t(', Dudu știe să negocieze 😎') : '', PRICE.sawmillDay)); this.log($t('{0} a vândut {1} lemne la cherestea: +{2} lei 💰', pawn.actor.spec.name, n, lei)); }
@@ -2010,6 +2064,12 @@ export class WorldScene implements Scene {
     const allAsleep = pawns.every(p => aiAway(p) || (p.activity?.a.id === 'sleep' && (p.activity.t ?? 0) >= 0));
     const mult = paused ? 0 : allAsleep ? 30 : 1;
     this.timeMult = mult;
+    // 1.15.0: reclama pe tot ecranul vine DOAR in somn, cand timpul trece repede (o data la fiecare somn)
+    // (abia dupa 2 s de timp grabit: intai rutina de seara in doi, apoi reclama, niciodata peste ea)
+    if (this.me.activity?.a.id !== 'sleep') { this.sleepAd = false; this.sleepFastT = 0; }
+    else if (mult > 1 && !this.minigame) { this.sleepFastT += dt; if (!this.sleepAd && this.sleepFastT > 2) { this.sleepAd = true; void Ads.interstitial(); } }
+    else this.sleepFastT = 0;
+    if (this.afterMini && !this.minigame) { const f = this.afterMini; this.afterMini = null; setTimeout(f, 400); }
     this.w.gameMin += dt * speed * mult;
     this.w.minutes = this.w.gameMin % 1440; this.w.day = Math.floor(this.w.gameMin / 1440) + 1;
     const hours = dt * speed * mult / 60;
@@ -2045,6 +2105,7 @@ export class WorldScene implements Scene {
         }
       }
       this.checkGoals();
+      this.hud.setAdChips(this.adOffers());
       if ((this.autoT = (this.autoT + 1) % 3) === 0) try { autoCheck(this, this.fpsAvg); } catch (e) { console.warn(e); } // modul tester: probleme vizuale
       Town.dailyTick(this);
       Story.daily(this);
@@ -2356,7 +2417,7 @@ export class WorldScene implements Scene {
       else if ((R.water ?? 0) < 2 && aiHome && Object.values(this.w.plots ?? {}).some(p => p.crop)) target = FURNITURE.find(f => f.id === 'well');
     }
     else if (p.id === 'dudu' && aiHome && Object.keys(this.w.grass ?? {}).length > 10 && Math.random() < 0.5) target = pick(['mow']);
-    else if (p.id === 'dudu' && aiHome && (R.wood ?? 0) >= 14 && (this.w.stats['woodSold-' + this.w.day] ?? 0) < PRICE.sawmillDay && Math.random() < 0.5) target = FURNITURE.find(f => f.id === 'w-sawmill');
+    else if (p.id === 'dudu' && aiHome && (R.wood ?? 0) >= 14 && ((this.w.stats['woodSold-' + this.w.day] ?? 0) < PRICE.sawmillDay || (this.w.stats['sawUnl-' + this.w.day] ?? 0) > 0) && Math.random() < 0.5) target = FURNITURE.find(f => f.id === 'w-sawmill');
     if (target) { this.goInteract(p, target); return; }
     if (low[1] < 55) {
       if (low[0] === 'hunger') target = pick(['snack', 'eat']);
