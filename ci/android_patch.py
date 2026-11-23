@@ -19,8 +19,17 @@ if os.environ.get('SKIP_ADMOB') != '1':
     cap = json.loads(pathlib.Path('node_modules/@capacitor/android/package.json').read_text())['version']
     sh = os.name == 'nt'
     subprocess.run(['npm', 'i', '--no-save', '--legacy-peer-deps', f'@capacitor/cli@{cap}', f'@capacitor/core@{cap}', f'@capacitor/android@{cap}', ADMOB_PLUGIN], check=True, shell=sh)
+    # 1.15.1: `cap sync` ia pluginurile DOAR din package.json (nu din node_modules): fara linia asta, v1.15.0 a iesit fara
+    # reclame. Scriem pluginul in package.json doar aici, in copia din GitHub Actions (in repo nu se schimba nimic).
+    pj = pathlib.Path('package.json'); pkgj = json.loads(pj.read_text(encoding='utf-8'))
+    name, ver = ADMOB_PLUGIN.rsplit('@', 1); pkgj.setdefault('dependencies', {})[name] = ver
+    pj.write_text(json.dumps(pkgj, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
     subprocess.run(['npx', 'cap', 'sync', 'android'], check=True, shell=sh)
-    print(f'AdMob: {ADMOB_PLUGIN} (Capacitor {cap})')
+    # verificare: pluginul chiar e legat in aplicatie (altfel oprim build-ul, nu scoatem o versiune fara reclame)
+    plugins = json.loads((root / 'app/src/main/assets/capacitor.plugins.json').read_text(encoding='utf-8'))
+    if not any('admob' in json.dumps(p).lower() for p in plugins):
+        sys.exit(f'AdMob nu apare in capacitor.plugins.json: {plugins}')
+    print(f'AdMob: {ADMOB_PLUGIN} (Capacitor {cap}) · pluginuri: {plugins}')
 
 acts = list(root.glob('app/src/main/java/**/MainActivity.java'))
 if not acts:
