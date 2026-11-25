@@ -374,7 +374,7 @@ export class BedtimeGame extends Panel {
           ctx.fillStyle = '#fff'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x + 40, y + 130, w - 80, 22, 11); ctx.fill(); ctx.stroke();
           ctx.fillStyle = '#2ec4b6'; ctx.beginPath(); ctx.roundRect(x + 40, y + 130, (w - 80) * this.fan, 22, 11); ctx.fill();
           if (Math.random() < 0.3) this.fx.fart(x + w / 2 + (Math.random() - 0.5) * w * 0.6, bedY - 20, 1.2);
-        } else { T('Hihihi 😈💨', y + 90, 26); if (Math.random() < 0.25) this.fx.fart(x + w / 2 + (Math.random() - 0.5) * w * 0.6, bedY - 20, 1.3); }
+        } else { T($t('Hihihi 😈💨'), y + 90, 26); if (Math.random() < 0.25) this.fx.fart(x + w / 2 + (Math.random() - 0.5) * w * 0.6, bedY - 20, 1.3); }
         break;
       }
       case 'kiss': {
@@ -387,7 +387,7 @@ export class BedtimeGame extends Panel {
         const r = 18 + this.kiss * 34;
         heartPath(ctx, x + w / 2, bedY - 118, r); ctx.fillStyle = '#ff4d6d'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
         ctx.font = '800 13px "Baloo 2", sans-serif'; ctx.fillStyle = '#fff';
-        ctx.fillText(`${this.kissHold ? '💗 tu' : '🤍 tu'}   ${this.theirKiss ? '💗' : '🤍'} ${this.scene.partner.actor.spec.name}`, x + w / 2, this.noteBtn().y + 62);
+        ctx.fillText(`${this.kissHold ? '💗 ' + $t('tu') : '🤍 ' + $t('tu')}   ${this.theirKiss ? '💗' : '🤍'} ${this.scene.partner.actor.spec.name}`, x + w / 2, this.noteBtn().y + 62);
         break;
       }
       case 'story': {

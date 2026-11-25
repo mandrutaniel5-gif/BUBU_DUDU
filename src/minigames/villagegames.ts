@@ -16,7 +16,7 @@ const QUESTIONS: { q: string; a: string[]; ok: number }[] = [
   { q: $t('Ce faci când partenerul e bolnav?'), a: [$t('Îl lași singur'), $t('Îi faci supă și îl îngrijești 🍲'), $t('Te uiți la TV')], ok: 1 },
   { q: $t('Cu ce uzi grădina?'), a: [$t('Cu apă din fântână 🪣'), $t('Cu suc'), $t('Cu nisip')], ok: 0 },
   { q: $t('Ce aduce îngrășământul?'), a: [$t('Plantele cresc mai repede ✨'), $t('Plantele zboară'), $t('Nimic')], ok: 0 },
-  { q: $t('Ce animal face miere?'), a: ['Vaca', 'Albina 🐝', 'Ariciul'], ok: 1 },
+  { q: $t('Ce animal face miere?'), a: [$t('Vaca'), $t('Albina 🐝'), $t('Ariciul')], ok: 1 },
   { q: $t('Câte ore are o zi?'), a: ['12', '24 ⏰', '100'], ok: 1 },
   { q: $t('Ce e o ie?'), a: [$t('O bluză tradițională românească 👚'), $t('Un fel de supă'), $t('O pasăre')], ok: 0 },
   { q: $t('Ce faci după ce culegi legumele?'), a: [$t('Le arunci'), $t('Le gătești sau le vinzi 🥕'), $t('Le îngropi iar')], ok: 1 },

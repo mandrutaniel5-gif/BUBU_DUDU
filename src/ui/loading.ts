@@ -35,7 +35,7 @@ export async function showLoading(): Promise<void> {
 
   set(0.95, $t('Deschidem căsuța…'));
   const min = 1800; const left = min - (performance.now() - t0); if (left > 0) { const steps = 10; for (let i = 0; i < steps; i++) { await new Promise(r => setTimeout(r, left / steps)); set(0.95 + (i + 1) / steps * 0.05); } }
-  set(1, 'Gata! 💕');
+  set(1, $t('Gata! 💕'));
   await new Promise(r => setTimeout(r, 250));
   el.classList.add('out');
   setTimeout(() => el.remove(), 600);

@@ -296,7 +296,7 @@ export class Hud {
     this.txt(this.els['.me .mood'], moodText(s.myId, s.me.actor.mood));
     const sk = this.els['.me .sick'];
     sk.classList.toggle('hidden', !c.sick);
-    if (c.sick) { const t = `${SICK_INFO[c.sick].icon} ${SICK_INFO[c.sick].label}${c.request ? ' · vrei ' + (REQUESTS[c.request]?.icon ?? '') : ''}`; if (sk.dataset.t !== t) { sk.dataset.t = t; sk.innerHTML = `${t} <button class="mini-btn" data-a="bell">${$t('🔔 Cheamă')}</button>`; } }
+    if (c.sick) { const t = `${SICK_INFO[c.sick].icon} ${SICK_INFO[c.sick].label}${c.request ? ' · ' + $t('vrei {0}', REQUESTS[c.request]?.icon ?? '') : ''}`; if (sk.dataset.t !== t) { sk.dataset.t = t; sk.innerHTML = `${t} <button class="mini-btn" data-a="bell">${$t('🔔 Cheamă')}</button>`; } }
     this.txt(this.els['.clock .time'], (nightAmount(w.minutes) > 0.5 ? '🌙 ' : '☀️ ') + clockText(w.minutes));
     { const se = Story.seasonOf(w.day), ev = Story.eventsOf(w.day, w.stats)[0]; this.txt(this.els['.clock .day'], $t('{0} Ziua {1}{2} 📅', se.icon, w.day, ev ? ' · ' + ev.icon : '')); }
     this.txt(this.root.querySelector('.clock .money'), `💰 ${w.money ?? 0} lei`);
@@ -332,7 +332,7 @@ export class Hud {
   setNet(st: NetStatus, msg?: string) {
     // 1.12.0: jucatorul vede doar Offline / Online (nu Firebase, server...)
     const t = this.s.net.kind;
-    this.els['.net'].textContent = t === 'solo' ? 'Offline' : t === 'local' ? $t('Test 2 tab-uri') : $t('Online: {0}', st === 'online' ? 'conectat' : st === 'connecting' ? $t('se conectează…') : st === 'error' ? $t('fără legătură') : $t('deconectat'));
+    this.els['.net'].textContent = t === 'solo' ? $t('Offline') : t === 'local' ? $t('Test 2 tab-uri') : $t('Online: {0}', st === 'online' ? $t('conectat') : st === 'connecting' ? $t('se conectează…') : st === 'error' ? $t('fără legătură') : $t('deconectat'));
     this.els['.dot'].className = 'dot ' + st;
     if (msg && st === 'error') this.toast('⚠️ ' + msg);
   }
@@ -516,7 +516,7 @@ export class Hud {
     const n = ch.goals.filter(x => w.stats['goal-' + x.id]).length;
     (this.root.querySelector('.goal b') as HTMLElement).textContent = `📜 ${ch.title.split('·')[0].trim()} · ${n}/${ch.goals.length}`;
     const el = this.root.querySelector('.goal .gtxt') as HTMLElement;
-    el.textContent = g ? `${g.icon} ${g.text}` : '🎉 Gata!';
+    el.textContent = g ? `${g.icon} ${g.text}` : $t('🎉 Gata!');
     // 1.12.0: unde se face (jucatorii noi nu stiau unde e soba, masina de tuns, cheresteaua...)
     const hint = this.root.querySelector('.goal .ghint') as HTMLElement | null; if (hint) hint.textContent = g && (g as { hint?: string }).hint ? '📍 ' + (g as { hint?: string }).hint : '';
   }
@@ -569,7 +569,7 @@ export class Hud {
     }).join('');
     const rest = keys.filter(k => !used.has(k));
     const more = rest.length ? `<h4>📦 Altele</h4><div class="invgrid">${rest.map(k => { const it = info(k)!; return `<div class="invit"><span>${it.icon}</span><b>${it.label}</b><i>×${r[k]}</i></div>`; }).join('')}</div>` : '';
-    this.modal(`<h3>${$t('🎒 Inventarul vostru')}</h3><p class="sub">${$t('💰 {0} lei · e comun: ce pune unul, poate lua și celălalt. Produsele pentru tarabă le pui pe tejghea din 🎒 de la tarabă.', this.s.w.money ?? 0)}</p>${html || '<p>Gol… 🙂</p>'}${more}`);
+    this.modal(`<h3>${$t('🎒 Inventarul vostru')}</h3><p class="sub">${$t('💰 {0} lei · e comun: ce pune unul, poate lua și celălalt. Produsele pentru tarabă le pui pe tejghea din 🎒 de la tarabă.', this.s.w.money ?? 0)}</p>${html || '<p>' + $t('Gol… 🙂') + '</p>'}${more}`);
   }
 
   showChapter(doneText?: string) {
@@ -600,7 +600,7 @@ export class Hud {
   openVillage(tab = 'shop') {
     const s = this.s, w = s.w, r = w.res ?? {};
     const online = tab === 'online', city = tab === 'city';
-    const tabs: [string, string][] = online || city ? [] : [['shop', '🛒 Magazin'], [/*ro*/'sell', $t('💱 Piața')], [/*ro*/'hall', $t('🏛️ Primăria')], [/*ro*/'town', $t('🏙️ Orașul')]];
+    const tabs: [string, string][] = online || city ? [] : [['shop', $t('🛒 Magazin')], [/*ro*/'sell', $t('💱 Piața')], [/*ro*/'hall', $t('🏛️ Primăria')], [/*ro*/'town', $t('🏙️ Orașul')]];
     if (online || city) tab = 'shop';
     let body = '';
     const LIST = online ? SHOP_ONLINE : city ? SHOP_CITY : SHOP_BUY;
@@ -707,12 +707,12 @@ export class Hud {
     if (this.rideMode === 'riding') {
       const r = s.ride!; const left = Math.max(1, Math.ceil((r.len - r.s) / Math.max(4, r.v || 4)));
       const dn = DEST_BY_ID[r.dest]?.name;
-      txt = r.dest === 'field' ? $t('🚜 Utilajul lucrează pe rânduri…') : `${vic} ${dn ? 'Spre ' + dn.replace($t('Acasă'), $t('casă')) : DEST_TXT[r.dest] ?? $t('Pe drum')}${r.paused ? ' · ⏸ oprit' : ''}${r.duo ? $t(' cu {0} 💕', nm) : ''}${r.paused ? '' : $t(' · mai ai ~{0} s', left)}`; go = '';
+      txt = r.dest === 'field' ? $t('🚜 Utilajul lucrează pe rânduri…') : `${vic} ${dn ? 'Spre ' + dn.replace($t('Acasă'), $t('casă')) : DEST_TXT[r.dest] ?? $t('Pe drum')}${r.paused ? ' · ' + $t('⏸ oprit') : ''}${r.duo ? $t(' cu {0} 💕', nm) : ''}${r.paused ? '' : $t(' · mai ai ~{0} s', left)}`; go = '';
       if (r.kind === 'bike' || r.kind === 'scooter' || (r.kind === 'tractor' && r.dest !== 'field')) { pause = r.paused ? $t('▶ Pornește') : $t('⏸ Oprește'); back = r.from ? $t('↩ Întoarce') : ''; }
       const ns = s.rideNextStop(); if (ns) { stopAt = ns; stopName = $t('⤵ Oprește la {0} {1}', DEST_BY_ID[ns].icon, DEST_BY_ID[ns].name); }
     }
     else if (this.rideMode === 'passenger') { txt = pa.riding && !pa.board ? $t('{0} Mergeți împreună 💕', vic) : $t('{0} Stai în spate. Așteaptă să pornească {1}', vic, nm); go = ''; }
-    else if (pa.passenger) { txt = $t('{0} {1} a urcat în spate 💕', vic, nm); go = `▶ Pornim ${dest}!`; }
+    else if (pa.passenger) { txt = $t('{0} {1} a urcat în spate 💕', vic, nm); go = $t('▶ Pornim {0}!', dest); }
     else if (pa.callBoard) { txt = $t('{0} {1} vine să urce…', vic, nm); go = (s.myId === 'bubu' ? $t('▶ Pornește singură') : $t('▶ Pornește singur')); show = false; }
     else { txt = $t('{0} Ești pe {1}. Unde mergi{2}?', vic, vname, pa.passenger ? '' : (s.myId === 'bubu' ? $t(', singură sau cu {0}', nm) : $t(', singur sau cu {0}', nm))); go = ''; call = pa.passenger ? '' : (pa.id === 'bubu' ? $t('📣 Cheam-o pe {0}', nm) : $t('📣 Cheamă-l pe {0}', nm)); }
     if (this.rideMode === 'driver') { const here = s.vehAt(veh); dests = DESTS.filter(d => d.id !== here).map(d => { const why = s.reachWhy(d.id); return `<button data-go="${d.id}" class="go${why ? ' off' : ''}" title="${why ?? ''}">${d.icon} ${d.name}</button>`; }).join(''); if (pa.passenger) txt = $t('{0} {1} a urcat în spate 💕 Unde mergeți?', vic, nm); }

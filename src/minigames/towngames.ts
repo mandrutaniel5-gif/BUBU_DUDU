@@ -170,7 +170,7 @@ export class BakeryGame extends Panel {
     ctx.fillStyle = '#c98e5f'; ctx.beginPath(); ctx.roundRect(x + 16, ty, w - 32, 22, 6); ctx.fill(); ctx.stroke();
     // comanda
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(x + 16, y + 40, w * 0.4, 70, 12); ctx.fill(); ctx.stroke();
-    T(ctx, `Comanda ${Math.min(this.i + 1, this.orders.length)}/${this.orders.length}:`, x + 28, y + 56, 13, O, 'left');
+    T(ctx, $t('Comanda {0}/{1}:', Math.min(this.i + 1, this.orders.length), this.orders.length), x + 28, y + 56, 13, O, 'left');
     T(ctx, BREADS.find(b => b.id === this.order)!.name, x + 28, y + 80, 18, '#c0573e', 'left');
     drawBread(ctx, this.order, x + 16 + w * 0.4 - 48, y + 76, 0.55, 1);
     T(ctx, `⏰ ${Math.ceil(Math.max(0, this.left))}s`, x + 28, y + 100, 12, O, 'left');

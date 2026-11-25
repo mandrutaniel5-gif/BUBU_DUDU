@@ -601,9 +601,11 @@ def({
   pose(P, t, p) { P.back = true; P.legL = P.legR = 5; P.sy = 0.94; P.dy = 2; P.armL = P.armR = 0.5; P.headRot = wave(t, 0.2, 0.05); if (p > 0.6 && p < 0.75) P.dy = -Math.abs(Math.sin(t * 12)) * 3; },
   events: [[0.62, f => f.text(0, -110, $t('HAHA'), '#ff9f1c', 0.8)]],
 });
+/** 1.15.3: capul celui care doarme sta pe perna, nu plutind deasupra tabliei (raport iPhone 25.11) */
+export const SLEEP_HEAD_DY = 34;
 def({
   id: 'act_sleepbed', label: $t('Doarme'), icon: '😴', who: 'both', kind: 'base', dur: 4, loop: true,
-  pose(P, t) { P.headOnly = true; P.eyes = 'closed'; P.mouth = 'o'; P.rot = -0.25; P.snot = 0.5 + 0.5 * Math.sin(t * 1.6); P.blush = 0.5; },
+  pose(P, t) { P.headOnly = true; P.dy = SLEEP_HEAD_DY; P.eyes = 'closed'; P.mouth = 'o'; P.rot = -0.25; P.snot = 0.5 + 0.5 * Math.sin(t * 1.6); P.blush = 0.5; },
   tick(f, t, _p, dt) { if (every(t, dt, 1.1, 0.3)) f.emit('zzz', 20, -30, { vx: 10, vy: -20, max: 1.8, size: 0.8 }); },
 });
 def({

@@ -13,7 +13,7 @@ export interface JobDef {
 export const JOBS: Record<string, JobDef> = {
   post: { id: 'post', name: [$t('Poștaș'), $t('Poștăriță')], place: 'village', building: 'v-post', mini: 'post', base: 26, open: [8, 17], energy: 12, icon: '💌', desc: $t('Duci scrisorile prin sat cu bicicleta') },
   bakery: { id: 'bakery', name: [$t('Brutar'), $t('Brutăriță')], place: 'village', building: 'v-bakery', mini: 'bakery', base: 24, open: [6, 13], energy: 12, icon: '🍞', desc: $t('Frămânți, modelezi și coci pâinea satului') },
-  cafe: { id: 'cafe', name: ['Barista', 'Barista'], place: 'city', building: 'c-cafe', mini: 'cafe', base: 38, open: [7, 21], energy: 14, icon: '☕', desc: $t('Faci cafelele comandate, cât mai repede') },
+  cafe: { id: 'cafe', name: [$t('Barista'), $t('Barista')], place: 'city', building: 'c-cafe', mini: 'cafe', base: 38, open: [7, 21], energy: 14, icon: '☕', desc: $t('Faci cafelele comandate, cât mai repede') },
   office: { id: 'office', name: [$t('Funcționar'), $t('Funcționară')], place: 'city', building: 'c-office', mini: 'office', base: 70, open: [8, 18], energy: 18, requires: 'birou', icon: '💼', desc: $t('Sortezi dosarele firmei (ai nevoie de diploma de birou)') },
   nurse: { id: 'nurse', name: [$t('Asistent medical'), $t('Asistentă medicală')], place: 'city', building: 'c-hospital', mini: 'nurse', base: 82, open: [7, 20], energy: 20, requires: 'prim-ajutor', icon: '🩹', desc: $t('Îngrijești pacienții spitalului (ai nevoie de diploma de prim ajutor)') },
 };

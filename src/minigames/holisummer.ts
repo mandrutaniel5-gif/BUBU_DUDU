@@ -244,7 +244,7 @@ export class FishContestShow extends Show {
           return false;
         },
         draw: (c, W, H) => { this.lake(c, W, H); this.lanes(c, W, H);
-          if (this.state === 'reel') { const k = clamp(this.reel / 7); rrect(c, W * 0.14 - 50, H * 0.3, 100, 14, 7, '#fff'); rrect(c, W * 0.14 - 50, H * 0.3, 100 * k, 14, 7, '#7cc576', false); say(c, 'Trage! 💪', W * 0.14, H * 0.24, 15, '#e63946'); }
+          if (this.state === 'reel') { const k = clamp(this.reel / 7); rrect(c, W * 0.14 - 50, H * 0.3, 100, 14, 7, '#fff'); rrect(c, W * 0.14 - 50, H * 0.3, 100 * k, 14, 7, '#7cc576', false); say(c, $t('Trage! 💪'), W * 0.14, H * 0.24, 15, '#e63946'); }
           if (this.state === 'show' && this.last) { icon(c, this.last.icon, W * 0.2, H * 0.36, 44); say(c, this.last.fish ? `${this.last.name} · ${this.last.kg} kg!` : `…${this.last.name} 😂`, W * 0.2, H * 0.26, 15, '#7a3a5a'); }
           const f = this.feed.filter(x => this.t - x.t < 3).slice(-1)[0]; if (f) this.bub(c, f.txt, W / 2, H * 0.2, 13);
           say(c, `⏱ ${Math.max(0, Math.ceil(45 - this.pt))}`, W / 2, 30, 18, '#2b6a9a'); } },

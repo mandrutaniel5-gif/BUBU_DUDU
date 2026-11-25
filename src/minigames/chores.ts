@@ -80,7 +80,7 @@ export class TeethGame extends Panel {
       const T = this.teeth();
       for (const g of this.germs) { const p = T[g.tooth]; if (Math.hypot(this.brushX - p.x, this.brushY - p.y) < 40) { g.hp -= dt * 2.5; if (Math.random() < 0.3) this.fx.emit('puff', p.x + rnd(-20, 20), p.y + rnd(-20, 20), { vy: -20, max: 0.6, size: 0.6 }); } }
       const dead = this.germs.filter(g => g.hp <= 0);
-      for (const g of dead) { const p = T[g.tooth]; this.killed++; Sfx.play('pop'); this.fx.text(p.x, p.y - 30, ['Pa!', 'Iiiik!', 'Nuuu!'][this.killed % 3], '#7cb342', 0.8); this.fx.burst('sparkle', p.x, p.y, 6, 6.28, 90, { max: 0.5 }); }
+      for (const g of dead) { const p = T[g.tooth]; this.killed++; Sfx.play('pop'); this.fx.text(p.x, p.y - 30, [$t('Pa!'), 'Iiiik!', $t('Nuuu!')][this.killed % 3], '#7cb342', 0.8); this.fx.burst('sparkle', p.x, p.y, 6, 6.28, 90, { max: 0.5 }); }
       this.germs = this.germs.filter(g => g.hp > 0);
     }
     if (this.germs.length >= 9) this.finish(0, $t('Carii peste tot! 🦷😱'));

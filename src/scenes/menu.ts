@@ -29,7 +29,7 @@ const other = (w: CharId): CharId => (w === 'bubu' ? 'dudu' : 'bubu');
 const esc = (t: string) => t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
 /** ce scrie pe cartonasul casei (din salvarea de pe telefon): capitolul si ziua */
 function saveInfo(room: string): string {
-  try { const raw = localStorage.getItem('bd-save-' + room); if (!raw) return $t('Încă n-ați jucat pe telefonul ăsta'); const w = JSON.parse(JSON.parse(raw).json); return `Capitolul ${w?.stats?.chapter ?? 0} · Ziua ${w?.day ?? 1}`; }
+  try { const raw = localStorage.getItem('bd-save-' + room); if (!raw) return $t('Încă n-ați jucat pe telefonul ăsta'); const w = JSON.parse(JSON.parse(raw).json); return $t('Capitolul {0} · Ziua {1}', w?.stats?.chapter ?? 0, w?.day ?? 1); }
   catch { return ''; }
 }
 
@@ -55,7 +55,11 @@ export class MenuScene implements Scene {
     this.tab = s.net.mode === 'solo' && s.net.room === OFFLINE_ROOM && hasOffline && !(s.houses ?? []).length ? 'offline' : 'online';
     this.ui = document.createElement('div');
     this.ui.className = 'menu';
+    // limba (colțul din stânga sus și Setări): se ține minte și jocul pornește din nou în ea (casa și salvările rămân)
+    this.ui.addEventListener('change', e => { const t = e.target as HTMLElement; if (t.matches('select.lang')) setLang((t as HTMLSelectElement).value as Lang); });
+    // 1.15.3: limba se alege direct din colțul din stânga sus (cerut de testeri), nu doar din Setări
     this.ui.innerHTML = `
+      <label class="menulang" title="${$t('Limba')}">🌐 <select class="lang">${LANGS.map(l => `<option value="${l.id}"${l.id === lang ? ' selected' : ''}>${l.flag} ${l.name}</option>`).join('')}</select></label>
       <div class="menu-card">
         <h1>${GAME_NAME.includes(' & ') ? GAME_NAME.split(' & ').map(esc).join(' <span>&</span> ') : esc(GAME_NAME)}</h1>
         <p class="tag">${$t('Căsuța noastră 🏡💕')}</p>
@@ -327,7 +331,6 @@ export class MenuScene implements Scene {
       <div class="row2"><button class="xcred">${$t('Închide')}</button></div>`);
     // ascuns: atingi de 5 ori versiunea si apare locul pentru cod
     // limba: se tine minte si jocul porneste din nou in ea (din meniu; casa si salvarile raman)
-    (this.ui.querySelector('select.lang') as HTMLSelectElement | null)?.addEventListener('change', e => setLang((e.target as HTMLSelectElement).value as Lang));
     let taps = 0; const v = this.ui.querySelector('.vtap') as HTMLElement;
     v.addEventListener('click', () => { if (++taps >= 5 && !DEV) this.ui.querySelector('.devcode')!.classList.remove('hidden'); });
   }
@@ -340,9 +343,9 @@ export class MenuScene implements Scene {
     const name = `BubuDudu-salvare-${room === OFFLINE_ROOM ? 'offline' : ((Settings.get().houses ?? [])[0]?.code ?? 'casa')}-${new Date().toISOString().slice(0, 10)}.json`;
     const file = new File([blob], name, { type: 'application/json' });
     const nav = navigator as any;
-    if (nav.canShare?.({ files: [file] })) nav.share({ files: [file], title: 'Salvare ' + GAME_NAME }).catch(() => {});
+    if (nav.canShare?.({ files: [file] })) nav.share({ files: [file], title: $t('Salvare {0}', GAME_NAME) }).catch(() => {});
     else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
-    b.textContent = '✔ Salvat'; setTimeout(() => (b.textContent = $t('💾 Salvează')), 1600);
+    b.textContent = $t('✔ Salvat'); setTimeout(() => (b.textContent = $t('💾 Salvează')), 1600);
   }
   /** fisierul intra in jocul Offline; de acolo il mutati intr-o casa noua („Muta aici progresul din Offline”) */
   importSave() {

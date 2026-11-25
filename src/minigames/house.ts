@@ -49,7 +49,7 @@ export class FridgeCleanGame extends Panel {
       for (const it of this.items) {
         if (it.gone) continue;
         if (Math.hypot(x - (B.x + it.x * B.w), y - (B.y + it.y * B.h)) < 30) {
-          if (it.bad) { it.gone = 0.01; Sfx.play('squelch'); this.fx.text(x, y - 30, ['Bleah!', 'Puah!', $t('La gunoi!'), 'Iiiu!'][Math.floor(Math.random() * 4)], '#7cb342', 0.9); }
+          if (it.bad) { it.gone = 0.01; Sfx.play('squelch'); this.fx.text(x, y - 30, [$t('Bleah!'), 'Puah!', $t('La gunoi!'), 'Iiiu!'][Math.floor(Math.random() * 4)], '#7cb342', 0.9); }
           else { this.mistakes++; Sfx.play('bad'); this.shake = 4; this.fx.text(x, y - 30, $t('E bun! Nu-l arunca 😱'), '#e63946', 0.9); }
           return;
         }
@@ -153,7 +153,7 @@ export class TubScrubGame extends Panel {
     // robinetul
     ctx.strokeStyle = '#9aa5ad'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(x + w * 0.5, y + h * 0.28); ctx.quadraticCurveTo(x + w * 0.5, y + h * 0.36, x + w * 0.56, y + h * 0.36); ctx.stroke();
     if (this.down) { ctx.save(); ctx.translate(this.lx, this.ly); ctx.rotate(-0.4); ctx.fillStyle = '#ff9ab8'; ctx.strokeStyle = O; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(-20, -10, 40, 20, 6); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.fillRect(-18, 10, 36, 6); ctx.restore(); }
-    T(ctx, `Pete: ${this.grime.filter(g => g.d > 0).length}  ·  ⏱ ${Math.max(0, Math.ceil(this.dur - this.t))} s`, x + w / 2, y + 48, 15);
+    T(ctx, $t('Pete: {0}  ·  ⏱ {1} s', this.grime.filter(g => g.d > 0).length, Math.max(0, Math.ceil(this.dur - this.t))), x + w / 2, y + 48, 15);
   }
 }
 

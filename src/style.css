@@ -483,3 +483,7 @@ html.h520l .menu-card .myname { margin-top:3px; font-size:12px; } html.h520l .me
 @keyframes adpulse { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-2px); } }
 html.h500 .hud .adchips { top:46px; } html.h500 .hud .adchips button { font-size:11px; padding:2px 8px; }
 .hud.in-mini .adchips { display:none; }
+
+/* 1.15.3: limba din meniul principal, stânga sus */
+.menu .menulang { width:auto; max-width:46vw; position:absolute; top:calc(var(--safe-t, 0px) + 10px); left:calc(var(--safe-l, 0px) + 12px); z-index:5; display:flex; align-items:center; gap:4px; font-size:18px; background:#fffaf5e6; border:3px solid var(--ink); border-radius:14px; padding:2px 6px; box-shadow:0 3px 0 var(--ink); }
+.menu .menulang select { width:auto; min-width:0; padding:4px 2px; margin:0; box-shadow:none; font-family:inherit; font-size:14px; font-weight:800; color:var(--ink); background:transparent; border:0; outline:none; }

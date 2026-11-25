@@ -161,7 +161,7 @@ export function action(s: S, id: string, f?: Furn) {
   }
   if (id === 'st-h-contest') { s.playHoliday('fishcontest'); return; }
   if (id === 'st-h-picnic') { s.playHoliday('picnic'); return; }
-  if (id === 'st-h-rink') { if (!pay(s, 10 * (s.partnerOnline || s.partner.control === 'ai' ? 2 : 1), 'Patinoarul')) return; s.playHoliday('skate'); return; }
+  if (id === 'st-h-rink') { if (!pay(s, 10 * (s.partnerOnline || s.partner.control === 'ai' ? 2 : 1), $t($t('Patinoarul')))) return; s.playHoliday('skate'); return; }
   if (id === 'st-h-xcar') { if (!pay(s, 8 * 2, $t('Căluțeii'))) return; s.playHoliday('carusel'); return; }
   if (id === 'st-h-santa') { if (st(s, 'santa-' + y)) { s.hud.toast($t('🎅 „Ho-ho-ho! Ne-am pozat deja! Vă aștept la anul!”')); return; } s.playHoliday('santa'); return; }
   if (id.startsWith('st-h-xs-')) { treat(s, id.slice(8)); return; }
@@ -176,10 +176,10 @@ function treat(s: S, k: string) {
     ceai: { lei: 6, icon: '🍵', text: $t('Ceai cald cu scorțișoară și portocală… îți dezgheață lăbuțele'), needs: { warmth: 30, energy: 6 }, anim: 'act_coffee' },
     vata: { lei: 5, icon: '🍭', text: $t('Vată de zahăr roz! …și acum ai vată pe nas 😂'), needs: { fun: 18, hunger: 6 }, anim: 'act_eat' },
   };
-  const t = T[k]; if (!t || !pay(s, t.lei, 'Taraba')) return;
+  const t = T[k]; if (!t || !pay(s, t.lei, $t('Taraba'))) return;
   for (const [n, v] of Object.entries(t.needs)) s.op({ k: 'need', who: s.myId, need: n, delta: v });
   s.me.actor.play(t.anim); setTimeout(() => { if (s.me.actor.anim.id === t.anim) s.me.actor.stop(); if (k === 'vata') s.me.actor.play('laugh'); }, 2600);
-  const p = iso(s.me.gx, s.me.gy, 95); s.fx.text(p.x, p.y, t.icon + ' Mmm!', '#ff4d8d', 1);
+  const p = iso(s.me.gx, s.me.gy, 95); s.fx.text(p.x, p.y, t.icon + ' ' + $t('Mmm!'), '#ff4d8d', 1);
   s.hud.toast(`${t.icon} ${t.text}`); s.op({ k: 'stat', key: 'xtreats', delta: 1 });
 }
 function pickDrop(s: S, fid: string) {

@@ -329,7 +329,7 @@ export class SawmillGame extends Panel {
         ctx.font = '600 10px "Baloo 2", sans-serif'; ctx.fillStyle = '#7a5a4a'; ctx.textAlign = 'left'; ctx.fillText(o.text.length > 44 ? o.text.slice(0, 43) + '…' : o.text, x + 10, y + 25);
         btn('ord' + i, x + cw - 92, y + 2, 82, Math.min(26, rowH * 0.45), done ? $t('✔ Livrată') : $t('Livrează'), !done && have, '#d6f5d0'); }); }
     // 3. gaterul
-    { const x = card(2, '🪚 Gaterul', '#5b7fbf'); const logs = Math.min(3, Math.floor(this.spare() / 2));
+    { const x = card(2, $t('🪚 Gaterul'), '#5b7fbf'); const logs = Math.min(3, Math.floor(this.spare() / 2));
       line($t('2 lemne → 1 scândură'), x + 10, top + 38, O, 12); line($t('tăietură perfectă = scândură în plus'), x + 10, top + 54, '#7a5a4a', 10);
       btn('saw', x + 10, top + ch - bh * 2 - 14, cw - 20, bh, logs ? $t('Taie {0} {1} la gater', logs, logs === 1 ? $t('bușteanul') : $t('bușteni')) : $t('Îți trebuie lemne'), logs > 0, '#cfe3ff');
       btn('planks', x + 10, top + ch - bh - 8, cw - 20, bh, $t('Vinde scândurile ({0} × {1} lei)', this.res('plank'), PLANK_PRICE), this.res('plank') > 0, '#ffe1ea'); }

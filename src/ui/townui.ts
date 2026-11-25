@@ -28,7 +28,7 @@ export function openJob(s: WorldScene, id: string) {
     <ul class="goals inv">
       <li><b>${$t('⏰ Program')}</b><i>${job.open[0]}:00 – ${job.open[1]}:00</i></li>
       <li><b>${$t('⭐ Nivelul tău')}</b><i>${LEVEL_NAMES[lvl][fem ? 1 : 0]}</i></li>
-      <li><b>${$t('📈 Promovare')}</b><i>${lvl >= 3 ? 'nivel maxim' : `${xp}/${LEVEL_NEED[lvl]} ture bune`}</i></li>
+      <li><b>${$t('📈 Promovare')}</b><i>${lvl >= 3 ? $t('nivel maxim') : $t('{0}/{1} ture bune', xp, LEVEL_NEED[lvl])}</i></li>
       <li><b>${$t('💰 Plata pe tură')}</b><i>${$t('{0}–{1} lei', pay0, pay1)}</i></li>
       <li><b>${$t('😴 Energie')}</b><i>-${job.energy}%</i></li>
       ${job.requires ? `<li><b>🎓 ${COURSES[job.requires].name}</b><i>${need ? $t('lipsește') : $t('✔ ai diploma')}</i></li>` : ''}
@@ -69,7 +69,7 @@ export function openBank(s: WorldScene) {
 export function openBoard(s: WorldScene) {
   const qs = questsToday(s), rep = reputation(s.w), L = repLevel(s.w); const next = REP_LEVELS.find(l => l.at > rep);
   const m = s.hud.modal(`<h3>${$t('📜 Avizierul satului · ziua {0}', s.w.day)}</h3>
-    <p class="sub">${$t('Reputația voastră:')} <b>${L.name}</b> (${rep}${next ? ` / ${next.at} pentru „${next.name}”` : ''}) · ${L.bonus ? $t('reducere {0}% la magazinele din sat și prețuri mai bune la piață', Math.round(L.bonus * 100)) : $t('ajutați sătenii ca să primiți reduceri')}${isMarketDay(s.w) ? $t(' · 🎪 azi e târg!') : ''}</p>
+    <p class="sub">${$t('Reputația voastră:')} <b>${L.name}</b> (${rep}${next ? $t(' / {0} pentru „{1}”', next.at, next.name) : ''}) · ${L.bonus ? $t('reducere {0}% la magazinele din sat și prețuri mai bune la piață', Math.round(L.bonus * 100)) : $t('ajutați sătenii ca să primiți reduceri')}${isMarketDay(s.w) ? $t(' · 🎪 azi e târg!') : ''}</p>
     <div class="shop">${qs.map(q => { const v = VILLAGERS.find(v => v.id === q.who)!; const have = questHave(s, q); return `<button data-q="${q.id}" class="${q.done ? 'on' : have < q.qty ? 'poor' : ''}"><span><img class="prev" src="${portrait(v.spec)}" alt=""></span><b>${v.name}</b><small>vrea ${questText(q)}</small><small>${q.done ? $t('✔ gata') : $t('ai {0} · 💰 {1} lei', have, q.pay)}</small></button>`; }).join('')}</div>
     <p class="sub">${$t('Cererile se schimbă în fiecare dimineață. Poți vorbi și direct cu sătenii pe stradă.')}</p>`);
   m.querySelectorAll('[data-q]').forEach(el => el.addEventListener('click', () => { const q = questsToday(s).find(x => x.id === (el as HTMLElement).dataset.q)!; const err = deliverQuest(s, q); if (err) { s.hud.toast(err); Sfx.play('bad'); return; } s.hud.toast($t('💕 Mulțumesc! +{0} lei', q.pay)); openBoard(s); }));

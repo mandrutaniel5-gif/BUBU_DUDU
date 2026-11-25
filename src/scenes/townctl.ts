@@ -212,7 +212,7 @@ export function dailyTick(s: WorldScene) {
     else { b.late += 1; b.loanLeft += 10; msgs.push($t('⚠️ Rată neplătită! Penalizare 10 lei. Munciți la oraș sau vindeți la piață')); }
   }
   setBank(s, b);
-  if (st(s, 'apartment')) { const bill = Math.min(money, APT_BILLS); if (bill) s.op({ k: 'money', delta: -bill }); msgs.push(`💡 Facturi apartament: -${bill} lei`); }
+  if (st(s, 'apartment')) { const bill = Math.min(money, APT_BILLS); if (bill) s.op({ k: 'money', delta: -bill }); msgs.push($t('💡 Facturi apartament: -{0} lei', bill)); }
   questsToday(s);
   if (isMarketDay(s.w)) msgs.push($t('🎪 Azi e zi de târg în sat: piața plătește +40%!'));
   msgs.forEach((m, i) => setTimeout(() => s.hud.toast(m), 1200 + i * 900));

@@ -26,8 +26,8 @@ const pickKey = (res: Record<string, number>, src: string) => src.startsWith('ca
 export interface ChainInfo { id: string; src: string; srcLabel: string; where: string }
 /** produsele tarabei de acasa si sursa lor reala din inventar */
 export const CHAIN_INFO: ChainInfo[] = [
-  { id: 'flower', src: 'cat:flower', srcLabel: 'Flori', where: $t('culege sau crește în grădină 🌸') },
-  { id: 'veg', src: 'cat:veg', srcLabel: 'Legume', where: $t('crește-le în grădină 🥕') },
+  { id: 'flower', src: 'cat:flower', srcLabel: $t('Flori'), where: $t('culege sau crește în grădină 🌸') },
+  { id: 'veg', src: 'cat:veg', srcLabel: $t('Legume'), where: $t('crește-le în grădină 🥕') },
   { id: 'sweet', src: /*ro*/'flour', srcLabel: $t('Făină'), where: $t('magazinul online 🛒') },
   { id: 'drink', src: /*ro*/'lemon', srcLabel: $t('Lămâi'), where: $t('magazinul online 🛒') },
 ];

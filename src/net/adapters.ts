@@ -4,6 +4,8 @@ import { deviceId } from '../game/settings';
 import { $t } from '../i18n';
 
 /** locul (Bubu / Dudu) e ocupat de ALT telefon, conectat acum (semn de viata in ultimele 2 minute) */
+/** cate evenimente neconfirmate tinem in zbor spre Firebase */
+const EV_MAX = 40;
 export function seatTaken(p: any, dev: string, now: number) { return !!p?.online && !!p.dev && p.dev !== dev && now - (Number(p.ts) || 0) < 120000; }
 
 abstract class Base implements NetAdapter {
@@ -105,7 +107,7 @@ export class FirebaseAdapter extends Base {
       this.unsub.push(fb.onChildAdded(evRef, (snap: any) => { const v = snap.val(); if (!v || v.from === me) return; this.onEvent?.(v.e); fb.remove(snap.ref).catch(() => {}); }));
       // conexiunea reala cu Firebase (online / reconectare)
       this.off = off; this.unsub.push(fb.onValue(fb.ref(this.db, '.info/serverTimeOffset'), (s2: any) => { this.off = Number(s2.val()) || 0; }));
-      this.unsub.push(fb.onValue(fb.ref(this.db, '.info/connected'), (snap: any) => { this.connected = snap.val() === true; if (snap.val() === true) { this.setStatus('online'); fb.update(meRef, { online: true, ts: fb.serverTimestamp(), dev }); fb.onDisconnect(meRef).update({ online: false }); } else this.setStatus('connecting'); }));
+      this.unsub.push(fb.onValue(fb.ref(this.db, '.info/connected'), (snap: any) => { this.connected = snap.val() === true; if (snap.val() === true) { this.setStatus('online'); fb.update(meRef, { online: true, ts: fb.serverTimestamp(), dev }); fb.onDisconnect(meRef).update({ online: false }); if (this.pendingUp && !this.upTimer) this.upTimer = setTimeout(() => this.flushUp(), 1500); } else this.setStatus('connecting'); }));
       this.setStatus('online');
     } catch (e) { this.setStatus('error', 'Firebase: ' + (e as Error).message); }
   }
@@ -138,17 +140,33 @@ export class FirebaseAdapter extends Base {
     const done = () => { this.stateInFlight = 0; };
     try { this.fb.update(this.fb.ref(this.db, `rooms/${this.room}/players/${this.me}`), { online: true, state: clean(s), ts: this.fb.serverTimestamp() }).then(done, done); } catch (err) { done(); console.warn('stare netrimisa', err); }
   }
-  sendEvent(e: NetEvent) { if (!this.db || this.taken) return; try { this.fb.push(this.fb.ref(this.db, `rooms/${this.room}/events`), { from: this.me, e: clean(e), ts: Date.now() }).catch(() => { /* offline */ }); } catch (err) { console.warn('eveniment netrimis', err); } }
+  // 1.15.3: pe iPhone, dupa minute in fundal, Firebase trimitea dintr-odata tot ce se adunase in coada si dadea
+  // „Maximum call stack size exceeded” (send → sendData_ → sendRequest). Evenimentele sunt de moment: fara legatura
+  // nu le mai punem in coada, si tinem cel mult EV_MAX neconfirmate.
+  private evInFlight = 0;
+  sendEvent(e: NetEvent) {
+    if (!this.db || this.taken || !this.connected || this.evInFlight >= EV_MAX) return;
+    this.evInFlight++; const done = () => { this.evInFlight = Math.max(0, this.evInFlight - 1); };
+    try { this.fb.push(this.fb.ref(this.db, `rooms/${this.room}/events`), { from: this.me, e: clean(e), ts: Date.now() }).then(done, done); } catch (err) { done(); console.warn('eveniment netrimis', err); }
+  }
   // lumea intreaga se urca in Firebase cel mult o data la 45 s (si imediat la inchidere / minimizare) -> mai putina baterie si date mobile
   private lastUp = 0; private upTimer: ReturnType<typeof setTimeout> | null = null; private pendingUp: { json: string; ts: number } | null = null;
   async saveWorld(json: string, ts: number, force = false) {
     await super.saveWorld(json, ts);
     if (!this.db) return;
     this.pendingUp = { json, ts };
-    const flush = async () => { this.upTimer = null; const p = this.pendingUp; if (!p || !this.db) return; this.pendingUp = null; this.lastUp = Date.now(); try { await this.fb.set(this.fb.ref(this.db, `rooms/${this.room}/save`), p); } catch { /* offline: data viitoare */ } };
     const wait = 45000 - (Date.now() - this.lastUp);
-    if (force || wait <= 0) { if (this.upTimer) { clearTimeout(this.upTimer); this.upTimer = null; } await flush(); }
-    else if (!this.upTimer) this.upTimer = setTimeout(flush, wait);
+    if (force || wait <= 0) { if (this.upTimer) { clearTimeout(this.upTimer); this.upTimer = null; } await this.flushUp(); }
+    else if (!this.upTimer) this.upTimer = setTimeout(() => this.flushUp(), wait);
+  }
+  /** urca ultima salvare; fara legatura asteapta reconectarea (o singura scriere, nu o coada de salvari) */
+  private upBusy = false;
+  private async flushUp() {
+    this.upTimer = null; const p = this.pendingUp;
+    if (!p || !this.db || this.taken) return;
+    if (!this.connected || this.upBusy) return; // la reconectare (.info/connected) se reincearca
+    this.pendingUp = null; this.lastUp = Date.now(); this.upBusy = true;
+    try { await this.fb.set(this.fb.ref(this.db, `rooms/${this.room}/save`), p); } catch { if (!this.pendingUp) this.pendingUp = p; } finally { this.upBusy = false; }
   }
   async loadWorld() {
     const local = await super.loadWorld();
