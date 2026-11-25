@@ -19,7 +19,8 @@ const ID = REAL
 type Listener = { remove: () => Promise<void> };
 interface AdMobPlugin {
   initialize(o?: object): Promise<void>;
-  requestConsentInfo(o?: object): Promise<{ status: string; isConsentFormAvailable?: boolean }>;
+  requestConsentInfo(o?: object): Promise<{ status: string; isConsentFormAvailable?: boolean; privacyOptionsRequirementStatus?: string }>;
+  showPrivacyOptionsForm(): Promise<void>;
   showConsentForm(): Promise<{ status: string }>;
   prepareRewardVideoAd(o: { adId: string; isTesting?: boolean }): Promise<unknown>;
   showRewardVideoAd(): Promise<unknown>;
@@ -71,6 +72,21 @@ export const Ads = {
   /** porneste din timp (la intrarea in joc) */
   init() { void init(); },
   get showing() { return showing; },
+  /** butonul „Confidențialitate reclame” din Setari (doar unde sunt reclame adevarate: Android) */
+  canPrivacy(): boolean { return native(); },
+  /**
+   * GDPR: jucatorul isi schimba oricand acordul pentru reclame (cerinta Google pentru mesajul din UE).
+   * Intoarce un mesaj scurt pentru buton cand formularul nu e necesar (in afara UE).
+   */
+  async privacy(): Promise<string | null> {
+    await init();
+    if (!native()) return $t('📺 Reclamele nu merg pe acest dispozitiv');
+    try {
+      const c = await AdMob.requestConsentInfo();
+      if (c.privacyOptionsRequirementStatus === 'REQUIRED' || c.isConsentFormAvailable) { await AdMob.showPrivacyOptionsForm(); return null; }
+      return $t('Nu e nevoie de acord în țara ta');
+    } catch { return $t('Nu am putut deschide opțiunile. Mai încearcă'); }
+  },
   /**
    * Reclama cu recompensa. Rezolva true DOAR daca reclama s-a vazut pana la capat (atunci dai recompensa).
    * `toast` primeste mesajul pentru jucator cand reclama nu se poate incarca.

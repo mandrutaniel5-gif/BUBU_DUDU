@@ -1,4 +1,5 @@
 // Ecranul de start (1.12.0): Online (casele voastre, cine e in fiecare) sau Offline (singur, pe telefonul asta).
+import { Ads } from '../engine/ads';
 import { DEV, DEV_ROOM, unlockDev, lockDev } from '../game/dev';
 import { Actor } from '../char/actor';
 import { Fx } from '../char/fx';
@@ -163,6 +164,7 @@ export class MenuScene implements Scene {
     if (c.contains('errcopy')) { const t = `${GAME_NAME} v${pkg.version} · ${navigator.userAgent}\n` + ErrorLog.text(); navigator.clipboard?.writeText(t).then(() => { b.textContent = '✔ Copiat'; }).catch(() => { b.textContent = $t('Ține apăsat pe text → Copiază'); }); return; }
     if (c.contains('errclear')) { ErrorLog.clear(); this.showErrors(); return; }
     if (c.contains('eco')) { const on = !isEco(); Settings.set({ eco: on }); b.textContent = on ? $t('🔋 Eco: pornit') : $t('⚡ Eco: oprit'); dispatchEvent(new Event('resize')); return; }
+    if (c.contains('adprivacy')) { const b0 = b as HTMLElement; void Ads.privacy().then(msg => { if (msg) b0.textContent = msg; }); return; }
     if (c.contains('mute')) { const m = !Settings.get().muted; Settings.set({ muted: m }); Sfx.setMuted(m); b.textContent = m ? $t('🔇 Sunet: oprit') : $t('🔊 Sunet: pornit'); return; }
     if (c.contains('studio')) { this.game.go('studio'); return; }
     if (c.contains('export')) { this.exportSave(b); return; }
@@ -314,6 +316,7 @@ export class MenuScene implements Scene {
       <div class="row2 langrow"><label>🌐 ${$t('Limba')} <select class="lang">${LANGS.map(l => `<option value="${l.id}"${l.id === lang ? ' selected' : ''}>${l.flag} ${l.name}</option>`).join('')}</select></label></div>
       <div class="row2"><button class="mute">${s.muted ? $t('🔇 Sunet: oprit') : $t('🔊 Sunet: pornit')}</button><button class="eco" title="${$t('Economisire baterie: mai puține cadre pe secundă când stați')}">${isEco() ? $t('🔋 Eco: pornit') : $t('⚡ Eco: oprit')}</button></div>
       <div class="row2"><button class="errs" title="${$t('Erorile jocului (le poți copia și trimite)')}">${$t('📋 Erori ({0})', ErrorLog.all().length)}</button><button class="credits">${$t('📜 Credite')}</button></div>
+      ${Ads.canPrivacy() ? `<div class="row2"><button class="adprivacy">${$t('🛡️ Confidențialitate reclame')}</button></div>` : ''}
       ${DEV ? `<div class="devbox"><h4>${$t('🧪 Modul dezvoltator')}</h4><p class="sub">${$t('Uneltele (totul nelimitat, capitole, zile, sărbători) merg doar în lumea de test: nu se scrie nimic în casele voastre online.')}</p>
         <div class="row2"><button class="devworld">${$t('🧪 Lumea de test')}</button><button class="devlocal">${$t('👥 Test în 2 tab-uri')}</button></div>
         <div class="row2"><button class="studio">${$t('🎬 Studio')}</button><button class="devreset">${$t('🗑️ Șterge lumea de test')}</button><button class="devoff">${$t('🔒 Oprește')}</button></div></div>` : ''}
