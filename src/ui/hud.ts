@@ -153,7 +153,7 @@ export class Hud {
     return { me: { ...me, name: s.me.actor.spec.name }, partner: { ...pa, name: s.partner.actor.spec.name }, vehicles, t: s.time };
   }
   private caravanDay = -1;
-  private miniT = 0;
+  private miniT = 0; private miniKey = ''; private miniAt = 0;
   /** miniharta marita (se tine minte pe fiecare telefon) */
   /** harta mare: ultima marire (la redeschidere se centreaza pe tine) */
   mapView: MapView | null = null;
@@ -292,7 +292,9 @@ export class Hud {
     requestAnimationFrame(tick);
   }
   update() {
-    if ((this.miniT += 1) % 2 === 0) this.drawMinimap();
+    // 1.17: harta mica se redeseneaza cand va miscati; stand pe loc doar de ~8 ori pe secunda (punctul care pulseaza)
+    { const now = performance.now(), me = this.s.me, pa = this.s.partner, key = `${Math.round(me.gx * 8)},${Math.round(me.gy * 8)},${Math.round(pa.gx * 4)},${Math.round(pa.gy * 4)},${this.mapBig},${this.s.space}`;
+      if ((this.miniT += 1) % 2 === 0 && ((globalThis as any).__perfOld || key !== this.miniKey || now - this.miniAt > 120)) { this.miniKey = key; this.miniAt = now; this.drawMinimap(); } }
     // meniul se actualizeaza de ~8 ori pe secunda (nu la fiecare cadru)
     const now = performance.now(); if (now - this.lastUpd < 125) return; this.lastUpd = now;
     this.updateRide();

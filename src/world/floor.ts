@@ -153,6 +153,8 @@ export class FloorChunks {
   max = 28;
   /** desenul "copt" peste podea: obiectele care nu se misca (copaci, case, campuri), o data pe bucata */
   bake: ((ctx: CanvasRenderingContext2D, ox: number, oy: number, w: number, h: number) => void) | null = null;
+  /** 1.17: culoarea de sub podea, coapta in fiecare bucata (bucatile acopera tot ecranul, deci nu mai pictam fundalul separat) */
+  bg: string | null = null;
   constructor(public scale = 2) {}
   /** cand se schimba harta (lume / apartament) sau calitatea */
   reset(scale?: number) { for (const c of this.chunks.values()) this.pool.push(c.cv); this.chunks.clear(); if (scale) this.scale = scale; this.space = AREA; }
@@ -163,6 +165,7 @@ export class FloorChunks {
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     const ctx = cv.getContext('2d')!;
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H);
+    if (this.bg) { ctx.fillStyle = this.bg; ctx.fillRect(0, 0, W, H); }
     ctx.setTransform(S, 0, 0, S, -ox * S, -oy * S);
     ctx.lineJoin = 'round';
     // dalele care ating dreptunghiul

@@ -87,13 +87,18 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
   const night = nightAmount(scene.w.minutes);
   const apt = scene.space === 'apartment';
   if (apt) {
+    scene.floorChunks.bg = null; // in apartament, sub podea se vede cerul
     // apartamentul = vedere de la etaj: cerul orasului cu blocuri in departare
     const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, night > 0.5 ? '#1d2550' : '#9fd3f5'); bg.addColorStop(1, night > 0.5 ? '#4a3f75' : '#e8f4ff'); ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
     for (let i = 0; i < 26; i++) { const bw = 40 + ((i * 17) % 40), bx = i * (w / 22) - 30, bh = h * (0.2 + ((i * 37) % 50) / 100); ctx.fillStyle = night > 0.5 ? '#2f3a60' : ['#c9d8ee', '#b8c8e6', '#d6e2f2'][i % 3]; ctx.fillRect(bx, h - bh, bw, bh); ctx.fillStyle = night > 0.5 ? '#ffe68088' : '#ffffff88'; for (let yy = h - bh + 10; yy < h - 10; yy += 16) for (let xx = bx + 6; xx < bx + bw - 8; xx += 12) if (((xx * 3 + yy) | 0) % 5) ctx.fillRect(xx, yy, 5, 7); }
   } else {
     if (scene.chapter === 0) { const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, night > 0.5 ? '#2b3a67' : '#ffd6e4'); bg.addColorStop(1, night > 0.5 ? '#4a3f75' : '#ffeacc'); ctx.fillStyle = bg; }
     else ctx.fillStyle = night > 0.5 ? '#1f2540' : '#8fc98a';
-    ctx.fillRect(0, 0, w, h);
+    // 1.17: in lume (dupa Capitolul 0) fundalul e copt in bucatile de podea, care acopera tot ecranul; il pictam aici doar
+    // cand ecranul tremura (marginile se misca) sau in Capitolul 0 (degradeul din jurul casutei)
+    const old = !!(globalThis as any).__perfOld, bgIn = !old && scene.chapter > 0 && scene.shake <= 0.3;
+    scene.floorChunks.bg = !old && scene.chapter > 0 ? (night > 0.5 ? '#1f2540' : '#8fc98a') : null;
+    if (!bgIn) ctx.fillRect(0, 0, w, h);
   }
   ctx.save();
   ctx.translate(w / 2, h / 2);
