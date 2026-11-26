@@ -4,6 +4,9 @@
 // - iconizeDom() -> inlocuieste automat emoji-urile cunoscute din interfata cu desene
 // - fillTextIcons() -> scrie text pe canvas, cu emoji-urile inlocuite de desene
 
+import { drawCharacter, SPECS } from '../char/draw';
+import { basePose, type Pose } from '../char/pose';
+
 const O = '#4a2a22';
 type C = CanvasRenderingContext2D;
 
@@ -30,6 +33,35 @@ function wheel(c: C, x: number, y: number, r: number) { ci(c, x, y, r, '#3a3a44'
 function shirt(c: C, col: string, long = true) {
   po(c, [20, 12, 26, 10, 32, 15, 38, 10, 44, 12, long ? 58 : 52, long ? 34 : 24, long ? 50 : 46, long ? 38 : 30, 46, 30, 46, 54, 18, 54, 18, 30, long ? 14 : 18, long ? 38 : 30, long ? 6 : 12, long ? 34 : 24], col);
 }
+
+/** 1.16: fetele (in loc de emoji-urile cu fete): capul hamsterului din joc, cu expresia potrivita */
+function face(o: Partial<Pose> & { who?: 'bubu' | 'dudu' }) {
+  return (c: C) => {
+    const P = basePose(); Object.assign(P, { headOnly: true, blush: 0.9 }, o);
+    c.save(); try { drawCharacter(c, SPECS[o.who ?? 'dudu'], P, 32, 37, 0.84, 1, 0); } finally { c.restore(); }
+  };
+}
+const FACES: Record<string, Partial<Pose> & { who?: 'bubu' | 'dudu' }> = {
+  '🙂': { eyes: 'dot', mouth: 'smile' }, '☺': { eyes: 'happy', mouth: 'smile', blush: 1.3 }, '😊': { eyes: 'happy', mouth: 'smile', blush: 1.3 },
+  '😄': { eyes: 'happy', mouth: 'open' }, '😁': { eyes: 'happy', mouth: 'grin' }, '🤗': { eyes: 'happy', mouth: 'open', blush: 1.2 },
+  '😅': { eyes: 'happy', mouth: 'open', sweat: 1 }, '😂': { eyes: 'closed', mouth: 'open', tears: 1 }, '🤣': { eyes: 'closed', mouth: 'open', tears: 1 },
+  '😴': { eyes: 'closed', mouth: 'o', snot: 0.8 }, '😪': { eyes: 'half', mouth: 'o', snot: 0.8 }, '😌': { eyes: 'closed', mouth: 'smile' }, '😮‍💨': { eyes: 'closed', mouth: 'o' },
+  '🤫': { eyes: 'dot', mouth: 'flat' }, '🙊': { eyes: 'closed', mouth: 'flat' }, '🙈': { eyes: 'closed', mouth: 'grin', blush: 1.4 },
+  '🥰': { eyes: 'happy', mouth: 'w', blush: 1.6, who: 'bubu' }, '😍': { eyes: 'heart', mouth: 'open' }, '😘': { eyes: 'wink', mouth: 'kiss', who: 'bubu' },
+  '😉': { eyes: 'wink', mouth: 'smile' }, '😳': { eyes: 'wide', mouth: 'o', blush: 1.6 }, '🥶': { eyes: 'strain', mouth: 'wavy', blush: 0.2 },
+  '😤': { eyes: 'angry', mouth: 'flat', brows: 'angry' }, '😠': { eyes: 'angry', mouth: 'frown', brows: 'angry', vein: 0.8 }, '😈': { eyes: 'angry', mouth: 'grin', brows: 'angry' },
+  '🤤': { eyes: 'dot', mouth: 'drool' }, '😋': { eyes: 'happy', mouth: 'tongue' }, '🤪': { eyes: 'wink', mouth: 'tongue' },
+  '😱': { eyes: 'wide', mouth: 'scream' }, '🙀': { eyes: 'wide', mouth: 'scream', sweat: 0.8 }, '😮': { eyes: 'wide', mouth: 'o' },
+  '😩': { eyes: 'strain', mouth: 'wavy', brows: 'sad' }, '😫': { eyes: 'strain', mouth: 'scream', brows: 'sad' }, '😕': { eyes: 'dot', mouth: 'wavy', brows: 'sad' },
+  '😞': { eyes: 'sad', mouth: 'frown', brows: 'sad' }, '😓': { eyes: 'sad', mouth: 'flat', sweat: 1 }, '🥺': { eyes: 'sad', mouth: 'frown', brows: 'up', blush: 1.2 },
+  '😭': { eyes: 'cry', mouth: 'open', tears: 1 }, '😵': { eyes: 'x', mouth: 'o' }, '😵‍💫': { eyes: 'spiral', mouth: 'o', dizzy: 1 },
+  '🤒': { eyes: 'half', mouth: 'wavy', sickTint: 0.8 }, '🤢': { eyes: 'half', mouth: 'wavy', sickTint: 1 }, '🥵': { eyes: 'strain', mouth: 'tongue', sweat: 1, blush: 1.8 },
+  '😒': { eyes: 'side', mouth: 'flat' }, '🧐': { eyes: 'side', mouth: 'flat', brows: 'up' }, '🤔': { eyes: 'side', mouth: 'flat', brows: 'up' }, '😏': { eyes: 'side', mouth: 'smirk' },
+  '😇': { eyes: 'happy', mouth: 'smile', who: 'bubu' }, '🙅': { eyes: 'dot', mouth: 'flat', brows: 'angry' }, '😎': { eyes: 'happy', mouth: 'smirk' },
+  '🥸': { eyes: 'dot', mouth: 'flat' }, '🤓': { eyes: 'dot', mouth: 'grin' }, '🤠': { eyes: 'happy', mouth: 'grin' }, '🤩': { eyes: 'star', mouth: 'open' },
+  '🙃': { eyes: 'wink', mouth: 'smile' }, '🤭': { eyes: 'happy', mouth: 'cat', blush: 1.4, who: 'bubu' }, '🥳': { eyes: 'happy', mouth: 'open' },
+  '🐹': { eyes: 'dot', mouth: 'smile' },
+};
 
 /** registrul: emoji -> functie de desen (64x64) */
 const D: Record<string, (c: C) => void> = {
@@ -282,6 +314,172 @@ const D: Record<string, (c: C) => void> = {
   '🏠➕': c => { po(c, [6, 32, 28, 12, 50, 32], '#e07a5f'); rr(c, 11, 31, 34, 25, 3, '#fff3e0'); rr(c, 22, 40, 11, 16, 2, '#b07a4a'); ci(c, 48, 46, 13, '#5bd16b'); ln(c, [48, 39, 48, 53], 4, '#fff'); ln(c, [41, 46, 55, 46], 4, '#fff'); },
   '🎉': c => { po(c, [8, 58, 22, 18, 48, 44], '#ffd23f'); ln(c, [15, 38, 30, 50], 3, '#ff5d8f'); for (const [x, y, f] of [[34, 12, '#ff5d8f'], [50, 18, '#7ec8f0'], [44, 30, '#9ed67a'], [56, 36, '#ffd23f']] as const) ci(c, x, y, 3.5, f); ln(c, [28, 26, 36, 6], 2.5); ln(c, [38, 38, 58, 26], 2.5); },
 };
+for (const [k, o] of Object.entries(FACES)) if (!D[k]) D[k] = face(o);
+// ---------------- 1.16: restul emoji-urilor din joc, desenate (nu mai ramane niciun emoji al telefonului)
+const hrt = (c: C, x: number, y: number, s: number, f: string, stroke = true) => qd(c, c => { c.moveTo(x, y + s * 0.85); c.bezierCurveTo(x - s * 1.55, y - s * 0.15, x - s * 0.7, y - s * 1.3, x, y - s * 0.45); c.bezierCurveTo(x + s * 0.7, y - s * 1.3, x + s * 1.55, y - s * 0.15, x, y + s * 0.85); }, f, stroke);
+const star = (c: C, x: number, y: number, r: number, f: string, n = 5) => { const p: number[] = []; for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, rr2 = i % 2 ? r * 0.45 : r; p.push(x + Math.cos(a) * rr2, y + Math.sin(a) * rr2); } po(c, p, f); };
+/** labuta de hamster (in locul mainilor) */
+const paw = (c: C, x = 32, y = 36, s = 1, rot = 0) => { c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s); el(c, 0, 4, 15, 14, '#ffe3d6'); for (const [dx, dy] of [[-12, -12], [-4, -17], [5, -17], [13, -11]]) el(c, dx, dy, 5, 6, '#ffe3d6'); el(c, 0, 6, 7, 6, '#ff9ab8', 0, false); for (const [dx, dy] of [[-12, -12], [-4, -17], [5, -17], [13, -11]]) ci(c, dx, dy, 2.4, '#ff9ab8', false); c.restore(); };
+/** pictograma de om (ca la semnele de WC), in miscare */
+const fig = (c: C, col: string, dress: boolean, arms: 'up' | 'down' | 'run') => {
+  if (arms === 'up') for (const s of [-1, 1]) { ln(c, [32 + s * 6, 24, 32 + s * 14, 10], 8); ln(c, [32 + s * 6, 24, 32 + s * 14, 10], 4, col); }
+  else if (arms === 'run') { ln(c, [27, 24, 16, 34], 8); ln(c, [27, 24, 16, 34], 4, col); ln(c, [37, 24, 46, 16], 8); ln(c, [37, 24, 46, 16], 4, col); }
+  else for (const x of [19, 45]) { ln(c, [x, 23, x, 39], 8); ln(c, [x, 23, x, 39], 4, col); }
+  if (arms === 'run') { ln(c, [28, 42, 18, 56], 9); ln(c, [28, 42, 18, 56], 5, col); ln(c, [36, 42, 46, 56], 9); ln(c, [36, 42, 46, 56], 5, col); } else { rr(c, 24, 40, 7, 19, 3, col); rr(c, 33, 40, 7, 19, 3, col); }
+  if (dress) po(c, [27, 20, 37, 20, 47, 45, 17, 45], col); else rr(c, 22, 20, 20, 23, 6, col);
+  ci(c, 32, 11, 7.5, col);
+};
+const circ = (f: string) => (c: C) => { ci(c, 32, 32, 18, f); shine(c, 25, 25, 4); };
+const medal = (f: string, t: string) => (c: C) => { po(c, [20, 4, 30, 4, 34, 26, 24, 26], '#e63946'); po(c, [34, 4, 44, 4, 40, 26, 30, 26], '#5b9cf0'); ci(c, 32, 40, 16, f); ci(c, 32, 40, 10, undefined); c.fillStyle = O; c.font = '800 13px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(t, 32, 41); };
+const media = (d: (c: C) => void) => (c: C) => { rr(c, 6, 6, 52, 52, 12, '#7ab8ff'); d(c); };
+const note1 = (c: C, x: number, y: number) => { ln(c, [x + 6, y, x + 6, y - 28], 3.5); qd(c, c => { c.moveTo(x + 6, y - 28); c.quadraticCurveTo(x + 18, y - 24, x + 16, y - 14); c.quadraticCurveTo(x + 14, y - 20, x + 6, y - 20); }, O); el(c, x, y, 7, 5.5, '#7ab8ff', -0.4); };
+const withHat = (o: Partial<Pose> & { who?: 'bubu' | 'dudu' }, hat: (c: C) => void) => (c: C) => { face(o)(c); hat(c); };
+const EXTRA: Record<string, (c: C) => void> = {
+  // inimi
+  '💞': c => D['💕'](c),
+  '💖': c => { hrt(c, 30, 34, 20, '#ff5d8f'); shine(c, 21, 26, 4); star(c, 50, 14, 8, '#ffd23f'); },
+  '💚': c => { hrt(c, 32, 34, 21, '#5bd16b'); shine(c, 22, 26, 4); },
+  '💛': c => { hrt(c, 32, 34, 21, '#ffd23f'); shine(c, 22, 26, 4); },
+  '❤‍🩹': c => { hrt(c, 32, 34, 21, '#e63946'); c.save(); c.translate(32, 32); c.rotate(-0.6); rr(c, -16, -6, 32, 12, 5, '#fff3e0'); ci(c, -3, 0, 1.5, '#c9a', false); ci(c, 3, 0, 1.5, '#c9a', false); c.restore(); },
+  '💋': c => { qd(c, c => { c.moveTo(8, 32); c.quadraticCurveTo(20, 16, 32, 26); c.quadraticCurveTo(44, 16, 56, 32); c.quadraticCurveTo(32, 54, 8, 32); }, '#e63946'); ln(c, [12, 32, 32, 34, 52, 32], 2.5); },
+  '👄': c => EXTRA['💋'](c),
+  '💍': c => { c.beginPath(); c.lineWidth = 10; c.strokeStyle = O; c.arc(32, 40, 15, 0, 7); c.stroke(); c.lineWidth = 6; c.strokeStyle = '#ffd23f'; c.beginPath(); c.arc(32, 40, 15, 0, 7); c.stroke(); po(c, [24, 18, 40, 18, 44, 24, 32, 34, 20, 24], '#bfe8ff'); shine(c, 28, 22, 2.5); },
+  '💎': c => { po(c, [16, 22, 24, 12, 40, 12, 48, 22, 32, 52], '#bfe8ff'); ln(c, [16, 22, 48, 22], 2.5); ln(c, [24, 12, 28, 22, 32, 52, 36, 22, 40, 12], 2); },
+  // sarbatori si evenimente
+  '🎂': c => { rr(c, 10, 36, 44, 18, 4, '#f4c9a0'); rr(c, 14, 24, 36, 14, 4, '#ffe1ea'); qd(c, c => { c.moveTo(14, 30); c.quadraticCurveTo(20, 36, 26, 30); c.quadraticCurveTo(32, 36, 38, 30); c.quadraticCurveTo(44, 36, 50, 30); }, undefined); for (const x of [22, 32, 42]) { rr(c, x - 2, 12, 4, 12, 1.5, '#7ab8ff'); el(c, x, 8, 2.5, 4, '#ffb347', 0, false); } },
+  '💒': c => { rr(c, 14, 26, 36, 30, 3, '#fff8ef'); po(c, [10, 28, 32, 10, 54, 28], '#e07a5f'); rr(c, 27, 40, 10, 16, 5, '#b07a4a'); hrt(c, 32, 30, 6, '#ff5d8f'); },
+  '🎆': c => { for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; ln(c, [32 + Math.cos(a) * 7, 32 + Math.sin(a) * 7, 32 + Math.cos(a) * 24, 32 + Math.sin(a) * 24], 3.5, ['#ff5d8f', '#ffd23f', '#7ab8ff', '#9ed67a'][i % 4]); } ci(c, 32, 32, 5, '#fff'); },
+  '🏪': c => D['🏬'](c),
+  '🏨': c => { rr(c, 12, 10, 40, 46, 3, '#ffe1ea'); for (let r = 0; r < 3; r++) for (let k = 0; k < 3; k++) rr(c, 17 + k * 11, 15 + r * 10, 7, 6, 1.5, '#bfe8ff'); rr(c, 26, 44, 12, 12, 2, '#b07a4a'); },
+  '🎄': c => { rr(c, 28, 48, 8, 10, 2, '#8a5a3a'); po(c, [32, 30, 52, 50, 12, 50], '#3f9b52'); po(c, [32, 18, 48, 38, 16, 38], '#4fb563'); po(c, [32, 8, 44, 26, 20, 26], '#5bc571'); star(c, 32, 8, 6, '#ffd23f'); ci(c, 24, 44, 2.5, '#e63946', false); ci(c, 40, 34, 2.5, '#7ab8ff', false); },
+  '🎁': c => { rr(c, 10, 26, 44, 30, 3, '#ff5d8f'); rr(c, 8, 20, 48, 10, 3, '#ff7aa2'); rr(c, 28, 20, 8, 36, 1, '#ffd23f'); qd(c, c => { c.moveTo(32, 20); c.quadraticCurveTo(18, 6, 20, 18); c.closePath(); }, '#ffd23f'); qd(c, c => { c.moveTo(32, 20); c.quadraticCurveTo(46, 6, 44, 18); c.closePath(); }, '#ffd23f'); },
+  '🎅': c => { ci(c, 32, 36, 17, '#ffd8b0'); el(c, 32, 48, 16, 11, '#fff'); po(c, [14, 28, 32, 6, 50, 28], '#e63946'); rr(c, 13, 26, 38, 7, 3.5, '#fff'); ci(c, 32, 6, 4, '#fff'); ci(c, 26, 36, 2, O, false); ci(c, 38, 36, 2, O, false); ci(c, 32, 41, 3, '#ff9ab8', false); },
+  '🏆': c => { qd(c, c => { c.moveTo(16, 10); c.lineTo(48, 10); c.quadraticCurveTo(48, 38, 32, 40); c.quadraticCurveTo(16, 38, 16, 10); }, '#ffd23f'); qd(c, c => { c.arc(14, 20, 7, Math.PI * 0.5, Math.PI * 1.5); }); qd(c, c => { c.arc(50, 20, 7, -Math.PI * 0.5, Math.PI * 0.5); }); rr(c, 28, 40, 8, 8, 1, '#e8b830'); rr(c, 18, 48, 28, 8, 2, '#c99a3a'); shine(c, 24, 18, 3); },
+  '🥇': medal('#ffd23f', '1'), '🥈': medal('#d8dde6', '2'), '🥉': medal('#e0a36a', '3'), '🏅': medal('#ffd23f', '★'),
+  '🎟': c => { qd(c, c => { c.moveTo(6, 20); c.lineTo(58, 20); c.lineTo(58, 28); c.arc(58, 32, 4, -Math.PI / 2, Math.PI / 2, true); c.lineTo(58, 44); c.lineTo(6, 44); c.lineTo(6, 36); c.arc(6, 32, 4, Math.PI / 2, -Math.PI / 2, true); c.closePath(); }, '#ffd23f'); ln(c, [42, 22, 42, 42], 2); star(c, 24, 32, 7, '#ff5d8f'); },
+  '🎫': c => EXTRA['🎟'](c),
+  '🪩': c => { ln(c, [32, 2, 32, 12], 2.5); ci(c, 32, 34, 21, '#c9ccd6'); for (const y of [24, 34, 44]) ln(c, [14, y, 50, y], 1.5, '#8a8fa0'); for (const x of [24, 32, 40]) ln(c, [x, 14, x, 54], 1.5, '#8a8fa0'); ci(c, 25, 26, 3, '#fff', false); },
+  '⛸': c => { qd(c, c => { c.moveTo(16, 8); c.lineTo(32, 8); c.lineTo(34, 34); c.lineTo(52, 38); c.quadraticCurveTo(56, 44, 50, 44); c.lineTo(14, 44); c.closePath(); }, '#fff'); ln(c, [10, 52, 56, 52], 4, '#a7adbd'); ln(c, [20, 44, 20, 52], 3); ln(c, [44, 44, 44, 52], 3); },
+  '🎨': c => { qd(c, c => { c.moveTo(32, 8); c.quadraticCurveTo(58, 8, 56, 32); c.quadraticCurveTo(54, 52, 34, 54); c.quadraticCurveTo(26, 54, 28, 46); c.quadraticCurveTo(30, 40, 22, 40); c.quadraticCurveTo(8, 42, 8, 30); c.quadraticCurveTo(8, 8, 32, 8); }, '#f4c9a0'); for (const [x, y, f] of [[22, 22, '#e63946'], [34, 16, '#ffd23f'], [46, 24, '#7ab8ff'], [44, 40, '#9ed67a']] as const) ci(c, x, y, 5, f); },
+  '🎻': c => { c.save(); c.translate(32, 32); c.rotate(0.6); el(c, 0, 10, 12, 10, '#c0573e'); el(c, 0, -4, 9, 8, '#c0573e'); rr(c, -2, -30, 4, 22, 1, '#3a2a22'); ln(c, [-2, 2, 2, 2], 2); c.restore(); },
+  '🥁': c => { el(c, 32, 44, 22, 8, '#e63946'); rr(c, 10, 26, 44, 18, 0, '#e63946'); el(c, 32, 26, 22, 8, '#fff'); ln(c, [14, 6, 28, 22], 3.5, '#c98e5f'); ln(c, [50, 6, 36, 22], 3.5, '#c98e5f'); },
+  '🎵': c => note1(c, 26, 50),
+  '🎶': c => { note1(c, 16, 48); note1(c, 38, 40); },
+  '🍾': c => { c.save(); c.translate(32, 32); c.rotate(-0.5); rr(c, -9, -6, 18, 32, 5, '#3f9b52'); rr(c, -4, -24, 8, 20, 2, '#3f9b52'); rr(c, -5, -28, 10, 6, 2, '#ffd23f'); rr(c, -9, 4, 18, 10, 1, '#fff3e0'); c.restore(); for (const [x, y] of [[48, 8], [54, 16], [44, 2]]) ci(c, x, y, 2.5, '#ffd23f'); },
+  // vreme, natura
+  '💨': c => { for (const [y, l] of [[22, 34], [32, 44], [42, 30]] as const) { ln(c, [8, y, 8 + l, y], 6); ln(c, [8, y, 8 + l, y], 3, '#e8f4ff'); } ci(c, 48, 30, 7, '#e8f4ff'); },
+  '💤': c => { for (const [x, y, s] of [[12, 50, 14], [30, 34, 11], [44, 20, 9]] as const) { ln(c, [x, y - s, x + s, y - s, x, y, x + s, y], 6); ln(c, [x, y - s, x + s, y - s, x, y, x + s, y], 3, '#7a8cff'); } },
+  '🌅': c => { rr(c, 6, 10, 52, 44, 10, '#ffcf8f'); qd(c, c => { c.arc(32, 40, 14, Math.PI, 0); c.closePath(); }, '#ffb347'); rr(c, 6, 40, 52, 14, 0, '#7ab8ff', false); ln(c, [14, 46, 26, 46], 2.5, '#fff'); ln(c, [36, 50, 50, 50], 2.5, '#fff'); rr(c, 6, 10, 52, 44, 10); },
+  '⛈': c => { el(c, 32, 24, 22, 12, '#a7adbd'); ci(c, 22, 20, 9, '#a7adbd'); ci(c, 38, 16, 11, '#a7adbd'); po(c, [30, 34, 22, 48, 30, 48, 26, 60, 40, 42, 32, 42, 36, 34], '#ffd23f'); },
+  '⛄': c => { ci(c, 32, 44, 15, '#fff'); ci(c, 32, 22, 11, '#fff'); rr(c, 22, 6, 20, 10, 2, '#3a3a44'); ci(c, 28, 21, 1.8, O, false); ci(c, 36, 21, 1.8, O, false); po(c, [32, 24, 40, 26, 32, 27], '#ffb347'); },
+  '🍀': c => { for (const [a] of [[0], [1], [2], [3]]) { c.save(); c.translate(32, 30); c.rotate(a * Math.PI / 2); hrt(c, 0, -10, 9, '#5bc571'); c.restore(); } ln(c, [32, 34, 40, 58], 4, '#3f9b52'); },
+  '🍂': c => { leaf(c, 10, 40, 30, -0.5, '#e8873a'); leaf(c, 22, 50, 28, -1.1, '#d96a2b'); },
+  '🌀': c => { c.beginPath(); for (let i = 0; i <= 60; i++) { const a = i / 60 * Math.PI * 5, r = 2 + i / 60 * 22; i ? c.lineTo(32 + Math.cos(a) * r, 32 + Math.sin(a) * r) : c.moveTo(32, 32); } c.lineWidth = 7; c.strokeStyle = O; c.lineCap = 'round'; c.stroke(); c.lineWidth = 4; c.strokeStyle = '#7ab8ff'; c.stroke(); },
+  '💫': c => { star(c, 24, 36, 16, '#ffd23f'); qd(c, c => { c.arc(32, 30, 24, -2.4, -0.4); }); ci(c, 54, 18, 3, '#ffd23f'); },
+  '🌶': c => { qd(c, c => { c.moveTo(48, 14); c.quadraticCurveTo(54, 40, 14, 54); c.quadraticCurveTo(30, 34, 40, 16); c.closePath(); }, '#e63946'); ln(c, [44, 14, 50, 6], 4, '#3f9b52'); },
+  // mancare
+  '🍯': c => { rr(c, 14, 24, 36, 32, 10, '#ffb347'); rr(c, 12, 18, 40, 8, 3, '#c98e5f'); qd(c, c => { c.moveTo(14, 32); c.quadraticCurveTo(22, 40, 26, 32); c.quadraticCurveTo(32, 42, 38, 32); c.quadraticCurveTo(44, 40, 50, 32); }, undefined); },
+  '🌭': c => { c.save(); c.translate(32, 34); c.rotate(-0.4); el(c, 0, 4, 26, 10, '#e8b56a'); el(c, 0, -2, 28, 6, '#c0573e'); ln(c, [-18, -2, -10, -5, -2, -1, 6, -5, 14, -1], 2.5, '#ffd23f'); c.restore(); },
+  '🥪': c => { po(c, [8, 46, 32, 12, 56, 46], '#f4d9a0'); po(c, [12, 44, 32, 20, 52, 44], '#7cc56b', false); po(c, [14, 46, 32, 24, 50, 46], '#ffd45c', false); po(c, [8, 50, 56, 50, 56, 46, 8, 46], '#e8c08a'); },
+  '🍉': c => { qd(c, c => { c.moveTo(6, 22); c.quadraticCurveTo(32, 64, 58, 22); c.closePath(); }, '#3f9b52'); qd(c, c => { c.moveTo(11, 24); c.quadraticCurveTo(32, 56, 53, 24); c.closePath(); }, '#ff5d6f', false); for (const [x, y] of [[24, 30], [32, 36], [40, 30]]) el(c, x, y, 1.8, 2.8, O, 0, false); },
+  '🍎': c => { qd(c, c => { c.moveTo(32, 18); c.bezierCurveTo(8, 6, 4, 50, 22, 56); c.quadraticCurveTo(32, 54, 42, 56); c.bezierCurveTo(60, 50, 56, 6, 32, 18); }, '#e63946'); ln(c, [32, 18, 34, 8], 3.5); leaf(c, 34, 12, 12, -0.6); shine(c, 20, 28, 4); },
+  '🍭': c => { ln(c, [32, 34, 32, 60], 5, '#fff'); ci(c, 32, 22, 16, '#ff9ab8'); c.beginPath(); for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 4, r = i / 40 * 13; i ? c.lineTo(32 + Math.cos(a) * r, 22 + Math.sin(a) * r) : c.moveTo(32, 22); } c.lineWidth = 3; c.strokeStyle = '#fff'; c.stroke(); },
+  '🍬': c => { po(c, [6, 22, 18, 32, 6, 42], '#ff9ab8'); po(c, [58, 22, 46, 32, 58, 42], '#ff9ab8'); el(c, 32, 32, 16, 12, '#ff5d8f'); shine(c, 26, 27, 3); },
+  '🧃': c => { rr(c, 18, 16, 28, 40, 3, '#9ed67a'); rr(c, 18, 26, 28, 16, 0, '#fff', false); ci(c, 32, 34, 5, '#ffb347'); ln(c, [38, 16, 44, 4], 3.5, '#fff'); },
+  '🦴': c => { c.save(); c.translate(32, 32); c.rotate(-0.6); rr(c, -18, -5, 36, 10, 3, '#fff8ec'); for (const [x, y] of [[-20, -6], [-20, 6], [20, -6], [20, 6]]) ci(c, x, y, 6, '#fff8ec'); c.restore(); },
+  // animale
+  '🐔': c => { el(c, 32, 38, 18, 16, '#fff'); ci(c, 38, 22, 10, '#fff'); po(c, [34, 12, 38, 6, 42, 12, 46, 8, 46, 16], '#e63946'); po(c, [47, 22, 56, 25, 47, 28], '#ffb347'); ci(c, 40, 20, 2, O, false); el(c, 46, 31, 3, 4, '#e63946', 0, false); },
+  '🐣': c => { ci(c, 32, 28, 14, '#ffe14f'); ci(c, 27, 26, 2, O, false); ci(c, 37, 26, 2, O, false); po(c, [30, 31, 34, 31, 32, 35], '#ffb347'); po(c, [12, 36, 20, 42, 26, 36, 32, 42, 38, 36, 44, 42, 52, 36, 50, 56, 14, 56], '#fff8ec'); },
+  '🐶': c => { ci(c, 32, 34, 19, '#e8c08a'); el(c, 14, 30, 7, 13, '#a0703f', 0.3); el(c, 50, 30, 7, 13, '#a0703f', -0.3); ci(c, 25, 32, 2.5, O, false); ci(c, 39, 32, 2.5, O, false); el(c, 32, 42, 9, 6, '#fff8ec'); el(c, 32, 39, 3.5, 2.5, O, 0, false); },
+  '🐱': c => { po(c, [14, 26, 18, 8, 28, 18], '#ffb347'); po(c, [50, 26, 46, 8, 36, 18], '#ffb347'); ci(c, 32, 34, 19, '#ffb347'); ci(c, 25, 32, 2.5, O, false); ci(c, 39, 32, 2.5, O, false); po(c, [30, 38, 34, 38, 32, 41], '#ff9ab8'); for (const s of [-1, 1]) { ln(c, [32 + s * 8, 40, 32 + s * 20, 37], 1.5); ln(c, [32 + s * 8, 42, 32 + s * 20, 44], 1.5); } },
+  '🐄': c => { el(c, 14, 22, 8, 4, '#fff', -0.4); el(c, 50, 22, 8, 4, '#fff', 0.4); ci(c, 32, 30, 18, '#fff'); el(c, 24, 24, 6, 5, '#3a3a44', 0, false); el(c, 32, 44, 14, 9, '#ffb3c7'); ci(c, 27, 44, 2, O, false); ci(c, 37, 44, 2, O, false); ci(c, 25, 32, 2.5, O, false); ci(c, 39, 32, 2.5, O, false); },
+  '🐑': c => { for (const [x, y] of [[18, 24], [32, 18], [46, 24], [20, 40], [44, 40], [32, 44]]) ci(c, x, y, 10, '#fff8ec'); el(c, 32, 34, 9, 11, '#5a5a66'); ci(c, 28, 32, 1.8, '#fff', false); ci(c, 36, 32, 1.8, '#fff', false); },
+  '🐻': c => { ci(c, 16, 18, 7, '#a0703f'); ci(c, 48, 18, 7, '#a0703f'); ci(c, 32, 34, 20, '#a0703f'); el(c, 32, 42, 9, 7, '#e8c08a'); el(c, 32, 39, 3.5, 2.5, O, 0, false); ci(c, 25, 31, 2.5, O, false); ci(c, 39, 31, 2.5, O, false); },
+  '🐼': c => { ci(c, 16, 18, 7, '#3a3a44'); ci(c, 48, 18, 7, '#3a3a44'); ci(c, 32, 34, 20, '#fff'); el(c, 24, 32, 5, 6, '#3a3a44', 0.4, false); el(c, 40, 32, 5, 6, '#3a3a44', -0.4, false); ci(c, 24, 32, 1.6, '#fff', false); ci(c, 40, 32, 1.6, '#fff', false); el(c, 32, 41, 3.5, 2.5, O, 0, false); },
+  '🦊': c => { po(c, [10, 12, 22, 22, 14, 30], '#ff8c42'); po(c, [54, 12, 42, 22, 50, 30], '#ff8c42'); po(c, [10, 24, 54, 24, 32, 54], '#ff8c42'); po(c, [16, 34, 32, 54, 48, 34, 32, 40], '#fff8ec'); ci(c, 25, 30, 2.5, O, false); ci(c, 39, 30, 2.5, O, false); ci(c, 32, 52, 3, O, false); },
+  '🐜': c => { for (const [x, r] of [[16, 7], [30, 6], [46, 10]] as const) ci(c, x, 34, r, '#5a3a2a'); for (const x of [26, 32, 38]) { ln(c, [x, 36, x - 6, 50], 2.5); ln(c, [x, 32, x - 6, 18], 2.5); } ln(c, [12, 28, 6, 18], 2); },
+  '🐠': c => { po(c, [10, 20, 20, 32, 10, 44], '#ff8c42'); el(c, 34, 32, 20, 14, '#ff8c42'); rr(c, 28, 19, 6, 26, 3, '#fff', false); ci(c, 46, 29, 2.5, O, false); },
+  '🐡': c => { for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; ln(c, [32 + Math.cos(a) * 16, 32 + Math.sin(a) * 16, 32 + Math.cos(a) * 24, 32 + Math.sin(a) * 24], 3); } ci(c, 32, 32, 17, '#ffd45c'); ci(c, 38, 28, 2.5, O, false); el(c, 44, 36, 3, 2, '#ff9ab8', 0, false); },
+  '🐋': c => { qd(c, c => { c.moveTo(6, 36); c.quadraticCurveTo(8, 18, 32, 20); c.quadraticCurveTo(52, 22, 50, 38); c.quadraticCurveTo(30, 50, 6, 36); }, '#5b9cf0'); po(c, [48, 34, 60, 26, 58, 40], '#5b9cf0'); ci(c, 18, 30, 2.5, O, false); ln(c, [28, 18, 28, 8], 2.5, '#7ec8f0'); ln(c, [28, 10, 22, 6], 2.5, '#7ec8f0'); ln(c, [28, 10, 34, 6], 2.5, '#7ec8f0'); },
+  '🦆': c => { el(c, 30, 42, 20, 12, '#ffe14f'); ci(c, 42, 24, 11, '#ffe14f'); po(c, [51, 24, 60, 27, 51, 30], '#ffb347'); ci(c, 44, 21, 2, O, false); leaf(c, 18, 40, 16, -0.4, '#ffd23f'); },
+  '🤖': c => { ln(c, [32, 6, 32, 14], 3); ci(c, 32, 6, 3.5, '#e63946'); rr(c, 12, 14, 40, 34, 8, '#c9ccd6'); ci(c, 24, 30, 5, '#7ab8ff'); ci(c, 40, 30, 5, '#7ab8ff'); rr(c, 24, 40, 16, 4, 2, '#3a3a44', false); rr(c, 6, 26, 6, 12, 2, '#a7adbd'); rr(c, 52, 26, 6, 12, 2, '#a7adbd'); },
+  // oameni: capul hamsterului cu accesorii, sau pictograma de om
+  '🧑‍🌾': withHat({ eyes: 'happy', mouth: 'smile' }, c => { el(c, 32, 14, 26, 6, '#f2d27a'); qd(c, c => { c.moveTo(20, 14); c.quadraticCurveTo(20, 2, 32, 2); c.quadraticCurveTo(44, 2, 44, 14); }, '#f2d27a'); ln(c, [21, 11, 43, 11], 3, '#e63946'); }),
+  '👨‍🍳': withHat({ eyes: 'happy', mouth: 'smile' }, c => { rr(c, 20, 10, 24, 8, 2, '#fff'); for (const x of [22, 32, 42]) ci(c, x, 8, 7, '#fff'); }),
+  '👩‍🍳': withHat({ eyes: 'happy', mouth: 'smile', who: 'bubu' }, c => { rr(c, 20, 10, 24, 8, 2, '#fff'); for (const x of [22, 32, 42]) ci(c, x, 8, 7, '#fff'); }),
+  '👵': withHat({ eyes: 'happy', mouth: 'smile', who: 'bubu' }, c => { ci(c, 32, 8, 7, '#d8d8e0'); rr(c, 19, 34, 10, 6, 3); rr(c, 35, 34, 10, 6, 3); ln(c, [29, 37, 35, 37], 2); }),
+  '👴': withHat({ eyes: 'happy', mouth: 'smile' }, c => { el(c, 26, 46, 7, 3.5, '#fff', 0.3); el(c, 38, 46, 7, 3.5, '#fff', -0.3); rr(c, 19, 34, 10, 6, 3); rr(c, 35, 34, 10, 6, 3); ln(c, [29, 37, 35, 37], 2); }),
+  '👰': withHat({ eyes: 'happy', mouth: 'smile', who: 'bubu', blush: 1.4 }, c => { qd(c, c => { c.moveTo(14, 14); c.quadraticCurveTo(32, 0, 50, 14); c.lineTo(56, 52); c.lineTo(50, 52); c.lineTo(46, 22); c.quadraticCurveTo(32, 12, 18, 22); c.lineTo(14, 52); c.lineTo(8, 52); c.closePath(); }, 'rgba(255,255,255,0.85)'); }),
+  '👼': withHat({ eyes: 'happy', mouth: 'smile', who: 'bubu' }, c => { el(c, 32, 6, 14, 4, undefined); c.lineWidth = 3; c.strokeStyle = '#ffd23f'; c.beginPath(); c.ellipse(32, 6, 14, 4, 0, 0, 7); c.stroke(); }),
+  '💃': c => fig(c, '#ff7aa2', true, 'up'),
+  '🕺': c => fig(c, '#5b9cf0', false, 'up'),
+  '🧍': c => fig(c, '#a7adbd', false, 'down'),
+  '🏃': c => fig(c, '#5b9cf0', false, 'run'),
+  '🏊': c => { ci(c, 24, 28, 8, '#ffd8b0'); ln(c, [30, 34, 46, 22], 8); ln(c, [30, 34, 46, 22], 4, '#ffd8b0'); for (const y of [40, 50]) { qd(c, c => { c.moveTo(6, y); c.quadraticCurveTo(14, y - 6, 22, y); c.quadraticCurveTo(30, y + 6, 38, y); c.quadraticCurveTo(46, y - 6, 58, y); }); } },
+  '🛌': c => { rr(c, 6, 34, 52, 14, 3, '#c98e5f'); rr(c, 6, 26, 8, 26, 2, '#c98e5f'); rr(c, 16, 30, 40, 8, 3, '#ff9ab8'); ci(c, 20, 26, 7, '#ffd8b0'); ln(c, [10, 52, 10, 58], 3); ln(c, [54, 48, 54, 58], 3); },
+  // maini: labute de hamster
+  '👋': c => { paw(c, 30, 38, 1, -0.3); for (const [a, b] of [[48, 12], [54, 22]]) ln(c, [a, b, a + 6, b - 4], 2.5); },
+  '✋': c => paw(c), '🖐': c => paw(c),
+  '👏': c => { paw(c, 24, 38, 0.8, -0.4); paw(c, 40, 34, 0.8, 0.4); ln(c, [32, 6, 32, 12], 2.5); ln(c, [22, 10, 25, 14], 2.5); ln(c, [42, 10, 39, 14], 2.5); },
+  '👍': c => { rr(c, 18, 28, 34, 26, 9, '#ffe3d6'); qd(c, c => { c.moveTo(18, 34); c.lineTo(18, 14); c.quadraticCurveTo(18, 6, 25, 6); c.quadraticCurveTo(31, 6, 30, 14); c.lineTo(28, 30); }, '#ffe3d6'); for (const y of [36, 43, 50]) ln(c, [40, y, 52, y], 2); el(c, 24, 11, 2.6, 2.6, '#ff9ab8', 0, false); },
+  '👌': c => { paw(c, 30, 38, 0.95); ci(c, 44, 18, 8, undefined); },
+  '👆': c => { D['⬆'](c); },
+  '👉': c => { rr(c, 6, 20, 28, 28, 9, '#ffe3d6'); rr(c, 28, 26, 30, 10, 5, '#ffe3d6'); el(c, 53, 31, 3, 3, '#ff9ab8', 0, false); },
+  '💪': c => { qd(c, c => { c.moveTo(10, 54); c.lineTo(10, 40); c.quadraticCurveTo(12, 26, 28, 26); c.quadraticCurveTo(30, 12, 38, 8); c.quadraticCurveTo(48, 6, 48, 16); c.quadraticCurveTo(46, 22, 40, 22); c.quadraticCurveTo(56, 26, 54, 42); c.quadraticCurveTo(50, 56, 30, 54); c.closePath(); }, '#ffb347'); qd(c, c => { c.moveTo(30, 38); c.quadraticCurveTo(38, 30, 46, 38); }); },
+  '🦵': c => { paw(c, 32, 30, 1.05, Math.PI); },
+  '👀': c => { for (const x of [20, 44]) { el(c, x, 32, 11, 14, '#fff'); ci(c, x + 3, 34, 5, O, false); ci(c, x + 5, 31, 1.6, '#fff', false); } },
+  // obiecte
+  '🚚': c => { rr(c, 4, 16, 36, 28, 3, '#fff'); rr(c, 40, 24, 18, 20, 4, '#5b9cf0'); rr(c, 44, 28, 9, 7, 2, '#bfe8ff'); wheel(c, 16, 46, 6); wheel(c, 48, 46, 6); },
+  '🚗': c => { rr(c, 6, 30, 52, 16, 6, '#e63946'); po(c, [16, 30, 22, 18, 42, 18, 48, 30], '#e63946'); rr(c, 24, 21, 8, 8, 2, '#bfe8ff'); rr(c, 34, 21, 8, 8, 2, '#bfe8ff'); wheel(c, 18, 46, 6); wheel(c, 46, 46, 6); },
+  '🚀': c => { c.save(); c.translate(32, 32); c.rotate(0.8); qd(c, c => { c.moveTo(0, -26); c.quadraticCurveTo(12, -10, 9, 14); c.lineTo(-9, 14); c.quadraticCurveTo(-12, -10, 0, -26); }, '#fff'); ci(c, 0, -6, 5, '#7ab8ff'); po(c, [-9, 4, -16, 18, -9, 14], '#e63946'); po(c, [9, 4, 16, 18, 9, 14], '#e63946'); po(c, [-6, 14, 0, 26, 6, 14], '#ffb347'); c.restore(); },
+  '🛤': c => { ln(c, [20, 6, 12, 58], 4); ln(c, [44, 6, 52, 58], 4); for (let i = 0; i < 5; i++) { const y = 12 + i * 11, k = (y - 6) / 52; ln(c, [18 - k * 10, y, 46 + k * 10, y], 4, '#b07a4a'); } },
+  '⛩': c => { rr(c, 6, 10, 52, 8, 3, '#e63946'); rr(c, 12, 22, 40, 6, 2, '#e63946'); rr(c, 16, 14, 7, 44, 2, '#e63946'); rr(c, 41, 14, 7, 44, 2, '#e63946'); },
+  '🏺': c => { qd(c, c => { c.moveTo(24, 10); c.lineTo(40, 10); c.lineTo(38, 18); c.quadraticCurveTo(54, 28, 46, 48); c.quadraticCurveTo(42, 56, 32, 56); c.quadraticCurveTo(22, 56, 18, 48); c.quadraticCurveTo(10, 28, 26, 18); c.closePath(); }, '#e0a36a'); ln(c, [20, 34, 44, 34], 3, '#a0603a'); },
+  '🪜': c => { ln(c, [20, 6, 16, 58], 4.5); ln(c, [44, 6, 48, 58], 4.5); for (let i = 0; i < 5; i++) ln(c, [19 - i * 0.8, 12 + i * 11, 45 + i * 0.8, 12 + i * 11], 3.5, '#c98e5f'); },
+  '🪟': c => { rr(c, 10, 8, 44, 48, 3, '#bfe8ff'); ln(c, [32, 8, 32, 56], 3.5); ln(c, [10, 32, 54, 32], 3.5); shine(c, 18, 16, 3); },
+  '🧲': c => { qd(c, c => { c.moveTo(12, 8); c.lineTo(24, 8); c.lineTo(24, 34); c.quadraticCurveTo(24, 44, 32, 44); c.quadraticCurveTo(40, 44, 40, 34); c.lineTo(40, 8); c.lineTo(52, 8); c.lineTo(52, 34); c.quadraticCurveTo(52, 56, 32, 56); c.quadraticCurveTo(12, 56, 12, 34); c.closePath(); }, '#e63946'); rr(c, 12, 8, 12, 9, 1, '#d8dde6'); rr(c, 40, 8, 12, 9, 1, '#d8dde6'); },
+  '🥽': c => { rr(c, 6, 22, 52, 22, 10, '#5b9cf0'); el(c, 21, 33, 9, 7, '#bfe8ff'); el(c, 43, 33, 9, 7, '#bfe8ff'); },
+  '⛑': c => { qd(c, c => { c.moveTo(8, 44); c.quadraticCurveTo(8, 12, 32, 12); c.quadraticCurveTo(56, 12, 56, 44); c.closePath(); }, '#e63946'); rr(c, 4, 42, 56, 7, 3, '#e63946'); rr(c, 28, 20, 8, 16, 1, '#fff', false); rr(c, 24, 24, 16, 8, 1, '#fff', false); },
+  '🧥': c => { shirt(c, '#c0573e'); ln(c, [32, 16, 32, 54], 2.5); ci(c, 28, 30, 1.8, O, false); ci(c, 28, 40, 1.8, O, false); },
+  '📿': c => { for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; ci(c, 32 + Math.cos(a) * 18, 28 + Math.sin(a) * 18, 4, '#c98e5f'); } rr(c, 29, 46, 6, 12, 2, '#c98e5f'); },
+  '🧳': c => { rr(c, 8, 20, 48, 34, 6, '#c0573e'); rr(c, 24, 12, 16, 10, 3); ln(c, [8, 32, 56, 32], 2.5); rr(c, 18, 20, 5, 34, 0, '#e8b830', false); rr(c, 41, 20, 5, 34, 0, '#e8b830', false); },
+  '🔮': c => { rr(c, 18, 48, 28, 8, 3, '#c98e5f'); ci(c, 32, 30, 19, '#c9a6ff'); shine(c, 24, 22, 5); },
+  '📅': c => { rr(c, 8, 10, 48, 46, 5, '#fff'); rr(c, 8, 10, 48, 12, 5, '#e63946'); for (const x of [18, 46]) rr(c, x - 2, 4, 4, 10, 2, '#c9ccd6'); c.fillStyle = O; c.font = '800 22px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('14', 32, 40); },
+  '📣': c => { po(c, [10, 26, 22, 26, 48, 10, 48, 54, 22, 38, 10, 38], '#ffb347'); rr(c, 14, 38, 8, 14, 2, '#ffb347'); for (const [x, y] of [[54, 22], [56, 32], [54, 42]]) ln(c, [x, y, x + 4, y + (y - 32) / 3], 2.5); },
+  '🧾': c => { po(c, [14, 6, 50, 6, 50, 58, 44, 54, 38, 58, 32, 54, 26, 58, 20, 54, 14, 58], '#fff'); for (const y of [16, 24, 32, 40]) ln(c, [20, y, 44, y], 2, '#b9aaa3'); },
+  '📄': c => { po(c, [14, 6, 40, 6, 50, 16, 50, 58, 14, 58], '#fff'); po(c, [40, 6, 40, 16, 50, 16], '#e8e0dc'); for (const y of [26, 34, 42]) ln(c, [20, y, 44, y], 2, '#b9aaa3'); },
+  '📝': c => { D['📄'](c); c.save(); c.translate(40, 34); c.rotate(0.7); rr(c, -4, -20, 8, 30, 2, '#ffd23f'); po(c, [-4, 10, 4, 10, 0, 18], '#e8c08a'); c.restore(); },
+  '📒': c => { rr(c, 12, 6, 40, 52, 4, '#ffd23f'); rr(c, 12, 6, 8, 52, 3, '#e8b830'); for (const y of [20, 30, 40]) ln(c, [26, y, 46, y], 2, '#c99a3a'); },
+  '📈': c => { rr(c, 8, 8, 48, 48, 4, '#fff'); ln(c, [14, 46, 26, 34, 34, 40, 50, 18], 4, '#5bd16b'); po(c, [44, 16, 52, 16, 52, 24], '#5bd16b'); },
+  '📭': c => { rr(c, 14, 22, 36, 24, 10, '#7ab8ff'); ln(c, [32, 46, 32, 60], 5); rr(c, 46, 8, 3, 18, 1, O); po(c, [49, 8, 58, 11, 49, 14], '#e63946'); },
+  '📶': c => { for (let i = 0; i < 4; i++) rr(c, 10 + i * 12, 46 - i * 10, 8, 10 + i * 10, 2, '#5bd16b'); },
+  '📍': c => { qd(c, c => { c.moveTo(32, 58); c.quadraticCurveTo(12, 34, 12, 24); c.arc(32, 24, 20, Math.PI, 0); c.quadraticCurveTo(52, 34, 32, 58); }, '#e63946'); ci(c, 32, 24, 7, '#fff'); },
+  '📸': c => { rr(c, 6, 18, 52, 36, 6, '#5a5a66'); rr(c, 22, 12, 20, 8, 2, '#5a5a66'); ci(c, 32, 36, 12, '#bfe8ff'); ci(c, 32, 36, 5, '#5b7fbf'); ci(c, 50, 25, 3, '#ffd23f'); },
+  '⏱': c => { rr(c, 27, 4, 10, 6, 2, '#c9ccd6'); ci(c, 32, 36, 21, '#fff'); ln(c, [32, 36, 40, 24], 3.5, '#e63946'); ci(c, 32, 36, 2.5, O, false); },
+  '⏳': c => { rr(c, 12, 6, 40, 6, 2, '#c98e5f'); rr(c, 12, 52, 40, 6, 2, '#c98e5f'); po(c, [16, 12, 48, 12, 34, 32, 48, 52, 16, 52, 30, 32], '#e8f4ff'); po(c, [22, 50, 42, 50, 32, 40], '#ffd23f', false); po(c, [24, 18, 40, 18, 32, 28], '#ffd23f', false); },
+  '⌛': c => EXTRA['⏳'](c),
+  '💬': c => { rr(c, 6, 10, 52, 34, 12, '#fff'); po(c, [18, 42, 14, 56, 30, 44], '#fff'); for (const x of [22, 32, 42]) ci(c, x, 27, 3, O, false); },
+  '💭': c => { el(c, 34, 24, 24, 16, '#fff'); ci(c, 14, 46, 6, '#fff'); ci(c, 6, 56, 3.5, '#fff'); },
+  '❓': c => { c.fillStyle = '#e63946'; c.strokeStyle = O; c.lineWidth = 6; c.font = '900 52px "Baloo 2", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.strokeText('?', 32, 36); c.fillText('?', 32, 36); },
+  '⚠': c => { po(c, [32, 6, 60, 54, 4, 54], '#ffd23f'); rr(c, 29, 22, 6, 18, 3, O, false); ci(c, 32, 47, 3.5, O, false); },
+  '✖': c => { for (const p of [[16, 16, 48, 48], [48, 16, 16, 48]]) ln(c, p, 9, '#5a4a44'); },
+  '➕': c => { ci(c, 32, 32, 22, '#5bd16b'); ln(c, [32, 18, 32, 46], 6, '#fff'); ln(c, [18, 32, 46, 32], 6, '#fff'); },
+  '♾': c => { c.beginPath(); for (let i = 0; i <= 80; i++) { const t = i / 80 * Math.PI * 2, d = 1 + Math.sin(t) ** 2; const x = 32 + 24 * Math.cos(t) / d, y = 32 + 24 * Math.sin(t) * Math.cos(t) / d; i ? c.lineTo(x, y) : c.moveTo(x, y); } c.lineWidth = 9; c.strokeStyle = O; c.stroke(); c.lineWidth = 5; c.strokeStyle = '#ff7aa2'; c.stroke(); },
+  '🏴‍☠': c => { ln(c, [12, 6, 12, 60], 4); rr(c, 12, 8, 44, 30, 2, '#3a3a44'); ci(c, 34, 20, 7, '#fff'); ln(c, [24, 32, 44, 26], 3, '#fff'); ln(c, [24, 26, 44, 32], 3, '#fff'); },
+  // culori, media, sageti
+  '🔴': circ('#e63946'), '🔵': circ('#5b9cf0'), '🟡': circ('#ffd23f'), '🟣': circ('#a77bdb'), '⚪': circ('#ffffff'),
+  '⏸': media(c => { rr(c, 21, 18, 8, 28, 2, '#fff'); rr(c, 35, 18, 8, 28, 2, '#fff'); }),
+  '⏹': media(c => { rr(c, 20, 20, 24, 24, 3, '#fff'); }),
+  '⏩': media(c => { po(c, [14, 20, 32, 32, 14, 44], '#fff'); po(c, [32, 20, 50, 32, 32, 44], '#fff'); }),
+  '⏭': media(c => { po(c, [14, 20, 30, 32, 14, 44], '#fff'); po(c, [30, 20, 46, 32, 30, 44], '#fff'); rr(c, 46, 20, 5, 24, 1, '#fff'); }),
+  '◀': c => { po(c, [44, 12, 12, 32, 44, 52], '#ff7aa2'); },
+  '⬅': c => { po(c, [56, 24, 56, 40, 32, 40, 32, 52, 8, 32, 32, 12, 32, 24], '#7ab8ff'); },
+  '👈': c => EXTRA['⬅'](c),
+  '↩': c => { qd(c, c => { c.moveTo(50, 50); c.quadraticCurveTo(56, 22, 26, 22); }); c.lineWidth = 4; po(c, [26, 10, 10, 22, 26, 34], '#7ab8ff'); ln(c, [50, 50, 54, 34, 44, 24, 28, 22], 7); ln(c, [50, 50, 54, 34, 44, 24, 28, 22], 3.5, '#7ab8ff'); },
+  '⤵': c => { ln(c, [10, 16, 38, 16, 46, 26, 46, 38], 8); ln(c, [10, 16, 38, 16, 46, 26, 46, 38], 4, '#7ab8ff'); po(c, [34, 38, 58, 38, 46, 56], '#7ab8ff'); },
+};
+for (const [k, f] of Object.entries(EXTRA)) if (!D[k]) D[k] = f;
+
 // Alias (fara selectorul de varianta)
 for (const k of Object.keys(D)) { const b = k.replace(/️/g, ''); if (b !== k && !D[b]) D[b] = D[k]; }
 
