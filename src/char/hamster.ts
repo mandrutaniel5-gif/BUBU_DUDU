@@ -98,8 +98,13 @@ export function sprite(key: string, k: number, x: number, y: number, w: number, 
   return s;
 }
 /** rezolutia imaginii: dupa cat de mare apare personajul pe ecran (trepte, ca sa nu refacem mereu) */
+/** 1.17: calitatea adaptiva de acum (0,6..1). Imaginile pastrate se fac pentru rezolutia completa, ca o schimbare de
+ *  calitate sa nu refaca toate personajele (cu blur) intr-un singur cadru: era o sacadare de ~0,4 s */
+let QB = 1;
+export function setBucketQuality(q: number) { QB = q > 0 ? q : 1; }
 export function bucket(ctx: CanvasRenderingContext2D) {
   let e = 1; try { const m = ctx.getTransform(); e = Math.hypot(m.a, m.b); } catch { /* */ }
+  if (!(globalThis as any).__perfOld) e /= QB;
   return Math.min(6, Math.max(0.5, 2 ** (Math.ceil(Math.log2(Math.max(0.01, e)) * 2) / 2)));
 }
 export function blit(ctx: CanvasRenderingContext2D, s: Sprite) { ctx.drawImage(s.cv, s.x, s.y, s.w, s.h); }

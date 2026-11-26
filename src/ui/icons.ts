@@ -45,10 +45,9 @@ function face(o: Partial<Pose> & { who?: 'bubu' | 'dudu' }) {
   };
 }
 /** cine e jucatorul (la intrarea in lume): fetele se redeseneaza cu personajul lui */
-export function setIconPlayer(who: 'bubu' | 'dudu') {
-  if (who === FACE_WHO) return; FACE_WHO = who;
-  for (const k of [...Object.keys(FACES), '🤧']) { delete urls[k]; for (const ck of Object.keys(cache)) if (ck.startsWith(k + '@')) delete cache[ck]; }
-}
+export function setIconPlayer(who: 'bubu' | 'dudu') { FACE_WHO = who; }
+/** 1.17: fetele depind de jucator: le tinem minte separat pentru Luna si Leo (inainte se aruncau si se refaceau din mers = sacadari) */
+const faceKey = (k: string) => (FACE_KEYS.has(k) ? '#' + FACE_WHO : '');
 const FACES: Record<string, Partial<Pose> & { who?: 'bubu' | 'dudu' }> = {
   '🙂': { eyes: 'dot', mouth: 'smile' }, '☺': { eyes: 'happy', mouth: 'smile', blush: 1.3 }, '😊': { eyes: 'happy', mouth: 'smile', blush: 1.3 },
   '😄': { eyes: 'happy', mouth: 'open' }, '😁': { eyes: 'happy', mouth: 'grin' }, '🤗': { eyes: 'happy', mouth: 'open', blush: 1.2 },
@@ -326,6 +325,7 @@ const D: Record<string, (c: C) => void> = {
 };
 for (const [k, o] of Object.entries(FACES)) if (!D[k]) D[k] = face(o);
 for (const [k, o] of Object.entries(HEADS)) D[k] = face(o);
+const FACE_KEYS = new Set([...Object.keys(FACES), '🤧']);
 // ---------------- 1.16: restul emoji-urilor din joc, desenate (nu mai ramane niciun emoji al telefonului)
 const hrt = (c: C, x: number, y: number, s: number, f: string, stroke = true) => qd(c, c => { c.moveTo(x, y + s * 0.85); c.bezierCurveTo(x - s * 1.55, y - s * 0.15, x - s * 0.7, y - s * 1.3, x, y - s * 0.45); c.bezierCurveTo(x + s * 0.7, y - s * 1.3, x + s * 1.55, y - s * 0.15, x, y + s * 0.85); }, f, stroke);
 const star = (c: C, x: number, y: number, r: number, f: string, n = 5) => { const p: number[] = []; for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, rr2 = i % 2 ? r * 0.45 : r; p.push(x + Math.cos(a) * rr2, y + Math.sin(a) * rr2); } po(c, p, f); };
@@ -501,14 +501,14 @@ export const hasIcon = (e: string) => !!norm(e);
 
 export function iconCanvas(e: string, px = 64): HTMLCanvasElement | null {
   const k = norm(e); if (!k) return null;
-  const key = k + '@' + px;
+  const key = k + faceKey(k) + '@' + px;
   if (cache[key]) return cache[key];
   const cv = document.createElement('canvas'); cv.width = cv.height = px;
   const c = cv.getContext('2d')!; c.scale(px / 64, px / 64);
   LW = 3; D[k](c);
   return cache[key] = cv;
 }
-export function iconURL(e: string) { const k = norm(e); if (!k) return ''; return urls[k] ??= iconCanvas(k, 64)!.toDataURL(); }
+export function iconURL(e: string) { const k = norm(e); if (!k) return ''; return urls[k + faceKey(k)] ??= iconCanvas(k, 64)!.toDataURL(); }
 export const iconImg = (e: string, cls = 'di') => hasIcon(e) ? `<img class="${cls}" src="${iconURL(e)}" alt="">` : e;
 
 // regex pentru toate emoji-urile din registru (cele mai lungi primele)
@@ -609,4 +609,6 @@ export function fillTextIcons(c: C, text: string, x: number, y: number, _size?: 
 /** pregateste toate iconitele dinainte (ecranul de incarcare) */
 export function preloadIcons(step?: (k: number) => void) {
   const keys = Object.keys(D); keys.forEach((k, i) => { iconURL(k); if (step && i % 20 === 0) step(i / keys.length); });
+  // si fetele celuilalt personaj (jucatorul poate fi oricare)
+  const was = FACE_WHO; FACE_WHO = was === 'dudu' ? 'bubu' : 'dudu'; for (const k of FACE_KEYS) iconURL(k); FACE_WHO = was;
 }

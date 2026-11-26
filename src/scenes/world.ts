@@ -506,7 +506,7 @@ export class WorldScene implements Scene {
   navKey = '';
   blockKey() { return `${this.chapter}|${this.bridgeFixed()}|${Story.forestKey(this)}`; }
   /** rezolutia bucatilor de podea si a imaginilor (pasi de 0,25, ca pixelii sa se potriveasca exact) */
-  chunkScale() { return Math.round(Math.max(1, Math.min(2, this.game.dpr * Math.max(1, this.cam.zoom))) * 4) / 4; }
+  chunkScale() { const d = (globalThis as any).__perfOld ? this.game.dpr : this.game.baseDpr; return Math.round(Math.max(1, Math.min(2, d * Math.max(1, this.cam.zoom))) * 4) / 4; } // 1.17: la rezolutia completa (o schimbare de calitate nu mai reface podeaua)
   depleted(id: string) { return (this.w.nodes?.[id] ?? 0) > Date.now(); }
   isDecor(f: Furn) { return !f.solid && ['soilplot', 'rug', 'plot', 'doormat', 'flowers', 'stonepath', 'heartstone', 'flowerbed', 'wildflower', 'lilypad', 'bridgegap'].includes(f.type as string); }
 
@@ -1130,6 +1130,7 @@ export class WorldScene implements Scene {
     this.hud.setMinigame(true);
   }
   switchArea(name: string) {
+    this.game.settle(6000); // 1.17: incarcarea zonei nu inseamna ca aparatul e slab (nu scadem calitatea)
     const from = this.space;
     setArea(name); this.space = name === 'apartment' ? 'apartment' : 'world'; furnChanged();
     this.me.board = false; this.me.riding = false; this.me.passenger = false;

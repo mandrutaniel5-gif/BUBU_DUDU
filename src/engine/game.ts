@@ -1,4 +1,5 @@
 import { ErrorLog } from './errors';
+import { setBucketQuality } from '../char/hamster';
 import { Settings } from '../game/settings';
 export interface Scene {
   enter(): void;
@@ -17,6 +18,8 @@ export class Game {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   w = 0; h = 0; dpr = 1;
+  /** rezolutia fara calitatea adaptiva (pentru imaginile pastrate: podea, personaje) */
+  baseDpr = 1;
   scenes: Record<string, () => Scene> = {};
   scene: Scene | null = null;
   sceneName = '';
@@ -44,7 +47,9 @@ export class Game {
     // si cel mult ~2,2 milioane de pixeli pe ecran (pe un laptop cu ecran mare, la scara 150%, ar fi mult mai multi)
     const cssPx = Math.max(1, (this.rotated ? innerHeight * innerWidth : innerWidth * innerHeight));
     const budget = Math.sqrt(2.2e6 / cssPx);
-    this.dpr = Math.max(0.75, Math.min(base, budget) * this.quality);
+    this.baseDpr = Math.max(0.75, Math.min(base, budget));
+    this.dpr = Math.max(0.75, this.baseDpr * this.quality);
+    setBucketQuality(this.dpr / this.baseDpr);
     const touch = matchMedia('(pointer: coarse)').matches;
     this.rotated = touch && innerHeight > innerWidth;
     this.w = this.rotated ? innerHeight : innerWidth; this.h = this.rotated ? innerWidth : innerHeight;
@@ -70,6 +75,7 @@ export class Game {
     this.scene?.exit();
     this.sceneName = name;
     this.scene = this.scenes[name]();
+    this.settle(8000);
     this.scene.enter();
     if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
   }
@@ -95,7 +101,10 @@ export class Game {
 
   // ---- calitatea adaptiva: masuram cate cadre iese de fapt fata de cate vrem (cel mult pana la Q_MIN)
   private win = { t0: 0, n: 0, want: 0 };
-  private lastDown = 0;
+  private lastDown = 0; private bad = 0; private good = 0;
+  /** pana cand nu masuram (incarcarea unei zone sau scene) */
+  quietUntil = 0;
+  settle(ms = 6000) { this.quietUntil = performance.now() + ms; }
   private adapt(dtMs: number, want: number, now: number) {
     const W = this.win;
     if (!W.t0 || W.want !== want) { W.t0 = now; W.n = 0; W.want = want; return; }
@@ -106,11 +115,15 @@ export class Game {
     W.t0 = now; W.n = 0;
     void dtMs;
     if (document.hidden) return;
+    // 1.17: dupa o zona noua / o scena noua (incarcare) nu judecam; si schimbam doar dupa 2 masuratori la rand
+    if (now < this.quietUntil || (globalThis as any).__noAdapt) { this.bad = this.good = 0; return; }
     // 1.14.2: iPhone-ul in economie de baterie da doar 30 de cadre oricat de putin am desena (si o blocare de cateva secunde
     // nu inseamna ca e slab): atunci nu scadem rezolutia. Si nu mai jos de Q_MIN: la 0,6 jocul arata „blurat”.
     const capped = want > 45 && got > 27 && got < 32.5;
-    if (got < want * 0.72 && !capped && this.quality > Q_MIN) { this.setQuality(Math.max(Q_MIN, this.quality * 0.88)); this.lastDown = now; }
-    else if (got > want * 0.96 && this.quality < 1 && now - this.lastDown > 45000) this.setQuality(Math.min(1, this.quality / 0.85));
+    const old = !!(globalThis as any).__perfOld;
+    if (got < want * 0.72 && !capped && this.quality > Q_MIN) { this.good = 0; if (++this.bad >= (old ? 1 : 2)) { this.bad = 0; this.setQuality(Math.max(Q_MIN, this.quality * 0.88)); this.lastDown = now; } }
+    else if (got > want * 0.96 && this.quality < 1 && now - this.lastDown > (old ? 45000 : 90000)) { this.bad = 0; if (++this.good >= (old ? 1 : 3)) { this.good = 0; this.setQuality(Math.min(1, this.quality / 0.85)); } }
+    else { this.bad = 0; this.good = 0; }
   }
   setQuality(q: number) {
     q = Math.round(q * 100) / 100; if (q === this.quality) return;
