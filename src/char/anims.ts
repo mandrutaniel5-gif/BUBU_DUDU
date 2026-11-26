@@ -605,7 +605,7 @@ def({
 export const SLEEP_HEAD_DY = 34;
 def({
   id: 'act_sleepbed', label: $t('Doarme'), icon: '😴', who: 'both', kind: 'base', dur: 4, loop: true,
-  pose(P, t) { P.headOnly = true; P.bare = true; P.sx = P.sy = 0.7; P.dy = SLEEP_HEAD_DY; P.eyes = 'closed'; P.mouth = 'o'; P.rot = -0.25; P.snot = 0.5 + 0.5 * Math.sin(t * 1.6); P.blush = 0.5; },
+  pose(P, t) { P.headOnly = true; P.bare = true; P.dy = SLEEP_HEAD_DY; P.eyes = 'closed'; P.mouth = 'o'; P.rot = -0.25; P.snot = 0.5 + 0.5 * Math.sin(t * 1.6); P.blush = 0.5; },
   tick(f, t, _p, dt) { if (every(t, dt, 1.1, 0.3)) f.emit('zzz', 20, -30, { vx: 10, vy: -20, max: 1.8, size: 0.8 }); },
 });
 def({

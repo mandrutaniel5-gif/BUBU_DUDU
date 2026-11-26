@@ -1,4 +1,5 @@
 import { DEV } from '../game/dev';
+import { setIconPlayer } from '../ui/icons';
 import { Ads } from '../engine/ads';
 import { drawDevOverlay } from '../ui/devpanel';
 import { Bugs } from '../engine/bugs';
@@ -211,6 +212,7 @@ export class WorldScene implements Scene {
   async enter() {
     resetAreas(); // hartile pornesc curate (altfel obiectele casei se puteau lipi de oras dupa o iesire in meniu)
     worldMapImage(); topMapImage(); // hartile lumii se deseneaza acum, cat e incarcata lumea (nu apartamentul)
+    setIconPlayer(this.myId); // fetele din iconite (emote-uri) sunt personajul tau
     this.hud = new Hud(this);
     this.net.onStatus = (s, msg) => this.hud.setNet(s, msg);
     await this.net.connect(Settings.get().net.room, this.myId);
@@ -1771,7 +1773,7 @@ export class WorldScene implements Scene {
     // pozitionare pe obiect
     const slot = pawn.id === 'bubu' ? 0 : 1;
     pawn.z = 0;
-    if (a.place === 'bed') { pawn.gx = f.gx + 0.42 + slot * 1.16; pawn.gy = f.gy + 0.62; pawn.z = 34; }
+    if (a.place === 'bed') { pawn.gx = f.gx + 0.55 + slot * 0.95; pawn.gy = f.gy + 0.62; pawn.z = 34; }
     else if (a.place === 'tub') { pawn.gx = f.gx + 0.6 + slot * 0.8; pawn.gy = f.gy + 0.5; pawn.z = 24; }
     else if (a.place === 'toilet') { pawn.gx = f.gx + 0.5; pawn.gy = f.gy + 0.6; pawn.z = 12; }
     else if (a.place === 'sofa') { pawn.gx = f.gx + 0.45; pawn.gy = f.gy + 0.64 + slot * 0.72; pawn.z = 10; }

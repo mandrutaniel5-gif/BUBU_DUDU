@@ -5,6 +5,7 @@
 // - fillTextIcons() -> scrie text pe canvas, cu emoji-urile inlocuite de desene
 
 import { drawCharacter, SPECS } from '../char/draw';
+import { ANIMS } from '../char/anims';
 import { basePose, type Pose } from '../char/pose';
 
 const O = '#4a2a22';
@@ -35,11 +36,18 @@ function shirt(c: C, col: string, long = true) {
 }
 
 /** 1.16: fetele (in loc de emoji-urile cu fete): capul hamsterului din joc, cu expresia potrivita */
+/** personajul jucatorului de pe telefonul asta: fetele (emote-urile, 🐹) il arata pe el, nu pe un personaj fix */
+let FACE_WHO: 'bubu' | 'dudu' = 'dudu';
 function face(o: Partial<Pose> & { who?: 'bubu' | 'dudu' }) {
   return (c: C) => {
-    const P = basePose(); Object.assign(P, { headOnly: true, blush: 0.9 }, o);
-    c.save(); try { drawCharacter(c, SPECS[o.who ?? 'dudu'], P, 32, 37, 0.84, 1, 0); } finally { c.restore(); }
+    const P = basePose(); Object.assign(P, { headOnly: true, blush: 0.9 }, o); delete (P as any).who;
+    c.save(); try { drawCharacter(c, SPECS[o.who ?? FACE_WHO], P, 32, 37, 0.84, 1, 0); } finally { c.restore(); }
   };
+}
+/** cine e jucatorul (la intrarea in lume): fetele se redeseneaza cu personajul lui */
+export function setIconPlayer(who: 'bubu' | 'dudu') {
+  if (who === FACE_WHO) return; FACE_WHO = who;
+  for (const k of [...Object.keys(FACES), '🤧']) { delete urls[k]; for (const ck of Object.keys(cache)) if (ck.startsWith(k + '@')) delete cache[ck]; }
 }
 const FACES: Record<string, Partial<Pose> & { who?: 'bubu' | 'dudu' }> = {
   '🙂': { eyes: 'dot', mouth: 'smile' }, '☺': { eyes: 'happy', mouth: 'smile', blush: 1.3 }, '😊': { eyes: 'happy', mouth: 'smile', blush: 1.3 },
@@ -47,7 +55,7 @@ const FACES: Record<string, Partial<Pose> & { who?: 'bubu' | 'dudu' }> = {
   '😅': { eyes: 'happy', mouth: 'open', sweat: 1 }, '😂': { eyes: 'closed', mouth: 'open', tears: 1 }, '🤣': { eyes: 'closed', mouth: 'open', tears: 1 },
   '😴': { eyes: 'closed', mouth: 'o', snot: 0.8 }, '😪': { eyes: 'half', mouth: 'o', snot: 0.8 }, '😌': { eyes: 'closed', mouth: 'smile' }, '😮‍💨': { eyes: 'closed', mouth: 'o' },
   '🤫': { eyes: 'dot', mouth: 'flat' }, '🙊': { eyes: 'closed', mouth: 'flat' }, '🙈': { eyes: 'closed', mouth: 'grin', blush: 1.4 },
-  '🥰': { eyes: 'happy', mouth: 'w', blush: 1.6, who: 'bubu' }, '😍': { eyes: 'heart', mouth: 'open' }, '😘': { eyes: 'wink', mouth: 'kiss', who: 'bubu' },
+  '🥰': { eyes: 'happy', mouth: 'w', blush: 1.6 }, '😍': { eyes: 'heart', mouth: 'open' }, '😘': { eyes: 'wink', mouth: 'kiss' },
   '😉': { eyes: 'wink', mouth: 'smile' }, '😳': { eyes: 'wide', mouth: 'o', blush: 1.6 }, '🥶': { eyes: 'strain', mouth: 'wavy', blush: 0.2 },
   '😤': { eyes: 'angry', mouth: 'flat', brows: 'angry' }, '😠': { eyes: 'angry', mouth: 'frown', brows: 'angry', vein: 0.8 }, '😈': { eyes: 'angry', mouth: 'grin', brows: 'angry' },
   '🤤': { eyes: 'dot', mouth: 'drool' }, '😋': { eyes: 'happy', mouth: 'tongue' }, '🤪': { eyes: 'wink', mouth: 'tongue' },
@@ -57,11 +65,13 @@ const FACES: Record<string, Partial<Pose> & { who?: 'bubu' | 'dudu' }> = {
   '😭': { eyes: 'cry', mouth: 'open', tears: 1 }, '😵': { eyes: 'x', mouth: 'o' }, '😵‍💫': { eyes: 'spiral', mouth: 'o', dizzy: 1 },
   '🤒': { eyes: 'half', mouth: 'wavy', sickTint: 0.8 }, '🤢': { eyes: 'half', mouth: 'wavy', sickTint: 1 }, '🥵': { eyes: 'strain', mouth: 'tongue', sweat: 1, blush: 1.8 },
   '😒': { eyes: 'side', mouth: 'flat' }, '🧐': { eyes: 'side', mouth: 'flat', brows: 'up' }, '🤔': { eyes: 'side', mouth: 'flat', brows: 'up' }, '😏': { eyes: 'side', mouth: 'smirk' },
-  '😇': { eyes: 'happy', mouth: 'smile', who: 'bubu' }, '🙅': { eyes: 'dot', mouth: 'flat', brows: 'angry' }, '😎': { eyes: 'happy', mouth: 'smirk' },
+  '😇': { eyes: 'happy', mouth: 'smile' }, '🙅': { eyes: 'dot', mouth: 'flat', brows: 'angry' }, '😎': { eyes: 'happy', mouth: 'smirk' },
   '🥸': { eyes: 'dot', mouth: 'flat' }, '🤓': { eyes: 'dot', mouth: 'grin' }, '🤠': { eyes: 'happy', mouth: 'grin' }, '🤩': { eyes: 'star', mouth: 'open' },
-  '🙃': { eyes: 'wink', mouth: 'smile' }, '🤭': { eyes: 'happy', mouth: 'cat', blush: 1.4, who: 'bubu' }, '🥳': { eyes: 'happy', mouth: 'open' },
+  '🙃': { eyes: 'wink', mouth: 'smile' }, '🤭': { eyes: 'happy', mouth: 'cat', blush: 1.4 }, '🥳': { eyes: 'happy', mouth: 'open' },
   '🐹': { eyes: 'dot', mouth: 'smile' },
 };
+/** capul Lunei / al lui Leo (cartonasele cu nume): mereu personajul respectiv */
+const HEADS: Record<string, Partial<Pose> & { who?: 'bubu' | 'dudu' }> = { '🐹‍♀': { eyes: 'dot', mouth: 'smile', who: 'bubu' }, '🐹‍♂': { eyes: 'dot', mouth: 'smile', who: 'dudu' } };
 
 /** registrul: emoji -> functie de desen (64x64) */
 const D: Record<string, (c: C) => void> = {
@@ -121,7 +131,7 @@ const D: Record<string, (c: C) => void> = {
   // ---------------- unelte
   '🪓': c => { ln(c, [16, 56, 42, 14], 9); ln(c, [16, 56, 42, 14], 5, '#c99a5a'); qd(c, c => { c.moveTo(36, 10); c.quadraticCurveTo(60, 8, 56, 32); c.lineTo(42, 24); c.closePath(); }, '#c9ccd6'); },
   '⛏️': c => { ln(c, [18, 56, 40, 18], 9); ln(c, [18, 56, 40, 18], 5, '#c99a5a'); qd(c, c => { c.moveTo(14, 18); c.quadraticCurveTo(38, 2, 58, 26); c.quadraticCurveTo(40, 14, 14, 18); }, '#c9ccd6'); },
-  '🔨': c => { ln(c, [20, 56, 36, 26], 9); ln(c, [20, 56, 36, 26], 5, '#c99a5a'); po(c, [22, 10, 56, 10, 56, 26, 22, 26], '#9aa0ae'); },
+  '🔨': c => { c.save(); c.translate(32, 33); c.rotate(-0.72); rr(c, -4.5, -6, 9, 34, 4, '#c98e5f'); ln(c, [0, 0, 0, 24], 1.5, '#a0703f'); rr(c, -19, -20, 30, 15, 4, '#a7adbd'); rr(c, 11, -18, 9, 11, 2, '#c9ccd6'); po(c, [-19, -18, -27, -24, -23, -14, -19, -10], '#a7adbd'); ln(c, [-14, -16, 6, -16], 2, '#d8dde6'); c.restore(); },
   '🔧': c => { ln(c, [16, 50, 40, 26], 10); ln(c, [16, 50, 40, 26], 6, '#c9ccd6'); ci(c, 44, 22, 11, '#c9ccd6'); ci(c, 48, 18, 4, '#fff'); },
   '🪚': c => { po(c, [10, 30, 46, 22, 46, 40, 10, 40], '#c9ccd6'); for (let i = 0; i < 6; i++) po(c, [12 + i * 6, 40, 15 + i * 6, 45, 18 + i * 6, 40], '#c9ccd6'); rr(c, 44, 18, 14, 26, 6, '#c0563a'); },
   '🪣': c => { po(c, [14, 22, 50, 22, 44, 56, 20, 56], '#7cc8f0'); el(c, 32, 22, 18, 5, '#bfe8ff'); qd(c, c => { c.moveTo(14, 22); c.quadraticCurveTo(32, -2, 50, 22); }, undefined); },
@@ -131,7 +141,7 @@ const D: Record<string, (c: C) => void> = {
   '🧽': c => { rr(c, 10, 22, 44, 24, 6, '#ffe14f'); rr(c, 10, 38, 44, 8, 3, '#6bb35a'); for (const [x, y] of [[20, 30], [32, 28], [44, 31]]) ci(c, x, y, 2.5, '#e8c030', false); },
   '🧼': c => { rr(c, 10, 22, 44, 26, 12, '#ffb3c7'); ci(c, 48, 16, 6, 'rgba(190,230,255,.8)'); ci(c, 38, 10, 4, 'rgba(190,230,255,.8)'); },
   '🫧': c => { ci(c, 24, 36, 14, 'rgba(190,230,255,.6)'); ci(c, 44, 22, 9, 'rgba(190,230,255,.6)'); shine(c, 18, 30); },
-  '🪥': c => { rr(c, 6, 36, 40, 8, 4, '#7cc8f0'); rr(c, 40, 22, 18, 12, 3, '#fff'); },
+  '🪥': c => { c.save(); c.translate(32, 32); c.rotate(-0.7); rr(c, -26, -4, 38, 9, 4.5, '#ff9ab8'); rr(c, 10, -6, 18, 12, 4, '#fff'); for (const x of [13, 17, 21, 25]) ln(c, [x, -6, x, -14], 3, '#7ec8f0'); qd(c, c => { c.moveTo(11, -14); c.quadraticCurveTo(14, -24, 20, -18); c.quadraticCurveTo(26, -24, 28, -14); c.closePath(); }, '#fff'); ln(c, [14, -17, 25, -17], 2, '#9be3c8'); shine(c, -18, -2, 2); c.restore(); },
   '🩹': c => { c.save(); c.translate(32, 32); c.rotate(-0.7); rr(c, -26, -9, 52, 18, 9, '#f2c9a0'); rr(c, -9, -9, 18, 18, 2, '#fff3e0'); c.restore(); },
   '💊': c => { c.save(); c.translate(32, 32); c.rotate(-0.7); rr(c, -24, -10, 48, 20, 10, '#fff'); qd(c, c => { c.moveTo(0, -10); c.lineTo(-14, -10); c.arc(-14, 0, 10, -Math.PI / 2, Math.PI / 2, true); c.lineTo(0, 10); c.closePath(); }, '#ff5d8f'); c.restore(); },
   '🌡️': c => { rr(c, 26, 6, 12, 40, 6, '#fff'); ci(c, 32, 48, 9, '#e63946'); ln(c, [32, 20, 32, 44], 4, '#e63946'); },
@@ -251,7 +261,7 @@ const D: Record<string, (c: C) => void> = {
   '🏬': c => { rr(c, 6, 18, 52, 38, 3, '#ffe1ea'); rr(c, 6, 12, 52, 10, 3, '#ff7aa2'); for (let i = 0; i < 4; i++) rr(c, 10 + i * 12, 28, 8, 10, 2, '#bfe8ff'); rr(c, 26, 42, 12, 14, 2, '#bfe8ff'); },
   '🩺': c => { qd(c, c => { c.moveTo(16, 8); c.lineTo(16, 30); c.quadraticCurveTo(16, 44, 30, 44); c.quadraticCurveTo(44, 44, 44, 30); c.lineTo(44, 8); }, undefined); ln(c, [30, 44, 30, 50, 46, 54], 3); ci(c, 48, 54, 6, '#c9ccd6'); ci(c, 16, 8, 3, O, false); ci(c, 44, 8, 3, O, false); },
   '🤕': c => { ci(c, 32, 34, 22, '#ffd8b0'); rr(c, 10, 18, 44, 9, 4, '#fff'); ci(c, 24, 36, 2.5, O, false); ci(c, 40, 36, 2.5, O, false); ln(c, [26, 46, 38, 46], 2.5); },
-  '🤧': c => { ci(c, 32, 30, 20, '#ffd8b0'); ln(c, [22, 26, 28, 28], 2.5); ln(c, [36, 28, 42, 26], 2.5); rr(c, 22, 38, 22, 16, 5, '#fff'); },
+  '🤧': c => { face({ eyes: 'strain', mouth: 'open', blush: 1.3 })(c); for (const [x, y, r] of [[55, 42, 5], [59, 34, 3.5], [57, 51, 3.5]]) ci(c, x, y, r, 'rgba(190,230,255,0.9)', false); },
   '😢': c => { ci(c, 32, 32, 22, '#ffe58a'); ci(c, 24, 28, 2.5, O, false); ci(c, 40, 28, 2.5, O, false); qd(c, c => { c.arc(32, 46, 8, Math.PI * 1.15, Math.PI * 1.85); }, undefined); el(c, 22, 38, 3, 5, '#7ec8f0', 0, false); },
   '🧤': c => { qd(c, c => { c.moveTo(18, 56); c.lineTo(18, 24); c.quadraticCurveTo(18, 14, 26, 14); c.lineTo(42, 14); c.quadraticCurveTo(50, 14, 50, 24); c.lineTo(50, 30); c.lineTo(56, 26); c.quadraticCurveTo(62, 32, 50, 44); c.lineTo(46, 56); c.closePath(); }, '#e07a5f'); rr(c, 16, 50, 32, 8, 3, '#fff'); },
   '🎪': c => { po(c, [6, 30, 32, 8, 58, 30], '#ff5d8f'); rr(c, 10, 30, 44, 26, 2, '#fff'); for (let i = 0; i < 4; i++) rr(c, 12 + i * 11, 30, 5, 26, 0, '#ff8fab', false); rr(c, 26, 40, 12, 16, 2, '#7a4a2a'); },
@@ -315,6 +325,7 @@ const D: Record<string, (c: C) => void> = {
   '🎉': c => { po(c, [8, 58, 22, 18, 48, 44], '#ffd23f'); ln(c, [15, 38, 30, 50], 3, '#ff5d8f'); for (const [x, y, f] of [[34, 12, '#ff5d8f'], [50, 18, '#7ec8f0'], [44, 30, '#9ed67a'], [56, 36, '#ffd23f']] as const) ci(c, x, y, 3.5, f); ln(c, [28, 26, 36, 6], 2.5); ln(c, [38, 38, 58, 26], 2.5); },
 };
 for (const [k, o] of Object.entries(FACES)) if (!D[k]) D[k] = face(o);
+for (const [k, o] of Object.entries(HEADS)) D[k] = face(o);
 // ---------------- 1.16: restul emoji-urilor din joc, desenate (nu mai ramane niciun emoji al telefonului)
 const hrt = (c: C, x: number, y: number, s: number, f: string, stroke = true) => qd(c, c => { c.moveTo(x, y + s * 0.85); c.bezierCurveTo(x - s * 1.55, y - s * 0.15, x - s * 0.7, y - s * 1.3, x, y - s * 0.45); c.bezierCurveTo(x + s * 0.7, y - s * 1.3, x + s * 1.55, y - s * 0.15, x, y + s * 0.85); }, f, stroke);
 const star = (c: C, x: number, y: number, r: number, f: string, n = 5) => { const p: number[] = []; for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, rr2 = i % 2 ? r * 0.45 : r; p.push(x + Math.cos(a) * rr2, y + Math.sin(a) * rr2); } po(c, p, f); };
@@ -361,7 +372,7 @@ const EXTRA: Record<string, (c: C) => void> = {
   '🪩': c => { ln(c, [32, 2, 32, 12], 2.5); ci(c, 32, 34, 21, '#c9ccd6'); for (const y of [24, 34, 44]) ln(c, [14, y, 50, y], 1.5, '#8a8fa0'); for (const x of [24, 32, 40]) ln(c, [x, 14, x, 54], 1.5, '#8a8fa0'); ci(c, 25, 26, 3, '#fff', false); },
   '⛸': c => { qd(c, c => { c.moveTo(16, 8); c.lineTo(32, 8); c.lineTo(34, 34); c.lineTo(52, 38); c.quadraticCurveTo(56, 44, 50, 44); c.lineTo(14, 44); c.closePath(); }, '#fff'); ln(c, [10, 52, 56, 52], 4, '#a7adbd'); ln(c, [20, 44, 20, 52], 3); ln(c, [44, 44, 44, 52], 3); },
   '🎨': c => { qd(c, c => { c.moveTo(32, 8); c.quadraticCurveTo(58, 8, 56, 32); c.quadraticCurveTo(54, 52, 34, 54); c.quadraticCurveTo(26, 54, 28, 46); c.quadraticCurveTo(30, 40, 22, 40); c.quadraticCurveTo(8, 42, 8, 30); c.quadraticCurveTo(8, 8, 32, 8); }, '#f4c9a0'); for (const [x, y, f] of [[22, 22, '#e63946'], [34, 16, '#ffd23f'], [46, 24, '#7ab8ff'], [44, 40, '#9ed67a']] as const) ci(c, x, y, 5, f); },
-  '🎻': c => { c.save(); c.translate(32, 32); c.rotate(0.6); el(c, 0, 10, 12, 10, '#c0573e'); el(c, 0, -4, 9, 8, '#c0573e'); rr(c, -2, -30, 4, 22, 1, '#3a2a22'); ln(c, [-2, 2, 2, 2], 2); c.restore(); },
+  '🎻': c => { c.save(); c.translate(30, 34); c.rotate(0.55); qd(c, c => { c.moveTo(0, -18); c.bezierCurveTo(13, -18, 13, -6, 7, -3); c.bezierCurveTo(14, 0, 15, 18, 0, 19); c.bezierCurveTo(-15, 18, -14, 0, -7, -3); c.bezierCurveTo(-13, -6, -13, -18, 0, -18); }, '#c0573e'); rr(c, -2.5, -34, 5, 22, 2, '#3a2a22'); ci(c, 0, -36, 3.5, '#8a3a2a'); for (const x of [-4, 4]) qd(c, c => { c.moveTo(x, -4); c.quadraticCurveTo(x * 1.6, 2, x, 8); }); rr(c, -5, 9, 10, 3, 1, '#3a2a22', false); for (const x of [-1.2, 1.2]) ln(c, [x, -30, x, 10], 0.8, '#fff3e0'); c.restore(); },
   '🥁': c => { el(c, 32, 44, 22, 8, '#e63946'); rr(c, 10, 26, 44, 18, 0, '#e63946'); el(c, 32, 26, 22, 8, '#fff'); ln(c, [14, 6, 28, 22], 3.5, '#c98e5f'); ln(c, [50, 6, 36, 22], 3.5, '#c98e5f'); },
   '🎵': c => note1(c, 26, 50),
   '🎶': c => { note1(c, 16, 48); note1(c, 38, 40); },
@@ -401,15 +412,15 @@ const EXTRA: Record<string, (c: C) => void> = {
   '🐠': c => { po(c, [10, 20, 20, 32, 10, 44], '#ff8c42'); el(c, 34, 32, 20, 14, '#ff8c42'); rr(c, 28, 19, 6, 26, 3, '#fff', false); ci(c, 46, 29, 2.5, O, false); },
   '🐡': c => { for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; ln(c, [32 + Math.cos(a) * 16, 32 + Math.sin(a) * 16, 32 + Math.cos(a) * 24, 32 + Math.sin(a) * 24], 3); } ci(c, 32, 32, 17, '#ffd45c'); ci(c, 38, 28, 2.5, O, false); el(c, 44, 36, 3, 2, '#ff9ab8', 0, false); },
   '🐋': c => { qd(c, c => { c.moveTo(6, 36); c.quadraticCurveTo(8, 18, 32, 20); c.quadraticCurveTo(52, 22, 50, 38); c.quadraticCurveTo(30, 50, 6, 36); }, '#5b9cf0'); po(c, [48, 34, 60, 26, 58, 40], '#5b9cf0'); ci(c, 18, 30, 2.5, O, false); ln(c, [28, 18, 28, 8], 2.5, '#7ec8f0'); ln(c, [28, 10, 22, 6], 2.5, '#7ec8f0'); ln(c, [28, 10, 34, 6], 2.5, '#7ec8f0'); },
-  '🦆': c => { el(c, 30, 42, 20, 12, '#ffe14f'); ci(c, 42, 24, 11, '#ffe14f'); po(c, [51, 24, 60, 27, 51, 30], '#ffb347'); ci(c, 44, 21, 2, O, false); leaf(c, 18, 40, 16, -0.4, '#ffd23f'); },
+  '🦆': c => { el(c, 32, 52, 26, 6, '#9fd8f5', 0, false); qd(c, c => { c.moveTo(8, 38); c.quadraticCurveTo(10, 54, 32, 54); c.quadraticCurveTo(54, 54, 56, 36); c.quadraticCurveTo(46, 40, 40, 36); c.lineTo(36, 30); c.lineTo(14, 30); c.quadraticCurveTo(8, 32, 8, 38); }, '#ffd23f'); ci(c, 40, 22, 12, '#ffd23f'); qd(c, c => { c.moveTo(50, 22); c.quadraticCurveTo(60, 22, 60, 27); c.quadraticCurveTo(56, 30, 49, 28); c.closePath(); }, '#ff8c42'); ci(c, 43, 19, 2.4, O, false); qd(c, c => { c.moveTo(18, 40); c.quadraticCurveTo(28, 34, 34, 42); c.quadraticCurveTo(26, 46, 18, 40); }, '#ffe58a'); shine(c, 35, 15, 3); },
   '🤖': c => { ln(c, [32, 6, 32, 14], 3); ci(c, 32, 6, 3.5, '#e63946'); rr(c, 12, 14, 40, 34, 8, '#c9ccd6'); ci(c, 24, 30, 5, '#7ab8ff'); ci(c, 40, 30, 5, '#7ab8ff'); rr(c, 24, 40, 16, 4, 2, '#3a3a44', false); rr(c, 6, 26, 6, 12, 2, '#a7adbd'); rr(c, 52, 26, 6, 12, 2, '#a7adbd'); },
   // oameni: capul hamsterului cu accesorii, sau pictograma de om
-  '🧑‍🌾': withHat({ eyes: 'happy', mouth: 'smile' }, c => { el(c, 32, 14, 26, 6, '#f2d27a'); qd(c, c => { c.moveTo(20, 14); c.quadraticCurveTo(20, 2, 32, 2); c.quadraticCurveTo(44, 2, 44, 14); }, '#f2d27a'); ln(c, [21, 11, 43, 11], 3, '#e63946'); }),
-  '👨‍🍳': withHat({ eyes: 'happy', mouth: 'smile' }, c => { rr(c, 20, 10, 24, 8, 2, '#fff'); for (const x of [22, 32, 42]) ci(c, x, 8, 7, '#fff'); }),
+  '🧑‍🌾': withHat({ eyes: 'happy', mouth: 'smile', who: 'dudu' }, c => { el(c, 32, 14, 26, 6, '#f2d27a'); qd(c, c => { c.moveTo(20, 14); c.quadraticCurveTo(20, 2, 32, 2); c.quadraticCurveTo(44, 2, 44, 14); }, '#f2d27a'); ln(c, [21, 11, 43, 11], 3, '#e63946'); }),
+  '👨‍🍳': withHat({ eyes: 'happy', mouth: 'smile', who: 'dudu' }, c => { rr(c, 20, 10, 24, 8, 2, '#fff'); for (const x of [22, 32, 42]) ci(c, x, 8, 7, '#fff'); }),
   '👩‍🍳': withHat({ eyes: 'happy', mouth: 'smile', who: 'bubu' }, c => { rr(c, 20, 10, 24, 8, 2, '#fff'); for (const x of [22, 32, 42]) ci(c, x, 8, 7, '#fff'); }),
-  '👵': withHat({ eyes: 'happy', mouth: 'smile', who: 'bubu' }, c => { ci(c, 32, 8, 7, '#d8d8e0'); rr(c, 19, 34, 10, 6, 3); rr(c, 35, 34, 10, 6, 3); ln(c, [29, 37, 35, 37], 2); }),
-  '👴': withHat({ eyes: 'happy', mouth: 'smile' }, c => { el(c, 26, 46, 7, 3.5, '#fff', 0.3); el(c, 38, 46, 7, 3.5, '#fff', -0.3); rr(c, 19, 34, 10, 6, 3); rr(c, 35, 34, 10, 6, 3); ln(c, [29, 37, 35, 37], 2); }),
-  '👰': withHat({ eyes: 'happy', mouth: 'smile', who: 'bubu', blush: 1.4 }, c => { qd(c, c => { c.moveTo(14, 14); c.quadraticCurveTo(32, 0, 50, 14); c.lineTo(56, 52); c.lineTo(50, 52); c.lineTo(46, 22); c.quadraticCurveTo(32, 12, 18, 22); c.lineTo(14, 52); c.lineTo(8, 52); c.closePath(); }, 'rgba(255,255,255,0.85)'); }),
+  '👵': c => { ci(c, 32, 11, 9, '#e3e3ec'); face({ eyes: 'happy', mouth: 'smile', who: 'bubu' })(c); },
+  '👴': withHat({ eyes: 'happy', mouth: 'smile', who: 'dudu' }, c => { el(c, 26, 46, 7, 3.5, '#fff', 0.3); el(c, 38, 46, 7, 3.5, '#fff', -0.3); rr(c, 19, 34, 10, 6, 3); rr(c, 35, 34, 10, 6, 3); ln(c, [29, 37, 35, 37], 2); }),
+  '👰': c => { qd(c, c => { c.moveTo(6, 60); c.quadraticCurveTo(2, 10, 32, 4); c.quadraticCurveTo(62, 10, 58, 60); c.closePath(); }, '#efe9ff'); c.save(); c.translate(32, 44); c.scale(0.8, 0.8); c.translate(-32, -40); face({ eyes: 'happy', mouth: 'smile', who: 'bubu', blush: 1.4 })(c); c.restore(); for (const x of [22, 32, 42]) ci(c, x, 11, 2.6, '#fff'); },
   '👼': withHat({ eyes: 'happy', mouth: 'smile', who: 'bubu' }, c => { el(c, 32, 6, 14, 4, undefined); c.lineWidth = 3; c.strokeStyle = '#ffd23f'; c.beginPath(); c.ellipse(32, 6, 14, 4, 0, 0, 7); c.stroke(); }),
   '💃': c => fig(c, '#ff7aa2', true, 'up'),
   '🕺': c => fig(c, '#5b9cf0', false, 'up'),
@@ -425,7 +436,7 @@ const EXTRA: Record<string, (c: C) => void> = {
   '👌': c => { paw(c, 30, 38, 0.95); ci(c, 44, 18, 8, undefined); },
   '👆': c => { D['⬆'](c); },
   '👉': c => { rr(c, 6, 20, 28, 28, 9, '#ffe3d6'); rr(c, 28, 26, 30, 10, 5, '#ffe3d6'); el(c, 53, 31, 3, 3, '#ff9ab8', 0, false); },
-  '💪': c => { qd(c, c => { c.moveTo(10, 54); c.lineTo(10, 40); c.quadraticCurveTo(12, 26, 28, 26); c.quadraticCurveTo(30, 12, 38, 8); c.quadraticCurveTo(48, 6, 48, 16); c.quadraticCurveTo(46, 22, 40, 22); c.quadraticCurveTo(56, 26, 54, 42); c.quadraticCurveTo(50, 56, 30, 54); c.closePath(); }, '#ffb347'); qd(c, c => { c.moveTo(30, 38); c.quadraticCurveTo(38, 30, 46, 38); }); },
+  '💪': c => { qd(c, c => { c.moveTo(6, 58); c.lineTo(6, 44); c.quadraticCurveTo(8, 30, 21, 28); c.quadraticCurveTo(33, 19, 38, 31); c.lineTo(39, 20); c.quadraticCurveTo(37, 6, 48, 6); c.quadraticCurveTo(59, 6, 58, 17); c.lineTo(56, 40); c.quadraticCurveTo(54, 58, 36, 58); c.closePath(); }, '#f2a65a'); qd(c, c => { c.moveTo(20, 46); c.quadraticCurveTo(30, 44, 37, 36); }, undefined); for (const [x, y] of [[43, 10], [49, 8.5], [54, 12]]) el(c, x, y, 2.6, 2.2, '#ff9ab8', 0, false); el(c, 19, 35, 5, 3, 'rgba(255,255,255,0.55)', -0.4, false); },
   '🦵': c => { paw(c, 32, 30, 1.05, Math.PI); },
   '👀': c => { for (const x of [20, 44]) { el(c, x, 32, 11, 14, '#fff'); ci(c, x + 3, 34, 5, O, false); ci(c, x + 5, 31, 1.6, '#fff', false); } },
   // obiecte
@@ -451,7 +462,7 @@ const EXTRA: Record<string, (c: C) => void> = {
   '📝': c => { D['📄'](c); c.save(); c.translate(40, 34); c.rotate(0.7); rr(c, -4, -20, 8, 30, 2, '#ffd23f'); po(c, [-4, 10, 4, 10, 0, 18], '#e8c08a'); c.restore(); },
   '📒': c => { rr(c, 12, 6, 40, 52, 4, '#ffd23f'); rr(c, 12, 6, 8, 52, 3, '#e8b830'); for (const y of [20, 30, 40]) ln(c, [26, y, 46, y], 2, '#c99a3a'); },
   '📈': c => { rr(c, 8, 8, 48, 48, 4, '#fff'); ln(c, [14, 46, 26, 34, 34, 40, 50, 18], 4, '#5bd16b'); po(c, [44, 16, 52, 16, 52, 24], '#5bd16b'); },
-  '📭': c => { rr(c, 14, 22, 36, 24, 10, '#7ab8ff'); ln(c, [32, 46, 32, 60], 5); rr(c, 46, 8, 3, 18, 1, O); po(c, [49, 8, 58, 11, 49, 14], '#e63946'); },
+  '📭': c => D['📮'](c),
   '📶': c => { for (let i = 0; i < 4; i++) rr(c, 10 + i * 12, 46 - i * 10, 8, 10 + i * 10, 2, '#5bd16b'); },
   '📍': c => { qd(c, c => { c.moveTo(32, 58); c.quadraticCurveTo(12, 34, 12, 24); c.arc(32, 24, 20, Math.PI, 0); c.quadraticCurveTo(52, 34, 32, 58); }, '#e63946'); ci(c, 32, 24, 7, '#fff'); },
   '📸': c => { rr(c, 6, 18, 52, 36, 6, '#5a5a66'); rr(c, 22, 12, 20, 8, 2, '#5a5a66'); ci(c, 32, 36, 12, '#bfe8ff'); ci(c, 32, 36, 5, '#5b7fbf'); ci(c, 50, 25, 3, '#ffd23f'); },
@@ -503,6 +514,9 @@ export const iconImg = (e: string, cls = 'di') => hasIcon(e) ? `<img class="${cl
 // regex pentru toate emoji-urile din registru (cele mai lungi primele)
 const KEYS = Object.keys(D).sort((a, b) => b.length - a.length).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 const RX = new RegExp('(' + KEYS.join('|') + ')️?', 'gu');
+/** 1.16.2: alta copie pentru scrisul pe canvas. Iconitele care scriu text (calendarul, medaliile) se deseneaza chiar in timpul
+ *  inlocuirii din pagina; cu acelasi RX ii resetau pozitia si textul se dubla („Ziua 1 · 📅 Ziua 1 · 📅”). */
+const RXC = new RegExp(RX.source, 'gu');
 
 /** 1.13.0: filtrul de text (numele alese de jucatori in locul lui „Bubu” / „Dudu”), pe canvas si in pagina; vezi game/names.ts */
 let textFilter: ((t: string) => string) | null = null;
@@ -554,8 +568,8 @@ const origFill = P2.fillText, origStroke = P2.strokeText, origMeasure = P2.measu
 P2.measureText = function (this: C, text: string) { return origMeasure.call(this, tf(String(text))); } as any;
 function fontPx(c: C) { const m = /(\d+(?:\.\d+)?)px/.exec(c.font); return m ? +m[1] : 16; }
 function layout(c: C, text: string, x: number, size: number) {
-  const parts: (string | { e: string })[] = []; let last = 0; RX.lastIndex = 0; let m: RegExpExecArray | null;
-  while ((m = RX.exec(text))) { if (m.index > last) parts.push(text.slice(last, m.index)); parts.push({ e: m[1] }); last = m.index + m[0].length; }
+  const parts: (string | { e: string })[] = []; let last = 0; RXC.lastIndex = 0; let m: RegExpExecArray | null;
+  while ((m = RXC.exec(text))) { if (m.index > last) parts.push(text.slice(last, m.index)); parts.push({ e: m[1] }); last = m.index + m[0].length; }
   if (last < text.length) parts.push(text.slice(last));
   const isz = size * 1.15;
   const ws = parts.map(p => typeof p === 'string' ? c.measureText(p).width : isz);
@@ -577,13 +591,13 @@ function draw(c: C, text: string, x: number, y: number, size: number, fill: bool
 }
 /** toate textele scrise pe canvas care contin emoji-uri cunoscute le deseneaza ca iconite */
 P2.fillText = function (this: C, text: string, x: number, y: number, maxW?: number) {
-  const s = tf(String(text)); RX.lastIndex = 0;
-  if (!RX.test(s)) return maxW === undefined ? origFill.call(this, s, x, y) : origFill.call(this, s, x, y, maxW);
+  const s = tf(String(text)); RXC.lastIndex = 0;
+  if (!RXC.test(s)) return maxW === undefined ? origFill.call(this, s, x, y) : origFill.call(this, s, x, y, maxW);
   draw(this, s, x, y, fontPx(this), true);
 } as any;
 P2.strokeText = function (this: C, text: string, x: number, y: number, maxW?: number) {
-  const s = tf(String(text)); RX.lastIndex = 0;
-  if (!RX.test(s)) return maxW === undefined ? origStroke.call(this, s, x, y) : origStroke.call(this, s, x, y, maxW);
+  const s = tf(String(text)); RXC.lastIndex = 0;
+  if (!RXC.test(s)) return maxW === undefined ? origStroke.call(this, s, x, y) : origStroke.call(this, s, x, y, maxW);
   draw(this, s, x, y, fontPx(this), false);
 } as any;
 
