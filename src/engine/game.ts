@@ -79,7 +79,7 @@ export class Game {
     const loop = (t: number) => {
       requestAnimationFrame(loop);
       const want = (this.scene as { wantFps?: () => number } | null)?.wantFps?.() ?? 60;
-      const fps = Math.min(60, isEco() ? want : 60);
+      const fps = Math.min(60, want); // cat cere scena (1.17: nu mai depinde de Eco; vezi WorldScene.wantFps si setarea Fluiditate maxima)
       if (this.last && t - this.last < 1000 / fps - 3) return;
       const dt = Math.min(0.05, (t - (this.last || t)) / 1000) * this.timeScale;
       if (this.last) this.adapt(t - this.last, fps, t);

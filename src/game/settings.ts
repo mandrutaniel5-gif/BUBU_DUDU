@@ -15,8 +15,10 @@ export interface SettingsData {
   houses?: SavedHouse[];
   dayMinutes: number;   // cate minute reale dureaza o zi in joc
   muted: boolean;
-  /** economisire baterie: cel mult 30 cadre/s cand nu se misca nimic, rezolutie putin mai mica pe telefon */
+  /** economisire baterie: rezolutie putin mai mica pe telefon */
   eco?: boolean;
+  /** 1.17: fluiditate maxima: 60 cadre/s cand mergi (implicit 30; placa video munceste aproape dublu la 60) */
+  fluid?: boolean;
   resetAt?: number;   // cand s-a pornit un joc nou
 }
 

@@ -181,6 +181,7 @@ export class MenuScene implements Scene {
     if (c.contains('errs')) { this.showErrors(); return; }
     if (c.contains('errcopy')) { const t = `${GAME_NAME} v${pkg.version} · ${navigator.userAgent}\n` + ErrorLog.text(); navigator.clipboard?.writeText(t).then(() => { b.textContent = '✔ Copiat'; }).catch(() => { b.textContent = $t('Ține apăsat pe text → Copiază'); }); return; }
     if (c.contains('errclear')) { ErrorLog.clear(); this.showErrors(); return; }
+    if (c.contains('fluid')) { const on = !Settings.get().fluid; Settings.set({ fluid: on }); b.textContent = on ? $t('⏩ Fluiditate maximă (60): pornită') : $t('⏩ Fluiditate maximă (60): oprită'); return; }
     if (c.contains('eco')) { const on = !isEco(); Settings.set({ eco: on }); b.textContent = on ? $t('🔋 Eco: pornit') : $t('⚡ Eco: oprit'); dispatchEvent(new Event('resize')); return; }
     if (c.contains('adprivacy')) { const b0 = b as HTMLElement; void Ads.privacy().then(msg => { if (msg) b0.textContent = msg; }); return; }
     if (c.contains('mute')) { const m = !Settings.get().muted; Settings.set({ muted: m }); Sfx.setMuted(m); b.textContent = m ? $t('🔇 Sunet: oprit') : $t('🔊 Sunet: pornit'); return; }
@@ -332,7 +333,8 @@ export class MenuScene implements Scene {
     const s = Settings.get();
     this.dialog(`<h3>${$t('⚙ Setări')}</h3>
       <div class="row2 langrow"><label>🌐 ${$t('Limba')} <select class="lang">${LANGS.map(l => `<option value="${l.id}"${l.id === lang ? ' selected' : ''}>${l.flag} ${l.name}</option>`).join('')}</select></label></div>
-      <div class="row2"><button class="mute">${s.muted ? $t('🔇 Sunet: oprit') : $t('🔊 Sunet: pornit')}</button><button class="eco" title="${$t('Economisire baterie: mai puține cadre pe secundă când stați')}">${isEco() ? $t('🔋 Eco: pornit') : $t('⚡ Eco: oprit')}</button></div>
+      <div class="row2"><button class="mute">${s.muted ? $t('🔇 Sunet: oprit') : $t('🔊 Sunet: pornit')}</button><button class="eco" title="${$t('Economisire baterie: rezoluție puțin mai mică pe telefon')}">${isEco() ? $t('🔋 Eco: pornit') : $t('⚡ Eco: oprit')}</button></div>
+      <div class="row2"><button class="fluid" title="${$t('60 de cadre pe secundă când mergi: mai fluid, dar placa video muncește aproape dublu. Pentru aparate puternice.')}">${s.fluid ? $t('⏩ Fluiditate maximă (60): pornită') : $t('⏩ Fluiditate maximă (60): oprită')}</button></div>
       <div class="row2"><button class="errs" title="${$t('Erorile jocului (le poți copia și trimite)')}">${$t('📋 Erori ({0})', ErrorLog.all().length)}</button><button class="credits">${$t('📜 Credite')}</button></div>
       ${Ads.canPrivacy() ? `<div class="row2"><button class="adprivacy">${$t('🛡️ Confidențialitate reclame')}</button></div>` : ''}
       ${DEV ? `<div class="devbox"><h4>${$t('🧪 Modul dezvoltator')}</h4><p class="sub">${$t('Uneltele (totul nelimitat, capitole, zile, sărbători) merg doar în lumea de test: nu se scrie nimic în casele voastre online.')}</p>

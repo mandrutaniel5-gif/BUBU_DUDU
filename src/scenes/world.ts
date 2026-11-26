@@ -1528,9 +1528,11 @@ export class WorldScene implements Scene {
   miniScale() { return Math.min(1, this.game.h / 470); }
   /** cate cadre pe secunda ne trebuie: 60 cand se misca ceva, 30 cand stati (modul eco economiseste bateria) */
   wantFps() {
-    // 60 doar cand te misti tu, in minijocuri, pe drum si la construit; altfel 30 (partenerul care se plimba arata bine si la 30)
-    const busy = !!this.minigame || !!this.travel || !!this.build || this.joy.active || this.me.actor.moving || this.me.path.length > 0 || this.shake > 0.5;
-    return busy ? 60 : 30;
+    // 1.17: minijocurile si drumul (scena de calatorie) la 60; mersul la 30, sau la 60 cu setarea „Fluiditate maxima”;
+    // stand pe loc 30. Masurat pe laptop (Intel UHD), la mers: 60/s = placa video 46%, 30/s = 26%
+    if (this.minigame || this.travel || this.shake > 0.5) return 60;
+    const moving = !!this.build || this.joy.active || this.me.actor.moving || this.me.path.length > 0;
+    return moving && Settings.get().fluid ? 60 : 30;
   }
   storeMode: '' | 'florarie' = '';
   /** porneste un minijoc fara activitate legata de un obiect */

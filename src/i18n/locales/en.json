@@ -1775,7 +1775,6 @@
  "Mai târziu": "Later",
  "Mă uit cine e în casă…": "Checking who's in the house…",
  "Limba": "Language",
- "Economisire baterie: mai puține cadre pe secundă când stați": "Battery saver: fewer frames per second while you're idle",
  "Erorile jocului (le poți copia și trimite)": "The game's errors (you can copy and send them)",
  "📋 Erori ({0})": "📋 Errors ({0})",
  "📜 Credite": "📜 Credits",
@@ -3306,5 +3305,9 @@
  "culege flori": "pick flowers",
  "cumpără un sac de pământ de la magazinul satului": "buy a bag of soil at the village shop",
  "{0} · devine copac în ~{1} min": "{0} · becomes a tree in ~{1} min",
- "🎪 A venit negustorul ambulant în piața satului: lucruri rare, lozuri și harta comorii. Stă până la 20:00.": "🎪 The traveling merchant has arrived in the village square: rare things, lottery tickets and the treasure map. He stays until 20:00."
+ "🎪 A venit negustorul ambulant în piața satului: lucruri rare, lozuri și harta comorii. Stă până la 20:00.": "🎪 The traveling merchant has arrived in the village square: rare things, lottery tickets and the treasure map. He stays until 20:00.",
+ "⏩ Fluiditate maximă (60): pornită": "⏩ Max smoothness (60): on",
+ "⏩ Fluiditate maximă (60): oprită": "⏩ Max smoothness (60): off",
+ "Economisire baterie: rezoluție puțin mai mică pe telefon": "Battery saver: slightly lower resolution on phones",
+ "60 de cadre pe secundă când mergi: mai fluid, dar placa video muncește aproape dublu. Pentru aparate puternice.": "60 frames per second while walking: smoother, but the graphics chip works almost twice as hard. For powerful devices."
 }

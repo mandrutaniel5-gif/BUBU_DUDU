@@ -1787,7 +1787,6 @@
  "Mai târziu": "Più tardi",
  "Mă uit cine e în casă…": "Vedo chi c'è in casa…",
  "Limba": "Lingua",
- "Economisire baterie: mai puține cadre pe secundă când stați": "Risparmio batteria: meno fotogrammi al secondo quando siete fermi",
  "Erorile jocului (le poți copia și trimite)": "Gli errori del gioco (puoi copiarli e inviarli)",
  "📋 Erori ({0})": "📋 Errori ({0})",
  "📜 Credite": "📜 Riconoscimenti",
@@ -3306,5 +3305,9 @@
  "culege flori": "raccogli fiori",
  "cumpără un sac de pământ de la magazinul satului": "compra un sacco di terra al negozio del villaggio",
  "{0} · devine copac în ~{1} min": "{0} · diventa un albero in ~{1} min",
- "🎪 A venit negustorul ambulant în piața satului: lucruri rare, lozuri și harta comorii. Stă până la 20:00.": "🎪 È arrivato il venditore ambulante nella piazza del villaggio: cose rare, biglietti della lotteria e la mappa del tesoro. Resta fino alle 20:00."
+ "🎪 A venit negustorul ambulant în piața satului: lucruri rare, lozuri și harta comorii. Stă până la 20:00.": "🎪 È arrivato il venditore ambulante nella piazza del villaggio: cose rare, biglietti della lotteria e la mappa del tesoro. Resta fino alle 20:00.",
+ "⏩ Fluiditate maximă (60): pornită": "⏩ Fluidità massima (60): attiva",
+ "⏩ Fluiditate maximă (60): oprită": "⏩ Fluidità massima (60): disattivata",
+ "Economisire baterie: rezoluție puțin mai mică pe telefon": "Risparmio batteria: risoluzione un po' più bassa sul telefono",
+ "60 de cadre pe secundă când mergi: mai fluid, dar placa video muncește aproape dublu. Pentru aparate puternice.": "60 fotogrammi al secondo mentre cammini: più fluido, ma la scheda grafica lavora quasi il doppio. Per dispositivi potenti."
 }
