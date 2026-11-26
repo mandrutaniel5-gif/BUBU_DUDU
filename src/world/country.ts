@@ -205,6 +205,8 @@ export function chapterBlocks(chapter: number, bridgeFixed: boolean): Rect[] {
   if (chapter < 2) R.push({ x0: 18, y0: -8.7, x1: 22, y1: -8.3 });
   if (!bridgeFixed) R.push({ x0: BRIDGE.x0 + 2.2, y0: BRIDGE.y0, x1: BRIDGE.x0 + 3.8, y1: BRIDGE.y1 });
   if (chapter < 6) R.push({ x0: BROOK_BRIDGE.x1 - 1.7, y0: 24, x1: BROOK_BRIDGE.x1 - 1.3, y1: 26 }); // pe podet: pe langa el e apa
+  // 1.16: clopotnita bisericii din sat iese in fata cladirii (w-church: 126,-8, 4x4); fara asta treceai prin ea (raport 26.11)
+  R.push({ x0: 127.3, y0: -4.4, x1: 128.7, y1: -3.0 });
   return R;
 }
 

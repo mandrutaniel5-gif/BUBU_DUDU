@@ -568,7 +568,13 @@ export class WorldScene implements Scene {
   confirmBuild() {
     const b = this.build; if (!b?.item) return;
     const it = b.item;
-    if (!this.canAfford(it)) { this.hud.toast($t('Nu ai destule materiale 🪵🪨🌸 — taie copaci, sparge pietre, culege flori!')); Sfx.play('bad'); return; }
+    if (!this.canAfford(it)) {
+      // 1.16: spune exact ce lipseste si de unde il iei (la rezor scria lemne / pietre / flori, desi trebuie pamant de la magazin)
+      const where: Record<string, string> = { wood: $t('taie copaci'), stone: $t('sparge pietre'), flower: $t('culege flori'), soil: $t('cumpără un sac de pământ de la magazinul satului') };
+      const miss = Object.entries(it.cost).filter(([r, n]) => (this.w.res?.[r] ?? 0) < (n ?? 0))
+        .map(([r, n]) => `${RES_INFO[r as keyof typeof RES_INFO]?.icon ?? ''} ${RES_INFO[r as keyof typeof RES_INFO]?.label ?? r} ${(this.w.res?.[r] ?? 0)}/${n}: ${where[r] ?? ''}`);
+      this.hud.toast($t('Îți lipsește: {0}', miss.join(' · '))); Sfx.play('bad'); return;
+    }
     if (!this.canPlace(it, b.gx, b.gy)) { this.hud.toast($t('Nu încape aici ✖')); Sfx.play('bad'); return; }
     for (const [r, n] of Object.entries(it.cost)) this.op({ k: 'res', res: r, delta: -(n ?? 0) });
     if (it.type === 'soilplot') { this.op({ k: 'plot', key: `${b.gx},${b.gy}`, plot: { crop: null, prog: 0, wetUntil: 0, fert: 0 } }); this.syncPlaced(); Sfx.play('dig'); Sfx.play('good', { delay: 0.4, vol: 0.6 }); return; }
@@ -1765,7 +1771,7 @@ export class WorldScene implements Scene {
     // pozitionare pe obiect
     const slot = pawn.id === 'bubu' ? 0 : 1;
     pawn.z = 0;
-    if (a.place === 'bed') { pawn.gx = f.gx + 0.55 + slot * 0.95; pawn.gy = f.gy + 0.62; pawn.z = 34; }
+    if (a.place === 'bed') { pawn.gx = f.gx + 0.42 + slot * 1.16; pawn.gy = f.gy + 0.62; pawn.z = 34; }
     else if (a.place === 'tub') { pawn.gx = f.gx + 0.6 + slot * 0.8; pawn.gy = f.gy + 0.5; pawn.z = 24; }
     else if (a.place === 'toilet') { pawn.gx = f.gx + 0.5; pawn.gy = f.gy + 0.6; pawn.z = 12; }
     else if (a.place === 'sofa') { pawn.gx = f.gx + 0.45; pawn.gy = f.gy + 0.64 + slot * 0.72; pawn.z = 10; }

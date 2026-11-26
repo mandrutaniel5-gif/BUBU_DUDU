@@ -487,3 +487,68 @@ html.h500 .hud .adchips { top:46px; } html.h500 .hud .adchips button { font-size
 /* 1.15.3: limba din meniul principal, stânga sus */
 .menu .menulang { width:auto; max-width:46vw; position:absolute; top:calc(var(--safe-t, 0px) + 10px); left:calc(var(--safe-l, 0px) + 12px); z-index:5; display:flex; align-items:center; gap:4px; font-size:18px; background:#fffaf5e6; border:3px solid var(--ink); border-radius:14px; padding:2px 6px; box-shadow:0 3px 0 var(--ink); }
 .menu .menulang select { width:auto; min-width:0; padding:4px 2px; margin:0; box-shadow:none; font-family:inherit; font-size:14px; font-weight:800; color:var(--ink); background:transparent; border:0; outline:none; }
+
+/* ---------------------------------------------------------------- 1.16: meniul principal ca ecran de titlu */
+.menu.mc { display:block; padding:0; overflow:hidden; }
+.menu.mc .menulang { width:auto; max-width:none; padding:5px 10px; gap:0; font:800 15px "Baloo 2", sans-serif; color:var(--ink); }
+.menu.mc .menulang span { display:flex; align-items:center; gap:6px; pointer-events:none; }
+.menu.mc .menulang select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+.menu.mc .m-title { position:absolute; top:calc(var(--safe-t, 0px) + 6px); left:0; right:0; text-align:center; pointer-events:none; }
+.menu.mc .m-title h1 { margin:0; font-size:42px; line-height:1; color:#ff5c8a; text-shadow:0 3px 0 #fff; }
+.menu.mc .m-title .tag { margin:2px 0 0; font-weight:800; font-size:14px; color:var(--ink); }
+.menu.mc .m-corner { position:absolute; top:calc(var(--safe-t, 0px) + 10px); right:calc(var(--safe-r, 0px) + 12px); display:flex; gap:8px; }
+.menu.mc .m-corner button { width:46px; height:46px; padding:0; display:grid; place-items:center; border:3px solid var(--ink); border-radius:14px; background:#fffaf5; box-shadow:0 3px 0 var(--ink); }
+.menu.mc .m-corner img.di { width:28px; height:28px; vertical-align:0; }
+.menu.mc .m-left { position:absolute; left:calc(var(--safe-l, 0px) + 14px); top:calc(var(--safe-t, 0px) + 66px); bottom:14px; width:min(290px, 34%); display:flex; flex-direction:column; justify-content:flex-end; gap:8px; }
+.menu.mc .m-left .p-online { min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:2px 2px 4px; }
+.menu.mc .myname { display:flex; align-items:center; gap:8px; margin:0; flex-shrink:0; background:#fffaf5; border:3px solid var(--ink); border-radius:14px; padding:3px 10px; box-shadow:0 3px 0 var(--ink); font-weight:800; font-size:13px; }
+.menu.mc .myname span { white-space:nowrap; opacity:.75; }
+.menu.mc .myname input { flex:1; min-width:0; width:auto; border:0; outline:none; background:transparent; font:800 17px "Baloo 2", sans-serif; color:var(--ink); padding:2px 0; }
+.menu.mc .houses .hcard { background:#fffaf5; }
+.menu.mc .hc-seats button img.di { width:22px; height:22px; }
+.menu.mc .hempty { background:#fffaf5ee; }
+.menu.mc .m-left .p-offline { display:flex; flex-direction:column; gap:8px; background:#fffaf5ee; border:3px solid var(--ink); border-radius:18px; padding:10px; box-shadow:0 4px 0 var(--ink); }
+.menu.mc .m-left .p-offline.hidden { display:none; }
+.menu.mc .p-offline .sub2 { margin:0; }
+.menu.mc .p-offline .myname { box-shadow:none; border-width:2px; }
+.menu.mc .who2 { gap:8px; }
+.menu.mc .who2 button { flex-direction:row; justify-content:center; gap:8px; font-size:16px; padding:6px; box-shadow:0 3px 0 var(--ink); }
+.menu.mc .who2 button img.di { width:30px; height:30px; }
+.menu.mc .who2 button b { font-size:17px; }
+.menu.mc .play { width:100%; margin:0; font:800 19px "Baloo 2", sans-serif; color:#fff; background:var(--pink); border:3px solid var(--ink); border-radius:14px; padding:6px; box-shadow:0 4px 0 var(--ink); }
+.menu.mc .reset { border:3px solid var(--ink); border-radius:14px; background:#fff; font-weight:800; padding:4px; box-shadow:0 3px 0 var(--ink); }
+.menu.mc .m-right { position:absolute; right:calc(var(--safe-r, 0px) + 14px); bottom:14px; width:min(250px, 30%); }
+.menu.mc .acts { display:flex; flex-direction:column; gap:8px; }
+.menu.mc .acts.hidden { display:none; }
+.menu.mc .acts button { display:flex; align-items:center; gap:10px; text-align:left; border:3px solid var(--ink); border-radius:16px; background:#fffaf5; padding:8px 12px; box-shadow:0 4px 0 var(--ink); color:var(--ink); }
+.menu.mc .acts button img.di { width:30px; height:30px; flex-shrink:0; vertical-align:0; }
+.menu.mc .acts button span { display:flex; flex-direction:column; min-width:0; }
+.menu.mc .acts button b { font:800 17px "Baloo 2", sans-serif; line-height:1.15; }
+.menu.mc .acts button small { font-size:11.5px; font-weight:700; opacity:.65; line-height:1.2; }
+.menu.mc .ver { position:absolute; left:0; right:0; bottom:2px; margin:0; font-size:11px; opacity:.4; pointer-events:none; }
+/* telefoane pe lat, joase (S10: 360 px) */
+html.h500 .menu.mc .m-title h1 { font-size:34px; }
+html.h500 .menu.mc .m-title .tag { font-size:13px; }
+html.h500 .menu.mc .m-left { top:calc(var(--safe-t, 0px) + 62px); bottom:10px; }
+html.h500 .menu.mc .m-right { bottom:10px; }
+html.h500 .menu.mc .acts button { padding:5px 10px; }
+html.h500 .menu.mc .acts button img.di { width:26px; height:26px; }
+html.h500 .menu.mc .acts button b { font-size:16px; }
+html.h500 .menu.mc .hc-seats button { font-size:14px; padding:1px 4px; }
+html.h500 .menu.mc .hc-enter { font-size:15px; padding:2px; }/* fereastra in picioare (calculator; telefoanele sunt rotite pe lat de joc): titlul, Luna si Sunny, apoi totul unul sub altul */
+@media (orientation: portrait) {
+  html:not(.rot) .menu.mc { overflow-y:auto; padding:230px 14px 24px; display:flex; flex-direction:column; gap:12px; }
+  html:not(.rot) .menu.mc .m-left, html:not(.rot) .menu.mc .m-right { position:static; width:100%; max-width:440px; margin:0 auto; }
+  html:not(.rot) .menu.mc .ver { position:static; text-align:center; }
+}
+/* 1.16: casele din meniu mai scunde (locurile pe un rand), ca sa incapa mai multe; jos se estompeaza cand mai sunt case dedesubt */
+.menu.mc .hc-seats button { flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center; gap:0 6px; padding:3px 6px; }
+.menu.mc .hc-seats button small { min-height:0; display:flex; align-items:center; gap:2px; }
+.menu.mc .hc-seats button small img.di { width:14px; height:14px; }
+.menu.mc .m-left .p-online.more { -webkit-mask-image:linear-gradient(#000 calc(100% - 34px), transparent); mask-image:linear-gradient(#000 calc(100% - 34px), transparent); padding-bottom:30px; }
+.menu.mc .m-right { width:min(250px, 30%); }
+/* coloana din stanga se aseaza jos, dar cand nu incape se deruleaza in jos (nu mai creste peste butonul de limba) */
+.menu.mc .m-left { justify-content:flex-start; }
+.menu.mc .m-left > :first-child { margin-top:auto; }
+.menu.mc .m-left .p-offline { min-height:0; overflow-y:auto; flex-shrink:1; }
+html.h500 .menu.mc .p-offline .sub2 { display:none; } html.h500 .menu.mc .p-offline { gap:6px; padding:8px; } html.h500 .menu.mc .who2 button { padding:3px 6px; } html.h500 .menu.mc .play { font-size:17px; padding:3px; }

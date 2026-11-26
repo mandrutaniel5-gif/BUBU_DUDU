@@ -386,8 +386,8 @@ export function drawHamster(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, x
 function drawHamsterAt(ctx: CanvasRenderingContext2D, id: HamId, p: Pose, x: number, y: number, scale: number, flip: 1 | -1, t: number, o?: Outfit) {
   ctx.save(); ctx.translate(x, y); ctx.scale(scale * flip, scale); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   if (p.headOnly) {
-    ctx.translate(p.dx, p.dy); ctx.rotate(p.rot); ctx.scale(HS, HS);
-    drawHead(ctx, id, p, t, o, bucket(ctx)); ctx.restore(); return;
+    ctx.translate(p.dx, p.dy); ctx.rotate(p.rot); ctx.scale(HS * p.sx, HS * p.sy);
+    drawHead(ctx, id, p, t, p.bare && o ? { ...o, head: 'none', face: 'none' } : o, bucket(ctx)); ctx.restore(); return;
   }
   const lift = Math.max(0, -p.dy), sh = p.shadowScale * Math.max(0.35, 1 - lift / 160);
   ctx.fillStyle = 'rgba(60,35,30,0.18)'; ell(ctx, p.dx * 0.6, 1, 27 * sh, 6.5 * sh); ctx.fill();

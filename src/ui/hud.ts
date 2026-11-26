@@ -142,8 +142,17 @@ export class Hud {
       if ((s.me.riding && s.me.rideKind === k) || (s.partner.riding && s.partner.rideKind === k)) continue;
       const sp = s.parkSpot(k, s.vehAt(k)); vehicles.push({ x: sp.gx + 0.5, y: sp.gy + 0.5, icon: k === 'bike' ? '🚲' : k === 'scooter' ? '🛵' : '🚜' });
     }
+    // 1.16: X-ul comorii (harta de la negustor) si caruta negustorului apar si pe harta (raport 26.11)
+    for (const f of s.furnList) {
+      if (f.id === 'st-h-dig') vehicles.push({ x: f.gx + 0.5, y: f.gy + 0.5, icon: '❌' });
+      else if (f.id === 'st-h-caravan') {
+        vehicles.push({ x: f.gx + 1, y: f.gy + 1, icon: '🎪' });
+        if (this.caravanDay !== s.w.day) { this.caravanDay = s.w.day; setTimeout(() => this.toast($t('🎪 A venit negustorul ambulant în piața satului: lucruri rare, lozuri și harta comorii. Stă până la 20:00.')), 1500); }
+      }
+    }
     return { me: { ...me, name: s.me.actor.spec.name }, partner: { ...pa, name: s.partner.actor.spec.name }, vehicles, t: s.time };
   }
+  private caravanDay = -1;
   private miniT = 0;
   /** miniharta marita (se tine minte pe fiecare telefon) */
   /** harta mare: ultima marire (la redeschidere se centreaza pe tine) */

@@ -36,7 +36,7 @@ export function drawFurn(ctx: CanvasRenderingContext2D, f: Furn, t: number, st: 
   switch (f.type) {
     case 'bed': {
       isoBox(ctx, gx, gy, w, 0.18, 46, boxOf('#c98e5f'));             // tablia
-      const hb = iso(gx + 1, gy + 0.09, 38); heartPath(ctx, hb.x, hb.y, 7); ctx.fillStyle = '#ff7aa2'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.stroke();
+      const hb = iso(gx + 0.52, gy + 0.09, 38); heartPath(ctx, hb.x, hb.y, 7); // 1.16: intre perne (la gx+1 parea o fundita pe capul celui care doarme in dreapta) ctx.fillStyle = '#ff7aa2'; ctx.fill(); ctx.strokeStyle = O; ctx.lineWidth = 1.5; ctx.stroke();
       isoBox(ctx, gx, gy + 0.18, w, d - 0.18, 14, boxOf('#c98e5f'));   // cadru
       isoBox(ctx, gx + 0.06, gy + 0.22, w - 0.12, d - 0.3, 9, boxOf('#fffaf4'), 14); // saltea
       isoBox(ctx, gx + 0.12, gy + 0.3, 0.82, 0.55, 7, boxOf('#ffffff'), 23);   // perne

@@ -5,7 +5,7 @@ import { SPECS } from '../char/draw';
 import { setTextFilter } from '../ui/icons';
 
 /** pana isi alege fiecare numele */
-export const DEFAULT_NAME = { bubu: 'Pufi', dudu: 'Ghem' } as const;
+export const DEFAULT_NAME = { bubu: 'Luna', dudu: 'Leo' } as const; // 1.16 (pana atunci Pufi si Ghem)
 /** numele jocului (aplicatia, meniul, fisierele). Se schimba doar aici */
 export const GAME_NAME = 'Twogether';
 /** doar litere, cifre, spatiu, cratima, punct; cel mult 14 caractere (numele ajung si in HTML) */

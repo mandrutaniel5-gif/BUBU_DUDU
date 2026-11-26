@@ -250,6 +250,37 @@ const D: Record<string, (c: C) => void> = {
   '🍹': c => { po(c, [16, 14, 48, 14, 42, 56, 22, 56], '#fffbe0'); po(c, [17, 22, 47, 22, 42, 56, 22, 56], '#ffe97a'); el(c, 44, 16, 8, 8, '#ffe14f'); ln(c, [36, 6, 30, 46], 3, '#ff7aa2'); ci(c, 26, 34, 2.5, '#fff', false); ci(c, 34, 44, 2, '#fff', false); },
   '🧑‍🍳': c => { D['🍞'](c); },
   '🏮': c => { el(c, 32, 32, 18, 20, '#e63946'); rr(c, 24, 8, 16, 6, 2, '#ffd23f'); rr(c, 24, 50, 16, 6, 2, '#ffd23f'); },
+  // ---------------- 1.16: meniul si setarile (pana acum aici ramaneau emoji-urile telefonului)
+  // Luna si Sunny: pictograme ca la semnele de WC (ea cu rochie, el), in culorile lor
+  '🚺': c => { const P = '#ff7aa2'; for (const s of [-1, 1]) { ln(c, [32 + s * 6, 24, 32 + s * 13, 38], 8); ln(c, [32 + s * 6, 24, 32 + s * 13, 38], 4, P); }
+    rr(c, 24, 42, 6, 17, 3, P); rr(c, 34, 42, 6, 17, 3, P); po(c, [27, 20, 37, 20, 47, 45, 17, 45], P); ci(c, 32, 11, 7.5, P); },
+  '🚹': c => { const B = '#5b9cf0'; for (const x of [17, 47]) { ln(c, [x, 23, x, 39], 8); ln(c, [x, 23, x, 39], 4, B); }
+    rr(c, 23, 38, 8, 21, 3, B); rr(c, 33, 38, 8, 21, 3, B); rr(c, 21, 20, 22, 22, 6, B); ci(c, 32, 11, 7.5, B); },
+  '🌐': c => { ci(c, 32, 32, 22, '#7ec8f0'); el(c, 32, 32, 10, 22); ln(c, [10, 32, 54, 32], 3); ln(c, [14, 21, 50, 21], 2.5); ln(c, [14, 43, 50, 43], 2.5); shine(c, 22, 20, 3); },
+  '🌍': c => { ci(c, 32, 32, 22, '#7ec8f0'); po(c, [18, 18, 30, 14, 34, 22, 28, 30, 30, 40, 22, 46, 16, 36, 12, 28], '#7cc56b'); po(c, [38, 30, 48, 26, 52, 36, 44, 48, 38, 42], '#7cc56b'); shine(c, 40, 16, 3); },
+  '📴': c => { rr(c, 18, 6, 28, 52, 6, '#3a3a44'); rr(c, 22, 12, 20, 38, 2, '#c9ccd6'); ci(c, 32, 31, 8, '#fff'); ln(c, [26, 37, 38, 25], 3, '#e63946'); ci(c, 32, 54, 1.8, '#c9ccd6', false); },
+  '▶': c => { po(c, [20, 12, 52, 32, 20, 52], '#fff'); },
+  '📂': c => { po(c, [6, 16, 24, 16, 28, 22, 52, 22, 52, 50, 6, 50], '#e8b830'); po(c, [6, 50, 14, 30, 60, 30, 52, 50], '#ffd23f'); },
+  '⚙': c => { c.save(); c.translate(32, 32); for (let i = 0; i < 8; i++) { c.rotate(Math.PI / 4); rr(c, -5, -26, 10, 12, 2, '#a7adbd'); } c.restore(); ci(c, 32, 32, 18, '#c9ccd6'); ci(c, 32, 32, 7, '#fff'); },
+  '🚪': c => { rr(c, 14, 6, 36, 54, 3, '#b07a4a'); rr(c, 20, 12, 24, 18, 2, '#c98e5f'); rr(c, 20, 34, 24, 20, 2, '#c98e5f'); ci(c, 41, 34, 3, '#ffd23f'); },
+  '🟢': c => { ci(c, 32, 32, 18, '#5bd16b'); shine(c, 25, 25, 4); },
+  '✔': c => { ln(c, [12, 34, 26, 48, 52, 16], 12); ln(c, [12, 34, 26, 48, 52, 16], 6, '#5bd16b'); },
+  '✅': c => { rr(c, 8, 8, 48, 48, 10, '#5bd16b'); ln(c, [18, 33, 28, 43, 46, 21], 6, '#fff'); },
+  '❌': c => { for (const p of [[16, 16, 48, 48], [48, 16, 16, 48]]) ln(c, p, 13); for (const p of [[16, 16, 48, 48], [48, 16, 16, 48]]) ln(c, p, 7, '#e63946'); },
+  '🔋': c => { rr(c, 8, 18, 44, 28, 5, '#fff'); rr(c, 52, 26, 6, 12, 2, '#c9ccd6'); rr(c, 13, 23, 30, 18, 2, '#5bd16b', false); },
+  '🔊': c => { po(c, [8, 24, 18, 24, 32, 12, 32, 52, 18, 40, 8, 40], '#c9ccd6'); qd(c, c => { c.arc(34, 32, 10, -0.9, 0.9); }); qd(c, c => { c.arc(34, 32, 19, -0.9, 0.9); }); },
+  '🔇': c => { po(c, [8, 24, 18, 24, 32, 12, 32, 52, 18, 40, 8, 40], '#c9ccd6'); for (const p of [[40, 24, 56, 40], [56, 24, 40, 40]]) { ln(c, p, 8); ln(c, p, 4, '#e63946'); } },
+  '🐞': c => { ci(c, 32, 16, 9, '#3a3a44'); el(c, 32, 38, 21, 20, '#e63946'); ln(c, [32, 20, 32, 58], 3); for (const [x, y, r] of [[22, 32, 4], [42, 32, 4], [24, 46, 3.5], [40, 46, 3.5]]) ci(c, x, y, r, '#3a3a44', false); ln(c, [27, 8, 22, 2], 2.5); ln(c, [37, 8, 42, 2], 2.5); },
+  '📋': c => { rr(c, 12, 10, 40, 48, 5, '#c98e5f'); rr(c, 17, 17, 30, 36, 2, '#fff'); rr(c, 24, 6, 16, 9, 3, '#c9ccd6'); for (const y of [26, 34, 42]) ln(c, [22, y, 42, y], 2.5, '#b9aaa3'); },
+  '🛡': c => { qd(c, c => { c.moveTo(32, 6); c.lineTo(54, 14); c.quadraticCurveTo(54, 44, 32, 58); c.quadraticCurveTo(10, 44, 10, 14); c.closePath(); }, '#5b9cf0'); qd(c, c => { c.moveTo(32, 12); c.lineTo(48, 18); c.quadraticCurveTo(48, 40, 32, 51); c.closePath(); }, '#8fbcf7', false); },
+  '👥': c => { ci(c, 42, 20, 9, '#a7adbd'); qd(c, c => { c.moveTo(28, 52); c.quadraticCurveTo(28, 32, 42, 32); c.quadraticCurveTo(56, 32, 56, 52); c.closePath(); }, '#a7adbd'); ci(c, 24, 24, 10, '#c9ccd6'); qd(c, c => { c.moveTo(8, 58); c.quadraticCurveTo(8, 36, 24, 36); c.quadraticCurveTo(40, 36, 40, 58); c.closePath(); }, '#c9ccd6'); },
+  '🗑': c => { rr(c, 10, 14, 44, 8, 3, '#a7adbd'); rr(c, 26, 8, 12, 7, 2, '#a7adbd'); po(c, [14, 22, 50, 22, 46, 58, 18, 58], '#c9ccd6'); for (const x of [25, 32, 39]) ln(c, [x, 29, x, 51], 2.5); },
+  '💥': c => { const p: number[] = []; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, r = i % 2 ? 12 : 27; p.push(32 + Math.cos(a) * r, 32 + Math.sin(a) * r); } po(c, p, '#ffb347'); ci(c, 32, 32, 8, '#ffe58a', false); },
+  '🔎': c => { ln(c, [38, 38, 56, 56], 11); ln(c, [38, 38, 56, 56], 6, '#8a5a3a'); ci(c, 26, 26, 17, '#bfe8ff'); shine(c, 20, 20, 4); },
+  '📤': c => { po(c, [6, 36, 18, 36, 22, 44, 42, 44, 46, 36, 58, 36, 58, 56, 6, 56], '#c9ccd6'); po(c, [32, 6, 46, 22, 37, 22, 37, 38, 27, 38, 27, 22, 18, 22], '#5bd16b'); },
+  // casa noua: casuta cu un plus verde mic in colt (butonul „Casa noua” din meniu)
+  '🏠➕': c => { po(c, [6, 32, 28, 12, 50, 32], '#e07a5f'); rr(c, 11, 31, 34, 25, 3, '#fff3e0'); rr(c, 22, 40, 11, 16, 2, '#b07a4a'); ci(c, 48, 46, 13, '#5bd16b'); ln(c, [48, 39, 48, 53], 4, '#fff'); ln(c, [41, 46, 55, 46], 4, '#fff'); },
+  '🎉': c => { po(c, [8, 58, 22, 18, 48, 44], '#ffd23f'); ln(c, [15, 38, 30, 50], 3, '#ff5d8f'); for (const [x, y, f] of [[34, 12, '#ff5d8f'], [50, 18, '#7ec8f0'], [44, 30, '#9ed67a'], [56, 36, '#ffd23f']] as const) ci(c, x, y, 3.5, f); ln(c, [28, 26, 36, 6], 2.5); ln(c, [38, 38, 58, 26], 2.5); },
 };
 // Alias (fara selectorul de varianta)
 for (const k of Object.keys(D)) { const b = k.replace(/️/g, ''); if (b !== k && !D[b]) D[b] = D[k]; }

@@ -9,7 +9,7 @@ import { ErrorLog } from '../engine/errors';
 import { Bugs } from '../engine/bugs';
 import pkg from '../../package.json';
 import { Settings, OFFLINE_ROOM, deviceId, type SavedHouse } from '../game/settings';
-import { GAME_NAME, cleanName } from '../game/names';
+import { GAME_NAME, DEFAULT_NAME, cleanName } from '../game/names';
 import type { Scene, Game } from '../engine/game';
 import type { NetConfig } from '../net/types';
 import type { CharId } from '../char/draw';
@@ -17,14 +17,15 @@ import { createHouse, joinHouse, normCode, watchSeats, type Seats } from '../net
 import { seatTaken } from '../net/adapters';
 import { $t, LANGS, lang, setLang, type Lang } from '../i18n';
 
-// 1.13.0: personajele nu mai au nume fixe. Pana se stie numele (din salvare), scrie cine e: ea (hamsterita alba) / el (hamsterul auriu)
-const ROLE: Record<CharId, string> = { bubu: $t('Ea (hamsterița)'), dudu: $t('El (hamsterul)') } as Record<CharId, string>;
+// 1.16: personajele au nume: Luna (ea) si Leo (el). Fiecare jucator si-l poate schimba; pana se stie numele din salvare, scrie Luna / Leo
+const ROLE: Record<CharId, string> = { bubu: DEFAULT_NAME.bubu, dudu: DEFAULT_NAME.dudu } as Record<CharId, string>;
 /** numele din salvarea casei de pe telefonul asta (al tau si al partenerului, daca a intrat vreodata) */
 function houseNames(room: string): Partial<Record<CharId, string>> {
   try { const raw = localStorage.getItem('bd-save-' + room); if (!raw) return {}; const w = JSON.parse(JSON.parse(raw).json); return { bubu: cleanName(w?.chars?.bubu?.name), dudu: cleanName(w?.chars?.dudu?.name) }; } catch { return {}; }
 }
 const label = (w: CharId, room?: string) => (room && houseNames(room)[w]) || ROLE[w];
-const ICON: Record<CharId, string> = { bubu: '🐹', dudu: '🐹' } as Record<CharId, string>;
+/** pictogramele desenate (ca la semnele de WC): ea / el */
+const ICON: Record<CharId, string> = { bubu: '🚺', dudu: '🚹' } as Record<CharId, string>;
 const other = (w: CharId): CharId => (w === 'bubu' ? 'dudu' : 'bubu');
 const esc = (t: string) => t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
 /** ce scrie pe cartonasul casei (din salvarea de pe telefon): capitolul si ziua */
@@ -57,34 +58,42 @@ export class MenuScene implements Scene {
     this.ui.className = 'menu';
     // limba (colțul din stânga sus și Setări): se ține minte și jocul pornește din nou în ea (casa și salvările rămân)
     this.ui.addEventListener('change', e => { const t = e.target as HTMLElement; if (t.matches('select.lang')) setLang((t as HTMLSelectElement).value as Lang); });
-    // 1.15.3: limba se alege direct din colțul din stânga sus (cerut de testeri), nu doar din Setări
+    // 1.16: ecran de titlu (varianta C): titlul sus, Luna si Leo in mijloc, in stanga numele tau si casele voastre,
+    // in dreapta ce poti incepe, in colturi limba si salvare / incarcare / setari
+    this.ui.classList.add('mc');
     this.ui.innerHTML = `
-      <label class="menulang" title="${$t('Limba')}">🌐 <select class="lang">${LANGS.map(l => `<option value="${l.id}"${l.id === lang ? ' selected' : ''}>${l.flag} ${l.name}</option>`).join('')}</select></label>
-      <div class="menu-card">
-        <h1>${GAME_NAME.includes(' & ') ? GAME_NAME.split(' & ').map(esc).join(' <span>&</span> ') : esc(GAME_NAME)}</h1>
-        <p class="tag">${$t('Căsuța noastră 🏡💕')}</p>
-        <label class="myname">${$t('Numele tău')} <input name="myname" maxlength="14" autocomplete="nickname" placeholder="${$t('ex. Ana')}" value="${esc(cleanName(s.myName))}" /></label>
-        <div class="tabs2">
-          <button data-tab="online">${$t('🌍 Online')}<small>${$t('cu partenerul')}</small></button>
-          <button data-tab="offline">${$t('📴 Offline')}<small>${$t('singur, fără internet')}</small></button>
-        </div>
-        <div class="pane p-online">
-          <div class="houses"></div>
-          <div class="row2 hbtns"><button class="h-new">${$t('✨ Casă nouă')}</button><button class="h-joinopen">${$t('🔑 Intră la partener')}</button></div>
-        </div>
+      <label class="menulang" title="${$t('Limba')}"><span>🌐 ${lang.toUpperCase()}</span><select class="lang" aria-label="${$t('Limba')}">${LANGS.map(l => `<option value="${l.id}"${l.id === lang ? ' selected' : ''}>${l.name}</option>`).join('')}</select></label>
+      <div class="m-title"><h1>${esc(GAME_NAME)}</h1><p class="tag">${$t('Căsuța noastră')}</p></div>
+      <div class="m-corner">
+        <button class="export" title="${$t('Salvează progresul într-un fișier')}" aria-label="${$t('Salvează')}">💾</button>
+        <button class="import" title="${$t('Încarcă progresul dintr-un fișier')}" aria-label="${$t('Încarcă')}">📂</button>
+        <button class="more" title="${$t('Setări')}" aria-label="${$t('Setări')}">⚙</button>
+      </div>
+      <div class="m-left">
+        <label class="myname"><span>${$t('Numele tău')}</span><input name="myname" maxlength="14" autocomplete="nickname" placeholder="${$t('ex. Ana')}" value="${esc(cleanName(s.myName))}" /></label>
+        <div class="pane p-online"><div class="houses"></div></div>
         <div class="pane p-offline">
           <p class="sub2">${$t('Joci pe telefonul ăsta. Partenerul e jucat de calculator.')}</p>
           <div class="who2">
-            <button data-who="bubu">🐹<b>${$t('Ea')}</b><small>${$t('hamsterița albă')}</small></button>
-            <button data-who="dudu">🐹<b>${$t('El')}</b><small>${$t('hamsterul auriu')}</small></button>
+            <button data-who="bubu">🚺<b>${esc(DEFAULT_NAME.bubu)}</b></button>
+            <button data-who="dudu">🚹<b>${esc(DEFAULT_NAME.dudu)}</b></button>
           </div>
-          <label class="myname">${$t('Numele partenerului')} <input name="pname" maxlength="14" placeholder="${$t('ex. Mihai')}" value="${esc(cleanName(s.partnerName))}" /></label>
-          <button class="play">${$t('▶ Joacă')}</button>
-          <div class="row2"><button class="reset">${$t('🔄 Joc nou (Offline)')}</button></div>
+          <label class="myname"><span>${$t('Numele partenerului')}</span><input name="pname" maxlength="14" placeholder="${$t('ex. Mihai')}" value="${esc(cleanName(s.partnerName))}" /></label>
+          <button class="play">▶ ${$t('Joacă')}</button>
+          <button class="reset">🔄 ${$t('Joc nou (Offline)')}</button>
         </div>
-        <div class="row2"><button class="export" title="${$t('Salvează progresul într-un fișier')}">${$t('💾 Salvează')}</button><button class="import" title="${$t('Încarcă progresul dintr-un fișier')}">${$t('📂 Încarcă')}</button><button class="more">${$t('⚙ Setări')}</button></div>
-        <p class="ver">${$t('v{0} · făcut cu 💕 pentru noi doi', pkg.version)}</p>
-      </div>`;
+      </div>
+      <div class="m-right">
+        <div class="pane p-online acts">
+          <button class="h-new">🏠➕ <span><b>${$t('Casă nouă')}</b><small>${$t('faci o casă și îi dai partenerului codul')}</small></span></button>
+          <button class="h-joinopen">🔑 <span><b>${$t('Intră la partener')}</b><small>${$t('ai primit codul și parola')}</small></span></button>
+          <button data-tab="offline">📴 <span><b>${$t('Offline')}</b><small>${$t('singur, fără internet')}</small></span></button>
+        </div>
+        <div class="pane p-offline acts">
+          <button data-tab="online">🌍 <span><b>${$t('Online')}</b><small>${$t('cu partenerul')}</small></span></button>
+        </div>
+      </div>
+      <p class="ver">v${pkg.version}</p>`;
     document.getElementById('ui')!.appendChild(this.ui);
     this.showTab(this.tab);
     this.ui.addEventListener('click', e => this.onClick(e));
@@ -101,8 +110,8 @@ export class MenuScene implements Scene {
   showTab(t: 'online' | 'offline') {
     this.tab = t;
     this.ui.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', (b as HTMLElement).dataset.tab === t));
-    this.ui.querySelector('.p-online')!.classList.toggle('hidden', t !== 'online');
-    this.ui.querySelector('.p-offline')!.classList.toggle('hidden', t !== 'offline');
+    this.ui.querySelectorAll('.p-online').forEach(x => x.classList.toggle('hidden', t !== 'online'));
+    this.ui.querySelectorAll('.p-offline').forEach(x => x.classList.toggle('hidden', t !== 'offline'));
     const who = Settings.get().who;
     this.ui.querySelectorAll('[data-who]').forEach(x => x.classList.toggle('on', (x as HTMLElement).dataset.who === who));
     if (t === 'online') { this.renderHouses(); this.watch(); }
@@ -119,10 +128,15 @@ export class MenuScene implements Scene {
     return seatTaken(x.s[w as 'bubu' | 'dudu'], deviceId(), x.now()) ? 'busy' : 'free';
   }
   renderHouses() {
+    this.renderHousesInner();
+    const pane = this.ui.querySelector('.m-left .p-online') as HTMLElement | null;
+    if (pane) { const upd = () => pane.classList.toggle('more', pane.scrollHeight - pane.scrollTop - pane.clientHeight > 8); requestAnimationFrame(upd); if (!pane.dataset.sc) { pane.dataset.sc = '1'; pane.addEventListener('scroll', upd, { passive: true }); addEventListener('resize', upd); } }
+  }
+  renderHousesInner() {
     const box = this.ui.querySelector('.houses') as HTMLElement | null; if (!box) return;
     const list = Settings.get().houses ?? [];
     if (!list.length) {
-      box.innerHTML = `<div class="hempty"><b>${$t('Nu aveți încă o casă.')}</b><br>${$t('Unul dintre voi apasă')} <b>${$t('✨ Casă nouă')}</b> ${$t('și îi spune celuilalt codul și parola. Celălalt apasă')} <b>${$t('🔑 Intră la partener')}</b>.</div>`;
+      box.innerHTML = `<div class="hempty"><b>${$t('Nu aveți încă o casă.')}</b><br>${$t('Unul dintre voi apasă')} <b>🏠➕ ${$t('Casă nouă')}</b> ${$t('și îi spune celuilalt codul și parola. Celălalt apasă')} <b>${$t('🔑 Intră la partener')}</b>.</div>`;
       return;
     }
     box.innerHTML = list.map(h => {
@@ -308,7 +322,7 @@ export class MenuScene implements Scene {
       const pref = free.includes(Settings.get().who) ? Settings.get().who : free[0];
       if (!free.length) { this.notice($t('🏠 Casa e plină'), $t('În casa {0} sunt deja amândoi. Casa a rămas în listă: intrați când se eliberează un loc.', h.code)); this.showTab('online'); return; }
       this.dialog(`<h3>${$t('🏠 Casa {0}', esc(h.code))}</h3><p class="sub">${$t('Cine ești tu? {0}', busy.bubu || busy.dudu ? $t('Locul ocupat e al partenerului, care e acum în joc.') : '')}</p>
-        <div class="row2">${free.map(w => `<button data-join2='${esc(JSON.stringify(h))}' data-as="${w}" class="${w === pref ? 'on' : ''}">${ICON[w]} Intru ca ${esc(label(w, h.room))}</button>`).join('')}</div>
+        <div class="row2">${free.map(w => `<button data-join2='${esc(JSON.stringify(h))}' data-as="${w}" class="${w === pref ? 'on' : ''}">${ICON[w]} ${$t('Intru ca {0}', esc(label(w, h.room)))}</button>`).join('')}</div>
         <div class="row2"><button class="xcred">${$t('Mai târziu')}</button></div>`, 'house');
     };
     this.showTab('online');
@@ -396,14 +410,24 @@ export class MenuScene implements Scene {
   update(dt: number) {
     this.t += dt;
     const { w, h } = this.game;
+    // 1.16 (ecranul de titlu): Luna si Leo stau, in mijlocul locului liber dintre cele doua coloane
+    // coordonatele din pagina (nu de pe ecran): pe telefonul tinut vertical jocul e rotit
+    const box = (q: string) => { const e = this.ui?.querySelector(q) as HTMLElement | null; return e && e.offsetWidth ? { left: e.offsetLeft, right: e.offsetLeft + e.offsetWidth, width: e.offsetWidth } : null; };
+    const L = box('.m-left'), R = box('.m-right');
+    if (L && R && R.left > L.right + 40) {
+      // in mijlocul ecranului (nu jos), cat de mari incap intre coloane
+      const gapW = R.left - L.right, s2 = Math.max(0.8, Math.min(2.6, h / 215, gapW / 175)), cx2 = (L.right + R.left) / 2;
+      this.bubu.scale = this.dudu.scale = s2; this.bubu.x = cx2 - 40 * s2; this.dudu.x = cx2 + 40 * s2; this.bubu.y = this.dudu.y = Math.min(h - 10, h * 0.58 + 62 * s2); this.dudu.flip = -1;
+    } else {
     const sc = Math.max(1, Math.min(2.2, h / 380));
-    const narrow = w < 760 && h > w; // telefon pe lat: personajele stanga, meniul dreapta
+    const narrow = h > w; // ecran in picioare: personajele sus, meniul sub ele
     const cx = narrow ? w / 2 : w * 0.28;
     this.bubu.scale = this.dudu.scale = sc;
     this.bubu.x = cx - 55 * sc; this.dudu.x = cx + 55 * sc; this.dudu.flip = -1;
     this.bubu.y = this.dudu.y = narrow ? h * 0.26 : h * 0.68;
     if (narrow) { const s2 = 1.25; this.bubu.scale = this.dudu.scale = s2; this.bubu.x = cx - 50 * s2; this.dudu.x = cx + 50 * s2; this.bubu.y = this.dudu.y = 150; }
     else if (h < 520) { const s2 = Math.min(h / 300, w * 0.36 / 220); const cx = w * 0.2; this.bubu.scale = this.dudu.scale = s2; this.bubu.y = this.dudu.y = h * 0.78; this.bubu.x = cx - 50 * s2; this.dudu.x = cx + 50 * s2; }
+    }
     this.nextEmote -= dt;
     if (this.nextEmote < 0) {
       this.nextEmote = 3 + Math.random() * 2;
