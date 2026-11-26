@@ -2109,7 +2109,6 @@
  "S-a deschis magazinul „Bubu & Dudu” în oraș! 🏪💕": "A loja “Bubu & Dudu” abriu na cidade! 🏪💕",
  "pe raft {0} · ai {1} · {2} lei": "na prateleira {0} · você tem {1} · {2} lei",
  "🏪 Magazinul „Bubu & Dudu”": "🏪 A loja “Bubu & Dudu”",
- "Pe rafturi: {0} produse. Se vând singure în fiecare zi ({1} pe zi, mai multe cu vânzător angajat). Atinge un produs ca să pui 5 pe raft.": "Nas prateleiras: {0} produtos. Eles vendem sozinhos todo dia ({1} por dia, mais com um vendedor contratado). Toque num produto para pôr 5 na prateleira.",
  "🪟 Vitrina (nivel {0}/3){1}": "🪟 A vitrine (nível {0}/3){1}",
  "📜 Contracte": "📜 Contratos",
  "🧾 Vinde acum": "🧾 Vender agora",
@@ -2569,7 +2568,7 @@
  "{0} a înfundat toaleta 🚽 (te așteaptă o pompă 🪠)": "{0} entupiu o vaso 🚽 (um desentupidor espera por você 🪠)",
  "{0} a desfundat toaleta 🪠✨ {1}!": "{0} desentupiu o vaso 🪠✨ {1}!",
  "Erou": "Herói",
- "Eroină": "Heroína",
+ "Eroină": "Campeã",
  "🪵 Cheresteaua a cumpărat azi destule lemne ({0}). Mai vino mâine!": "🪵 A serraria já comprou lenha bastante hoje ({0}). Volte amanhã!",
  "🪵 Ai vândut {0} lemne la cherestea: +{1} lei ({2} lei bucata{3}; cel mult {4} pe zi)": "🪵 Você vendeu {0} lenhas na serraria: +{1} lei ({2} lei cada{3}; no máximo {4} por dia)",
  ", Dudu știe să negocieze 😎": ", o Dudu sabe negociar 😎",
@@ -3309,5 +3308,13 @@
  "⏩ Fluiditate maximă (60): pornită": "⏩ Fluidez máxima (60): ligada",
  "⏩ Fluiditate maximă (60): oprită": "⏩ Fluidez máxima (60): desligada",
  "Economisire baterie: rezoluție puțin mai mică pe telefon": "Economia de bateria: resolução um pouco menor no celular",
- "60 de cadre pe secundă când mergi: mai fluid, dar placa video muncește aproape dublu. Pentru aparate puternice.": "60 quadros por segundo ao andar: mais fluido, mas a placa de vídeo trabalha quase o dobro. Para aparelhos potentes."
+ "60 de cadre pe secundă când mergi: mai fluid, dar placa video muncește aproape dublu. Pentru aparate puternice.": "60 quadros por segundo ao andar: mais fluido, mas a placa de vídeo trabalha quase o dobro. Para aparelhos potentes.",
+ "Pe rafturi: {0} produse. Se vând singure în fiecare zi ({1} pe zi, mai multe cu vânzător angajat).": "Nas prateleiras: {0} produtos. Vendem-se sozinhos todos os dias ({1} por dia, mais com um vendedor contratado).",
+ "📦 Pune pe raft": "📦 Pôr na prateleira",
+ "↩ Ia înapoi": "↩ Retirar",
+ "Câte:": "Quantos:",
+ "Tot": "Tudo",
+ "Nu e nimic de luat de pe raft": "Não há nada para retirar da prateleira",
+ "Nu ai produsul ăsta": "Não tens este produto",
+ "⬅ Înapoi la magazin": "⬅ Voltar à loja"
 }

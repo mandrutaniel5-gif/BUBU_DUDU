@@ -663,10 +663,13 @@ export class Hud {
     if (!this.prevCache[key]) {
       const it = ITEMS.find(i => i.id === itemId)!;
       const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d')!;
-      const head = it.slot !== 'body';
       const P = basePose(); P.eyes = 'happy'; P.mouth = 'open'; P.blush = 1;
       const of: any = { ...NO_OUTFIT, [it.slot]: it.id };
-      if (head) drawCharacter(c, SPECS[s.myId], P, 64, 196, 1.3, 1, 0, of);
+      // 1.17: incadrarea dupa locul obiectului (de la micsorarea hamsterilor in 1.14.1 se vedea doar crestetul:
+      // ochelarii si ce porti la gat nu apareau deloc, raport 26.11). Capul e la ~51 * marime deasupra talpilor.
+      if (it.slot === 'head') drawCharacter(c, SPECS[s.myId], P, 64, 166, 1.6, 1, 0, of);
+      else if (it.slot === 'face') drawCharacter(c, SPECS[s.myId], P, 64, 150, 1.65, 1, 0, of);
+      else if (it.slot === 'neck') drawCharacter(c, SPECS[s.myId], P, 64, 140, 1.45, 1, 0, of);
       else drawCharacter(c, SPECS[s.myId], P, 64, 116, 1.15, 1, 0, of);
       this.prevCache[key] = cv.toDataURL();
     }

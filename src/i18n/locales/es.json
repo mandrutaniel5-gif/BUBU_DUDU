@@ -2109,7 +2109,6 @@
  "S-a deschis magazinul „Bubu & Dudu” în oraș! 🏪💕": "¡Ha abierto la tienda «Bubu & Dudu» en la ciudad! 🏪💕",
  "pe raft {0} · ai {1} · {2} lei": "en la estantería {0} · tienes {1} · {2} lei",
  "🏪 Magazinul „Bubu & Dudu”": "🏪 La tienda «Bubu & Dudu»",
- "Pe rafturi: {0} produse. Se vând singure în fiecare zi ({1} pe zi, mai multe cu vânzător angajat). Atinge un produs ca să pui 5 pe raft.": "En las estanterías: {0} productos. Se venden solos cada día ({1} al día, más con dependiente contratado). Toca un producto para poner 5 en la estantería.",
  "🪟 Vitrina (nivel {0}/3){1}": "🪟 El escaparate (nivel {0}/3){1}",
  "📜 Contracte": "📜 Contratos",
  "🧾 Vinde acum": "🧾 Vender ahora",
@@ -2569,7 +2568,7 @@
  "{0} a înfundat toaleta 🚽 (te așteaptă o pompă 🪠)": "{0} ha atascado el inodoro 🚽 (te espera un desatascador 🪠)",
  "{0} a desfundat toaleta 🪠✨ {1}!": "¡{0} ha desatascado el inodoro 🪠✨ {1}!",
  "Erou": "Héroe",
- "Eroină": "Heroína",
+ "Eroină": "Campeona",
  "🪵 Cheresteaua a cumpărat azi destule lemne ({0}). Mai vino mâine!": "🪵 El aserradero ya ha comprado bastante leña hoy ({0}). ¡Vuelve mañana!",
  "🪵 Ai vândut {0} lemne la cherestea: +{1} lei ({2} lei bucata{3}; cel mult {4} pe zi)": "🪵 Has vendido {0} troncos en el aserradero: +{1} lei ({2} lei la pieza{3}; como mucho {4} al día)",
  ", Dudu știe să negocieze 😎": ", Dudu sabe regatear 😎",
@@ -3309,5 +3308,13 @@
  "⏩ Fluiditate maximă (60): pornită": "⏩ Fluidez máxima (60): activada",
  "⏩ Fluiditate maximă (60): oprită": "⏩ Fluidez máxima (60): desactivada",
  "Economisire baterie: rezoluție puțin mai mică pe telefon": "Ahorro de batería: resolución un poco menor en el móvil",
- "60 de cadre pe secundă când mergi: mai fluid, dar placa video muncește aproape dublu. Pentru aparate puternice.": "60 fotogramas por segundo al caminar: más fluido, pero la tarjeta gráfica trabaja casi el doble. Para dispositivos potentes."
+ "60 de cadre pe secundă când mergi: mai fluid, dar placa video muncește aproape dublu. Pentru aparate puternice.": "60 fotogramas por segundo al caminar: más fluido, pero la tarjeta gráfica trabaja casi el doble. Para dispositivos potentes.",
+ "Pe rafturi: {0} produse. Se vând singure în fiecare zi ({1} pe zi, mai multe cu vânzător angajat).": "En las estanterías: {0} productos. Se venden solos cada día ({1} al día, más con un dependiente contratado).",
+ "📦 Pune pe raft": "📦 Poner en estante",
+ "↩ Ia înapoi": "↩ Retirar",
+ "Câte:": "Cuántos:",
+ "Tot": "Todo",
+ "Nu e nimic de luat de pe raft": "No hay nada que retirar del estante",
+ "Nu ai produsul ăsta": "No tienes este producto",
+ "⬅ Înapoi la magazin": "⬅ Volver a la tienda"
 }

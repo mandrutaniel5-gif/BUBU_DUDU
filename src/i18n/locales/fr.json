@@ -2109,7 +2109,6 @@
  "S-a deschis magazinul „Bubu & Dudu” în oraș! 🏪💕": "La boutique « Bubu & Dudu » a ouvert en ville ! 🏪💕",
  "pe raft {0} · ai {1} · {2} lei": "en rayon {0} · tu as {1} · {2} lei",
  "🏪 Magazinul „Bubu & Dudu”": "🏪 La boutique « Bubu & Dudu »",
- "Pe rafturi: {0} produse. Se vând singure în fiecare zi ({1} pe zi, mai multe cu vânzător angajat). Atinge un produs ca să pui 5 pe raft.": "En rayon : {0} produits. Ils se vendent tout seuls chaque jour ({1} par jour, plus avec un vendeur embauché). Touche un produit pour en mettre 5 en rayon.",
  "🪟 Vitrina (nivel {0}/3){1}": "🪟 La vitrine (niveau {0}/3){1}",
  "📜 Contracte": "📜 Contrats",
  "🧾 Vinde acum": "🧾 Vendre maintenant",
@@ -2569,7 +2568,7 @@
  "{0} a înfundat toaleta 🚽 (te așteaptă o pompă 🪠)": "{0} a bouché les toilettes 🚽 (une ventouse t'attend 🪠)",
  "{0} a desfundat toaleta 🪠✨ {1}!": "{0} a débouché les toilettes 🪠✨ {1} !",
  "Erou": "Héros",
- "Eroină": "Héroïne",
+ "Eroină": "Championne",
  "🪵 Cheresteaua a cumpărat azi destule lemne ({0}). Mai vino mâine!": "🪵 La scierie a déjà acheté assez de bois aujourd'hui ({0}). Reviens demain !",
  "🪵 Ai vândut {0} lemne la cherestea: +{1} lei ({2} lei bucata{3}; cel mult {4} pe zi)": "🪵 Tu as vendu {0} bûches à la scierie : +{1} lei ({2} lei pièce{3} ; au maximum {4} par jour)",
  ", Dudu știe să negocieze 😎": ", Dudu sait négocier 😎",
@@ -3309,5 +3308,13 @@
  "⏩ Fluiditate maximă (60): pornită": "⏩ Fluidité maximale (60) : activée",
  "⏩ Fluiditate maximă (60): oprită": "⏩ Fluidité maximale (60) : désactivée",
  "Economisire baterie: rezoluție puțin mai mică pe telefon": "Économie de batterie : résolution un peu plus basse sur téléphone",
- "60 de cadre pe secundă când mergi: mai fluid, dar placa video muncește aproape dublu. Pentru aparate puternice.": "60 images par seconde en marchant : plus fluide, mais la carte graphique travaille presque deux fois plus. Pour les appareils puissants."
+ "60 de cadre pe secundă când mergi: mai fluid, dar placa video muncește aproape dublu. Pentru aparate puternice.": "60 images par seconde en marchant : plus fluide, mais la carte graphique travaille presque deux fois plus. Pour les appareils puissants.",
+ "Pe rafturi: {0} produse. Se vând singure în fiecare zi ({1} pe zi, mai multe cu vânzător angajat).": "En rayon : {0} produits. Ils se vendent tout seuls chaque jour ({1} par jour, plus avec un vendeur embauché).",
+ "📦 Pune pe raft": "📦 Mettre en rayon",
+ "↩ Ia înapoi": "↩ Reprendre",
+ "Câte:": "Combien :",
+ "Tot": "Tout",
+ "Nu e nimic de luat de pe raft": "Rien à reprendre en rayon",
+ "Nu ai produsul ăsta": "Tu n'as pas ce produit",
+ "⬅ Înapoi la magazin": "⬅ Retour à la boutique"
 }

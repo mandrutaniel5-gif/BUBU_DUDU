@@ -2109,7 +2109,6 @@
  "S-a deschis magazinul „Bubu & Dudu” în oraș! 🏪💕": "Der Laden „Bubu & Dudu“ hat in der Stadt eröffnet! 🏪💕",
  "pe raft {0} · ai {1} · {2} lei": "im Regal {0} · du hast {1} · {2} Lei",
  "🏪 Magazinul „Bubu & Dudu”": "🏪 Der Laden „Bubu & Dudu“",
- "Pe rafturi: {0} produse. Se vând singure în fiecare zi ({1} pe zi, mai multe cu vânzător angajat). Atinge un produs ca să pui 5 pe raft.": "In den Regalen: {0} Produkte. Sie verkaufen sich jeden Tag von selbst ({1} pro Tag, mehr mit angestelltem Verkäufer). Tipp auf ein Produkt, um 5 ins Regal zu stellen.",
  "🪟 Vitrina (nivel {0}/3){1}": "🪟 Schaufenster (Stufe {0}/3){1}",
  "📜 Contracte": "📜 Verträge",
  "🧾 Vinde acum": "🧾 Jetzt verkaufen",
@@ -3309,5 +3308,13 @@
  "⏩ Fluiditate maximă (60): pornită": "⏩ Maximale Flüssigkeit (60): an",
  "⏩ Fluiditate maximă (60): oprită": "⏩ Maximale Flüssigkeit (60): aus",
  "Economisire baterie: rezoluție puțin mai mică pe telefon": "Akku sparen: etwas geringere Auflösung auf dem Handy",
- "60 de cadre pe secundă când mergi: mai fluid, dar placa video muncește aproape dublu. Pentru aparate puternice.": "60 Bilder pro Sekunde beim Gehen: flüssiger, aber der Grafikchip arbeitet fast doppelt so viel. Für leistungsstarke Geräte."
+ "60 de cadre pe secundă când mergi: mai fluid, dar placa video muncește aproape dublu. Pentru aparate puternice.": "60 Bilder pro Sekunde beim Gehen: flüssiger, aber der Grafikchip arbeitet fast doppelt so viel. Für leistungsstarke Geräte.",
+ "Pe rafturi: {0} produse. Se vând singure în fiecare zi ({1} pe zi, mai multe cu vânzător angajat).": "In den Regalen: {0} Produkte. Sie verkaufen sich jeden Tag von selbst ({1} pro Tag, mehr mit einer angestellten Verkaufskraft).",
+ "📦 Pune pe raft": "📦 Ins Regal",
+ "↩ Ia înapoi": "↩ Zurücknehmen",
+ "Câte:": "Wie viele:",
+ "Tot": "Alle",
+ "Nu e nimic de luat de pe raft": "Nichts im Regal zum Zurücknehmen",
+ "Nu ai produsul ăsta": "Du hast dieses Produkt nicht",
+ "⬅ Înapoi la magazin": "⬅ Zurück zum Laden"
 }

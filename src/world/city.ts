@@ -446,9 +446,12 @@ export function drawCityType(c: CanvasRenderingContext2D, f: Furn, t: number, ni
       return true;
     }
     case 'painting': {
-      for (const u of [0.25, 0.75]) isoBox(c, gx + u - 0.03, gy + 0.5, 0.06, 0.06, 40, boxOf('#8a5d32'));
-      const p = iso(gx + 0.5, gy + 0.5, 46); c.fillStyle = '#ffe1ea'; c.strokeStyle = '#c99a5a'; c.lineWidth = 4; c.beginPath(); c.roundRect(p.x - 20, p.y - 26, 40, 30, 3); c.fill(); c.stroke();
-      heartPath(c, p.x, p.y - 12, 8); c.fillStyle = '#ff4d6d'; c.fill();
+      // 1.17: tabloul e agatat pe peretele din spate (planul gy = 3): rama de lemn, panza roz, inimioara
+      const y = gy + 0.04, x0 = gx + 0.1, x1 = gx + 0.9, z0 = 52, z1 = 84;
+      const quad = (a: number, b: number, za: number, zb: number, fill: string, lw: number, stroke = '#8a5d32') => { const P = [iso(a, y, za), iso(b, y, za), iso(b, y, zb), iso(a, y, zb)]; c.beginPath(); P.forEach((q, i) => i ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y)); c.closePath(); c.fillStyle = fill; c.fill(); if (lw) { c.strokeStyle = stroke; c.lineWidth = lw; c.stroke(); } };
+      quad(x0, x1, z0, z1, '#c99a5a', 2.5, '#5a3a22');                 // rama
+      quad(x0 + 0.08, x1 - 0.08, z0 + 4, z1 - 4, '#ffe1ea', 1.2, '#a0703f'); // panza
+      const m = iso((x0 + x1) / 2, y, (z0 + z1) / 2); heartPath(c, m.x, m.y + 3, 7); c.fillStyle = '#ff4d6d'; c.fill(); c.strokeStyle = '#5a3a22'; c.lineWidth = 1.2; c.stroke();
       return true;
     }
     case 'bigplant': {

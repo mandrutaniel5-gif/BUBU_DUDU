@@ -284,7 +284,7 @@ export class Soundscape {
           else this.spot(rx, ry, pick(['birds', 'birds', 'leaves', 'wood_drop']), 0.4, 20);
         } else if (area === 'home' && !mini) {
           const inside = me.gx >= HOUSE.x0 && me.gx <= HOUSE.x1 + 1 && me.gy >= HOUSE.y0 && me.gy <= HOUSE.y1 + 1;
-          if (inside) { if (Math.random() < 0.35) Sfx.play('clock_tick', { vol: 0.2 }); }
+          if (inside) { /* 1.17: fara ticaitul ceasului (doua lovituri seci, ca o bataie in lemn: „extrem de enervant”, raport 26.11) */ }
           else if (night > 0.6) { if (Math.random() < 0.5) this.spot(rx, ry, 'owl', 0.3, 20); }
           else this.spot(rx, ry, pick(['birds', 'birds', 'chicken', 'leaves']), 0.35, 20);
         } else if (area === 'city') {
@@ -293,8 +293,6 @@ export class Soundscape {
         } else if (area === 'country' || area === 'lake') {
           if (night > 0.6) { if (Math.random() < 0.5) this.spot(rx, ry, 'owl', 0.3, 20); }
           else this.spot(rx, ry, pick(area === 'lake' ? ['duck', 'birds', 'duck'] : ['birds', 'birds', 'sheep', 'horse', 'chicken']), 0.4, 20);
-        } else if (area === 'apartment') {
-          if (Math.random() < 0.3) Sfx.play('clock_tick', { vol: 0.2 });
         }
       }
       // clopotele bisericii din sat: la 8, 12 si 18

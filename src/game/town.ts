@@ -142,7 +142,8 @@ export const DECOR: DecorDef[] = [
   { id: 'piano', label: $t('Pian'), icon: '🎹', price: 1100, type: 'piano', gx: 10, gy: 4, w: 2, d: 2, action: { id: 'piano', label: $t('Cântă la pian'), icon: '🎹' }, desc: $t('Cântați împreună: +iubire, +distracție') },
   { id: 'console', label: $t('Consolă de jocuri'), icon: '🎮', price: 480, type: 'console', gx: 4, gy: 10, w: 1, d: 1, action: { id: 'console', label: $t('Joacă pe consolă'), icon: '🎮' }, desc: $t('Jocuri video în doi: +distracție mare') },
   { id: 'coffee', label: $t('Espressor'), icon: '☕', price: 260, type: 'coffeemachine', gx: 15, gy: 8, w: 1, d: 1, action: { id: 'coffee', label: $t('Fă o cafea'), icon: '☕' }, desc: $t('O cafea pe zi: +energie') },
-  { id: 'painting', label: $t('Tablou cu inimioare'), icon: '🖼️', price: 150, type: 'painting', gx: 7, gy: 8, w: 1, d: 1, desc: $t('Decor: casa e mai frumoasă') },
+  { id: 'painting', label: $t('Tablou cu inimioare'), icon: '🖼️', price: 150, type: 'painting', gx: 7, gy: 3, w: 1, d: 1, // 1.17: agatat pe peretele din spate (statea pe picioare in mijlocul camerei: „nu inteleg ce e”)
+    desc: $t('Decor: casa e mai frumoasă') },
   { id: 'bigplant', label: $t('Plantă mare'), icon: '🪴', price: 100, type: 'bigplant', gx: 11, gy: 13, w: 1, d: 1, action: { id: 'water_plant', label: $t('Udă planta'), icon: '🪴' }, desc: $t('Decor viu') },
   { id: 'lamp', label: $t('Lampă de podea'), icon: '💡', price: 140, type: 'floorlamp', gx: 9, gy: 9, w: 1, d: 1, // 1.16: langa canapea (la 9,13 statea in drum, raport 26.11)
     desc: $t('Lumină caldă seara') },

@@ -503,7 +503,7 @@ export function openLot(s: S) {
   if (s.chapter < SHOP_CHAPTER) { s.hud.toast($t('🏗️ Teren de vânzare. Magazinul vostru vine în Capitolul 7')); return; }
   if (!st(s, 'shopLot')) {
     s.choice($t('🏗️ Terenul din oraș'), $t('Aici poate fi magazinul vostru „Bubu & Dudu”, cu produsele de la fermă. Terenul costă 1500 de lei.'), [
-      ['🏗️', $t('Cumpără terenul (1500 lei)'), () => { if ((s.w.money ?? 0) < 1500) { s.hud.toast($t('Nu aveți destui bani')); Sfx.play('bad'); return; } s.op({ k: 'money', delta: -1500 }); s.op({ k: 'stat', key: 'shopLot', delta: 1 }); s.log($t('Ați cumpărat terenul din oraș 🏗️')); Sfx.play('good'); s.hud.toast($t('🏗️ Terenul e al vostru! Construiți magazinul: 30 scânduri, 20 pietre, 800 lei')); }],
+      ['🏗️', $t('Cumpără terenul (1500 lei)'), () => { if ((s.w.money ?? 0) < 1500) { s.hud.toast($t('Nu aveți destui bani')); Sfx.play('bad'); return; } s.op({ k: 'money', delta: -1500 }); s.op({ k: 'stat', key: 'shopLot', delta: 1 }); s.syncPlaced(); s.log($t('Ați cumpărat terenul din oraș 🏗️')); Sfx.play('good'); s.hud.toast($t('🏗️ Terenul e al vostru! Construiți magazinul: 30 scânduri, 20 pietre, 800 lei')); }],
       ['✖', $t('Nu acum'), () => {}]]);
     return;
   }
@@ -526,14 +526,25 @@ function shopSell(s: S, max: number): { n: number; lei: number } | null {
   setT(s, 'shopStock', stock); s.op({ k: 'money', delta: lei }); s.op({ k: 'stat', key: 'shopSold', delta: n });
   return { n, lei };
 }
+// 1.17: alegi cate bucati pui (1 / 5 / 10 / tot) si poti lua marfa inapoi de pe raft (raport 26.11: „pun produsele unu cate unu”)
+let shopQty = 5, shopTake = false;
 export function openShop(s: S) {
   const stock = shopStock(s), total = Object.values(stock).reduce((a, b) => a + b, 0);
-  const shelves = Object.entries(SHOP_ITEMS).map(([k, it]) => `<button data-stock="${k}" class="${res(s, k) ? '' : 'poor'}"><span>${it.icon}</span><b>${it.label}</b><small>${$t('pe raft {0} · ai {1} · {2} lei', stock[k] ?? 0, res(s, k), Math.round(it.price * (1.5 + st(s, 'vitrina') * 0.15)))}</small></button>`).join('');
+  const shelves = Object.entries(SHOP_ITEMS).map(([k, it]) => `<button data-stock="${k}" class="${(shopTake ? stock[k] ?? 0 : res(s, k)) ? '' : 'poor'}"><span>${it.icon}</span><b>${it.label}</b><small>${$t('pe raft {0} · ai {1} · {2} lei', stock[k] ?? 0, res(s, k), Math.round(it.price * (1.5 + st(s, 'vitrina') * 0.15)))}</small></button>`).join('');
   const vit = st(s, 'vitrina');
-  const m = s.hud.modal(`<h3>${$t('🏪 Magazinul „Bubu & Dudu”')}</h3><p class="sub">${$t('Pe rafturi: {0} produse. Se vând singure în fiecare zi ({1} pe zi, mai multe cu vânzător angajat). Atinge un produs ca să pui 5 pe raft.', total, 6 + vit * 2)}</p>
+  const m = s.hud.modal(`<h3>${$t('🏪 Magazinul „Bubu & Dudu”')}</h3><p class="sub">${$t('Pe rafturi: {0} produse. Se vând singure în fiecare zi ({1} pe zi, mai multe cu vânzător angajat).', total, 6 + vit * 2)}</p>
+    <div class="tabs shopq"><button data-mode="put" class="${shopTake ? '' : 'on'}">${$t('📦 Pune pe raft')}</button><button data-mode="take" class="${shopTake ? 'on' : ''}">${$t('↩ Ia înapoi')}</button></div><div class="tabs shopq"><span class="shopq-l">${$t('Câte:')}</span>${[1, 5, 10, 0].map(q => `<button data-q="${q}" class="${shopQty === q ? 'on' : ''}">${q || $t('Tot')}</button>`).join('')}</div>
     <div class="row2"><button data-vit>${$t('🪟 Vitrina (nivel {0}/3){1}', vit, vit < 3 ? $t(' · {0} flori, {1} lei', 10 + vit * 10, 150 + vit * 100) : '')}</button><button data-contracts>${$t('📜 Contracte')}</button><button data-sell>${$t('🧾 Vinde acum')}</button></div>
     <div class="shop">${shelves}</div>`);
-  m.querySelectorAll('[data-stock]').forEach(b => b.addEventListener('click', () => { const k = (b as HTMLElement).dataset.stock!, n = Math.min(5, res(s, k)); if (!n) { Sfx.play('bad'); return; } s.op({ k: 'res', res: k, delta: -n }); const st2 = shopStock(s); st2[k] = (st2[k] ?? 0) + n; setT(s, 'shopStock', st2); s.op({ k: 'stat', key: 'shopStocked', delta: n }); Sfx.play('cloth'); openShop(s); }));
+  m.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { shopTake = (b as HTMLElement).dataset.mode === 'take'; Sfx.play('click'); openShop(s); }));
+  m.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => { shopQty = +(b as HTMLElement).dataset.q!; Sfx.play('click'); openShop(s); }));
+  m.querySelectorAll('[data-stock]').forEach(b => b.addEventListener('click', () => {
+    const k = (b as HTMLElement).dataset.stock!, st2 = shopStock(s), have = shopTake ? st2[k] ?? 0 : res(s, k), n = shopQty ? Math.min(shopQty, have) : have;
+    if (!n) { s.hud.toast(shopTake ? $t('Nu e nimic de luat de pe raft') : $t('Nu ai produsul ăsta')); Sfx.play('bad'); return; }
+    if (shopTake) { st2[k] -= n; if (!st2[k]) delete st2[k]; s.op({ k: 'res', res: k, delta: n }); s.op({ k: 'stat', key: 'shopStocked', delta: -n }); }
+    else { s.op({ k: 'res', res: k, delta: -n }); st2[k] = (st2[k] ?? 0) + n; s.op({ k: 'stat', key: 'shopStocked', delta: n }); }
+    setT(s, 'shopStock', st2); Sfx.play('cloth'); openShop(s);
+  }));
   m.querySelector('[data-vit]')?.addEventListener('click', () => { const v = st(s, 'vitrina'); if (v >= 3) return; const fl = 10 + v * 10, lei = 150 + v * 100; if (catCount(s.w.res ?? {}, 'flower') < fl || (s.w.money ?? 0) < lei) { s.hud.toast($t('🪟 Pentru vitrină: {0} flori și {1} lei', fl, lei)); Sfx.play('bad'); return; } take(s, FLOWERS, fl); s.op({ k: 'money', delta: -lei }); s.op({ k: 'stat', key: 'vitrina', delta: 1 }); s.me.actor.play('love'); Sfx.play('good'); s.hud.toast($t('🪟 Vitrina arată minunat: clienții plătesc mai mult')); openShop(s); });
   m.querySelector('[data-contracts]')?.addEventListener('click', () => openContracts(s));
   m.querySelector('[data-sell]')?.addEventListener('click', () => { const r = shopSell(s, 4 + vit * 2); s.hud.toast(r ? $t('🧾 Au intrat clienți: {0} produse, +{1} lei', r.n, r.lei) : $t('Rafturile sunt goale')); Sfx.play(r ? 'register' : 'bad'); openShop(s); });
@@ -549,7 +560,8 @@ export function openContracts(s: S) {
   const week = Math.floor((s.w.day - 1) / 7);
   const rows = contractsOf(s).map(c => { const done = st(s, `ctr-${week}-${c.idx}`) > 0, has = Object.entries(c.need).every(([k, n]) => res(s, k) >= n);
     return `<li class="${done ? 'done' : ''}"><b>${c.icon} ${c.client} · ${c.pay} lei</b><small>${Object.entries(c.need).map(([k, n]) => $t('{0} {1} {2} (ai {3})', SHOP_ITEMS[k].icon, n, SHOP_ITEMS[k].label.toLowerCase(), res(s, k))).join(' · ')}</small>${done ? `<small>${$t('✔ livrat săptămâna asta')}</small>` : `<button data-ctr="${c.idx}" ${has ? '' : 'disabled'}>${$t('🚚 Livrează')}</button>`}</li>`; }).join('');
-  const m = s.hud.modal(`<h3>${$t('📜 Contractele săptămânii')}</h3><p class="sub">${$t('Restaurantele și magazinele din oraș cumpără marfa voastră, livrată cu camionul{0}. Contracte noi în fiecare săptămână.', st(s, 'truck') ? '' : $t(' (laptopul → Vehicule → Camionul)'))}</p><ul class="goals give">${rows}</ul>`);
+  const m = s.hud.modal(`<h3>${$t('📜 Contractele săptămânii')}</h3><p class="sub">${$t('Restaurantele și magazinele din oraș cumpără marfa voastră, livrată cu camionul{0}. Contracte noi în fiecare săptămână.', st(s, 'truck') ? '' : $t(' (laptopul → Vehicule → Camionul)'))}</p><ul class="goals give">${rows}</ul><div class="row2"><button data-back>${$t('⬅ Înapoi la magazin')}</button></div>`);
+  m.querySelector('[data-back]')?.addEventListener('click', () => openShop(s)); // 1.17: inapoi la magazin
   m.querySelectorAll('[data-ctr]').forEach(b => b.addEventListener('click', () => {
     if (!st(s, 'truck')) { s.hud.toast($t('🚚 Vă trebuie camionul (laptopul → Vehicule)')); Sfx.play('bad'); return; }
     const c = contractsOf(s)[+(b as HTMLElement).dataset.ctr!];
@@ -823,7 +835,7 @@ export function place(s: S, push: (f: Furn) => void) {
   // 1.11.0: targul orasului (standul) a devenit Targul de Craciun (iarna, in nordul orasului): vezi holidays.ts
 }
 /** cheia pentru imaginile gata desenate (cand se schimba, se redeseneaza) */
-export function storyKey(s: S) { const p = parcelsOf(s); return `${s.w.furn.roofBroken ? 'R' : ''}${forestKey(s)}|${s.chapter}|${st(s, 'projectsDone')}|${Object.entries(p).map(([k, v]) => k + v.stage + Math.floor(v.prog * 4) + (v.crop ?? '')).join(',')}|${st(s, 'shopBuilt')}|${st(s, 'bridgeFixed')}`; }
+export function storyKey(s: S) { const p = parcelsOf(s); return `${s.w.furn.roofBroken ? 'R' : ''}${forestKey(s)}|${s.chapter}|${st(s, 'projectsDone')}|${Object.entries(p).map(([k, v]) => k + v.stage + Math.floor(v.prog * 4) + (v.crop ?? '')).join(',')}|${st(s, 'shopBuilt')}|${st(s, 'shopLot')}|${st(s, 'bridgeFixed')}`; }
 
 /** actiunile noi (id-uri cu prefixul st-) */
 export function action(s: S, id: string, f: Furn) {

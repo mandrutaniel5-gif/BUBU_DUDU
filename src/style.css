@@ -557,3 +557,6 @@ html.h500 .menu.mc .hc-enter { font-size:15px; padding:2px; }/* fereastra in pic
 .menu.mc .m-left > :first-child { margin-top:auto; }
 .menu.mc .m-left .p-offline { min-height:0; overflow-y:auto; flex-shrink:1; }
 html.h500 .menu.mc .p-offline .sub2 { display:none; } html.h500 .menu.mc .p-offline { gap:6px; padding:8px; } html.h500 .menu.mc .who2 button { padding:3px 6px; } html.h500 .menu.mc .play { font-size:17px; padding:3px; }
+
+/* 1.17: magazinul vostru: cate bucati pui / iei de pe raft */
+.shopq { align-items:center; flex-wrap:nowrap; gap:6px; margin:4px 0; } .shopq button { white-space:nowrap; flex:1 1 0; padding:3px 8px; } .shopq .shopq-l { font-weight:800; padding:0 4px; }

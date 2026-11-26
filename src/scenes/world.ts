@@ -481,6 +481,8 @@ export class WorldScene implements Scene {
       for (const f of YARD_ITEMS) { const i = FURNITURE.indexOf(f); if (i >= 0) FURNITURE.splice(i, 1); }
       for (const f of YARD_ITEMS) { const at = yard[f.id]; if (at === 0) continue; const o = YARD_ORIG.get(f.id)!; f.gx = at ? at.gx : o.gx; f.gy = at ? at.gy : o.gy; FURNITURE.push(f); } }
     Story.place(this, f => FURNITURE.push(f));
+    // 1.17: indicatorul „Teren de vanzare” dispare dupa ce ati cumparat terenul (raport 26.11)
+    if ((this.w.stats.shopLot ?? 0) > 0 || (this.w.stats.shopBuilt ?? 0) > 0) { const i = FURNITURE.findIndex(f => f.id === 'c-lot'); if (i >= 0) FURNITURE.splice(i, 1); }
     Hol.place(this, f => FURNITURE.push(f)); this.holKeyNow = Hol.holKey(this);
     for (const key of Object.keys(this.w.plots ?? {})) { const [x, y] = key.split(',').map(Number); FURNITURE.push({ id: 'plot:' + key, type: 'soilplot', gx: x, gy: y, w: 1, d: 1, solid: false, action: { id: 'plot', label: $t('Răzor'), icon: '🌱' } }); }
     let growNext = Infinity;
@@ -498,7 +500,10 @@ export class WorldScene implements Scene {
     if (growNext < Infinity) { if (this.growTimer) clearTimeout(this.growTimer); this.growTimer = setTimeout(() => { this.growTimer = null; this.syncPlaced(); }, Math.min(growNext + 500, 60000)); }
     furnChanged(); this.placedVersion++;
     if (this.walkers.some(v => v.emp)) this.syncWalkers();
-    this.nav = new Nav([...this.doorBlocks(), ...this.worldBlocks()]);
+    // 1.17: fasia ingusta dintre perete si pat (inchisa de garderoba) e o fundatura: cand te ridicai din pat, locul liber
+    // cel mai apropiat era acolo si ramaneai blocat (raport 26.11). O inchidem, ca sa nu mai poata fi aleasa.
+    const bedGap = FURNITURE.find(f => f.id === 'bed' && f.gx === 3 && f.gy === 2) ? [{ x0: 2, y0: 2, x1: 3, y1: 5 }] : [];
+    this.nav = new Nav([...this.doorBlocks(), ...this.worldBlocks(), ...bedGap]);
     this.worldNav = this.nav; // angajatii o folosesc si cand sunteti in apartament
     this.navKey = this.blockKey();
   }
@@ -1522,8 +1527,8 @@ export class WorldScene implements Scene {
     if (this.space !== 'apartment' || currentArea() !== 'apartment') return;
     for (let i = FURNITURE.length - 1; i >= 0; i--) if (FURNITURE[i].id.startsWith('d-')) FURNITURE.splice(i, 1);
     const owned = (this.w.town?.decor as string[] | undefined) ?? [];
-    for (const d of DECOR) if (owned.includes(d.id)) FURNITURE.push({ id: 'd-' + d.id, type: d.type as any, gx: d.gx, gy: d.gy, w: d.w, d: d.d, solid: true, action: d.action });
-    this.nav = new Nav([]);
+    for (const d of DECOR) if (owned.includes(d.id)) FURNITURE.push({ id: 'd-' + d.id, type: d.type as any, gx: d.gx, gy: d.gy, w: d.w, d: d.d, solid: d.type !== 'painting', action: d.action });
+    this.nav = new Nav([{ x0: 3, y0: 3, x1: 4, y1: 6 }]); // 1.17: fundatura dintre perete si pat (vezi casa)
   }
   /** scara la care desenam minijocurile (1 pe ecrane normale, <1 pe ecrane scunde) */
   miniScale() { return Math.min(1, this.game.h / 470); }

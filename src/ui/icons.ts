@@ -195,7 +195,14 @@ const D: Record<string, (c: C) => void> = {
   '🛣️': c => { po(c, [22, 4, 42, 4, 60, 60, 4, 60], '#8d8f9a'); for (const y of [10, 26, 44]) rr(c, 30, y, 4, 10, 1, '#fff', false); ln(c, [22, 4, 4, 60], 3); ln(c, [42, 4, 60, 60], 3); },
   '🚶': c => { ci(c, 34, 12, 8, '#f6d2b5'); rr(c, 26, 22, 16, 20, 6, '#7ab8ff'); ln(c, [30, 42, 24, 58], 6); ln(c, [38, 42, 44, 58], 6); ln(c, [28, 26, 18, 38], 5); ln(c, [40, 26, 48, 36], 5); },
   '🚌': c => { rr(c, 6, 14, 52, 34, 8, '#ffd23f'); for (let i = 0; i < 3; i++) rr(c, 10 + i * 14, 20, 11, 11, 2, '#bfe8ff'); rr(c, 50, 20, 6, 20, 2, '#bfe8ff'); wheel(c, 18, 48, 7); wheel(c, 46, 48, 7); },
-  '✈️': c => { po(c, [8, 34, 56, 26, 58, 32, 10, 40], '#fff'); po(c, [28, 32, 40, 8, 46, 8, 40, 30], '#7cc8f0'); po(c, [30, 36, 40, 58, 46, 58, 40, 36], '#7cc8f0'); },
+  '✈️': c => { // 1.17: avionul vazut de sus, in zbor (era doar din linii)
+    c.save(); c.translate(32, 33); c.rotate(-Math.PI / 4);
+    po(c, [-2, 0, 8, 0, -4, -26, -12, -26], '#7ab8ff'); po(c, [-2, 0, 8, 0, -4, 26, -12, 26], '#7ab8ff');
+    po(c, [-20, 0, -16, 0, -24, -11, -28, -11], '#7ab8ff'); po(c, [-20, 0, -16, 0, -24, 11, -28, 11], '#7ab8ff');
+    el(c, 0, 0, 28, 6.5, '#f4f7fb');
+    el(c, 21, 0, 4, 3.2, '#5b9cf0', 0, false);
+    c.restore();
+  },
   // ---------------- haine
   '👗': c => { po(c, [24, 6, 40, 6, 42, 22, 56, 58, 8, 58, 22, 22], '#ff8fab'); ln(c, [22, 22, 42, 22], 3); },
   '👚': c => { shirt(c, '#ffb3c7'); ci(c, 32, 30, 3, '#fff'); },
@@ -222,8 +229,28 @@ const D: Record<string, (c: C) => void> = {
   '⭐': c => { const p: number[] = []; for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 - Math.PI / 2, r = i % 2 ? 11 : 25; p.push(32 + Math.cos(a) * r, 34 + Math.sin(a) * r); } po(c, p, '#ffd23f'); },
   '🌊': c => { qd(c, c => { c.moveTo(4, 52); c.quadraticCurveTo(10, 20, 34, 18); c.quadraticCurveTo(52, 18, 54, 34); c.quadraticCurveTo(40, 26, 36, 40); c.quadraticCurveTo(48, 44, 60, 40); c.lineTo(60, 52); c.closePath(); }, '#5aa8d8'); },
   '🐦': c => { el(c, 30, 36, 18, 14, '#7cc8f0'); ci(c, 44, 26, 10, '#7cc8f0'); po(c, [52, 24, 60, 28, 52, 30], '#ffb347'); ci(c, 46, 24, 2, O, false); qd(c, c => { c.moveTo(18, 32); c.quadraticCurveTo(28, 26, 36, 38); c.quadraticCurveTo(26, 44, 18, 32); }, '#5aa8d8'); },
-  '🦌': c => { el(c, 30, 40, 18, 12, '#c99a5a'); ci(c, 46, 24, 9, '#c99a5a'); ln(c, [44, 16, 40, 4, 34, 6], 3); ln(c, [50, 16, 54, 4, 60, 6], 3); ln(c, [20, 50, 20, 60], 4); ln(c, [38, 50, 38, 60], 4); },
-  '🐓': c => { el(c, 30, 38, 18, 14, '#fff'); ci(c, 42, 22, 9, '#fff'); po(c, [38, 12, 42, 8, 46, 12], '#e63946'); po(c, [50, 22, 58, 24, 50, 26], '#ffb347'); po(c, [12, 34, 4, 20, 16, 28], '#e07a5f'); },
+  '🦌': c => { // 1.17: caprioara din profil: coarne, pete albe, picioare subtiri
+    for (const x of [16, 22, 36, 42]) { ln(c, [x, 42, x, 59], 5); ln(c, [x, 42, x, 59], 2, '#b8783e'); }
+    el(c, 28, 38, 17, 10, '#c98a4a');
+    po(c, [36, 32, 42, 16, 50, 18, 46, 36], '#c98a4a');
+    ci(c, 28, 34, 2, '#fff', false); ci(c, 20, 38, 2, '#fff', false); ci(c, 34, 40, 1.8, '#fff', false); ci(c, 24, 31, 1.6, '#fff', false);
+    el(c, 12, 32, 3, 4, '#fff', -0.4);
+    ln(c, [44, 12, 40, 3], 2.5); ln(c, [42, 7, 36, 5], 2.5); ln(c, [50, 12, 56, 4], 2.5); ln(c, [53, 8, 58, 9], 2.5);
+    el(c, 40, 13, 5, 2.5, '#c98a4a', -0.5);
+    el(c, 49, 17, 9, 6.5, '#c98a4a', 0.35); el(c, 56, 20, 3.5, 3, '#e8c69a', 0.35); ci(c, 58.5, 20.5, 1.8, O, false);
+    ci(c, 49, 15, 2, O, false); ci(c, 49.6, 14.4, 0.7, '#fff', false);
+  },
+  '🐓': c => { // 1.17: cocosul redesenat: coada colorata, creasta mare
+    for (const [a, col] of [[-1.9, '#2f6b4f'], [-2.3, '#e07a3a'], [-2.7, '#2f6b4f']] as const) { c.save(); c.translate(20, 34); c.rotate(a); qd(c, c => { c.moveTo(0, -4); c.quadraticCurveTo(14, -10, 24, -2); c.quadraticCurveTo(14, 2, 0, 4); }, col); c.restore(); }
+    for (const x of [26, 36]) { ln(c, [x, 50, x, 59], 5); ln(c, [x, 50, x, 59], 2.5, '#ff9f1c'); ln(c, [x - 4, 60, x + 4, 60], 3); }
+    qd(c, c => { c.moveTo(14, 34); c.bezierCurveTo(14, 54, 50, 58, 52, 38); c.lineTo(50, 24); c.bezierCurveTo(44, 26, 40, 30, 34, 30); c.bezierCurveTo(26, 30, 16, 24, 14, 34); c.closePath(); }, '#c8582e');
+    for (const [x, y, r] of [[38, 11, 4.5], [43, 7, 5.5], [49, 7, 5.5], [53, 12, 4.5]] as const) ci(c, x, y, r, '#e63946');
+    ci(c, 45, 21, 10, '#f2a65a'); el(c, 47, 30, 6, 6, '#f2a65a', 0, false);
+    po(c, [54, 18, 62, 22, 54, 25], '#ffd23f');
+    el(c, 52, 31, 3.5, 5.5, '#e63946');
+    ci(c, 48, 18, 2.4, O, false); ci(c, 48.8, 17.2, 0.8, '#fff', false);
+    qd(c, c => { c.moveTo(22, 38); c.bezierCurveTo(26, 48, 40, 48, 42, 38); c.bezierCurveTo(36, 42, 28, 42, 22, 38); }, '#8f3a1e');
+  },
   '🐝': c => { el(c, 32, 36, 18, 13, '#ffd23f'); ln(c, [26, 24, 26, 48], 4); ln(c, [36, 24, 36, 48], 4); el(c, 26, 18, 9, 7, 'rgba(255,255,255,.8)'); el(c, 40, 18, 9, 7, 'rgba(255,255,255,.8)'); },
   '🎈': c => { el(c, 32, 26, 16, 20, '#ff5d8f'); po(c, [29, 46, 35, 46, 32, 50], '#ff5d8f'); ln(c, [32, 50, 28, 62], 2); shine(c, 26, 18, 4); },
   '🎠': c => { po(c, [8, 18, 32, 4, 56, 18], '#ff8fab'); ln(c, [32, 18, 32, 56], 3); el(c, 32, 40, 16, 8, '#fff'); ci(c, 44, 32, 5, '#fff'); el(c, 32, 58, 24, 4, '#ffd23f'); },
@@ -259,9 +286,9 @@ const D: Record<string, (c: C) => void> = {
   '🎓': c => { po(c, [4, 26, 32, 14, 60, 26, 32, 38], '#3a3a44'); qd(c, c => { c.moveTo(16, 32); c.lineTo(16, 44); c.quadraticCurveTo(32, 54, 48, 44); c.lineTo(48, 32); }, '#3a3a44'); ln(c, [56, 26, 56, 42], 2.5, '#ffd23f'); ci(c, 56, 44, 3, '#ffd23f'); },
   '🏬': c => { rr(c, 6, 18, 52, 38, 3, '#ffe1ea'); rr(c, 6, 12, 52, 10, 3, '#ff7aa2'); for (let i = 0; i < 4; i++) rr(c, 10 + i * 12, 28, 8, 10, 2, '#bfe8ff'); rr(c, 26, 42, 12, 14, 2, '#bfe8ff'); },
   '🩺': c => { qd(c, c => { c.moveTo(16, 8); c.lineTo(16, 30); c.quadraticCurveTo(16, 44, 30, 44); c.quadraticCurveTo(44, 44, 44, 30); c.lineTo(44, 8); }, undefined); ln(c, [30, 44, 30, 50, 46, 54], 3); ci(c, 48, 54, 6, '#c9ccd6'); ci(c, 16, 8, 3, O, false); ci(c, 44, 8, 3, O, false); },
-  '🤕': c => { ci(c, 32, 34, 22, '#ffd8b0'); rr(c, 10, 18, 44, 9, 4, '#fff'); ci(c, 24, 36, 2.5, O, false); ci(c, 40, 36, 2.5, O, false); ln(c, [26, 46, 38, 46], 2.5); },
+  '🤕': c => { face({ eyes: 'half', mouth: 'wavy', brows: 'sad' })(c); rr(c, 9, 13, 46, 9, 4, '#fff'); for (const x of [16, 26, 38, 48]) ln(c, [x, 15, x, 20], 1.2, '#d9c8b0'); rr(c, 37, 10, 11, 13, 3, '#ffd2b0'); }, // 1.17: hamsterul tau cu bandaj
   '🤧': c => { face({ eyes: 'strain', mouth: 'open', blush: 1.3 })(c); for (const [x, y, r] of [[55, 42, 5], [59, 34, 3.5], [57, 51, 3.5]]) ci(c, x, y, r, 'rgba(190,230,255,0.9)', false); },
-  '😢': c => { ci(c, 32, 32, 22, '#ffe58a'); ci(c, 24, 28, 2.5, O, false); ci(c, 40, 28, 2.5, O, false); qd(c, c => { c.arc(32, 46, 8, Math.PI * 1.15, Math.PI * 1.85); }, undefined); el(c, 22, 38, 3, 5, '#7ec8f0', 0, false); },
+  '😢': face({ eyes: 'sad', mouth: 'frown', brows: 'sad', tears: 1 }), // 1.17: hamsterul tau (era o fata galbena de emoji)
   '🧤': c => { qd(c, c => { c.moveTo(18, 56); c.lineTo(18, 24); c.quadraticCurveTo(18, 14, 26, 14); c.lineTo(42, 14); c.quadraticCurveTo(50, 14, 50, 24); c.lineTo(50, 30); c.lineTo(56, 26); c.quadraticCurveTo(62, 32, 50, 44); c.lineTo(46, 56); c.closePath(); }, '#e07a5f'); rr(c, 16, 50, 32, 8, 3, '#fff'); },
   '🎪': c => { po(c, [6, 30, 32, 8, 58, 30], '#ff5d8f'); rr(c, 10, 30, 44, 26, 2, '#fff'); for (let i = 0; i < 4; i++) rr(c, 12 + i * 11, 30, 5, 26, 0, '#ff8fab', false); rr(c, 26, 40, 12, 16, 2, '#7a4a2a'); },
   '📮': c => { rr(c, 18, 14, 28, 40, 8, '#e63946'); rr(c, 22, 24, 20, 5, 2, '#3a3a44'); ln(c, [32, 54, 32, 60], 5); },
@@ -325,7 +352,7 @@ const D: Record<string, (c: C) => void> = {
 };
 for (const [k, o] of Object.entries(FACES)) if (!D[k]) D[k] = face(o);
 for (const [k, o] of Object.entries(HEADS)) D[k] = face(o);
-const FACE_KEYS = new Set([...Object.keys(FACES), '🤧']);
+const FACE_KEYS = new Set([...Object.keys(FACES), '🤧', '😢', '🤕']);
 // ---------------- 1.16: restul emoji-urilor din joc, desenate (nu mai ramane niciun emoji al telefonului)
 const hrt = (c: C, x: number, y: number, s: number, f: string, stroke = true) => qd(c, c => { c.moveTo(x, y + s * 0.85); c.bezierCurveTo(x - s * 1.55, y - s * 0.15, x - s * 0.7, y - s * 1.3, x, y - s * 0.45); c.bezierCurveTo(x + s * 0.7, y - s * 1.3, x + s * 1.55, y - s * 0.15, x, y + s * 0.85); }, f, stroke);
 const star = (c: C, x: number, y: number, r: number, f: string, n = 5) => { const p: number[] = []; for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, rr2 = i % 2 ? r * 0.45 : r; p.push(x + Math.cos(a) * rr2, y + Math.sin(a) * rr2); } po(c, p, f); };
@@ -384,14 +411,23 @@ const EXTRA: Record<string, (c: C) => void> = {
   '⛈': c => { el(c, 32, 24, 22, 12, '#a7adbd'); ci(c, 22, 20, 9, '#a7adbd'); ci(c, 38, 16, 11, '#a7adbd'); po(c, [30, 34, 22, 48, 30, 48, 26, 60, 40, 42, 32, 42, 36, 34], '#ffd23f'); },
   '⛄': c => { ci(c, 32, 44, 15, '#fff'); ci(c, 32, 22, 11, '#fff'); rr(c, 22, 6, 20, 10, 2, '#3a3a44'); ci(c, 28, 21, 1.8, O, false); ci(c, 36, 21, 1.8, O, false); po(c, [32, 24, 40, 26, 32, 27], '#ffb347'); },
   '🍀': c => { for (const [a] of [[0], [1], [2], [3]]) { c.save(); c.translate(32, 30); c.rotate(a * Math.PI / 2); hrt(c, 0, -10, 9, '#5bc571'); c.restore(); } ln(c, [32, 34, 40, 58], 4, '#3f9b52'); },
-  '🍂': c => { leaf(c, 10, 40, 30, -0.5, '#e8873a'); leaf(c, 22, 50, 28, -1.1, '#d96a2b'); },
+  '🍂': c => { // 1.17: frunzele de toamna mai mari, cu nervuri
+    for (const [x, y, len, a, col] of [[4, 38, 36, -0.5, '#e8873a'], [24, 60, 38, -0.95, '#c9542a']] as const) { leaf(c, x, y, len, a, col); ln(c, [x, y, x + Math.cos(a) * len * 0.9, y + Math.sin(a) * len * 0.9], 2, '#7a3a1a'); }
+  },
   '🌀': c => { c.beginPath(); for (let i = 0; i <= 60; i++) { const a = i / 60 * Math.PI * 5, r = 2 + i / 60 * 22; i ? c.lineTo(32 + Math.cos(a) * r, 32 + Math.sin(a) * r) : c.moveTo(32, 32); } c.lineWidth = 7; c.strokeStyle = O; c.lineCap = 'round'; c.stroke(); c.lineWidth = 4; c.strokeStyle = '#7ab8ff'; c.stroke(); },
   '💫': c => { star(c, 24, 36, 16, '#ffd23f'); qd(c, c => { c.arc(32, 30, 24, -2.4, -0.4); }); ci(c, 54, 18, 3, '#ffd23f'); },
   '🌶': c => { qd(c, c => { c.moveTo(48, 14); c.quadraticCurveTo(54, 40, 14, 54); c.quadraticCurveTo(30, 34, 40, 16); c.closePath(); }, '#e63946'); ln(c, [44, 14, 50, 6], 4, '#3f9b52'); },
   // mancare
   '🍯': c => { rr(c, 14, 24, 36, 32, 10, '#ffb347'); rr(c, 12, 18, 40, 8, 3, '#c98e5f'); qd(c, c => { c.moveTo(14, 32); c.quadraticCurveTo(22, 40, 26, 32); c.quadraticCurveTo(32, 42, 38, 32); c.quadraticCurveTo(44, 40, 50, 32); }, undefined); },
   '🌭': c => { c.save(); c.translate(32, 34); c.rotate(-0.4); el(c, 0, 4, 26, 10, '#e8b56a'); el(c, 0, -2, 28, 6, '#c0573e'); ln(c, [-18, -2, -10, -5, -2, -1, 6, -5, 14, -1], 2.5, '#ffd23f'); c.restore(); },
-  '🥪': c => { po(c, [8, 46, 32, 12, 56, 46], '#f4d9a0'); po(c, [12, 44, 32, 20, 52, 44], '#7cc56b', false); po(c, [14, 46, 32, 24, 50, 46], '#ffd45c', false); po(c, [8, 50, 56, 50, 56, 46, 8, 46], '#e8c08a'); },
+  '🥪': c => { // 1.17: sandvisul din lateral (era un triunghi ca un semn de avertizare)
+    rr(c, 6, 42, 52, 12, 6, '#f6dca5'); ln(c, [12, 47, 52, 47], 2, '#e8c08a');
+    po(c, [10, 40, 22, 40, 20, 48, 26, 40, 40, 40, 44, 47, 46, 40, 56, 40, 56, 36, 8, 36], '#ffd23f');
+    for (const x of [18, 34, 48]) el(c, x, 35, 8, 3.5, '#e63946');
+    qd(c, c => { c.moveTo(6, 32); for (let x = 6; x < 58; x += 8) c.quadraticCurveTo(x + 4, 37, Math.min(58, x + 8), 32); c.lineTo(58, 29); c.lineTo(6, 29); c.closePath(); }, '#7cc56b');
+    rr(c, 6, 16, 52, 14, 6, '#f6dca5'); rr(c, 9, 19, 46, 8, 4, undefined); ln(c, [10, 23, 54, 23], 0.01);
+    c.lineWidth = 2; c.strokeStyle = '#d9a05a'; c.beginPath(); c.roundRect(9.5, 19.5, 45, 7, 3.5); c.stroke();
+  },
   '🍉': c => { qd(c, c => { c.moveTo(6, 22); c.quadraticCurveTo(32, 64, 58, 22); c.closePath(); }, '#3f9b52'); qd(c, c => { c.moveTo(11, 24); c.quadraticCurveTo(32, 56, 53, 24); c.closePath(); }, '#ff5d6f', false); for (const [x, y] of [[24, 30], [32, 36], [40, 30]]) el(c, x, y, 1.8, 2.8, O, 0, false); },
   '🍎': c => { qd(c, c => { c.moveTo(32, 18); c.bezierCurveTo(8, 6, 4, 50, 22, 56); c.quadraticCurveTo(32, 54, 42, 56); c.bezierCurveTo(60, 50, 56, 6, 32, 18); }, '#e63946'); ln(c, [32, 18, 34, 8], 3.5); leaf(c, 34, 12, 12, -0.6); shine(c, 20, 28, 4); },
   '🍭': c => { ln(c, [32, 34, 32, 60], 5, '#fff'); ci(c, 32, 22, 16, '#ff9ab8'); c.beginPath(); for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 4, r = i / 40 * 13; i ? c.lineTo(32 + Math.cos(a) * r, 22 + Math.sin(a) * r) : c.moveTo(32, 22); } c.lineWidth = 3; c.strokeStyle = '#fff'; c.stroke(); },
@@ -399,16 +435,40 @@ const EXTRA: Record<string, (c: C) => void> = {
   '🧃': c => { rr(c, 18, 16, 28, 40, 3, '#9ed67a'); rr(c, 18, 26, 28, 16, 0, '#fff', false); ci(c, 32, 34, 5, '#ffb347'); ln(c, [38, 16, 44, 4], 3.5, '#fff'); },
   '🦴': c => { c.save(); c.translate(32, 32); c.rotate(-0.6); rr(c, -18, -5, 36, 10, 3, '#fff8ec'); for (const [x, y] of [[-20, -6], [-20, 6], [20, -6], [20, 6]]) ci(c, x, y, 6, '#fff8ec'); c.restore(); },
   // animale
-  '🐔': c => { el(c, 32, 38, 18, 16, '#fff'); ci(c, 38, 22, 10, '#fff'); po(c, [34, 12, 38, 6, 42, 12, 46, 8, 46, 16], '#e63946'); po(c, [47, 22, 56, 25, 47, 28], '#ffb347'); ci(c, 40, 20, 2, O, false); el(c, 46, 31, 3, 4, '#e63946', 0, false); },
+  '🐔': c => { // 1.17: gaina redesenata (era un cerc alb): coada, aripa, creasta, ciocul, barbia, picioarele
+    for (const a of [-2.0, -2.4, -2.8]) { c.save(); c.translate(19, 33); c.rotate(a); qd(c, c => { c.moveTo(0, -4.5); c.quadraticCurveTo(13, -9, 20, 0); c.quadraticCurveTo(13, 9, 0, 4.5); }, '#fff'); c.restore(); }
+    for (const x of [26, 36]) { ln(c, [x, 50, x, 59], 5); ln(c, [x, 50, x, 59], 2.5, '#ff9f1c'); ln(c, [x - 4, 60, x + 4, 60], 3); }
+    qd(c, c => { c.moveTo(14, 34); c.bezierCurveTo(14, 54, 50, 58, 52, 38); c.lineTo(50, 24); c.bezierCurveTo(44, 26, 40, 30, 34, 30); c.bezierCurveTo(26, 30, 16, 24, 14, 34); c.closePath(); }, '#fff');
+    for (const [x, y, r] of [[40, 10, 4.5], [45, 8, 5], [50, 11, 4.5]] as const) ci(c, x, y, r, '#e63946');
+    ci(c, 45, 21, 10, '#fff'); el(c, 47, 30, 6, 6, '#fff', 0, false);
+    po(c, [54, 18, 62, 22, 54, 25], '#ffb347');
+    el(c, 53, 30, 3, 4.5, '#e63946');
+    ci(c, 48, 18, 2.4, O, false); ci(c, 48.8, 17.2, 0.8, '#fff', false);
+    qd(c, c => { c.moveTo(22, 38); c.bezierCurveTo(26, 48, 40, 48, 42, 38); c.bezierCurveTo(36, 42, 28, 42, 22, 38); }, '#f1e4d0');
+  },
   '🐣': c => { ci(c, 32, 28, 14, '#ffe14f'); ci(c, 27, 26, 2, O, false); ci(c, 37, 26, 2, O, false); po(c, [30, 31, 34, 31, 32, 35], '#ffb347'); po(c, [12, 36, 20, 42, 26, 36, 32, 42, 38, 36, 44, 42, 52, 36, 50, 56, 14, 56], '#fff8ec'); },
   '🐶': c => { ci(c, 32, 34, 19, '#e8c08a'); el(c, 14, 30, 7, 13, '#a0703f', 0.3); el(c, 50, 30, 7, 13, '#a0703f', -0.3); ci(c, 25, 32, 2.5, O, false); ci(c, 39, 32, 2.5, O, false); el(c, 32, 42, 9, 6, '#fff8ec'); el(c, 32, 39, 3.5, 2.5, O, 0, false); },
   '🐱': c => { po(c, [14, 26, 18, 8, 28, 18], '#ffb347'); po(c, [50, 26, 46, 8, 36, 18], '#ffb347'); ci(c, 32, 34, 19, '#ffb347'); ci(c, 25, 32, 2.5, O, false); ci(c, 39, 32, 2.5, O, false); po(c, [30, 38, 34, 38, 32, 41], '#ff9ab8'); for (const s of [-1, 1]) { ln(c, [32 + s * 8, 40, 32 + s * 20, 37], 1.5); ln(c, [32 + s * 8, 42, 32 + s * 20, 44], 1.5); } },
   '🐄': c => { el(c, 14, 22, 8, 4, '#fff', -0.4); el(c, 50, 22, 8, 4, '#fff', 0.4); ci(c, 32, 30, 18, '#fff'); el(c, 24, 24, 6, 5, '#3a3a44', 0, false); el(c, 32, 44, 14, 9, '#ffb3c7'); ci(c, 27, 44, 2, O, false); ci(c, 37, 44, 2, O, false); ci(c, 25, 32, 2.5, O, false); ci(c, 39, 32, 2.5, O, false); },
-  '🐑': c => { for (const [x, y] of [[18, 24], [32, 18], [46, 24], [20, 40], [44, 40], [32, 44]]) ci(c, x, y, 10, '#fff8ec'); el(c, 32, 34, 9, 11, '#5a5a66'); ci(c, 28, 32, 1.8, '#fff', false); ci(c, 36, 32, 1.8, '#fff', false); },
+  '🐑': c => { // 1.17: oaia din profil: lana ca un nor, capul si picioarele inchise la culoare
+    for (const x of [20, 28, 38, 44]) { ln(c, [x, 44, x, 58], 6); ln(c, [x, 44, x, 58], 3, '#4a4a55'); }
+    for (const [x, y, r] of [[16, 36, 9], [22, 26, 9], [32, 22, 10], [42, 26, 9], [46, 36, 9], [36, 44, 9], [24, 44, 9], [30, 34, 12]] as const) ci(c, x, y, r, '#fff8ec');
+    for (const [x, y, r] of [[16, 36, 9], [22, 26, 9], [32, 22, 10], [42, 26, 9], [46, 36, 9], [36, 44, 9], [24, 44, 9]] as const) ci(c, x, y, r - 2.6, '#fff8ec', false);
+    el(c, 44, 23, 6, 3, '#4a4a55', -0.5);
+    el(c, 51, 30, 8, 10, '#4a4a55', 0.35);
+    ci(c, 48, 22, 5, '#fff8ec');
+    ci(c, 54, 28, 2, '#fff', false); ci(c, 54.5, 28, 1, O, false);
+  },
   '🐻': c => { ci(c, 16, 18, 7, '#a0703f'); ci(c, 48, 18, 7, '#a0703f'); ci(c, 32, 34, 20, '#a0703f'); el(c, 32, 42, 9, 7, '#e8c08a'); el(c, 32, 39, 3.5, 2.5, O, 0, false); ci(c, 25, 31, 2.5, O, false); ci(c, 39, 31, 2.5, O, false); },
   '🐼': c => { ci(c, 16, 18, 7, '#3a3a44'); ci(c, 48, 18, 7, '#3a3a44'); ci(c, 32, 34, 20, '#fff'); el(c, 24, 32, 5, 6, '#3a3a44', 0.4, false); el(c, 40, 32, 5, 6, '#3a3a44', -0.4, false); ci(c, 24, 32, 1.6, '#fff', false); ci(c, 40, 32, 1.6, '#fff', false); el(c, 32, 41, 3.5, 2.5, O, 0, false); },
   '🦊': c => { po(c, [10, 12, 22, 22, 14, 30], '#ff8c42'); po(c, [54, 12, 42, 22, 50, 30], '#ff8c42'); po(c, [10, 24, 54, 24, 32, 54], '#ff8c42'); po(c, [16, 34, 32, 54, 48, 34, 32, 40], '#fff8ec'); ci(c, 25, 30, 2.5, O, false); ci(c, 39, 30, 2.5, O, false); ci(c, 32, 52, 3, O, false); },
-  '🐜': c => { for (const [x, r] of [[16, 7], [30, 6], [46, 10]] as const) ci(c, x, 34, r, '#5a3a2a'); for (const x of [26, 32, 38]) { ln(c, [x, 36, x - 6, 50], 2.5); ln(c, [x, 32, x - 6, 18], 2.5); } ln(c, [12, 28, 6, 18], 2); },
+  '🐜': c => { // 1.17: furnica din profil: trei segmente, sase picioare, antene
+    for (const [x0, x1, y1] of [[30, 22, 52], [34, 34, 54], [38, 46, 52]] as const) ln(c, [x0, 36, (x0 + x1) / 2 + (x1 < x0 ? -4 : 4), 44, x1, y1], 3);
+    el(c, 17, 34, 12, 10, '#5a3a2a'); shine(c, 12, 29, 3);
+    el(c, 34, 32, 7, 5.5, '#5a3a2a');
+    ci(c, 49, 27, 8, '#5a3a2a'); shine(c, 47, 23, 2.2); ci(c, 52, 26, 1.8, '#fff', false);
+    ln(c, [51, 20, 53, 10, 60, 8], 2.5); ln(c, [47, 20, 46, 10, 52, 5], 2.5);
+  },
   '🐠': c => { po(c, [10, 20, 20, 32, 10, 44], '#ff8c42'); el(c, 34, 32, 20, 14, '#ff8c42'); rr(c, 28, 19, 6, 26, 3, '#fff', false); ci(c, 46, 29, 2.5, O, false); },
   '🐡': c => { for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; ln(c, [32 + Math.cos(a) * 16, 32 + Math.sin(a) * 16, 32 + Math.cos(a) * 24, 32 + Math.sin(a) * 24], 3); } ci(c, 32, 32, 17, '#ffd45c'); ci(c, 38, 28, 2.5, O, false); el(c, 44, 36, 3, 2, '#ff9ab8', 0, false); },
   '🐋': c => { qd(c, c => { c.moveTo(6, 36); c.quadraticCurveTo(8, 18, 32, 20); c.quadraticCurveTo(52, 22, 50, 38); c.quadraticCurveTo(30, 50, 6, 36); }, '#5b9cf0'); po(c, [48, 34, 60, 26, 58, 40], '#5b9cf0'); ci(c, 18, 30, 2.5, O, false); ln(c, [28, 18, 28, 8], 2.5, '#7ec8f0'); ln(c, [28, 10, 22, 6], 2.5, '#7ec8f0'); ln(c, [28, 10, 34, 6], 2.5, '#7ec8f0'); },
