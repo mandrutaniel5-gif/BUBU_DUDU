@@ -4,6 +4,7 @@
 import { AREAS, type Floor, type Furn, type Wall } from './map';
 import { iso, isoBox, shade, boxOf, type Pt } from './iso';
 import { heartPath } from '../char/draw';
+import { bucket } from '../char/hamster';
 import { drawPOI, drawSign } from './poi';
 import { isOpen } from '../game/town';
 import { $t } from '../i18n';
@@ -178,8 +179,30 @@ export function updateCars(cars: Car[], dt: number, t: number, who: { x: number;
     if (!stop) c.k = (c.k + c.speed * dt) % 1;
   }
 }
-export function drawCar(c: CanvasRenderingContext2D, car: Car, t: number) {
-  const p = carPos(car);
+/**
+ * 1.17: masinile se deseneaza o singura data pe model (fel, culoare, directie, sens, rezolutie) intr-o imagine
+ * pastrata, apoi doar se lipesc (inainte: zeci de forme de la zero la fiecare cadru, ~1 ms / masina pe tableta).
+ * Desenul e acelasi (drawCarRaw); imaginea e pozitionata fata de punctul de pe sol al masinii.
+ */
+const CAR_SPR = new Map<string, HTMLCanvasElement>();
+/** cat ocupa pe ecran (fata de punctul de pe sol): cat mai strans, ca sa nu lipim pixeli goi (conteaza pe ecranele mari) */
+const CAR_BOX = { car: { x: -48, y: -68, w: 96, h: 102 }, bus: { x: -70, y: -106, w: 140, h: 144 } };
+export function drawCar(c: CanvasRenderingContext2D, car: Car, t: number) { drawCarAt(c, car, carPos(car), t); }
+export function drawCarAt(c: CanvasRenderingContext2D, car: Car, p: { x: number; y: number; dir: 'x' | 'y'; sgn: 1 | -1 }, t: number) {
+  if ((globalThis as any).__perfOld) { drawCarRaw(c, car, p, t); return; } // (comutator de test: desenul vechi, pentru comparatii)
+  const k = bucket(c), a = iso(p.x, p.y), B = car.kind === 'bus' ? CAR_BOX.bus : CAR_BOX.car;
+  const key = `${car.kind}|${car.col}|${p.dir}|${p.sgn}|${k}`;
+  let cv = CAR_SPR.get(key);
+  if (!cv) {
+    if (CAR_SPR.size > 80) CAR_SPR.clear(); // memorie: cel mult ~80 de imagini mici
+    cv = document.createElement('canvas'); cv.width = Math.ceil(B.w * k); cv.height = Math.ceil(B.h * k);
+    const g = cv.getContext('2d')!; g.scale(k, k); g.translate(-B.x - a.x, -B.y - a.y); g.lineJoin = 'round';
+    drawCarRaw(g, car, p, t); CAR_SPR.set(key, cv);
+  }
+  c.drawImage(cv, a.x + B.x, a.y + B.y, B.w, B.h);
+}
+/** desenul masinii din forme (folosit o data, pentru imaginea pastrata) */
+export function drawCarRaw(c: CanvasRenderingContext2D, car: Car, p: { x: number; y: number; dir: 'x' | 'y'; sgn: 1 | -1 }, t: number) {
   const L = car.kind === 'bus' ? 2.6 : 1.5, W = 0.78;
   const x0 = p.dir === 'x' ? p.x - L / 2 : p.x - W / 2, y0 = p.dir === 'y' ? p.y - L / 2 : p.y - W / 2;
   const w = p.dir === 'x' ? L : W, d = p.dir === 'y' ? L : W;

@@ -202,9 +202,11 @@ export class FloorChunks {
       if (this.chunks.has(k)) continue;
       const ch = this.render(i, j); ch.used = this.frame - 1; this.chunks.set(k, ch); made++;
     }
-    // uitam bucatile vechi
-    if (this.chunks.size > this.max) {
-      const old = [...this.chunks.entries()].sort((a, b) => a[1].used - b[1].used).slice(0, this.chunks.size - this.max);
+    // uitam bucatile vechi. 1.17: limita creste cu ecranul (tot ce se vede + inelul din jur); pe tableta si laptop
+    // cele 28 nu ajungeau: jocul arunca si refacea ~28 de bucati pe secunda chiar cand stateai pe loc (procesor + placa video)
+    const lim = (globalThis as any).__perfOld ? this.max : Math.min(64, Math.max(this.max, (i1 - i0 + 3) * (j1 - j0 + 3))); // cel mult 64 (memoria, la harta foarte micsorata)
+    if (this.chunks.size > lim) {
+      const old = [...this.chunks.entries()].sort((a, b) => a[1].used - b[1].used).slice(0, this.chunks.size - lim);
       for (const [k, c] of old) { this.chunks.delete(k); this.pool.push(c.cv); }
       if (this.pool.length > 6) this.pool.length = 6;
     }

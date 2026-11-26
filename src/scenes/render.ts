@@ -220,7 +220,7 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
     }
   }
   if (home) for (const [k, p] of Object.entries(scene.w.plots ?? {})) { if (!p.crop) continue; const [x, y] = k.split(',').map(Number); if (!seen(x, y)) continue; items.push({ x0: x + 0.3, y0: y + 0.3, x1: x + 0.7, y1: y + 0.7, draw: () => drawCropPlant(ctx, x, y, p as Plot, scene.w.gameMin ?? 0, scene.time) }); }
-  if (home) for (const car of scene.cars) { const cp = carPos(car); if (!seen(cp.x, cp.y)) continue; items.push({ x0: cp.x - 0.5, y0: cp.y - 0.3, x1: cp.x + 0.5, y1: cp.y + 0.3, mx: 80, h: 80, draw: () => drawCar(ctx, car, scene.time) }); }
+  if (home) for (const car of scene.cars) { const cp = carPos(car); if (!seen(cp.x, cp.y)) continue; items.push({ x0: cp.x - 0.5, y0: cp.y - 0.3, x1: cp.x + 0.5, y1: cp.y + 0.3, mx: 80, h: 80, draw: () => drawCar(ctx, car, scene.time) , k: 'masina' }); }
   if (home) for (const v of scene.walkers) { if (v.off || !seen(v.x, v.y)) continue; items.push({ x0: v.x - 0.2, y0: v.y - 0.2, x1: v.x + 0.2, y1: v.y + 0.2, draw: () => {
     if (v.tractor) { const s = iso(v.x, v.y, 0); ctx.save(); ctx.translate(s.x, s.y + 2); ctx.scale(v.a.flip, 1); drawTractorSide(ctx, 0, 0, 0.42, scene.time, { rot: scene.time * 18, bump: Math.abs(Math.sin(scene.time * 14)) * -1.2, logs: 0, driver: v.a.spec, trailer: false }); ctx.restore(); }
     else v.a.draw(ctx);
@@ -232,7 +232,7 @@ export function drawWorld(scene: WorldScene, ctx: CanvasRenderingContext2D) {
       const hasQ = (scene.w.town?.quests as any[] | undefined)?.some(x => x.who === v.vid && !x.done && x.day === scene.w.day);
       if (hasQ) { const by = q.y - 92 * ACTOR_SCALE * 0.92 - 18 + Math.sin(scene.time * 4) * 2; ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = '#4a2a22'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q.x, by, 9, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#4a2a22'; ctx.font = '900 13px "Baloo 2", sans-serif'; ctx.textBaseline = 'middle'; ctx.fillText('!', q.x, by + 1); ctx.textBaseline = 'alphabetic'; }
     }
-  } }); }
+  } , k: 'pieton' }); }
   if (home) for (const c of scene.critters) { if (!seen(c.x, c.y)) continue; items.push({ x0: c.x - 0.2, y0: c.y - 0.2, x1: c.x + 0.2, y1: c.y + 0.2, h: 70, draw: () => { const q = iso(c.x, c.y); drawCritter(ctx, c, q.x, q.y, scene.time); }, k: 'animal' }); }
   if (home) for (const n of scene.npcs) { if (!seen(n.x, n.y)) continue; items.push({ x0: n.x - 0.2, y0: n.y - 0.2, x1: n.x + 0.2, y1: n.y + 0.2, draw: () => drawNpc(scene, ctx, n), k: 'npc' }); }
   for (const p of [scene.me, scene.partner]) {
