@@ -196,7 +196,7 @@ export function drawCarAt(c: CanvasRenderingContext2D, car: Car, p: { x: number;
   if (!cv) {
     if (CAR_SPR.size > 80) CAR_SPR.clear(); // memorie: cel mult ~80 de imagini mici
     cv = document.createElement('canvas'); cv.width = Math.ceil(B.w * k); cv.height = Math.ceil(B.h * k);
-    const g = cv.getContext('2d')!; g.scale(k, k); g.translate(-B.x - a.x, -B.y - a.y); g.lineJoin = 'round';
+    const g = cv.getContext('2d', { willReadFrequently: !(globalThis as any).__gpuCaches })!; g.scale(k, k); g.translate(-B.x - a.x, -B.y - a.y); g.lineJoin = 'round';
     drawCarRaw(g, car, p, t); CAR_SPR.set(key, cv);
   }
   c.drawImage(cv, a.x + B.x, a.y + B.y, B.w, B.h);

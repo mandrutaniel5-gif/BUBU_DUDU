@@ -28,7 +28,8 @@ export class Game {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d')!;
+    // 1.17: panza opaca (fiecare scena o picteaza toata): browserul nu o mai amesteca cu pagina din spate la fiecare cadru
+    this.ctx = canvas.getContext('2d', { alpha: !!(globalThis as any).__perfOld })!;
     addEventListener('resize', () => this.resize());
     addEventListener('orientationchange', () => setTimeout(() => this.resize(), 120));
     this.resize();
@@ -85,8 +86,12 @@ export class Game {
     const loop = (t: number) => {
       requestAnimationFrame(loop);
       const want = (this.scene as { wantFps?: () => number } | null)?.wantFps?.() ?? 60;
-      const fps = Math.min(60, want); // cat cere scena (1.17: nu mai depinde de Eco; vezi WorldScene.wantFps si setarea Fluiditate maxima)
+      // cat cere scena (1.17: nu mai depinde de Eco; vezi WorldScene.wantFps si setarea Fluiditate maxima).
+      // Ritm adaptiv: daca aparatul nu tine 60 constant (cadre neregulate 17/25/17 ms se vad sacadat, desi contorul arata 48+),
+      // trecem la 30 constant, care e neted, si mai incercam 60 dupa o vreme.
+      const fps = Math.min(60, want, t < this.pace30Until ? 30 : 60);
       if (this.last && t - this.last < 1000 / fps - 3) return;
+      if (this.last) this.pace(t - this.last, fps, t);
       const dt = Math.min(0.05, (t - (this.last || t)) / 1000) * this.timeScale;
       if (this.last) this.adapt(t - this.last, fps, t);
       this.last = t;
@@ -102,6 +107,18 @@ export class Game {
   // ---- calitatea adaptiva: masuram cate cadre iese de fapt fata de cate vrem (cel mult pana la Q_MIN)
   private win = { t0: 0, n: 0, want: 0 };
   private lastDown = 0; private bad = 0; private good = 0;
+  // ---- ritmul: la 60, numaram cadrele intarziate; prea multe -> 30 pentru o vreme (din ce in ce mai lunga daca se repeta)
+  private pace30Until = 0; private paceN = 0; private paceLate = 0; private paceBack = 15000; private paceOkSince = 0;
+  private pace(dtMs: number, fps: number, now: number) {
+    if (fps < 55 || (globalThis as any).__perfOld) { this.paceN = this.paceLate = 0; return; }
+    if (now < this.quietUntil) return;
+    this.paceN++; if (dtMs > 22) this.paceLate++;
+    if (this.paceN >= 90) { // ~1,5 s la 60
+      if (this.paceLate / this.paceN > 0.12) { this.pace30Until = now + this.paceBack; this.paceBack = Math.min(120000, this.paceBack * 2); this.paceOkSince = 0; }
+      else if ((this.paceOkSince ||= now) && now - this.paceOkSince > 30000) this.paceBack = 15000; // 60 merge bine de 30 s: revenim la pauza scurta
+      this.paceN = this.paceLate = 0;
+    }
+  }
   /** pana cand nu masuram (incarcarea unei zone sau scene) */
   quietUntil = 0;
   settle(ms = 6000) { this.quietUntil = performance.now() + ms; }

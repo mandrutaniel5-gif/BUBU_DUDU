@@ -92,7 +92,7 @@ export function sprite(key: string, k: number, x: number, y: number, w: number, 
   const id = key + '@' + k; let s = SPR.get(id);
   if (!s) {
     const cv = document.createElement('canvas'); cv.width = Math.ceil(w * k); cv.height = Math.ceil(h * k);
-    const c = cv.getContext('2d')!; c.scale(k, k); c.translate(-x, -y); c.lineJoin = 'round'; c.lineCap = 'round';
+    const c = cv.getContext('2d', { willReadFrequently: !(globalThis as any).__gpuCaches })!; c.scale(k, k); c.translate(-x, -y); c.lineJoin = 'round'; c.lineCap = 'round';
     draw(c, k); s = { cv, x, y, w, h }; SPR.set(id, s);
   }
   return s;

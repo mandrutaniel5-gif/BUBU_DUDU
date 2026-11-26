@@ -11,7 +11,7 @@ import { $t } from '../i18n';
 const portraits: Record<string, string> = {};
 function portrait(spec: string) {
   if (portraits[spec]) return portraits[spec];
-  const cv = document.createElement('canvas'); cv.width = cv.height = 140; const c = cv.getContext('2d')!;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 140; const c = cv.getContext('2d', { willReadFrequently: !(globalThis as any).__gpuCaches })!;
   const P = basePose(); P.eyes = 'happy'; P.mouth = 'open'; P.blush = 1.1;
   drawCharacter(c, NPC_SPECS[spec], P, 70, 146, 1.25, 1, 0);
   return (portraits[spec] = cv.toDataURL());

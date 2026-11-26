@@ -22,7 +22,7 @@ let base: HTMLCanvasElement | null = null;
 export function worldMapImage(): HTMLCanvasElement {
   if (base) return base;
   const cv = document.createElement('canvas'); cv.width = Math.ceil(MAP_PW); cv.height = Math.ceil(MAP_PH);
-  const ctx = cv.getContext('2d')!;
+  const ctx = cv.getContext('2d', { willReadFrequently: !(globalThis as any).__gpuCaches })!;
   // podeaua: fiecare dala e un romb (desenat dintr-o imagine mica, apoi marit fara blur)
   const small = document.createElement('canvas'); const sw = Math.ceil(MAP_PW / K), sh = Math.ceil(MAP_PH / K); small.width = sw; small.height = sh;
   const sc = small.getContext('2d')!, img = sc.createImageData(sw, sh), d = img.data;
@@ -102,7 +102,7 @@ let top: HTMLCanvasElement | null = null;
 export function topMapImage(): HTMLCanvasElement {
   if (top) return top;
   const cv = document.createElement('canvas'); cv.width = (T1.x - T0.x) * TK; cv.height = (T1.y - T0.y) * TK;
-  const ctx = cv.getContext('2d')!;
+  const ctx = cv.getContext('2d', { willReadFrequently: !(globalThis as any).__gpuCaches })!;
   const img = ctx.createImageData(cv.width, cv.height), d = img.data;
   for (let ty = T0.y; ty < T1.y; ty++) for (let tx = T0.x; tx < T1.x; tx++) {
     const f = floorAt(tx, ty); const c = COL[f] ?? [160, 210, 140];

@@ -33,7 +33,7 @@ export class SpriteCache {
       if (sp) this.bytes -= sp.bytes;
       const cv = document.createElement('canvas');
       cv.width = Math.max(1, Math.round(w * S)); cv.height = Math.max(1, Math.round(h * S));
-      const c = cv.getContext('2d')!;
+      const c = cv.getContext('2d', { willReadFrequently: !(globalThis as any).__gpuCaches })!;
       c.setTransform(S, 0, 0, S, -l * S, -top * S); c.lineJoin = 'round'; c.lineCap = 'round';
       paint(c);
       sp = { cv, used: this.frame, S, bytes: cv.width * cv.height * 4 };

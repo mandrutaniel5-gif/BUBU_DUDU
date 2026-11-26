@@ -147,6 +147,7 @@ interface Chunk { cv: HTMLCanvasElement; used: number; ox: number; oy: number; w
 export class FloorChunks {
   private chunks = new Map<number, Chunk>();
   private pool: HTMLCanvasElement[] = [];
+  private ctxs = new WeakMap<HTMLCanvasElement, CanvasRenderingContext2D>();
   private space = '';
   private frame = 0;
   /** cate bucati tinem minte (memoria telefonului) */
@@ -161,9 +162,10 @@ export class FloorChunks {
   private render(i: number, j: number): Chunk {
     const ox = i * CW - PAD, oy = j * CHH - PAD, w = CW + PAD * 2, h = CHH + PAD * 2, S = this.scale;
     const cv = this.pool.pop() ?? document.createElement('canvas');
+    if (!this.ctxs.has(cv)) this.ctxs.set(cv, cv.getContext('2d', { willReadFrequently: !(globalThis as any).__gpuCaches })!); // 1.17: bucatile se coc pe procesor (pe placa video, una incarcata o bloca sute de ms); placa video primeste doar imaginea gata facuta
     const W = Math.round(w * S), H = Math.round(h * S);
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
-    const ctx = cv.getContext('2d')!;
+    const ctx = this.ctxs.get(cv)!;
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H);
     if (this.bg) { ctx.fillStyle = this.bg; ctx.fillRect(0, 0, W, H); }
     ctx.setTransform(S, 0, 0, S, -ox * S, -oy * S);

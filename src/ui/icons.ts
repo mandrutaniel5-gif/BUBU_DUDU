@@ -504,7 +504,7 @@ export function iconCanvas(e: string, px = 64): HTMLCanvasElement | null {
   const key = k + faceKey(k) + '@' + px;
   if (cache[key]) return cache[key];
   const cv = document.createElement('canvas'); cv.width = cv.height = px;
-  const c = cv.getContext('2d')!; c.scale(px / 64, px / 64);
+  const c = cv.getContext('2d', { willReadFrequently: !(globalThis as any).__gpuCaches })!; c.scale(px / 64, px / 64);
   LW = 3; D[k](c);
   return cache[key] = cv;
 }
